@@ -1,22 +1,36 @@
 # Standard imports
 import os
+from typing import cast
 
 # Local imports
+from services.aws.run_install_via_ssm import run_install_via_ssm
 from services.efs.get_efs_dir import get_efs_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import git_clone_to_efs
 from services.git.git_fetch import git_fetch
 from services.git.git_reset import git_reset
+from services.github.branches.create_remote_branch import create_remote_branch
+from services.github.branches.delete_remote_branch import delete_remote_branch
 from services.github.branches.get_default_branch import get_default_branch
+from services.github.commits.get_latest_remote_commit_sha import (
+    get_latest_remote_commit_sha,
+)
+from services.github.pulls.create_pull_request import create_pull_request
 from services.github.repositories.get_repository_stats import get_repository_stats
+from services.github.types.github_types import BaseArgs
+from services.github.utils.build_setup_pr_body import (
+    SETUP_PR_TITLE,
+    build_setup_pr_body,
+)
 from services.github.types.owner import OwnerType
 from services.github.types.repository import RepositoryAddedOrRemoved
-from services.aws.run_install_via_ssm import run_install_via_ssm
+from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
 from services.supabase.repositories.upsert_repository import upsert_repository
 from services.website.sync_files_from_github_to_coverage import (
     sync_files_from_github_to_coverage,
 )
 from utils.error.handle_exceptions import handle_exceptions
+from utils.generate_branch_name import generate_branch_name
 from utils.logging.logging_config import logger
 
 
@@ -100,3 +114,48 @@ async def process_repositories(
             repo_id=repo_id,
             user_name=user_name,
         )
+
+        # Create GitAuto setup PR with any necessary configuration
+        new_branch = generate_branch_name()
+
+        base_args = cast(
+            BaseArgs,
+            {
+                "owner": owner_name,
+                "repo": repo_name,
+                "token": token,
+                "base_branch": default_branch,
+                "new_branch": new_branch,
+            },
+        )
+
+        sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
+        create_remote_branch(sha=sha, base_args=base_args)
+
+        # Run setup tasks - each adds commits if needed
+        changes: list[str] = []
+
+        tsconfig_result = ensure_tsconfig_for_tests(
+            base_args=base_args,
+            commit_message="Configure relaxed TypeScript settings for test files",
+        )
+        if tsconfig_result:
+            changes.append(tsconfig_result)
+
+        # Future setup tasks can be added here
+        # eslint_result = ensure_eslint_config(base_args=base_args, ...)
+        # if eslint_result:
+        #     changes.append(eslint_result)
+
+        if not changes:
+            logger.info("No setup changes needed, deleting branch")
+            delete_remote_branch(base_args=base_args)
+            continue
+
+        _pr_url, pr_number = create_pull_request(
+            body=build_setup_pr_body(changes),
+            title=SETUP_PR_TITLE,
+            base_args=base_args,
+        )
+
+        logger.info("Created setup PR %s/%s#%d", owner_name, repo_name, pr_number)

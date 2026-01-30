@@ -1,11 +1,8 @@
 # Standard library imports
-from datetime import datetime
-from random import choices
-from string import ascii_letters, digits
 from typing import cast
 
 # Local imports
-from config import PRODUCT_ID, ISSUE_NUMBER_FORMAT, GITHUB_APP_USER_ID
+from config import GITHUB_APP_USER_ID
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.issues.get_parent_issue import get_parent_issue
 from services.github.types.github_types import BaseArgs, GitHubLabeledPayload
@@ -13,6 +10,7 @@ from services.github.token.get_installation_token import get_installation_access
 from services.github.users.get_user_public_email import get_user_public_email
 from services.supabase.repositories.get_repository import get_repository
 from utils.error.handle_exceptions import handle_exceptions
+from utils.generate_branch_name import generate_branch_name
 from utils.logging.logging_config import logger
 from utils.urls.extract_urls import extract_urls
 
@@ -60,13 +58,7 @@ def deconstruct_github_payload(
         base_branch_name = target_branch
         logger.info("Using target branch: %s", target_branch)
 
-    date = datetime.now().strftime(format="%Y%m%d")  # like "20241224"
-    time = datetime.now().strftime(format="%H%M%S")  # like "120000" means 12:00:00
-    # like "ABCD", "1234", "a1b2"
-    random_str = "".join(choices(ascii_letters + digits, k=4))
-    new_branch_name = (
-        f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}{issue_number}-{date}-{time}-{random_str}"
-    )
+    new_branch_name = generate_branch_name(issue_number=issue_number)
 
     # Extract sender related variables
     sender_id = payload["sender"]["id"]

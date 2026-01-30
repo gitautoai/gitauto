@@ -4,21 +4,25 @@ from services.github.commits.replace_remote_file import replace_remote_file_cont
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.types.github_types import BaseArgs
+from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
 from services.prettier.run_prettier import run_prettier
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 from utils.syntax.fix_missing_braces import fix_missing_braces
 
-JS_TEST_FILE_EXTENSIONS = (
-    ".test.js",
-    ".test.jsx",
+TS_TEST_FILE_EXTENSIONS = (
     ".test.ts",
     ".test.tsx",
-    ".spec.js",
-    ".spec.jsx",
     ".spec.ts",
     ".spec.tsx",
 )
+
+JS_TEST_FILE_EXTENSIONS = (
+    ".test.js",
+    ".test.jsx",
+    ".spec.js",
+    ".spec.jsx",
+) + TS_TEST_FILE_EXTENSIONS
 
 JS_TS_FILE_EXTENSIONS = (".js", ".jsx", ".ts", ".tsx")
 
@@ -52,6 +56,13 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
         for f in pr_files
         if f["filename"].endswith(JS_TEST_FILE_EXTENSIONS) and f["status"] != "removed"
     ]
+
+    ts_test_files = [f for f in js_test_files if f.endswith(TS_TEST_FILE_EXTENSIONS)]
+    if ts_test_files:
+        ensure_tsconfig_for_tests(
+            base_args=base_args,
+            commit_message="Add tsconfig.test.json for relaxed test file checking",
+        )
 
     fixes_applied: list[str] = []
     for file_path in js_test_files:

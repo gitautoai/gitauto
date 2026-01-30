@@ -59,11 +59,9 @@ def create_mock_payload(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_basic_functionality(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -79,8 +77,7 @@ def test_deconstruct_github_payload_basic_functionality(
     mock_extract_urls.return_value = (["https://github.com"], ["https://example.com"])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["X", "Y", "Z", "W"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-XYZW"
 
     # Create test payload
     payload = create_mock_payload(issue_body="Test issue body")
@@ -148,11 +145,9 @@ def test_deconstruct_github_payload_no_token_raises_error(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_with_empty_issue_body(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -168,8 +163,7 @@ def test_deconstruct_github_payload_with_empty_issue_body(
     mock_extract_urls.return_value = ([], [])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     # Create test payload with None issue body
     payload = create_mock_payload(issue_body=None)
@@ -187,11 +181,9 @@ def test_deconstruct_github_payload_with_empty_issue_body(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_with_fork_repository(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -207,8 +199,7 @@ def test_deconstruct_github_payload_with_fork_repository(
     mock_extract_urls.return_value = ([], [])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     # Create test payload with fork=True
     payload = create_mock_payload(fork=True)
@@ -226,11 +217,9 @@ def test_deconstruct_github_payload_with_fork_repository(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_with_bot_users(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -246,8 +235,7 @@ def test_deconstruct_github_payload_with_bot_users(
     mock_extract_urls.return_value = ([], [])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     # Create test payload with bot users
     payload = create_mock_payload(
@@ -267,11 +255,9 @@ def test_deconstruct_github_payload_with_bot_users(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_with_target_branch_exists(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -287,8 +273,7 @@ def test_deconstruct_github_payload_with_target_branch_exists(
     mock_extract_urls.return_value = ([], [])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     # Create test payload
     payload = create_mock_payload()
@@ -306,11 +291,9 @@ def test_deconstruct_github_payload_with_target_branch_exists(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_with_target_branch_not_exists(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -326,8 +309,7 @@ def test_deconstruct_github_payload_with_target_branch_not_exists(
     mock_extract_urls.return_value = ([], [])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     # Create test payload
     payload = create_mock_payload()
@@ -345,11 +327,9 @@ def test_deconstruct_github_payload_with_target_branch_not_exists(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_with_parent_issue_data(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -370,8 +350,7 @@ def test_deconstruct_github_payload_with_parent_issue_data(
         "body": "Parent issue body",
     }
     mock_get_parent_issue.return_value = parent_issue
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     # Create test payload
     payload = create_mock_payload()
@@ -391,11 +370,9 @@ def test_deconstruct_github_payload_with_parent_issue_data(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_with_automation_user(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -411,8 +388,7 @@ def test_deconstruct_github_payload_with_automation_user(
     mock_extract_urls.return_value = ([], [])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     # Create test payload with automation user (using GITHUB_APP_USER_ID from config)
     payload = create_mock_payload(sender_id=GITHUB_APP_USER_ID)
@@ -430,11 +406,9 @@ def test_deconstruct_github_payload_with_automation_user(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_no__(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -450,8 +424,7 @@ def test_deconstruct_github_payload_no__(
     mock_extract_urls.return_value = ([], [])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     # Create test payload
     payload = create_mock_payload()
@@ -470,11 +443,9 @@ def test_deconstruct_github_payload_no__(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_no_target_branch_in_settings(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -490,8 +461,7 @@ def test_deconstruct_github_payload_no_target_branch_in_settings(
     mock_extract_urls.return_value = ([], [])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     # Create test payload
     payload = create_mock_payload()
@@ -511,11 +481,9 @@ def test_deconstruct_github_payload_no_target_branch_in_settings(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_branch_name_generation(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -532,9 +500,9 @@ def test_deconstruct_github_payload_branch_name_generation(
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
 
-    # Mock specific datetime values
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["X", "Y", "Z", "W"]
+    # Mock generate_branch_name to return specific branch name
+    expected_branch = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}456-20241225-143000-XYZW"
+    mock_generate_branch_name.return_value = expected_branch
 
     # Create test payload with specific issue number
     payload = create_mock_payload(issue_number=456)
@@ -542,8 +510,8 @@ def test_deconstruct_github_payload_branch_name_generation(
     # Call the function
     base_args, _ = deconstruct_github_payload(payload)
 
-    # Verify branch name generation
-    expected_branch = f"{PRODUCT_ID}{ISSUE_NUMBER_FORMAT}456-20241225-143000-XYZW"
+    # Verify branch name generation - verify the mock was called with the issue number
+    mock_generate_branch_name.assert_called_once_with(issue_number=456)
     assert base_args["new_branch"] == expected_branch
 
 
@@ -553,11 +521,9 @@ def test_deconstruct_github_payload_branch_name_generation(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_duplicate_reviewers(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -573,8 +539,7 @@ def test_deconstruct_github_payload_duplicate_reviewers(
     mock_extract_urls.return_value = ([], [])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     # Create test payload where sender and issuer are the same
     payload = create_mock_payload(issuer_name="same-user", sender_name="same-user")
@@ -592,11 +557,9 @@ def test_deconstruct_github_payload_duplicate_reviewers(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_missing_fork_key(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -612,8 +575,7 @@ def test_deconstruct_github_payload_missing_fork_key(
     mock_extract_urls.return_value = ([], [])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     payload: Any = create_mock_payload()
     del payload["repository"]["fork"]
@@ -630,11 +592,9 @@ def test_deconstruct_github_payload_missing_fork_key(
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
 @patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
 @patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
-@patch("services.github.utils.deconstruct_github_payload.datetime")
-@patch("services.github.utils.deconstruct_github_payload.choices")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
 def test_deconstruct_github_payload_target_branch_used(
-    mock_choices,
-    mock_datetime,
+    mock_generate_branch_name,
     mock_get_parent_issue,
     mock_get_user_public_email,
     mock_extract_urls,
@@ -650,8 +610,7 @@ def test_deconstruct_github_payload_target_branch_used(
     mock_extract_urls.return_value = ([], [])
     mock_get_user_public_email.return_value = "test@example.com"
     mock_get_parent_issue.return_value = None
-    mock_datetime.now.return_value.strftime.side_effect = ["20241225", "143000"]
-    mock_choices.return_value = ["A", "B", "C", "D"]
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
 
     # Create test payload
     payload = create_mock_payload()

@@ -7,11 +7,11 @@ from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_file_tree(owner: str, repo: str, ref: str, token: str):
+def get_file_tree(owner: str, repo: str, ref: str, token: str, root_only: bool = False):
     """https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#get-a-tree"""
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/trees/{ref}"
     headers = create_headers(token=token)
-    params = {"recursive": 1}
+    params = {} if root_only else {"recursive": 1}
     response = requests.get(url=url, headers=headers, params=params, timeout=TIMEOUT)
 
     tree_items: list[Tree] = []

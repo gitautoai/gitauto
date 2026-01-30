@@ -80,8 +80,62 @@ def mock_upsert_repository():
 
 
 @pytest.fixture
-def mock_run_install_via_ssm():
-    with patch("services.webhook.process_repositories.run_install_via_ssm") as mock:
+def mock_run_install_via_codebuild():
+    with patch(
+        "services.webhook.process_repositories.run_install_via_codebuild"
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_sync_files_from_github_to_coverage():
+    with patch(
+        "services.webhook.process_repositories.sync_files_from_github_to_coverage"
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_generate_branch_name():
+    with patch("services.webhook.process_repositories.generate_branch_name") as mock:
+        mock.return_value = "gitauto/setup-20241224-120000-ABCD"
+        yield mock
+
+
+@pytest.fixture
+def mock_get_latest_remote_commit_sha():
+    with patch(
+        "services.webhook.process_repositories.get_latest_remote_commit_sha"
+    ) as mock:
+        mock.return_value = "abc123sha"
+        yield mock
+
+
+@pytest.fixture
+def mock_create_remote_branch():
+    with patch("services.webhook.process_repositories.create_remote_branch") as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_ensure_tsconfig_for_tests():
+    with patch(
+        "services.webhook.process_repositories.ensure_tsconfig_for_tests"
+    ) as mock:
+        mock.return_value = None
+        yield mock
+
+
+@pytest.fixture
+def mock_delete_remote_branch():
+    with patch("services.webhook.process_repositories.delete_remote_branch") as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_create_pull_request():
+    with patch("services.webhook.process_repositories.create_pull_request") as mock:
+        mock.return_value = ("https://github.com/test/pr/1", 1)
         yield mock
 
 
@@ -127,7 +181,13 @@ async def test_process_repositories_efs_exists_fetches(
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
-    mock_run_install_via_ssm,
+    mock_run_install_via_codebuild,
+    mock_sync_files_from_github_to_coverage,
+    mock_generate_branch_name,
+    mock_get_latest_remote_commit_sha,
+    mock_create_remote_branch,
+    mock_ensure_tsconfig_for_tests,
+    mock_delete_remote_branch,
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
@@ -148,7 +208,7 @@ async def test_process_repositories_efs_exists_fetches(
     assert mock_git_reset.call_count == 2
     assert mock_get_repository_stats.call_count == 2
     assert mock_upsert_repository.call_count == 4  # 2 repos x 2 calls (insert + update)
-    assert mock_run_install_via_ssm.call_count == 2
+    assert mock_run_install_via_codebuild.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -162,7 +222,13 @@ async def test_process_repositories_efs_not_exists_clones(
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
-    mock_run_install_via_ssm,
+    mock_run_install_via_codebuild,
+    mock_sync_files_from_github_to_coverage,
+    mock_generate_branch_name,
+    mock_get_latest_remote_commit_sha,
+    mock_create_remote_branch,
+    mock_ensure_tsconfig_for_tests,
+    mock_delete_remote_branch,
 ):
     mock_os_path_exists.return_value = False
     mock_get_repository_stats.return_value = sample_stats
@@ -179,7 +245,7 @@ async def test_process_repositories_efs_not_exists_clones(
 
     assert mock_git_clone_to_efs.call_count == 2
     assert mock_upsert_repository.call_count == 4  # 2 repos x 2 calls (insert + update)
-    assert mock_run_install_via_ssm.call_count == 2
+    assert mock_run_install_via_codebuild.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -192,7 +258,7 @@ async def test_process_repositories_empty_list(
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
-    mock_run_install_via_ssm,
+    mock_run_install_via_codebuild,
 ):
     await process_repositories(
         owner_id=12345,
@@ -209,7 +275,7 @@ async def test_process_repositories_empty_list(
     mock_git_reset.assert_not_called()
     mock_get_repository_stats.assert_not_called()
     mock_upsert_repository.assert_not_called()
-    mock_run_install_via_ssm.assert_not_called()
+    mock_run_install_via_codebuild.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -223,7 +289,13 @@ async def test_process_repositories_stats_saved_correctly(
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
-    mock_run_install_via_ssm,
+    mock_run_install_via_codebuild,
+    mock_sync_files_from_github_to_coverage,
+    mock_generate_branch_name,
+    mock_get_latest_remote_commit_sha,
+    mock_create_remote_branch,
+    mock_ensure_tsconfig_for_tests,
+    mock_delete_remote_branch,
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
@@ -278,7 +350,13 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
-    mock_run_install_via_ssm,
+    mock_run_install_via_codebuild,
+    mock_sync_files_from_github_to_coverage,
+    mock_generate_branch_name,
+    mock_get_latest_remote_commit_sha,
+    mock_create_remote_branch,
+    mock_ensure_tsconfig_for_tests,
+    mock_delete_remote_branch,
 ):
     mock_get_default_branch.return_value = ("main", True)
     single_repo = cast(
@@ -309,7 +387,7 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_git_fetch.assert_not_called()
     mock_git_reset.assert_not_called()
     mock_get_repository_stats.assert_not_called()
-    mock_run_install_via_ssm.assert_not_called()
+    mock_run_install_via_codebuild.assert_not_called()
     # Only called once without stats (empty repo skips clone)
     mock_upsert_repository.assert_called_once_with(
         owner_id=12345,
@@ -320,3 +398,105 @@ async def test_process_repositories_empty_repo_skips_clone(
         user_id=67890,
         user_name="test-user",
     )
+
+
+@pytest.mark.asyncio
+async def test_process_repositories_non_typescript_deletes_branch_no_pr(
+    sample_stats,
+    mock_get_efs_dir,
+    mock_get_clone_url,
+    mock_git_fetch,
+    mock_git_reset,
+    mock_os_path_exists,
+    mock_get_default_branch,
+    mock_get_repository_stats,
+    mock_upsert_repository,
+    mock_run_install_via_codebuild,
+    mock_sync_files_from_github_to_coverage,
+    mock_generate_branch_name,
+    mock_get_latest_remote_commit_sha,
+    mock_create_remote_branch,
+    mock_ensure_tsconfig_for_tests,
+    mock_delete_remote_branch,
+    mock_create_pull_request,
+):
+    mock_os_path_exists.return_value = True
+    mock_get_repository_stats.return_value = sample_stats
+    mock_ensure_tsconfig_for_tests.return_value = None
+    single_repo = cast(
+        list[RepositoryAddedOrRemoved],
+        [
+            {
+                "id": 555,
+                "node_id": "R_5",
+                "name": "python-repo",
+                "full_name": "test-owner/python-repo",
+                "private": False,
+            }
+        ],
+    )
+
+    await process_repositories(
+        owner_id=12345,
+        owner_name="test-owner",
+        owner_type="Organization",
+        repositories=single_repo,
+        token="ghs_test_token",
+        user_id=67890,
+        user_name="test-user",
+    )
+
+    mock_create_remote_branch.assert_called_once()
+    mock_delete_remote_branch.assert_called_once()
+    mock_create_pull_request.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_process_repositories_typescript_creates_pr(
+    sample_stats,
+    mock_get_efs_dir,
+    mock_get_clone_url,
+    mock_git_fetch,
+    mock_git_reset,
+    mock_os_path_exists,
+    mock_get_default_branch,
+    mock_get_repository_stats,
+    mock_upsert_repository,
+    mock_run_install_via_codebuild,
+    mock_sync_files_from_github_to_coverage,
+    mock_generate_branch_name,
+    mock_get_latest_remote_commit_sha,
+    mock_create_remote_branch,
+    mock_ensure_tsconfig_for_tests,
+    mock_delete_remote_branch,
+    mock_create_pull_request,
+):
+    mock_os_path_exists.return_value = True
+    mock_get_repository_stats.return_value = sample_stats
+    mock_ensure_tsconfig_for_tests.return_value = "Created tsconfig.test.json"
+    single_repo = cast(
+        list[RepositoryAddedOrRemoved],
+        [
+            {
+                "id": 666,
+                "node_id": "R_6",
+                "name": "typescript-repo",
+                "full_name": "test-owner/typescript-repo",
+                "private": False,
+            }
+        ],
+    )
+
+    await process_repositories(
+        owner_id=12345,
+        owner_name="test-owner",
+        owner_type="Organization",
+        repositories=single_repo,
+        token="ghs_test_token",
+        user_id=67890,
+        user_name="test-user",
+    )
+
+    mock_create_remote_branch.assert_called_once()
+    mock_delete_remote_branch.assert_not_called()
+    mock_create_pull_request.assert_called_once()
