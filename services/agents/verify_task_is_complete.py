@@ -4,7 +4,7 @@ from services.github.commits.replace_remote_file import replace_remote_file_cont
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.types.github_types import BaseArgs
-from services.node.ensure_tsconfig_test import ensure_tsconfig_test
+from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
 from services.prettier.run_prettier import run_prettier
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -59,7 +59,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
 
     ts_test_files = [f for f in js_test_files if f.endswith(TS_TEST_FILE_EXTENSIONS)]
     if ts_test_files:
-        ensure_tsconfig_test(
+        ensure_tsconfig_for_tests(
             base_args=base_args,
             commit_message="Add tsconfig.test.json for relaxed test file checking",
         )

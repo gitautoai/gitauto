@@ -13,7 +13,7 @@ TSCONFIG_VARIANT_PATTERN = re.compile(r"^tsconfig\..+\.json$")
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def ensure_tsconfig_test(base_args: BaseArgs, commit_message: str):
+def ensure_tsconfig_for_tests(base_args: BaseArgs, commit_message: str):
     """
     Ensure a tsconfig variant exists with relaxed settings for test files.
     Checks all tsconfig.*.json files first. Only creates tsconfig.test.json if none have correct settings.

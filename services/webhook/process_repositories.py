@@ -18,10 +18,13 @@ from services.github.commits.get_latest_remote_commit_sha import (
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.repositories.get_repository_stats import get_repository_stats
 from services.github.types.github_types import BaseArgs
-from services.github.utils.build_setup_pr_body import SETUP_PR_TITLE, build_setup_pr_body
+from services.github.utils.build_setup_pr_body import (
+    SETUP_PR_TITLE,
+    build_setup_pr_body,
+)
 from services.github.types.owner import OwnerType
 from services.github.types.repository import RepositoryAddedOrRemoved
-from services.node.ensure_tsconfig_test import ensure_tsconfig_test
+from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
 from services.supabase.repositories.upsert_repository import upsert_repository
 from services.website.sync_files_from_github_to_coverage import (
     sync_files_from_github_to_coverage,
@@ -132,7 +135,7 @@ async def process_repositories(
         # Run setup tasks - each adds commits if needed
         changes: list[str] = []
 
-        tsconfig_result = ensure_tsconfig_test(
+        tsconfig_result = ensure_tsconfig_for_tests(
             base_args=base_args,
             commit_message="Configure relaxed TypeScript settings for test files",
         )
