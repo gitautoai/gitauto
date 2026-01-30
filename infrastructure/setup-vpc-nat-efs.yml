@@ -234,7 +234,14 @@ Resources:
 
           # Install Node.js and yarn for package management
           curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
-          yum install -y nodejs
+
+          # Some npm packages have native C++ code that must be compiled during install.
+          # Example: segfault-handler (devDependency in Foxquilt repos for crash debugging).
+          # node-gyp handles native module compilation and requires:
+          #   - gcc-c++: C++ compiler to compile native code to machine code
+          #   - make: build automation tool that runs compilation commands
+          yum install -y nodejs gcc-c++ make
+
           npm install -g yarn
           echo "Node.js $(node -v) and yarn $(yarn -v) installed" >> /var/log/nat-setup.log
       Tags:
