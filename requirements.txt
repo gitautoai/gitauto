@@ -65,6 +65,7 @@ MarkupSafe==3.0.2
 mccabe==0.7.0
 mdurl==0.1.2
 multidict==6.1.0
+mypy-boto3-ec2==1.42.38
 mypy-boto3-lambda==1.42.37
 mypy-boto3-logs==1.42.10
 mypy-boto3-scheduler==1.42.3
@@ -94,7 +95,7 @@ Pygments==2.18.0
 PyJWT==2.9.0
 pylint==3.2.6
 PyNaCl==1.6.2
-pyright==1.1.407
+pyright==1.1.408
 pytest==8.3.3
 pytest-asyncio==0.26.0
 pytest-cov==6.0.0

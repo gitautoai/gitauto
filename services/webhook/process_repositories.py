@@ -11,7 +11,7 @@ from services.github.branches.get_default_branch import get_default_branch
 from services.github.repositories.get_repository_stats import get_repository_stats
 from services.github.types.owner import OwnerType
 from services.github.types.repository import RepositoryAddedOrRemoved
-from services.ssm.run_install_via_ssm import run_install_via_ssm
+from services.aws.run_install_via_ssm import run_install_via_ssm
 from services.supabase.repositories.upsert_repository import upsert_repository
 from services.website.sync_files_from_github_to_coverage import (
     sync_files_from_github_to_coverage,
