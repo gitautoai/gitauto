@@ -341,3 +341,32 @@ def test_no_false_positives_stripe_create_element_component():
     result = fix_missing_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
+
+
+def test_no_false_positives_test_with_timeout():
+    """Tests with timeout parameter like `}, 30000);` should not trigger false positives."""
+    content = """describe('Edge Cases', () => {
+  it('handles null value', () => {
+    const onChange = jest.fn();
+    expect(onChange).toHaveBeenCalled();
+  }, 30000);
+});
+
+describe('HTML Parsing', () => {
+  it('parses HTML', () => {
+    expect(true).toBe(true);
+  });
+});"""
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+def test_no_false_positives_foxcom_forms_coverage_option_timeout():
+    """Real file from foxcom-forms PR #1065 with Jest timeout pattern."""
+    content = (
+        FIXTURES_DIR / "correct_foxcom_forms_CoverageOption_timeout.test.tsx"
+    ).read_text()
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
