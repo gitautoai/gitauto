@@ -121,7 +121,11 @@ def fix_missing_braces(content: str) -> FixResult:
             const_stack.append((i, const_type, indent))
 
         # Handle closing patterns - both }); and }) can close blocks
-        if stripped in ("});", "})"):
+        # Also handle Jest timeout: }, 30000); or }, timeout);
+        is_block_close = stripped in ("});", "})") or re.match(
+            r"^\},\s*\w+\);$", stripped
+        )
+        if is_block_close:
             if _pop_from_stack(obj_arg_stack, line_indent, i, "obj_arg"):
                 pass
             else:
