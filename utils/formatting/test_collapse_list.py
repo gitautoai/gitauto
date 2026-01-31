@@ -22,29 +22,23 @@ def test_at_max():
     expected = """- a
 - b
 - c
-- d
-- e
-- f"""
-    assert collapse_list(["a", "b", "c", "d", "e", "f"]) == expected
+- d"""
+    assert collapse_list(["a", "b", "c", "d"]) == expected
 
 
 def test_over_max():
     expected = """- a
 - b
-- c
 - ... (1 more items) ...
-- e
-- f
-- g"""
-    assert collapse_list(["a", "b", "c", "d", "e", "f", "g"]) == expected
+- d
+- e"""
+    assert collapse_list(["a", "b", "c", "d", "e"]) == expected
 
 
 def test_many_items():
     expected = """- 1
 - 2
-- 3
-- ... (4 more items) ...
-- 8
+- ... (6 more items) ...
 - 9
 - 10"""
     assert (

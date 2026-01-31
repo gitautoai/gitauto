@@ -28,6 +28,7 @@ def extract_dependencies(efs_dir: str, clone_dir: str):
         return
 
     # Extract tarball to clone_dir (-x=extract, -z=decompress gzip, -f=file, -C=target dir)
+    logger.info("Extracting dependencies from EFS tarball...")
     subprocess.run(
         ["tar", "-xzf", tarball_path, "-C", clone_dir],
         check=True,
