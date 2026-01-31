@@ -88,6 +88,13 @@ def mock_run_install_via_codebuild():
 
 
 @pytest.fixture
+def mock_detect_package_manager():
+    with patch("services.webhook.process_repositories.detect_package_manager") as mock:
+        mock.return_value = ("npm", "package-lock.json", "lock content")
+        yield mock
+
+
+@pytest.fixture
 def mock_sync_files_from_github_to_coverage():
     with patch(
         "services.webhook.process_repositories.sync_files_from_github_to_coverage"
@@ -182,6 +189,7 @@ async def test_process_repositories_efs_exists_fetches(
     mock_get_repository_stats,
     mock_upsert_repository,
     mock_run_install_via_codebuild,
+    mock_detect_package_manager,
     mock_sync_files_from_github_to_coverage,
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
@@ -223,6 +231,7 @@ async def test_process_repositories_efs_not_exists_clones(
     mock_get_repository_stats,
     mock_upsert_repository,
     mock_run_install_via_codebuild,
+    mock_detect_package_manager,
     mock_sync_files_from_github_to_coverage,
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
@@ -290,6 +299,7 @@ async def test_process_repositories_stats_saved_correctly(
     mock_get_repository_stats,
     mock_upsert_repository,
     mock_run_install_via_codebuild,
+    mock_detect_package_manager,
     mock_sync_files_from_github_to_coverage,
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
@@ -351,6 +361,7 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_get_repository_stats,
     mock_upsert_repository,
     mock_run_install_via_codebuild,
+    mock_detect_package_manager,
     mock_sync_files_from_github_to_coverage,
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
@@ -412,6 +423,7 @@ async def test_process_repositories_non_typescript_deletes_branch_no_pr(
     mock_get_repository_stats,
     mock_upsert_repository,
     mock_run_install_via_codebuild,
+    mock_detect_package_manager,
     mock_sync_files_from_github_to_coverage,
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
@@ -463,6 +475,7 @@ async def test_process_repositories_typescript_creates_pr(
     mock_get_repository_stats,
     mock_upsert_repository,
     mock_run_install_via_codebuild,
+    mock_detect_package_manager,
     mock_sync_files_from_github_to_coverage,
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,

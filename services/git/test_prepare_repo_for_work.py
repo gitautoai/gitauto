@@ -64,8 +64,8 @@ def mock_copy_repo():
 
 
 @pytest.fixture
-def mock_symlink():
-    with patch("services.git.prepare_repo_for_work.symlink_dependencies") as mock:
+def mock_extract():
+    with patch("services.git.prepare_repo_for_work.extract_dependencies") as mock:
         yield mock
 
 
@@ -77,7 +77,7 @@ async def test_prepare_repo_waits_for_clone_task(
     mock_git_reset,
     mock_git_checkout,
     mock_copy_repo,
-    mock_symlink,
+    mock_extract,
 ):
     clone_task_awaited = False
 
@@ -98,7 +98,7 @@ async def test_prepare_repo_waits_for_clone_task(
         )
 
     mock_copy_repo.assert_called_once()
-    mock_symlink.assert_called_once()
+    mock_extract.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -110,7 +110,7 @@ async def test_prepare_repo_copies_and_symlinks(
     mock_git_reset,
     mock_git_checkout,
     mock_copy_repo,
-    mock_symlink,
+    mock_extract,
 ):
     await prepare_repo_for_work(
         owner="owner",
@@ -121,7 +121,7 @@ async def test_prepare_repo_copies_and_symlinks(
     )
 
     mock_copy_repo.assert_called_once_with("/mnt/efs/owner/repo", "/tmp/repo")
-    mock_symlink.assert_called_once_with("/mnt/efs/owner/repo", "/tmp/repo")
+    mock_extract.assert_called_once_with("/mnt/efs/owner/repo", "/tmp/repo")
 
 
 @pytest.mark.asyncio
@@ -133,7 +133,7 @@ async def test_prepare_repo_fetches_pr_branch(
     mock_git_reset,
     mock_git_checkout,
     mock_copy_repo,
-    mock_symlink,
+    mock_extract,
 ):
     await prepare_repo_for_work(
         owner="owner",

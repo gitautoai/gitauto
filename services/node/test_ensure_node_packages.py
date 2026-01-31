@@ -180,7 +180,7 @@ async def test_ensure_node_packages_triggers_ssm_install():
                 with patch("builtins.open", return_value=mock_lock_file):
                     with patch("services.node.ensure_node_packages.fcntl.flock"):
                         with patch(
-                            "services.node.ensure_node_packages.run_install_via_ssm"
+                            "services.node.ensure_node_packages.run_install_via_codebuild"
                         ) as mock_ssm:
                             mock_get.return_value = '{"name": "test"}'
                             mock_ssm.return_value = "cmd-123"
@@ -302,7 +302,7 @@ async def test_ensure_node_packages_sanitizes_http_to_https_in_npmrc():
                 with patch("builtins.open", side_effect=mock_open_side_effect):
                     with patch("services.node.ensure_node_packages.fcntl.flock"):
                         with patch(
-                            "services.node.ensure_node_packages.run_install_via_ssm"
+                            "services.node.ensure_node_packages.run_install_via_codebuild"
                         ):
                             mock_get.side_effect = [
                                 '{"name": "test"}',
@@ -353,7 +353,7 @@ async def test_ensure_node_packages_preserves_https_in_npmrc():
                 with patch("builtins.open", side_effect=mock_open_side_effect):
                     with patch("services.node.ensure_node_packages.fcntl.flock"):
                         with patch(
-                            "services.node.ensure_node_packages.run_install_via_ssm"
+                            "services.node.ensure_node_packages.run_install_via_codebuild"
                         ):
                             mock_get.side_effect = [
                                 '{"name": "test"}',

@@ -95,7 +95,7 @@ async def test_run_eslint_sets_npm_cache_env_on_lambda(base_args):
                     "services.eslint.run_eslint.get_efs_dir",
                     return_value="/mnt/efs/test",
                 ):
-                    with patch("services.eslint.run_eslint.symlink_dependencies"):
+                    with patch("services.eslint.run_eslint.extract_dependencies"):
                         with patch("services.eslint.run_eslint.os.makedirs"):
                             with patch(
                                 "builtins.open", mock_open(read_data="formatted")
@@ -138,7 +138,7 @@ async def test_run_eslint_returns_fixed_content(base_args):
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
             ):
-                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                with patch("services.eslint.run_eslint.extract_dependencies"):
                     with patch("services.eslint.run_eslint.os.makedirs"):
                         with patch("builtins.open", mock_open(read_data=fixed_content)):
                             with patch(
@@ -188,7 +188,7 @@ async def test_run_eslint_with_unfixable_errors(base_args):
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
             ):
-                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                with patch("services.eslint.run_eslint.extract_dependencies"):
                     with patch("services.eslint.run_eslint.os.makedirs"):
                         with patch("builtins.open", mock_open(read_data=file_content)):
                             with patch(
@@ -225,7 +225,7 @@ async def test_run_eslint_with_json_decode_error(base_args):
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
             ):
-                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                with patch("services.eslint.run_eslint.extract_dependencies"):
                     with patch("services.eslint.run_eslint.os.makedirs"):
                         with patch("builtins.open", mock_open(read_data=file_content)):
                             with patch(
@@ -260,7 +260,7 @@ async def test_run_eslint_fatal_error_returns_none(base_args):
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
             ):
-                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                with patch("services.eslint.run_eslint.extract_dependencies"):
                     with patch("services.eslint.run_eslint.os.makedirs"):
                         with patch("builtins.open", mock_open()):
                             with patch(
@@ -292,7 +292,7 @@ async def test_run_eslint_timeout_returns_none(base_args):
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
             ):
-                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                with patch("services.eslint.run_eslint.extract_dependencies"):
                     with patch("services.eslint.run_eslint.os.makedirs"):
                         with patch("builtins.open", mock_open()):
                             with patch(
@@ -335,7 +335,7 @@ async def test_run_eslint_supported_extensions(base_args, file_path):
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
             ):
-                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                with patch("services.eslint.run_eslint.extract_dependencies"):
                     with patch("services.eslint.run_eslint.os.makedirs"):
                         with patch("builtins.open", mock_open(read_data="formatted")):
                             with patch(
@@ -375,7 +375,7 @@ async def test_run_eslint_creates_directories(base_args):
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
             ):
-                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                with patch("services.eslint.run_eslint.extract_dependencies"):
                     with patch(
                         "services.eslint.run_eslint.os.makedirs"
                     ) as mock_makedirs:
@@ -411,7 +411,7 @@ async def test_run_eslint_sets_flat_config_false_for_legacy_config(base_args):
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
             ):
-                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                with patch("services.eslint.run_eslint.extract_dependencies"):
                     with patch("services.eslint.run_eslint.os.makedirs"):
                         with patch("builtins.open", mock_open(read_data="formatted")):
                             with patch(
@@ -451,7 +451,7 @@ async def test_run_eslint_does_not_set_flat_config_for_new_config(base_args):
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
             ):
-                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                with patch("services.eslint.run_eslint.extract_dependencies"):
                     with patch("services.eslint.run_eslint.os.makedirs"):
                         with patch("builtins.open", mock_open(read_data="formatted")):
                             with patch(
@@ -500,7 +500,7 @@ async def test_run_eslint_legacy_config_variants(base_args, config_filename):
             with patch(
                 "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
             ):
-                with patch("services.eslint.run_eslint.symlink_dependencies"):
+                with patch("services.eslint.run_eslint.extract_dependencies"):
                     with patch("services.eslint.run_eslint.os.makedirs"):
                         with patch("builtins.open", mock_open(read_data="formatted")):
                             with patch(
