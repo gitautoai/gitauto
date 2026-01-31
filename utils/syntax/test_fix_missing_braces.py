@@ -11,6 +11,7 @@ RULES:
 - For false positive tests (correct-to-correct): Pattern 3 alone is sufficient
 - For detection tests (broken-to-correct): All 3 patterns are required
 """
+
 from pathlib import Path
 
 from utils.syntax.fix_missing_braces import fix_missing_braces
@@ -466,6 +467,161 @@ def test_no_false_positives_stripe_create_element_component():
     """Correct to correct: real stripe createElementComponent test file."""
     content = (
         FIXTURES_DIR / "correct_stripe_createElementComponent.test.tsx"
+    ).read_text()
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+# =============================================================================
+# mockReturnValue([ array argument missing close
+# =============================================================================
+
+
+def test_detects_missing_mockreturnvalue_array_close_inline():
+    """Inline: mockReturnValue([ missing ]);"""
+    broken = """describe('Test', () => {
+  it('test case', async () => {
+    mockFunction.mockReturnValue([
+      mockArg,
+      {
+        data: undefined,
+        loading: false
+      } as any
+
+    otherMockFunction.mockReturnValue([
+      otherArg,
+      { data: 'test' }
+    ]);
+
+    render(<Component />);
+  });
+});"""
+    fixed = """describe('Test', () => {
+  it('test case', async () => {
+    mockFunction.mockReturnValue([
+      mockArg,
+      {
+        data: undefined,
+        loading: false
+      } as any
+    ]);
+
+    otherMockFunction.mockReturnValue([
+      otherArg,
+      { data: 'test' }
+    ]);
+
+    render(<Component />);
+  });
+});"""
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "block_start_line": 3,
+            "block_type": "mockReturnValue",
+            "insert_after_line": 8,
+            "missing": "]);",
+        },
+    ]
+    assert result["content"] == fixed
+
+
+def test_detects_missing_mockreturnvalue_array_close_broken_to_correct():
+    """Broken to correct: foxcom-payment-frontend PR #508 mockReturnValue([ missing close and stray ]);."""
+    broken = (
+        FIXTURES_DIR
+        / "broken_Foxquilt_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
+    ).read_text()
+    correct = (
+        FIXTURES_DIR
+        / "correct_Foxquilt_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
+    ).read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "block_start_line": 965,
+            "block_type": "mockReturnValue",
+            "insert_after_line": 981,
+            "missing": "]);",
+        },
+        {
+            "removed_line": 997,
+            "brace_type": "stray",
+            "removed_content": "]);",
+        },
+    ]
+    assert result["content"] == correct
+
+
+def test_no_false_positives_mockreturnvalue_array_correct_to_correct():
+    """Correct to correct: foxcom-payment-frontend PR #508 after fix."""
+    content = (
+        FIXTURES_DIR
+        / "correct_Foxquilt_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
+    ).read_text()
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+# =============================================================================
+# Stray ]); (extra closing braces that should be removed)
+# =============================================================================
+
+
+def test_detects_stray_braces_inline():
+    """Inline: stray ]); should be detected and removed."""
+    broken = """describe('Test', () => {
+  it('test case', async () => {
+    await waitFor(() => {
+      expect(screen.getByText('Hello')).toBeInTheDocument();
+    });
+    ]);
+  });
+});"""
+    fixed = """describe('Test', () => {
+  it('test case', async () => {
+    await waitFor(() => {
+      expect(screen.getByText('Hello')).toBeInTheDocument();
+    });
+  });
+});"""
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "removed_line": 6,
+            "brace_type": "stray",
+            "removed_content": "]);",
+        },
+    ]
+    assert result["content"] == fixed
+
+
+def test_no_false_positives_stray_braces_inline():
+    """Inline: valid ]); patterns should not be removed."""
+    content = """describe('Test', () => {
+  it('test case', async () => {
+    mockFunction.mockReturnValue([
+      mockArg,
+      { data: 'test' }
+    ]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Hello')).toBeInTheDocument();
+    });
+  });
+});"""
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+def test_no_false_positives_stray_braces_correct_to_correct():
+    """Correct to correct: files with valid ]); should not be modified."""
+    content = (
+        FIXTURES_DIR
+        / "correct_Foxquilt_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
     ).read_text()
     result = fix_missing_braces(content)
     assert result["fixes"] == []

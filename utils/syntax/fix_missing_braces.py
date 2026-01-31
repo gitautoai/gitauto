@@ -12,9 +12,15 @@ class MissingBrace(TypedDict):
     missing: str
 
 
+class StrayBrace(TypedDict):
+    removed_line: int
+    brace_type: str
+    removed_content: str
+
+
 class FixResult(TypedDict):
     content: str
-    fixes: list[MissingBrace]
+    fixes: list[MissingBrace | StrayBrace]
 
 
 def _pop_from_stack(
@@ -22,7 +28,7 @@ def _pop_from_stack(
     indent: int,
     current_line: int,
     stack_name: str | None,
-) -> bool:
+):
     for j in range(len(stack) - 1, -1, -1):
         if stack[j][2] != indent:
             continue
@@ -51,7 +57,7 @@ def _pop_from_stack(
 @handle_exceptions(
     default_return_value={"content": "", "fixes": []}, raise_on_error=False
 )
-def fix_missing_braces(content: str) -> FixResult:
+def fix_missing_braces(content: str):
     r"""
     Why pattern matching instead of bracket counting?
     Simple bracket counting (track all `{`, `}`, etc.) would be more universal,
@@ -68,6 +74,9 @@ def fix_missing_braces(content: str) -> FixResult:
     # Match function call with object literal argument: something({ or something.method({
     obj_arg_pattern = re.compile(r"^(\s*)(\w+(?:\.\w+)*)\s*\(\s*\{\s*$")
 
+    # Match function call with array literal argument: something([ or something.method([
+    arr_arg_pattern = re.compile(r"^(\s*)(\w+(?:\.\w+)*)\s*\(\s*\[\s*$")
+
     # Match const/let/var declarations with object literal opening brace
     const_pattern = re.compile(r"^(\s*)(const|let|var)\s+\w+\s*=\s*\{\s*$")
 
@@ -77,8 +86,17 @@ def fix_missing_braces(content: str) -> FixResult:
     # Stack for object literal arguments like mockReturnValue({ - tracked but not fixed
     obj_arg_stack: list[tuple[int, str, int]] = []
 
+    # Stack for array literal arguments like mockReturnValue([
+    arr_arg_stack: list[tuple[int, str, int]] = []
+
+    # Track unclosed arr_args detected when a new one opens at same indent
+    unclosed_arr_args: list[tuple[int, str, int, int]] = []
+
     # Separate stack for const/let/var object literals
     const_stack: list[tuple[int, str, int]] = []
+
+    # Track stray ]); lines (orphan closing braces)
+    stray_lines: list[int] = []
 
     for i, line in enumerate(lines):
         stripped = line.strip()
@@ -104,6 +122,29 @@ def fix_missing_braces(content: str) -> FixResult:
             logger.debug(
                 "Line %d: push obj_arg to obj_arg_stack (indent=%d)", i + 1, line_indent
             )
+        elif arr_arg_match := arr_arg_pattern.match(line):
+            func_name = arr_arg_match.group(2).split(".")[-1]
+            if func_name == "each":
+                logger.debug("Line %d: skip .each([ pattern", i + 1)
+            else:
+                for j in range(len(arr_arg_stack) - 1, -1, -1):
+                    if arr_arg_stack[j][2] != line_indent:
+                        continue
+                    logger.info(
+                        "Found unclosed arr_arg at line %d before new arr_arg at line %d",
+                        arr_arg_stack[j][0] + 1,
+                        i + 1,
+                    )
+                    prev_line, prev_type, prev_indent = arr_arg_stack.pop(j)
+                    unclosed_arr_args.append((prev_line, prev_type, prev_indent, i))
+                    break
+                arr_arg_stack.append((i, func_name, line_indent))
+                logger.debug(
+                    "Line %d: push %s to arr_arg_stack (indent=%d)",
+                    i + 1,
+                    func_name,
+                    line_indent,
+                )
 
         const_match = const_pattern.match(line)
         if const_match:
@@ -120,6 +161,12 @@ def fix_missing_braces(content: str) -> FixResult:
                 break
             const_stack.append((i, const_type, indent))
 
+        # Handle ]); closing for array arguments
+        if stripped == "]);":
+            if not _pop_from_stack(arr_arg_stack, line_indent, i, "arr_arg"):
+                logger.debug("Line %d: stray ]); detected", i + 1)
+                stray_lines.append(i)
+
         # Handle closing patterns - both }); and }) can close blocks
         # Also handle Jest timeout: }, 30000); or }, timeout);
         is_block_close = stripped in ("});", "})") or re.match(
@@ -134,15 +181,25 @@ def fix_missing_braces(content: str) -> FixResult:
         if stripped in ("};", "}"):
             _pop_from_stack(const_stack, line_indent, i, "const")
 
-    if not block_stack and not const_stack:
+    if (
+        not block_stack
+        and not const_stack
+        and not arr_arg_stack
+        and not unclosed_arr_args
+        and not stray_lines
+    ):
         logger.info(
-            "No missing braces detected: block_stack=%s, const_stack=%s",
+            "No issues detected: block_stack=%s, const_stack=%s, arr_arg_stack=%s, "
+            "unclosed_arr_args=%s, stray_lines=%s",
             block_stack,
             const_stack,
+            arr_arg_stack,
+            unclosed_arr_args,
+            stray_lines,
         )
         return FixResult(content=content, fixes=[])
 
-    fixes: list[MissingBrace] = []
+    fixes: list[MissingBrace | StrayBrace] = []
 
     # Process describe/test/it blocks
     for block_line, block_type, block_indent in block_stack:
@@ -181,6 +238,21 @@ def fix_missing_braces(content: str) -> FixResult:
             )
         )
 
+    # Process unclosed array arguments detected during first pass
+    for arr_line, arr_type, _, next_arr_line in unclosed_arr_args:
+        insert_after = next_arr_line - 1
+        while insert_after > arr_line and not lines[insert_after].strip():
+            insert_after -= 1
+
+        fixes.append(
+            MissingBrace(
+                block_start_line=arr_line + 1,
+                block_type=arr_type,
+                insert_after_line=insert_after + 1,
+                missing="]);",
+            )
+        )
+
     # Process const/let/var object literals - find ones missing };
     # A const is unclosed if another const at same indent appears before its };
     for idx, (const_line, const_type, const_indent) in enumerate(const_stack):
@@ -210,9 +282,36 @@ def fix_missing_braces(content: str) -> FixResult:
             )
         )
 
+    # Remove stray ]); lines FIRST (process in reverse order to preserve line numbers)
+    # This must happen before insertions to avoid line number shifts
+    for stray_idx in sorted(stray_lines, reverse=True):
+        removed_line = lines[stray_idx]
+        logger.info("Removing stray ']); at line %d: '%s'", stray_idx + 1, removed_line)
+        lines.pop(stray_idx)
+        fixes.append(
+            StrayBrace(
+                removed_line=stray_idx + 1,
+                brace_type="stray",
+                removed_content=removed_line.strip(),
+            )
+        )
+
+    # Adjust insert_after_line for fixes that come after removed stray lines
+    for fix in fixes:
+        if "insert_after_line" not in fix:
+            continue
+        for stray_idx in stray_lines:
+            if fix["insert_after_line"] > stray_idx + 1:
+                fix["insert_after_line"] -= 1
+
+    # Filter to only MissingBrace items for insertion processing
+    missing_fixes = [f for f in fixes if "insert_after_line" in f]
+
     # Sort by insert_after_line descending so we insert from bottom-up
     # This prevents line number shifts from affecting earlier insertions
-    sorted_fixes = sorted(fixes, key=lambda x: x["insert_after_line"], reverse=True)
+    sorted_fixes = sorted(
+        missing_fixes, key=lambda x: x["insert_after_line"], reverse=True
+    )
     for fix in sorted_fixes:
         insert_idx = fix["insert_after_line"] - 1  # Convert to 0-indexed
         start_line = lines[fix["block_start_line"] - 1]

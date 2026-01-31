@@ -82,9 +82,14 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
             )
             if upload_result:
                 for item in result["fixes"]:
-                    fixes_applied.append(
-                        f"- {file_path}: Inserted '{item['missing']}' after line {item['insert_after_line']} for {item['block_type']} block."
-                    )
+                    if "missing" in item:
+                        fixes_applied.append(
+                            f"- {file_path}: Inserted '{item['missing']}' after line {item['insert_after_line']} for {item['block_type']} block."
+                        )
+                    else:
+                        fixes_applied.append(
+                            f"- {file_path}: Removed stray '{item['removed_content']}' from line {item['removed_line']}."
+                        )
 
     if fixes_applied:
         logger.info("Fixed missing braces in test files:\n%s", "\n".join(fixes_applied))
