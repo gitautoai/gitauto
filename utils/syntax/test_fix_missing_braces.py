@@ -229,3 +229,92 @@ def test_detects_nested_missing_braces():
         },
     ]
     assert result["content"] == correct
+
+
+def test_detects_missing_waitfor_close():
+    broken = """describe('Dashboard', () => {
+  it('should load data', async () => {
+    render(<Dashboard />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('loading-table')).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('Data loaded')).toBeInTheDocument();
+    });
+  });
+});"""
+    fixed = """describe('Dashboard', () => {
+  it('should load data', async () => {
+    render(<Dashboard />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('loading-table')).not.toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Data loaded')).toBeInTheDocument();
+    });
+  });
+});"""
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "block_start_line": 5,
+            "block_type": "waitFor",
+            "insert_after_line": 6,
+            "missing": "});",
+        },
+    ]
+    assert result["content"] == fixed
+
+
+def test_detects_missing_regular_function_close():
+    broken = """describe('test', function() {
+  it('works', function() {
+    expect(true).toBe(true);
+
+  it('also works', function() {
+    expect(false).toBe(false);
+  });
+});"""
+    fixed = """describe('test', function() {
+  it('works', function() {
+    expect(true).toBe(true);
+  });
+
+  it('also works', function() {
+    expect(false).toBe(false);
+  });
+});"""
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "block_start_line": 2,
+            "block_type": "it",
+            "insert_after_line": 3,
+            "missing": "});",
+        },
+    ]
+    assert result["content"] == fixed
+
+
+def test_real_broken_foxquilt_pr454_waitfor_missing_close():
+    broken = (
+        FIXTURES_DIR
+        / "broken_Foxquilt_foxden-admin-portal_pr454_waitfor_missing_close.test.tsx"
+    ).read_text()
+    correct = (
+        FIXTURES_DIR
+        / "correct_Foxquilt_foxden-admin-portal_pr454_waitfor_missing_close.test.tsx"
+    ).read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "block_start_line": 994,
+            "block_type": "waitFor",
+            "insert_after_line": 995,
+            "missing": "});",
+        },
+    ]
+    assert result["content"] == correct
