@@ -89,39 +89,35 @@ async def test_run_eslint_sets_npm_cache_env_on_lambda(base_args):
             "services.eslint.run_eslint.set_npm_cache_env",
             side_effect=mock_set_npm_cache_env,
         ):
-            with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
-                mock_efs.return_value = True
-                with patch(
-                    "services.eslint.run_eslint.get_efs_dir",
-                    return_value="/mnt/efs/test",
-                ):
-                    with patch("services.eslint.run_eslint.extract_dependencies"):
-                        with patch("services.eslint.run_eslint.os.makedirs"):
+            with patch(
+                "services.eslint.run_eslint.get_efs_dir",
+                return_value="/mnt/efs/test",
+            ):
+                with patch("services.eslint.run_eslint.extract_dependencies"):
+                    with patch("services.eslint.run_eslint.os.makedirs"):
+                        with patch("builtins.open", mock_open(read_data="formatted")):
                             with patch(
-                                "builtins.open", mock_open(read_data="formatted")
-                            ):
-                                with patch(
-                                    "services.eslint.run_eslint.subprocess.run"
-                                ) as mock_run:
-                                    mock_run.return_value = MagicMock(
-                                        returncode=0, stdout=eslint_output
-                                    )
+                                "services.eslint.run_eslint.subprocess.run"
+                            ) as mock_run:
+                                mock_run.return_value = MagicMock(
+                                    returncode=0, stdout=eslint_output
+                                )
 
-                                    coro = run_eslint(
-                                        base_args=base_args,
-                                        file_path="src/index.ts",
-                                        file_content="const x=1",
-                                    )
-                                    assert coro is not None
-                                    await coro
+                                coro = run_eslint(
+                                    base_args=base_args,
+                                    file_path="src/index.ts",
+                                    file_content="const x=1",
+                                )
+                                assert coro is not None
+                                await coro
 
-                                    mock_run.assert_called_once()
-                                    call_kwargs = mock_run.call_args[1]
-                                    assert "env" in call_kwargs
-                                    assert (
-                                        call_kwargs["env"]["npm_config_cache"]
-                                        == "/tmp/.npm"
-                                    )
+                                mock_run.assert_called_once()
+                                call_kwargs = mock_run.call_args[1]
+                                assert "env" in call_kwargs
+                                assert (
+                                    call_kwargs["env"]["npm_config_cache"]
+                                    == "/tmp/.npm"
+                                )
 
 
 @pytest.mark.asyncio
@@ -133,28 +129,26 @@ async def test_run_eslint_returns_fixed_content(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
-            ):
-                with patch("services.eslint.run_eslint.extract_dependencies"):
-                    with patch("services.eslint.run_eslint.os.makedirs"):
-                        with patch("builtins.open", mock_open(read_data=fixed_content)):
-                            with patch(
-                                "services.eslint.run_eslint.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(
-                                    returncode=0, stdout=eslint_output, stderr=""
-                                )
+        with patch(
+            "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+        ):
+            with patch("services.eslint.run_eslint.extract_dependencies"):
+                with patch("services.eslint.run_eslint.os.makedirs"):
+                    with patch("builtins.open", mock_open(read_data=fixed_content)):
+                        with patch(
+                            "services.eslint.run_eslint.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(
+                                returncode=0, stdout=eslint_output, stderr=""
+                            )
 
-                                coro = run_eslint(
-                                    base_args=base_args,
-                                    file_path="test.js",
-                                    file_content="export const foo = 'bar';\n",
-                                )
-                                assert coro is not None
-                                result = await coro
+                            coro = run_eslint(
+                                base_args=base_args,
+                                file_path="test.js",
+                                file_content="export const foo = 'bar';\n",
+                            )
+                            assert coro is not None
+                            result = await coro
 
     assert result == fixed_content
 
@@ -183,31 +177,29 @@ async def test_run_eslint_with_unfixable_errors(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
-            ):
-                with patch("services.eslint.run_eslint.extract_dependencies"):
-                    with patch("services.eslint.run_eslint.os.makedirs"):
-                        with patch("builtins.open", mock_open(read_data=file_content)):
-                            with patch(
-                                "services.eslint.run_eslint.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(
-                                    returncode=1, stdout=eslint_output, stderr=""
-                                )
+        with patch(
+            "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+        ):
+            with patch("services.eslint.run_eslint.extract_dependencies"):
+                with patch("services.eslint.run_eslint.os.makedirs"):
+                    with patch("builtins.open", mock_open(read_data=file_content)):
+                        with patch(
+                            "services.eslint.run_eslint.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(
+                                returncode=1, stdout=eslint_output, stderr=""
+                            )
 
-                                with patch(
-                                    "services.eslint.run_eslint.sentry_sdk.capture_message"
-                                ):
-                                    coro = run_eslint(
-                                        base_args=base_args,
-                                        file_path="test.js",
-                                        file_content=file_content,
-                                    )
-                                    assert coro is not None
-                                    result = await coro
+                            with patch(
+                                "services.eslint.run_eslint.sentry_sdk.capture_message"
+                            ):
+                                coro = run_eslint(
+                                    base_args=base_args,
+                                    file_path="test.js",
+                                    file_content=file_content,
+                                )
+                                assert coro is not None
+                                result = await coro
 
     assert result == file_content
 
@@ -220,31 +212,29 @@ async def test_run_eslint_with_json_decode_error(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
-            ):
-                with patch("services.eslint.run_eslint.extract_dependencies"):
-                    with patch("services.eslint.run_eslint.os.makedirs"):
-                        with patch("builtins.open", mock_open(read_data=file_content)):
-                            with patch(
-                                "services.eslint.run_eslint.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(
-                                    returncode=0, stdout="not json output", stderr=""
-                                )
+        with patch(
+            "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+        ):
+            with patch("services.eslint.run_eslint.extract_dependencies"):
+                with patch("services.eslint.run_eslint.os.makedirs"):
+                    with patch("builtins.open", mock_open(read_data=file_content)):
+                        with patch(
+                            "services.eslint.run_eslint.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(
+                                returncode=0, stdout="not json output", stderr=""
+                            )
 
-                                with patch(
-                                    "services.eslint.run_eslint.sentry_sdk.capture_exception"
-                                ):
-                                    coro = run_eslint(
-                                        base_args=base_args,
-                                        file_path="test.js",
-                                        file_content=file_content,
-                                    )
-                                    assert coro is not None
-                                    result = await coro
+                            with patch(
+                                "services.eslint.run_eslint.sentry_sdk.capture_exception"
+                            ):
+                                coro = run_eslint(
+                                    base_args=base_args,
+                                    file_path="test.js",
+                                    file_content=file_content,
+                                )
+                                assert coro is not None
+                                result = await coro
 
     assert result == file_content
 
@@ -255,28 +245,26 @@ async def test_run_eslint_fatal_error_returns_none(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
-            ):
-                with patch("services.eslint.run_eslint.extract_dependencies"):
-                    with patch("services.eslint.run_eslint.os.makedirs"):
-                        with patch("builtins.open", mock_open()):
-                            with patch(
-                                "services.eslint.run_eslint.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(
-                                    returncode=2, stdout="", stderr="Fatal error"
-                                )
+        with patch(
+            "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+        ):
+            with patch("services.eslint.run_eslint.extract_dependencies"):
+                with patch("services.eslint.run_eslint.os.makedirs"):
+                    with patch("builtins.open", mock_open()):
+                        with patch(
+                            "services.eslint.run_eslint.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(
+                                returncode=2, stdout="", stderr="Fatal error"
+                            )
 
-                                coro = run_eslint(
-                                    base_args=base_args,
-                                    file_path="test.js",
-                                    file_content="const x = 1;",
-                                )
-                                assert coro is not None
-                                result = await coro
+                            coro = run_eslint(
+                                base_args=base_args,
+                                file_path="test.js",
+                                file_content="const x = 1;",
+                            )
+                            assert coro is not None
+                            result = await coro
 
     assert result is None
 
@@ -287,28 +275,26 @@ async def test_run_eslint_timeout_returns_none(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
-            ):
-                with patch("services.eslint.run_eslint.extract_dependencies"):
-                    with patch("services.eslint.run_eslint.os.makedirs"):
-                        with patch("builtins.open", mock_open()):
-                            with patch(
-                                "services.eslint.run_eslint.subprocess.run"
-                            ) as mock_run:
-                                mock_run.side_effect = subprocess.TimeoutExpired(
-                                    cmd="npx eslint", timeout=EFS_TIMEOUT_SECONDS
-                                )
+        with patch(
+            "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+        ):
+            with patch("services.eslint.run_eslint.extract_dependencies"):
+                with patch("services.eslint.run_eslint.os.makedirs"):
+                    with patch("builtins.open", mock_open()):
+                        with patch(
+                            "services.eslint.run_eslint.subprocess.run"
+                        ) as mock_run:
+                            mock_run.side_effect = subprocess.TimeoutExpired(
+                                cmd="npx eslint", timeout=EFS_TIMEOUT_SECONDS
+                            )
 
-                                coro = run_eslint(
-                                    base_args=base_args,
-                                    file_path="test.js",
-                                    file_content="const x = 1;",
-                                )
-                                assert coro is not None
-                                result = await coro
+                            coro = run_eslint(
+                                base_args=base_args,
+                                file_path="test.js",
+                                file_content="const x = 1;",
+                            )
+                            assert coro is not None
+                            result = await coro
 
     assert result is None
 
@@ -330,33 +316,31 @@ async def test_run_eslint_supported_extensions(base_args, file_path):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
-            ):
-                with patch("services.eslint.run_eslint.extract_dependencies"):
-                    with patch("services.eslint.run_eslint.os.makedirs"):
-                        with patch("builtins.open", mock_open(read_data="formatted")):
-                            with patch(
-                                "services.eslint.run_eslint.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(
-                                    returncode=0, stdout=eslint_output, stderr=""
-                                )
+        with patch(
+            "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+        ):
+            with patch("services.eslint.run_eslint.extract_dependencies"):
+                with patch("services.eslint.run_eslint.os.makedirs"):
+                    with patch("builtins.open", mock_open(read_data="formatted")):
+                        with patch(
+                            "services.eslint.run_eslint.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(
+                                returncode=0, stdout=eslint_output, stderr=""
+                            )
 
-                                coro = run_eslint(
-                                    base_args=base_args,
-                                    file_path=file_path,
-                                    file_content="content",
-                                )
-                                assert coro is not None
-                                result = await coro
+                            coro = run_eslint(
+                                base_args=base_args,
+                                file_path=file_path,
+                                file_content="content",
+                            )
+                            assert coro is not None
+                            result = await coro
 
-                                mock_run.assert_called_once()
-                                assert "npx" in mock_run.call_args[0][0]
-                                assert "eslint" in mock_run.call_args[0][0]
-                                assert result == "formatted"
+                            mock_run.assert_called_once()
+                            assert "npx" in mock_run.call_args[0][0]
+                            assert "eslint" in mock_run.call_args[0][0]
+                            assert result == "formatted"
 
 
 @pytest.mark.asyncio
@@ -370,32 +354,28 @@ async def test_run_eslint_creates_directories(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
-            ):
-                with patch("services.eslint.run_eslint.extract_dependencies"):
-                    with patch(
-                        "services.eslint.run_eslint.os.makedirs"
-                    ) as mock_makedirs:
-                        with patch("builtins.open", mock_open(read_data=file_content)):
-                            with patch(
-                                "services.eslint.run_eslint.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(
-                                    returncode=0, stdout=eslint_output, stderr=""
-                                )
+        with patch(
+            "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+        ):
+            with patch("services.eslint.run_eslint.extract_dependencies"):
+                with patch("services.eslint.run_eslint.os.makedirs") as mock_makedirs:
+                    with patch("builtins.open", mock_open(read_data=file_content)):
+                        with patch(
+                            "services.eslint.run_eslint.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(
+                                returncode=0, stdout=eslint_output, stderr=""
+                            )
 
-                                coro = run_eslint(
-                                    base_args=base_args,
-                                    file_path="src/deep/nested/test.js",
-                                    file_content=file_content,
-                                )
-                                assert coro is not None
-                                await coro
+                            coro = run_eslint(
+                                base_args=base_args,
+                                file_path="src/deep/nested/test.js",
+                                file_content=file_content,
+                            )
+                            assert coro is not None
+                            await coro
 
-                                mock_makedirs.assert_called_once()
+                            mock_makedirs.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -406,36 +386,33 @@ async def test_run_eslint_sets_flat_config_false_for_legacy_config(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
-            ):
-                with patch("services.eslint.run_eslint.extract_dependencies"):
-                    with patch("services.eslint.run_eslint.os.makedirs"):
-                        with patch("builtins.open", mock_open(read_data="formatted")):
-                            with patch(
-                                "services.eslint.run_eslint.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(
-                                    returncode=0, stdout=eslint_output
-                                )
+        with patch(
+            "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+        ):
+            with patch("services.eslint.run_eslint.extract_dependencies"):
+                with patch("services.eslint.run_eslint.os.makedirs"):
+                    with patch("builtins.open", mock_open(read_data="formatted")):
+                        with patch(
+                            "services.eslint.run_eslint.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(
+                                returncode=0, stdout=eslint_output
+                            )
 
-                                coro = run_eslint(
-                                    base_args=base_args,
-                                    file_path="test.ts",
-                                    file_content="const x=1",
-                                )
-                                assert coro is not None
-                                await coro
+                            coro = run_eslint(
+                                base_args=base_args,
+                                file_path="test.ts",
+                                file_content="const x=1",
+                            )
+                            assert coro is not None
+                            await coro
 
-                                mock_run.assert_called_once()
-                                call_kwargs = mock_run.call_args[1]
-                                assert "env" in call_kwargs
-                                assert (
-                                    call_kwargs["env"]["ESLINT_USE_FLAT_CONFIG"]
-                                    == "false"
-                                )
+                            mock_run.assert_called_once()
+                            call_kwargs = mock_run.call_args[1]
+                            assert "env" in call_kwargs
+                            assert (
+                                call_kwargs["env"]["ESLINT_USE_FLAT_CONFIG"] == "false"
+                            )
 
 
 @pytest.mark.asyncio
@@ -446,35 +423,31 @@ async def test_run_eslint_does_not_set_flat_config_for_new_config(base_args):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": "eslint.config.js", "content": "export default {};"},
     ):
-        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
-            ):
-                with patch("services.eslint.run_eslint.extract_dependencies"):
-                    with patch("services.eslint.run_eslint.os.makedirs"):
-                        with patch("builtins.open", mock_open(read_data="formatted")):
-                            with patch(
-                                "services.eslint.run_eslint.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(
-                                    returncode=0, stdout=eslint_output
-                                )
+        with patch(
+            "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+        ):
+            with patch("services.eslint.run_eslint.extract_dependencies"):
+                with patch("services.eslint.run_eslint.os.makedirs"):
+                    with patch("builtins.open", mock_open(read_data="formatted")):
+                        with patch(
+                            "services.eslint.run_eslint.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(
+                                returncode=0, stdout=eslint_output
+                            )
 
-                                coro = run_eslint(
-                                    base_args=base_args,
-                                    file_path="test.ts",
-                                    file_content="const x=1",
-                                )
-                                assert coro is not None
-                                await coro
+                            coro = run_eslint(
+                                base_args=base_args,
+                                file_path="test.ts",
+                                file_content="const x=1",
+                            )
+                            assert coro is not None
+                            await coro
 
-                                mock_run.assert_called_once()
-                                call_kwargs = mock_run.call_args[1]
-                                assert "env" in call_kwargs
-                                assert (
-                                    "ESLINT_USE_FLAT_CONFIG" not in call_kwargs["env"]
-                                )
+                            mock_run.assert_called_once()
+                            call_kwargs = mock_run.call_args[1]
+                            assert "env" in call_kwargs
+                            assert "ESLINT_USE_FLAT_CONFIG" not in call_kwargs["env"]
 
 
 @pytest.mark.parametrize(
@@ -495,32 +468,29 @@ async def test_run_eslint_legacy_config_variants(base_args, config_filename):
         "services.eslint.run_eslint.get_eslint_config",
         return_value={"filename": config_filename, "content": "{}"},
     ):
-        with patch("services.eslint.run_eslint.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
-            ):
-                with patch("services.eslint.run_eslint.extract_dependencies"):
-                    with patch("services.eslint.run_eslint.os.makedirs"):
-                        with patch("builtins.open", mock_open(read_data="formatted")):
-                            with patch(
-                                "services.eslint.run_eslint.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(
-                                    returncode=0, stdout=eslint_output
-                                )
+        with patch(
+            "services.eslint.run_eslint.get_efs_dir", return_value="/mnt/efs/test"
+        ):
+            with patch("services.eslint.run_eslint.extract_dependencies"):
+                with patch("services.eslint.run_eslint.os.makedirs"):
+                    with patch("builtins.open", mock_open(read_data="formatted")):
+                        with patch(
+                            "services.eslint.run_eslint.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(
+                                returncode=0, stdout=eslint_output
+                            )
 
-                                coro = run_eslint(
-                                    base_args=base_args,
-                                    file_path="test.ts",
-                                    file_content="const x=1",
-                                )
-                                assert coro is not None
-                                await coro
+                            coro = run_eslint(
+                                base_args=base_args,
+                                file_path="test.ts",
+                                file_content="const x=1",
+                            )
+                            assert coro is not None
+                            await coro
 
-                                mock_run.assert_called_once()
-                                call_kwargs = mock_run.call_args[1]
-                                assert (
-                                    call_kwargs["env"]["ESLINT_USE_FLAT_CONFIG"]
-                                    == "false"
-                                )
+                            mock_run.assert_called_once()
+                            call_kwargs = mock_run.call_args[1]
+                            assert (
+                                call_kwargs["env"]["ESLINT_USE_FLAT_CONFIG"] == "false"
+                            )

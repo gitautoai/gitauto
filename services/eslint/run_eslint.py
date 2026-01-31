@@ -6,9 +6,8 @@ import sentry_sdk
 
 from config import UTF8
 from constants.aws import EFS_TIMEOUT_SECONDS
-from services.efs.get_efs_dir import get_efs_dir
-from services.efs.is_efs_install_ready import is_efs_install_ready
 from services.efs.extract_dependencies import extract_dependencies
+from services.efs.get_efs_dir import get_efs_dir
 from services.github.files.get_eslint_config import get_eslint_config
 from services.github.types.github_types import BaseArgs
 from services.node.get_npm_cache_dir import set_npm_cache_env
@@ -38,10 +37,7 @@ async def run_eslint(*, base_args: BaseArgs, file_path: str, file_content: str):
     repo = base_args["repo"]
     clone_dir = base_args.get("clone_dir", "")
 
-    # Log if packages ready. If False, continue anyway - npx downloads if not available locally
-    is_efs_install_ready(owner, repo, "node")
-
-    # Extract EFS deps to clone_dir (may not exist if install finished after initial extract attempt)
+    # Extract EFS deps to clone_dir
     efs_dir = get_efs_dir(owner, repo)
     extract_dependencies(efs_dir, clone_dir)
 

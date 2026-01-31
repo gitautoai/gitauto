@@ -30,34 +30,32 @@ async def test_run_prettier_success(base_args):
         "services.prettier.run_prettier.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},
     ):
-        with patch("services.prettier.run_prettier.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.prettier.run_prettier.get_efs_dir",
-                return_value="/mnt/efs/test",
-            ):
-                with patch("services.prettier.run_prettier.extract_dependencies"):
-                    with patch("services.prettier.run_prettier.os.makedirs"):
-                        with patch("builtins.open", mock_open()):
+        with patch(
+            "services.prettier.run_prettier.get_efs_dir",
+            return_value="/mnt/efs/test",
+        ):
+            with patch("services.prettier.run_prettier.extract_dependencies"):
+                with patch("services.prettier.run_prettier.os.makedirs"):
+                    with patch("builtins.open", mock_open()):
+                        with patch(
+                            "services.prettier.run_prettier.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(returncode=0)
+
                             with patch(
-                                "services.prettier.run_prettier.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(returncode=0)
+                                "builtins.open",
+                                mock_open(read_data="const x = 1;\n"),
+                            ):
+                                coro = run_prettier(
+                                    base_args=base_args,
+                                    file_path="src/index.ts",
+                                    file_content="const x=1",
+                                )
+                                assert coro is not None
+                                result = await coro
 
-                                with patch(
-                                    "builtins.open",
-                                    mock_open(read_data="const x = 1;\n"),
-                                ):
-                                    coro = run_prettier(
-                                        base_args=base_args,
-                                        file_path="src/index.ts",
-                                        file_content="const x=1",
-                                    )
-                                    assert coro is not None
-                                    result = await coro
-
-                                    assert result == "const x = 1;\n"
-                                    mock_run.assert_called_once()
+                                assert result == "const x = 1;\n"
+                                mock_run.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -74,38 +72,32 @@ async def test_run_prettier_sets_npm_cache_env_on_lambda(base_args):
             side_effect=mock_set_npm_cache_env,
         ):
             with patch(
-                "services.prettier.run_prettier.is_efs_install_ready"
-            ) as mock_efs:
-                mock_efs.return_value = True
-                with patch(
-                    "services.prettier.run_prettier.get_efs_dir",
-                    return_value="/mnt/efs/test",
-                ):
-                    with patch("services.prettier.run_prettier.extract_dependencies"):
-                        with patch("services.prettier.run_prettier.os.makedirs"):
+                "services.prettier.run_prettier.get_efs_dir",
+                return_value="/mnt/efs/test",
+            ):
+                with patch("services.prettier.run_prettier.extract_dependencies"):
+                    with patch("services.prettier.run_prettier.os.makedirs"):
+                        with patch("builtins.open", mock_open(read_data="formatted")):
                             with patch(
-                                "builtins.open", mock_open(read_data="formatted")
-                            ):
-                                with patch(
-                                    "services.prettier.run_prettier.subprocess.run"
-                                ) as mock_run:
-                                    mock_run.return_value = MagicMock(returncode=0)
+                                "services.prettier.run_prettier.subprocess.run"
+                            ) as mock_run:
+                                mock_run.return_value = MagicMock(returncode=0)
 
-                                    coro = run_prettier(
-                                        base_args=base_args,
-                                        file_path="src/index.ts",
-                                        file_content="const x=1",
-                                    )
-                                    assert coro is not None
-                                    await coro
+                                coro = run_prettier(
+                                    base_args=base_args,
+                                    file_path="src/index.ts",
+                                    file_content="const x=1",
+                                )
+                                assert coro is not None
+                                await coro
 
-                                    mock_run.assert_called_once()
-                                    call_kwargs = mock_run.call_args[1]
-                                    assert "env" in call_kwargs
-                                    assert (
-                                        call_kwargs["env"]["npm_config_cache"]
-                                        == "/tmp/.npm"
-                                    )
+                                mock_run.assert_called_once()
+                                call_kwargs = mock_run.call_args[1]
+                                assert "env" in call_kwargs
+                                assert (
+                                    call_kwargs["env"]["npm_config_cache"]
+                                    == "/tmp/.npm"
+                                )
 
 
 @pytest.mark.asyncio
@@ -166,31 +158,29 @@ async def test_run_prettier_subprocess_failure(base_args):
         "services.prettier.run_prettier.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},
     ):
-        with patch("services.prettier.run_prettier.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.prettier.run_prettier.get_efs_dir",
-                return_value="/mnt/efs/test",
-            ):
-                with patch("services.prettier.run_prettier.extract_dependencies"):
-                    with patch("services.prettier.run_prettier.os.makedirs"):
-                        with patch("builtins.open", mock_open()):
-                            with patch(
-                                "services.prettier.run_prettier.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(
-                                    returncode=1, stderr="Prettier failed"
-                                )
+        with patch(
+            "services.prettier.run_prettier.get_efs_dir",
+            return_value="/mnt/efs/test",
+        ):
+            with patch("services.prettier.run_prettier.extract_dependencies"):
+                with patch("services.prettier.run_prettier.os.makedirs"):
+                    with patch("builtins.open", mock_open()):
+                        with patch(
+                            "services.prettier.run_prettier.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(
+                                returncode=1, stderr="Prettier failed"
+                            )
 
-                                coro = run_prettier(
-                                    base_args=base_args,
-                                    file_path="src/index.ts",
-                                    file_content="const x=1",
-                                )
-                                assert coro is not None
-                                result = await coro
+                            coro = run_prettier(
+                                base_args=base_args,
+                                file_path="src/index.ts",
+                                file_content="const x=1",
+                            )
+                            assert coro is not None
+                            result = await coro
 
-                                assert result is None
+                            assert result is None
 
 
 @pytest.mark.asyncio
@@ -199,31 +189,29 @@ async def test_run_prettier_timeout(base_args):
         "services.prettier.run_prettier.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},
     ):
-        with patch("services.prettier.run_prettier.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.prettier.run_prettier.get_efs_dir",
-                return_value="/mnt/efs/test",
-            ):
-                with patch("services.prettier.run_prettier.extract_dependencies"):
-                    with patch("services.prettier.run_prettier.os.makedirs"):
-                        with patch("builtins.open", mock_open()):
-                            with patch(
-                                "services.prettier.run_prettier.subprocess.run"
-                            ) as mock_run:
-                                mock_run.side_effect = subprocess.TimeoutExpired(
-                                    cmd="npx prettier", timeout=EFS_TIMEOUT_SECONDS
-                                )
+        with patch(
+            "services.prettier.run_prettier.get_efs_dir",
+            return_value="/mnt/efs/test",
+        ):
+            with patch("services.prettier.run_prettier.extract_dependencies"):
+                with patch("services.prettier.run_prettier.os.makedirs"):
+                    with patch("builtins.open", mock_open()):
+                        with patch(
+                            "services.prettier.run_prettier.subprocess.run"
+                        ) as mock_run:
+                            mock_run.side_effect = subprocess.TimeoutExpired(
+                                cmd="npx prettier", timeout=EFS_TIMEOUT_SECONDS
+                            )
 
-                                coro = run_prettier(
-                                    base_args=base_args,
-                                    file_path="src/index.ts",
-                                    file_content="const x=1",
-                                )
-                                assert coro is not None
-                                result = await coro
+                            coro = run_prettier(
+                                base_args=base_args,
+                                file_path="src/index.ts",
+                                file_content="const x=1",
+                            )
+                            assert coro is not None
+                            result = await coro
 
-                                assert result is None
+                            assert result is None
 
 
 @pytest.mark.parametrize(
@@ -247,29 +235,27 @@ async def test_run_prettier_supported_extensions(base_args, file_path):
         "services.prettier.run_prettier.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},
     ):
-        with patch("services.prettier.run_prettier.is_efs_install_ready") as mock_efs:
-            mock_efs.return_value = True
-            with patch(
-                "services.prettier.run_prettier.get_efs_dir",
-                return_value="/mnt/efs/test",
-            ):
-                with patch("services.prettier.run_prettier.extract_dependencies"):
-                    with patch("services.prettier.run_prettier.os.makedirs"):
-                        with patch("builtins.open", mock_open(read_data="formatted")):
-                            with patch(
-                                "services.prettier.run_prettier.subprocess.run"
-                            ) as mock_run:
-                                mock_run.return_value = MagicMock(returncode=0)
+        with patch(
+            "services.prettier.run_prettier.get_efs_dir",
+            return_value="/mnt/efs/test",
+        ):
+            with patch("services.prettier.run_prettier.extract_dependencies"):
+                with patch("services.prettier.run_prettier.os.makedirs"):
+                    with patch("builtins.open", mock_open(read_data="formatted")):
+                        with patch(
+                            "services.prettier.run_prettier.subprocess.run"
+                        ) as mock_run:
+                            mock_run.return_value = MagicMock(returncode=0)
 
-                                coro = run_prettier(
-                                    base_args=base_args,
-                                    file_path=file_path,
-                                    file_content="content",
-                                )
-                                assert coro is not None
-                                result = await coro
+                            coro = run_prettier(
+                                base_args=base_args,
+                                file_path=file_path,
+                                file_content="content",
+                            )
+                            assert coro is not None
+                            result = await coro
 
-                                mock_run.assert_called_once()
-                                assert "npx" in mock_run.call_args[0][0]
-                                assert "prettier" in mock_run.call_args[0][0]
-                                assert result == "formatted"
+                            mock_run.assert_called_once()
+                            assert "npx" in mock_run.call_args[0][0]
+                            assert "prettier" in mock_run.call_args[0][0]
+                            assert result == "formatted"
