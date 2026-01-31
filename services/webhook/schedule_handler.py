@@ -196,6 +196,11 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             item["branch_coverage"],
         )
 
+        # Skip files excluded from testing first (avoid unnecessary work)
+        if item.get("is_excluded_from_testing"):
+            logger.info("Skipping %s: excluded from testing", item_path)
+            continue
+
         # Skip non-code files
         if not is_code_file(item_path):
             logger.info("Skipping %s: not a code file", item_path)
@@ -250,11 +255,6 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             exclude_from_testing(
                 owner_id, repo_id, item_path, target_branch, "only exports", user_name
             )
-            continue
-
-        # Skip files excluded from testing (already in DB, no need to re-exclude)
-        if item.get("is_excluded_from_testing"):
-            logger.info("Skipping %s: excluded from testing by dashboard", item_path)
             continue
 
         # Skip files that have open PRs (temporary, don't exclude)
