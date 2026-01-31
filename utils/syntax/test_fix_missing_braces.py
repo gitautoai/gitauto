@@ -1,8 +1,26 @@
+"""
+Test patterns for fix_missing_braces:
+
+Each test case should follow these 3 patterns:
+
+1. INLINE SIMPLIFIED - Small inline test case that demonstrates the issue
+2. BROKEN TO CORRECT - Real fixture files testing detection and fix
+3. CORRECT TO CORRECT - Real fixture files testing no false positives
+
+RULES:
+- For false positive tests (correct-to-correct): Pattern 3 alone is sufficient
+- For detection tests (broken-to-correct): All 3 patterns are required
+"""
 from pathlib import Path
 
 from utils.syntax.fix_missing_braces import fix_missing_braces
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
+
+
+# =============================================================================
+# Basic: No missing braces
+# =============================================================================
 
 
 def test_no_missing_braces():
@@ -14,6 +32,11 @@ def test_no_missing_braces():
     result = fix_missing_braces(content)
     assert not result["fixes"]
     assert result["content"] == content
+
+
+# =============================================================================
+# Missing test/it close
+# =============================================================================
 
 
 def test_detects_missing_test_close():
@@ -48,6 +71,11 @@ def test_detects_missing_test_close():
     assert result["content"] == fixed
 
 
+# =============================================================================
+# Missing describe close
+# =============================================================================
+
+
 def test_detects_missing_describe_close():
     broken = """describe('Error Handling', () => {
   test('throws error', () => {
@@ -79,6 +107,11 @@ describe('Component', () => {
         },
     ]
     assert result["content"] == fixed
+
+
+# =============================================================================
+# Two missing in separate places
+# =============================================================================
 
 
 def test_detects_two_missing_separate_places():
@@ -132,106 +165,48 @@ def test_detects_two_missing_separate_places():
     assert result["content"] == fixed
 
 
-def test_detects_build_hooks_missing():
-    broken = (FIXTURES_DIR / "broken_build_hooks.test.tsx").read_text()
-    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
+# =============================================================================
+# Regular function syntax (not arrow functions)
+# =============================================================================
+
+
+def test_detects_missing_regular_function_close():
+    broken = """describe('test', function() {
+  it('works', function() {
+    expect(true).toBe(true);
+
+  it('also works', function() {
+    expect(false).toBe(false);
+  });
+});"""
+    fixed = """describe('test', function() {
+  it('works', function() {
+    expect(true).toBe(true);
+  });
+
+  it('also works', function() {
+    expect(false).toBe(false);
+  });
+});"""
     result = fix_missing_braces(broken)
     assert result["fixes"] == [
         {
-            "block_start_line": 25,
-            "block_type": "test",
-            "insert_after_line": 56,
+            "block_start_line": 2,
+            "block_type": "it",
+            "insert_after_line": 3,
             "missing": "});",
         },
     ]
-    assert result["content"] == correct
+    assert result["content"] == fixed
 
 
-def test_detects_build_hooks_two_separate():
-    broken = (FIXTURES_DIR / "broken_build_hooks_two_separate.test.tsx").read_text()
-    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
-    result = fix_missing_braces(broken)
-    assert result["fixes"] == [
-        {
-            "block_start_line": 6,
-            "block_type": "test",
-            "insert_after_line": 22,
-            "missing": "});",
-        },
-        {
-            "block_start_line": 58,
-            "block_type": "test",
-            "insert_after_line": 83,
-            "missing": "});",
-        },
-    ]
-    assert result["content"] == correct
+# =============================================================================
+# waitFor missing close
+# =============================================================================
 
 
-def test_detects_build_hooks_two_in_row():
-    broken = (FIXTURES_DIR / "broken_build_hooks_two_in_row.test.tsx").read_text()
-    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
-    result = fix_missing_braces(broken)
-    assert result["fixes"] == [
-        {
-            "block_start_line": 5,
-            "block_type": "describe",
-            "insert_after_line": 84,
-            "missing": "});",
-        },
-        {
-            "block_start_line": 59,
-            "block_type": "test",
-            "insert_after_line": 84,
-            "missing": "});",
-        },
-    ]
-    assert result["content"] == correct
-
-
-def test_detects_build_hooks_with_blank():
-    broken = (FIXTURES_DIR / "broken_build_hooks_with_blank.test.tsx").read_text()
-    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
-    result = fix_missing_braces(broken)
-    assert result["fixes"] == [
-        {
-            "block_start_line": 6,
-            "block_type": "test",
-            "insert_after_line": 22,
-            "missing": "});",
-        },
-        {
-            "block_start_line": 58,
-            "block_type": "test",
-            "insert_after_line": 83,
-            "missing": "});",
-        },
-    ]
-    assert result["content"] == correct
-
-
-def test_detects_nested_missing_braces():
-    broken = (FIXTURES_DIR / "missing_braces_nested.spec.ts").read_text()
-    correct = (FIXTURES_DIR / "correct_nested.spec.ts").read_text()
-    result = fix_missing_braces(broken)
-    assert result["fixes"] == [
-        {
-            "block_start_line": 475,
-            "block_type": "describe",
-            "insert_after_line": 512,
-            "missing": "});",
-        },
-        {
-            "block_start_line": 559,
-            "block_type": "const",
-            "insert_after_line": 568,
-            "missing": "};",
-        },
-    ]
-    assert result["content"] == correct
-
-
-def test_detects_missing_waitfor_close():
+def test_detects_missing_waitfor_close_inline():
+    """Inline: waitFor missing close."""
     broken = """describe('Dashboard', () => {
   it('should load data', async () => {
     render(<Dashboard />);
@@ -269,37 +244,8 @@ def test_detects_missing_waitfor_close():
     assert result["content"] == fixed
 
 
-def test_detects_missing_regular_function_close():
-    broken = """describe('test', function() {
-  it('works', function() {
-    expect(true).toBe(true);
-
-  it('also works', function() {
-    expect(false).toBe(false);
-  });
-});"""
-    fixed = """describe('test', function() {
-  it('works', function() {
-    expect(true).toBe(true);
-  });
-
-  it('also works', function() {
-    expect(false).toBe(false);
-  });
-});"""
-    result = fix_missing_braces(broken)
-    assert result["fixes"] == [
-        {
-            "block_start_line": 2,
-            "block_type": "it",
-            "insert_after_line": 3,
-            "missing": "});",
-        },
-    ]
-    assert result["content"] == fixed
-
-
-def test_real_broken_foxquilt_pr454_waitfor_missing_close():
+def test_detects_missing_waitfor_close_broken_to_correct():
+    """Broken to correct: foxden-admin-portal PR #454 waitFor missing close."""
     broken = (
         FIXTURES_DIR
         / "broken_Foxquilt_foxden-admin-portal_pr454_waitfor_missing_close.test.tsx"
@@ -320,31 +266,162 @@ def test_real_broken_foxquilt_pr454_waitfor_missing_close():
     assert result["content"] == correct
 
 
-def test_no_false_positives_reduxjs_build_hooks():
-    content = (FIXTURES_DIR / "correct_reduxjs_buildHooks.test.tsx").read_text()
-    result = fix_missing_braces(content)
-    assert result["fixes"] == []
-    assert result["content"] == content
-
-
-def test_no_false_positives_zod_to_json_schema():
-    content = (FIXTURES_DIR / "correct_zod_to-json-schema.test.ts").read_text()
-    result = fix_missing_braces(content)
-    assert result["fixes"] == []
-    assert result["content"] == content
-
-
-def test_no_false_positives_stripe_create_element_component():
+def test_no_false_positives_waitfor_correct_to_correct():
+    """Correct to correct: foxden-admin-portal PR #454 after fix."""
     content = (
-        FIXTURES_DIR / "correct_stripe_createElementComponent.test.tsx"
+        FIXTURES_DIR
+        / "correct_Foxquilt_foxden-admin-portal_pr454_waitfor_missing_close.test.tsx"
     ).read_text()
     result = fix_missing_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
 
 
-def test_no_false_positives_test_with_timeout():
-    """Tests with timeout parameter like `}, 30000);` should not trigger false positives."""
+# =============================================================================
+# build_hooks missing close
+# =============================================================================
+
+
+def test_detects_build_hooks_missing():
+    """Broken to correct: build_hooks missing one close."""
+    broken = (FIXTURES_DIR / "broken_build_hooks.test.tsx").read_text()
+    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "block_start_line": 25,
+            "block_type": "test",
+            "insert_after_line": 56,
+            "missing": "});",
+        },
+    ]
+    assert result["content"] == correct
+
+
+def test_detects_build_hooks_two_separate():
+    """Broken to correct: build_hooks missing two closes in separate places."""
+    broken = (FIXTURES_DIR / "broken_build_hooks_two_separate.test.tsx").read_text()
+    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "block_start_line": 6,
+            "block_type": "test",
+            "insert_after_line": 22,
+            "missing": "});",
+        },
+        {
+            "block_start_line": 58,
+            "block_type": "test",
+            "insert_after_line": 83,
+            "missing": "});",
+        },
+    ]
+    assert result["content"] == correct
+
+
+def test_detects_build_hooks_two_in_row():
+    """Broken to correct: build_hooks missing two closes in a row."""
+    broken = (FIXTURES_DIR / "broken_build_hooks_two_in_row.test.tsx").read_text()
+    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "block_start_line": 5,
+            "block_type": "describe",
+            "insert_after_line": 84,
+            "missing": "});",
+        },
+        {
+            "block_start_line": 59,
+            "block_type": "test",
+            "insert_after_line": 84,
+            "missing": "});",
+        },
+    ]
+    assert result["content"] == correct
+
+
+def test_detects_build_hooks_with_blank():
+    """Broken to correct: build_hooks with blank lines."""
+    broken = (FIXTURES_DIR / "broken_build_hooks_with_blank.test.tsx").read_text()
+    correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "block_start_line": 6,
+            "block_type": "test",
+            "insert_after_line": 22,
+            "missing": "});",
+        },
+        {
+            "block_start_line": 58,
+            "block_type": "test",
+            "insert_after_line": 83,
+            "missing": "});",
+        },
+    ]
+    assert result["content"] == correct
+
+
+def test_no_false_positives_build_hooks_correct_to_correct():
+    """Correct to correct: build_hooks after fix."""
+    content = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+def test_no_false_positives_reduxjs_build_hooks():
+    """Correct to correct: real reduxjs buildHooks test file."""
+    content = (FIXTURES_DIR / "correct_reduxjs_buildHooks.test.tsx").read_text()
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+# =============================================================================
+# Nested missing braces
+# =============================================================================
+
+
+def test_detects_nested_missing_braces():
+    """Broken to correct: nested describe/const missing braces."""
+    broken = (FIXTURES_DIR / "missing_braces_nested.spec.ts").read_text()
+    correct = (FIXTURES_DIR / "correct_nested.spec.ts").read_text()
+    result = fix_missing_braces(broken)
+    assert result["fixes"] == [
+        {
+            "block_start_line": 475,
+            "block_type": "describe",
+            "insert_after_line": 512,
+            "missing": "});",
+        },
+        {
+            "block_start_line": 559,
+            "block_type": "const",
+            "insert_after_line": 568,
+            "missing": "};",
+        },
+    ]
+    assert result["content"] == correct
+
+
+def test_no_false_positives_nested_correct_to_correct():
+    """Correct to correct: nested after fix."""
+    content = (FIXTURES_DIR / "correct_nested.spec.ts").read_text()
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+# =============================================================================
+# Jest timeout pattern (}, 30000);
+# =============================================================================
+
+
+def test_no_false_positives_timeout_inline():
+    """Inline: tests with timeout parameter should not trigger false positives."""
     content = """describe('Edge Cases', () => {
   it('handles null value', () => {
     const onChange = jest.fn();
@@ -362,10 +439,33 @@ describe('HTML Parsing', () => {
     assert result["content"] == content
 
 
-def test_no_false_positives_foxcom_forms_coverage_option_timeout():
-    """Real file from foxcom-forms PR #1065 with Jest timeout pattern."""
+def test_no_false_positives_timeout_correct_to_correct():
+    """Correct to correct: foxcom-forms PR #1065 with Jest timeout pattern."""
     content = (
         FIXTURES_DIR / "correct_foxcom_forms_CoverageOption_timeout.test.tsx"
+    ).read_text()
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+# =============================================================================
+# Other real-world correct files (no false positives)
+# =============================================================================
+
+
+def test_no_false_positives_zod_to_json_schema():
+    """Correct to correct: real zod to-json-schema test file."""
+    content = (FIXTURES_DIR / "correct_zod_to-json-schema.test.ts").read_text()
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+def test_no_false_positives_stripe_create_element_component():
+    """Correct to correct: real stripe createElementComponent test file."""
+    content = (
+        FIXTURES_DIR / "correct_stripe_createElementComponent.test.tsx"
     ).read_text()
     result = fix_missing_braces(content)
     assert result["fixes"] == []
