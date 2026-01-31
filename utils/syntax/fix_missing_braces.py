@@ -89,10 +89,16 @@ def fix_missing_braces(content: str) -> FixResult:
         if block_match:
             indent = len(block_match.group(1))
             block_type = block_match.group(2)
-            block_stack.append((i, block_type, indent))
-            logger.debug(
-                "Line %d: push %s to block_stack (indent=%d)", i + 1, block_type, indent
-            )
+            if block_type == "async":
+                logger.debug("Line %d: skip async keyword", i + 1)
+            else:
+                block_stack.append((i, block_type, indent))
+                logger.debug(
+                    "Line %d: push %s to block_stack (indent=%d)",
+                    i + 1,
+                    block_type,
+                    indent,
+                )
         elif obj_arg_pattern.match(line):
             obj_arg_stack.append((i, "obj_arg", line_indent))
             logger.debug(
@@ -114,14 +120,14 @@ def fix_missing_braces(content: str) -> FixResult:
                 break
             const_stack.append((i, const_type, indent))
 
-        # Handle closing patterns
-        if stripped == "});":
+        # Handle closing patterns - both }); and }) can close blocks
+        if stripped in ("});", "})"):
             if _pop_from_stack(obj_arg_stack, line_indent, i, "obj_arg"):
                 pass
             else:
                 _pop_from_stack(block_stack, line_indent, i, None)
 
-        if stripped == "};":
+        if stripped in ("};", "}"):
             _pop_from_stack(const_stack, line_indent, i, "const")
 
     if not block_stack and not const_stack:

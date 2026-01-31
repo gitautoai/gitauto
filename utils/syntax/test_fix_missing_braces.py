@@ -318,3 +318,26 @@ def test_real_broken_foxquilt_pr454_waitfor_missing_close():
         },
     ]
     assert result["content"] == correct
+
+
+def test_no_false_positives_reduxjs_build_hooks():
+    content = (FIXTURES_DIR / "correct_reduxjs_buildHooks.test.tsx").read_text()
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+def test_no_false_positives_zod_to_json_schema():
+    content = (FIXTURES_DIR / "correct_zod_to-json-schema.test.ts").read_text()
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+def test_no_false_positives_stripe_create_element_component():
+    content = (
+        FIXTURES_DIR / "correct_stripe_createElementComponent.test.tsx"
+    ).read_text()
+    result = fix_missing_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
