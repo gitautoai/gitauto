@@ -8,7 +8,7 @@ from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
 from services.prettier.run_prettier import run_prettier
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
-from utils.syntax.fix_missing_braces import fix_missing_braces
+from utils.syntax.fix_missing_and_stray_braces import fix_missing_and_stray_braces
 
 TS_TEST_FILE_EXTENSIONS = (
     ".test.ts",
@@ -72,7 +72,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
         if not content:
             continue
 
-        result = fix_missing_braces(content)
+        result = fix_missing_and_stray_braces(content)
         if result["fixes"]:
             upload_result = replace_remote_file_content(
                 file_content=result["content"],

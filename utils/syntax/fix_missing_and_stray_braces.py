@@ -57,7 +57,7 @@ def _pop_from_stack(
 @handle_exceptions(
     default_return_value={"content": "", "fixes": []}, raise_on_error=False
 )
-def fix_missing_braces(content: str):
+def fix_missing_and_stray_braces(content: str):
     r"""
     Why pattern matching instead of bracket counting?
     Simple bracket counting (track all `{`, `}`, etc.) would be more universal,
@@ -67,12 +67,15 @@ def fix_missing_braces(content: str):
     """
     lines = content.split("\n")
     # Match any function call with callback (arrow or regular function)
+    # Also matches assignments like: simulateOn = jest.fn((event, fn) => {
     block_pattern = re.compile(
-        r"^(\s*)(?:await\s+)?(\w+)\s*\(.*(?:=>\s*\{|function\s*\([^)]*\)\s*\{)\s*$"
+        r"^(\s*)(?:.*?(?:await\s+)?)?(\w+)\s*\(.*(?:=>\s*\{|function\s*\([^)]*\)\s*\{)\s*$"
     )
 
     # Match function call with object literal argument: something({ or something.method({
-    obj_arg_pattern = re.compile(r"^(\s*)(\w+(?:\.\w+)*)\s*\(\s*\{\s*$")
+    # Also matches assignments like: const x = createMocks({
+    # But NOT function declarations with destructured params: function name({
+    obj_arg_pattern = re.compile(r"^(\s*)(?!.*\bfunction\b).*?(\w+)\s*\(\s*\{\s*$")
 
     # Match function call with array literal argument: something([ or something.method([
     arr_arg_pattern = re.compile(r"^(\s*)(\w+(?:\.\w+)*)\s*\(\s*\[\s*$")
@@ -101,6 +104,10 @@ def fix_missing_braces(content: str):
     for i, line in enumerate(lines):
         stripped = line.strip()
         line_indent = len(line) - len(line.lstrip())
+
+        # Skip commented lines
+        if stripped.startswith("//"):
+            continue
 
         # Handle opening patterns
         block_match = block_pattern.match(line)
@@ -168,15 +175,30 @@ def fix_missing_braces(content: str):
                 stray_lines.append(i)
 
         # Handle closing patterns - both }); and }) can close blocks
-        # Also handle Jest timeout: }, 30000); or }, timeout);
-        is_block_close = stripped in ("});", "})") or re.match(
-            r"^\},\s*\w+\);$", stripped
+        # Also handle Jest timeout: }, 30000); or }, timeout); or }, { timeout: 10000 });
+        # Also handle React useEffect: }, [dep1, dep2])
+        # Also handle JSX callback: })}
+        is_block_close = stripped in ("});", "})", "})}") or re.match(
+            r"^\},\s*(?:\w+|\[.*\]|\{.*\})\)?;?$", stripped
         )
         if is_block_close:
             if _pop_from_stack(obj_arg_stack, line_indent, i, "obj_arg"):
                 pass
-            else:
-                _pop_from_stack(block_stack, line_indent, i, None)
+            elif _pop_from_stack(block_stack, line_indent, i, None):
+                pass
+            elif stripped == "});":
+                # Only mark as stray if previous non-blank line ends with ); or ;
+                # This catches cases where GitAuto added an extra }); after a function call
+                prev_idx = i - 1
+                while prev_idx >= 0 and not lines[prev_idx].strip():
+                    prev_idx -= 1
+                if prev_idx >= 0:
+                    prev_stripped = lines[prev_idx].strip()
+                    if prev_stripped.endswith(");") or prev_stripped.endswith(";"):
+                        logger.debug(
+                            "Line %d: stray }); detected (prev ends with ;)", i + 1
+                        )
+                        stray_lines.append(i)
 
         if stripped in ("};", "}"):
             _pop_from_stack(const_stack, line_indent, i, "const")
@@ -282,11 +304,13 @@ def fix_missing_braces(content: str):
             )
         )
 
-    # Remove stray ]); lines FIRST (process in reverse order to preserve line numbers)
+    # Remove stray ]); and }); lines FIRST (process in reverse order to preserve line numbers)
     # This must happen before insertions to avoid line number shifts
     for stray_idx in sorted(stray_lines, reverse=True):
         removed_line = lines[stray_idx]
-        logger.info("Removing stray ']); at line %d: '%s'", stray_idx + 1, removed_line)
+        logger.info(
+            "Removing stray brace at line %d: '%s'", stray_idx + 1, removed_line
+        )
         lines.pop(stray_idx)
         fixes.append(
             StrayBrace(
