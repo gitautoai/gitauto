@@ -36,7 +36,7 @@ async def test_run_prettier_success(base_args):
                 "services.prettier.run_prettier.get_efs_dir",
                 return_value="/mnt/efs/test",
             ):
-                with patch("services.prettier.run_prettier.symlink_dependencies"):
+                with patch("services.prettier.run_prettier.extract_dependencies"):
                     with patch("services.prettier.run_prettier.os.makedirs"):
                         with patch("builtins.open", mock_open()):
                             with patch(
@@ -81,7 +81,7 @@ async def test_run_prettier_sets_npm_cache_env_on_lambda(base_args):
                     "services.prettier.run_prettier.get_efs_dir",
                     return_value="/mnt/efs/test",
                 ):
-                    with patch("services.prettier.run_prettier.symlink_dependencies"):
+                    with patch("services.prettier.run_prettier.extract_dependencies"):
                         with patch("services.prettier.run_prettier.os.makedirs"):
                             with patch(
                                 "builtins.open", mock_open(read_data="formatted")
@@ -172,7 +172,7 @@ async def test_run_prettier_subprocess_failure(base_args):
                 "services.prettier.run_prettier.get_efs_dir",
                 return_value="/mnt/efs/test",
             ):
-                with patch("services.prettier.run_prettier.symlink_dependencies"):
+                with patch("services.prettier.run_prettier.extract_dependencies"):
                     with patch("services.prettier.run_prettier.os.makedirs"):
                         with patch("builtins.open", mock_open()):
                             with patch(
@@ -205,7 +205,7 @@ async def test_run_prettier_timeout(base_args):
                 "services.prettier.run_prettier.get_efs_dir",
                 return_value="/mnt/efs/test",
             ):
-                with patch("services.prettier.run_prettier.symlink_dependencies"):
+                with patch("services.prettier.run_prettier.extract_dependencies"):
                     with patch("services.prettier.run_prettier.os.makedirs"):
                         with patch("builtins.open", mock_open()):
                             with patch(
@@ -253,7 +253,7 @@ async def test_run_prettier_supported_extensions(base_args, file_path):
                 "services.prettier.run_prettier.get_efs_dir",
                 return_value="/mnt/efs/test",
             ):
-                with patch("services.prettier.run_prettier.symlink_dependencies"):
+                with patch("services.prettier.run_prettier.extract_dependencies"):
                     with patch("services.prettier.run_prettier.os.makedirs"):
                         with patch("builtins.open", mock_open(read_data="formatted")):
                             with patch(

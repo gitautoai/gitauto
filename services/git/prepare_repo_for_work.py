@@ -1,6 +1,6 @@
 from services.efs.copy_repo_from_efs_to_tmp import copy_repo_from_efs_to_tmp
 from services.efs.get_efs_dir import get_efs_dir
-from services.efs.symlink_dependencies import symlink_dependencies
+from services.efs.extract_dependencies import extract_dependencies
 from services.git.get_clone_url import get_clone_url
 from services.git.git_checkout import git_checkout
 from services.git.git_clone_to_efs import clone_tasks
@@ -31,8 +31,8 @@ async def prepare_repo_for_work(
     # Step 2: Copy to tmp for PR-specific work
     copy_repo_from_efs_to_tmp(efs_dir, clone_dir)
 
-    # Step 3: Symlink dependencies (node_modules, venv, etc.) to avoid re-installing
-    symlink_dependencies(efs_dir, clone_dir)
+    # Step 3: Extract dependencies from EFS tarball to clone_dir
+    extract_dependencies(efs_dir, clone_dir)
 
     # Step 4: Fetch, checkout, and reset PR branch
     fetch_ok = await git_fetch(clone_dir, clone_url, pr_branch)

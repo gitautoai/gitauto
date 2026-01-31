@@ -534,17 +534,7 @@ repo_settings = response.json()
 
 ### Lambda Runtime Environment
 
-**CRITICAL**: GitAuto runs entirely on AWS Lambda using Docker containers, not in client environments.
-
-#### Container Configuration
-
-- **Base Image**: `public.ecr.aws/lambda/python:3.12` (Amazon Linux 2023)
-- **Node.js Runtime**: LTS version (20.x) installed via nodesource repository  
-- **Package Manager**: npm/npx available for JavaScript/TypeScript tooling
-- **Memory**: 512MB allocated, timeout: 900 seconds (15 minutes)
-- **Storage**: `/tmp` directory (2GB) for temporary file operations
-
-#### Tool Installation
+**CRITICAL**: GitAuto runs on AWS, not in client environments. See `Dockerfile` for Lambda container, `infrastructure/setup-vpc-nat-efs.yml` for VPC/NAT/EFS/CodeBuild. Lambda settings (memory, timeout) configured via AWS UI - use `aws lambda get-function-configuration` to check.
 All code analysis, generation, and file processing happens on our Lambda instances. We can install tools via:
 
 - Python packages in requirements.txt (e.g., isort, black, ruff)

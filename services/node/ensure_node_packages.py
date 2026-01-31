@@ -5,7 +5,7 @@ from config import UTF8
 from services.git.git_clone_to_efs import clone_tasks
 from services.node.detect_package_manager import detect_package_manager
 from services.node.read_file_content import read_file_content
-from services.aws.run_install_via_ssm import run_install_via_ssm
+from services.aws.run_install_via_codebuild import run_install_via_codebuild
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
@@ -156,9 +156,9 @@ async def ensure_node_packages(
                     f.write(lock_file_content)
                 logger.info("node: Wrote %s to %s", lock_file_name, lock_path)
 
-            # Trigger SSM install on EC2 (fire and forget, bypasses Lambda 15-min timeout)
-            run_install_via_ssm(efs_dir, owner_id, pkg_manager)
-            logger.info("node: Triggered SSM install for %s", efs_dir)
+            # Trigger CodeBuild install (fire and forget, bypasses Lambda 15-min timeout)
+            run_install_via_codebuild(efs_dir, owner_id, pkg_manager)
+            logger.info("node: Triggered CodeBuild install for %s", efs_dir)
             return False  # Packages not ready yet, installing in background
 
         finally:

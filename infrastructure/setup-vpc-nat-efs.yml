@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'VPC + NAT Instance (~$4/mo) + EFS for GitAuto'
+Description: 'VPC + NAT Instance (~$4/mo) + EFS + CodeBuild for GitAuto'
 
 # No parameters needed - creates everything from scratch
 Resources:
@@ -152,48 +152,16 @@ Resources:
         - Key: Name
           Value: gitauto-nat-sg
 
-  # =============================================================================
-  # IAM Role for NAT Instance
-  # - Enables AWS Systems Manager (SSM) to run commands on this instance remotely
-  # - Lambda calls SSM SendCommand API to run long-running tasks on EC2 (e.g., yarn install)
-  # - This bypasses Lambda's 15-minute timeout
-  # - EFS symlink operations (e.g., yarn linking 872 packages) are slow; some repos need 20+ minutes
-  # =============================================================================
-  NATInstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: gitauto-nat-instance-role
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        # AmazonSSMManagedInstanceCore allows SSM agent to communicate with SSM service
-        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-      Tags:
-        - Key: Name
-          Value: gitauto-nat-instance-role
-
-  # Instance Profile wraps the IAM Role so it can be attached to EC2 instances
-  NATInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      InstanceProfileName: gitauto-nat-instance-profile
-      Roles:
-        - !Ref NATInstanceRole
-
   # Using Amazon Linux 2023 AMI with NAT configuration
   # https://docs.aws.amazon.com/vpc/latest/userguide/VPC_NAT_Instance.html
+  # NAT instance routes traffic - package installs run on CodeBuild
+  # EFS mounted for debugging access via SSH
   NATInstance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: t3.nano # ~$4/mo
+      InstanceType: t3.nano # ~$4/mo, sufficient for routing traffic only
       ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
       KeyName: gitauto # Private key: infrastructure/nat-instance-ssh-private-key.pem
-      IamInstanceProfile: !Ref NATInstanceProfile
       SubnetId: !Ref PublicSubnet
       SecurityGroupIds:
         - !Ref NATSecurityGroup
@@ -201,7 +169,7 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          set -e # Exit on error
+          set -e
 
           # Enable IP forwarding
           echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
@@ -225,30 +193,15 @@ Resources:
           service iptables save
           echo "NAT setup complete" >> /var/log/nat-setup.log
 
-          # Mount EFS for running yarn/npm install via SSM
+          # Mount EFS for debugging access via SSH
           yum install -y amazon-efs-utils
           mkdir -p /mnt/efs
           echo "${GitAutoEFS}:/ /mnt/efs efs defaults,_netdev 0 0" >> /etc/fstab
           mount -a
           echo "EFS mounted at /mnt/efs" >> /var/log/nat-setup.log
-
-          # Install Node.js and yarn for package management
-          curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
-
-          # Some npm packages have native C++ code that must be compiled during install.
-          # Example: segfault-handler (devDependency in Foxquilt repos for crash debugging).
-          # node-gyp handles native module compilation and requires:
-          #   - gcc-c++: C++ compiler to compile native code to machine code
-          #   - make: build automation tool that runs compilation commands
-          yum install -y nodejs gcc-c++ make
-
-          npm install -g yarn
-          echo "Node.js $(node -v) and yarn $(yarn -v) installed" >> /var/log/nat-setup.log
       Tags:
         - Key: Name
           Value: gitauto-nat-instance
-        - Key: EFSMount
-          Value: enabled
 
   # Elastic IP for NAT Instance (consistent public IP)
   NATEIP:
@@ -282,12 +235,21 @@ Resources:
 
   # =============================================================================
   # EFS (Elastic File System) - persistent storage shared across Lambda invocations
+  # Throughput modes:
+  #   - bursting: Free but slow (~2.4 MB/s baseline for 49GB), rm/rsync takes 10+ min
+  #   - elastic: ~$0.04/GB read, ~$0.06/GB write, scales automatically
+  #   - provisioned: ~$6/MB/s/mo fixed cost
+  # Jan 2026 usage: 6.9GB read + 14.1GB write = ~$1.13/mo with elastic
+  # To check usage: aws cloudwatch get-metric-statistics --namespace AWS/EFS \
+  #   --metric-name DataReadIOBytes --dimensions Name=FileSystemId,Value=fs-xxx \
+  #   --start-time 2026-01-01T00:00:00Z --end-time 2026-02-01T00:00:00Z \
+  #   --period 2678400 --statistics Sum --region us-west-1
   # =============================================================================
   GitAutoEFS:
     Type: AWS::EFS::FileSystem
     Properties:
       PerformanceMode: generalPurpose
-      ThroughputMode: bursting # Free, vs provisioned ($6/MB/s/mo)
+      ThroughputMode: elastic # ~$0.04/GB read, ~$0.06/GB write (~$1/mo based on Jan usage)
       Encrypted: true
       BackupPolicy: # Disabled - data is regenerable (re-clone, re-install)
         Status: DISABLED
@@ -312,6 +274,10 @@ Resources:
         - IpProtocol: tcp
           FromPort: 2049
           ToPort: 2049
+          SourceSecurityGroupId: !Ref CodeBuildSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
           SourceSecurityGroupId: !Ref NATSecurityGroup
       Tags:
         - Key: Name
@@ -333,6 +299,151 @@ Resources:
       SubnetId: !Ref PrivateSubnet2
       SecurityGroups:
         - !Ref EFSSecurityGroup
+
+  # =============================================================================
+  # CodeBuild - AWS managed build service (serverless containers, not EC2)
+  # - Lambda: 15 min timeout, 10GB storage, ~$0.0005/min (at 512MB) - 10x cheaper
+  # - CodeBuild: 8 hour timeout, 70GB local SSD, ~$0.005/min - 10x more expensive
+  # - Lambda is cheaper but times out on large yarn installs (can take 1+ hour)
+  # - Container spins up, runs install, creates tarball on EFS, terminates
+  #
+  # Strategy: Store node_modules as tarball on EFS, Lambda extracts to /tmp
+  # - Writing 150k files to EFS is slow (NFS metadata latency, ~1ms per file)
+  # - Writing 1 tarball to EFS is fast (sequential write, throughput-limited)
+  # - Lambda extracts tarball to local /tmp (fast, ~15-30s)
+  #
+  # Timing breakdown (Foxquilt/foxcom-forms with yarn, 2026-01-31, tarball approach):
+  #   QUEUED: 1s
+  #   PROVISIONING: 30s (spin up container)
+  #   DOWNLOAD_SOURCE: 36s (mount EFS, install Node.js 20)
+  #   BUILD: 175s
+  #     - tar EFS to local SSD: 1s
+  #     - yarn install: 103s
+  #       - Resolving packages: ~2s
+  #       - Fetching packages: ~35s
+  #       - Linking dependencies: ~46s
+  #       - Building fresh packages: ~20s
+  #     - tar -czf node_modules.tar.gz to EFS: 67s
+  #     - cleanup: 3s
+  #   Total: ~4 min
+  # =============================================================================
+  CodeBuildSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for CodeBuild to access EFS
+      VpcId: !Ref VPC
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: gitauto-codebuild-sg
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: gitauto-codebuild-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeBuildPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*'
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeSubnets
+                  - ec2:DescribeSecurityGroups
+                  - ec2:DescribeDhcpOptions
+                  - ec2:DescribeVpcs
+                  - ec2:CreateNetworkInterfacePermission
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - elasticfilesystem:ClientMount
+                  - elasticfilesystem:ClientWrite
+                  - elasticfilesystem:DescribeMountTargets
+                Resource: !GetAtt GitAutoEFS.Arn
+      Tags:
+        - Key: Name
+          Value: gitauto-codebuild-role
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: gitauto-package-install
+      Description: Install npm/yarn packages on EFS
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL # 3GB RAM, 2 vCPU, ~$0.005/min
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0 # Has Node.js 20
+        PrivilegedMode: true # Required for EFS mount
+        EnvironmentVariables:
+          - Name: EFS_DIR
+            Value: /mnt/efs
+          - Name: PKG_MANAGER
+            Value: yarn
+      Source:
+        Type: NO_SOURCE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                nodejs: 20
+            build:
+              commands:
+                - echo "Installing packages in $EFS_DIR using $PKG_MANAGER"
+                - LOCAL_DIR="/tmp$EFS_DIR"
+                - mkdir -p "$LOCAL_DIR"
+                - tar -cf - -C "$EFS_DIR" --exclude node_modules . | tar -xf - -C "$LOCAL_DIR"
+                - cd "$LOCAL_DIR"
+                - |
+                  if [ -n "$NPM_TOKEN" ]; then
+                    export NPM_TOKEN="$NPM_TOKEN"
+                  fi
+                - $PKG_MANAGER install
+                - rm -f "$EFS_DIR/node_modules.tar.gz"
+                - tar -czf "$EFS_DIR/node_modules.tar.gz" -C "$LOCAL_DIR" node_modules
+                - rm -rf "$LOCAL_DIR"
+                - echo "Package install complete - tarball at $EFS_DIR/node_modules.tar.gz"
+      TimeoutInMinutes: 60
+      VpcConfig:
+        VpcId: !Ref VPC
+        Subnets:
+          - !Ref PrivateSubnet1
+        SecurityGroupIds:
+          - !Ref CodeBuildSecurityGroup
+      FileSystemLocations:
+        - Type: EFS
+          Location: !Sub '${GitAutoEFS}.efs.${AWS::Region}.amazonaws.com:/'
+          MountPoint: /mnt/efs
+          Identifier: efs_mount
+          MountOptions: 'nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2'
+      LogsConfig:
+        CloudWatchLogs:
+          Status: ENABLED
+          GroupName: /aws/codebuild/gitauto-package-install
+      Tags:
+        - Key: Name
+          Value: gitauto-package-install
 
   # =============================================================================
   # S3 Gateway Endpoint - FREE, allows Lambda to access S3 without going through NAT
@@ -415,3 +526,9 @@ Outputs:
     Value: !Ref NATEIP
     Export:
       Name: GitAutoNATPublicIP
+
+  CodeBuildProjectName:
+    Description: CodeBuild project name for package installs
+    Value: !Ref CodeBuildProject
+    Export:
+      Name: GitAutoCodeBuildProjectName
