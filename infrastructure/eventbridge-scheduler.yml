@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'EventBridge Scheduler for GitAuto'
+
+# =============================================================================
+# Deployed via: .github/workflows/deployment.yml
+# Stack name: gitauto-scheduler
+# Depends on: gitauto-lambda-with-vpc-efs (exports Lambda ARN)
+#
+# NOTE: Resource names and logical IDs must match existing stack to avoid
+# regenerating IAM access keys (would break website env vars).
+# =============================================================================
+
+Parameters:
+  LambdaFunctionName:
+    Type: String
+    Default: pr-agent-prod
+
+Resources:
+
+  # =============================================================================
+  # EventBridge Scheduler IAM Role
+  # =============================================================================
+  EventBridgeSchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: EventBridgeScheduler-production
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaInvoke
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunctionName}'
+
+  # =============================================================================
+  # Lambda Permission for EventBridge Scheduler
+  # =============================================================================
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Action: lambda:InvokeFunction
+      Principal: scheduler.amazonaws.com
+      SourceArn: !Sub 'arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/*'
+
+  # =============================================================================
+  # IAM User for Scheduler Management (used by website to create schedules)
+  # =============================================================================
+  GitAutoUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: gitauto-scheduler-production
+      Policies:
+        - PolicyName: SchedulerManagement
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - scheduler:*
+                Resource: '*'
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt EventBridgeSchedulerRole.Arn
+
+  GitAutoAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref GitAutoUser
+
+Outputs:
+  SchedulerRoleArn:
+    Description: EventBridge Scheduler role ARN
+    Value: !GetAtt EventBridgeSchedulerRole.Arn
+
+  AccessKeyId:
+    Description: Access key ID for scheduler management
+    Value: !Ref GitAutoAccessKey
+
+  SecretAccessKey:
+    Description: Secret access key for scheduler management
+    Value: !GetAtt GitAutoAccessKey.SecretAccessKey

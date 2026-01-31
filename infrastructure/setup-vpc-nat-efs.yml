@@ -1,7 +1,13 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'VPC + NAT Instance (~$4/mo) + EFS + CodeBuild for GitAuto'
 
-# No parameters needed - creates everything from scratch
+# =============================================================================
+# Deployed via: .github/workflows/deployment.yml
+# Stack name: gitauto-vpc-nat-efs
+#
+# NOTE: Can't rename stack. Would need to rename all resources too, but that
+# breaks references from Lambda stack (VPC, subnets, EFS, security groups).
+# =============================================================================
 Resources:
 
   # =============================================================================
@@ -445,18 +451,6 @@ Resources:
         - Key: Name
           Value: gitauto-package-install
 
-  # =============================================================================
-  # S3 Gateway Endpoint - FREE, allows Lambda to access S3 without going through NAT
-  # =============================================================================
-  S3GatewayEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref VPC
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
-      VpcEndpointType: Gateway
-      RouteTableIds:
-        - !Ref PrivateRouteTable
-
   # EFS Access Point for Lambda
   LambdaAccessPoint:
     Type: AWS::EFS::AccessPoint
@@ -508,6 +502,12 @@ Outputs:
     Value: !Ref GitAutoEFS
     Export:
       Name: GitAutoEFSId
+
+  EFSFileSystemArn:
+    Description: EFS File System ARN for IAM policies
+    Value: !GetAtt GitAutoEFS.Arn
+    Export:
+      Name: GitAutoEFSFileSystemArn
 
   EFSAccessPointArn:
     Description: EFS Access Point ARN (Amazon Resource Name) for Lambda

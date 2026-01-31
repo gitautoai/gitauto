@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudWatch Monitoring and Alarms for GitAuto'
+
+# =============================================================================
+# Deployed via: .github/workflows/deployment.yml
+# Stack name: MonitoringStack
+# Depends on: gitauto-lambda-with-vpc-efs
+#
+# NOTE: Can't rename stack. Would need to rename SNS topic too, which requires
+# email re-confirmation.
+# =============================================================================
+
+Parameters:
+  Email:
+    Type: String
+    Description: Email address to receive notifications
+    Default: dev@gitauto.ai
+  LambdaFunctionName:
+    Type: String
+    Default: pr-agent-prod
+
+Resources:
+
+  # =============================================================================
+  # SNS Topic for Error Notifications
+  # =============================================================================
+  ErrorNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: LambdaErrorNotificationTopic
+
+  ErrorNotificationSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref ErrorNotificationTopic
+      Protocol: email
+      Endpoint: !Ref Email
+
+  # =============================================================================
+  # CloudWatch Alarm for Lambda Errors
+  # =============================================================================
+  LambdaErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: LambdaFunctionErrorAlarm
+      AlarmDescription: Alarm when Lambda function has errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref ErrorNotificationTopic
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LambdaFunctionName
+
+Outputs:
+  ErrorTopicArn:
+    Description: SNS topic ARN for error notifications
+    Value: !Ref ErrorNotificationTopic
