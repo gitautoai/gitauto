@@ -116,6 +116,7 @@ Resources:
   # - Container image from ECR
   # - VPC-connected for EFS access
   # - 15 min timeout (max for Lambda)
+  # - Environment variables from AWS Parameter Store (/gitauto/*)
   # =============================================================================
   LambdaFunction:
     Type: AWS::Lambda::Function
@@ -140,6 +141,32 @@ Resources:
       FileSystemConfigs:
         - Arn: !ImportValue GitAutoEFSAccessPointArn
           LocalMountPath: /mnt/efs
+      Environment:
+        Variables:
+          ANTHROPIC_API_KEY: '{{resolve:ssm:/gitauto/ANTHROPIC_API_KEY}}'
+          ENV: '{{resolve:ssm:/gitauto/ENV}}'
+          GH_APP_ID: '{{resolve:ssm:/gitauto/GH_APP_ID}}'
+          GH_APP_NAME: '{{resolve:ssm:/gitauto/GH_APP_NAME}}'
+          GH_APP_USER_ID: '{{resolve:ssm:/gitauto/GH_APP_USER_ID}}'
+          GH_APP_USER_NAME: '{{resolve:ssm:/gitauto/GH_APP_USER_NAME}}'
+          GH_PRIVATE_KEY: '{{resolve:ssm:/gitauto/GH_PRIVATE_KEY}}'
+          GH_WEBHOOK_SECRET: '{{resolve:ssm:/gitauto/GH_WEBHOOK_SECRET}}'
+          GITAUTO_API_KEY: '{{resolve:ssm:/gitauto/GITAUTO_API_KEY}}'
+          GIT_CONFIG_GLOBAL: '{{resolve:ssm:/gitauto/GIT_CONFIG_GLOBAL}}'
+          GIT_PYTHON_REFRESH: '{{resolve:ssm:/gitauto/GIT_PYTHON_REFRESH}}'
+          OPENAI_API_KEY: '{{resolve:ssm:/gitauto/OPENAI_API_KEY}}'
+          OPENAI_ORG_ID: '{{resolve:ssm:/gitauto/OPENAI_ORG_ID}}'
+          PRODUCT_ID: '{{resolve:ssm:/gitauto/PRODUCT_ID}}'
+          RESEND_API_KEY: '{{resolve:ssm:/gitauto/RESEND_API_KEY}}'
+          SENTRY_DSN: '{{resolve:ssm:/gitauto/SENTRY_DSN}}'
+          SLACK_BOT_TOKEN: '{{resolve:ssm:/gitauto/SLACK_BOT_TOKEN}}'
+          SLACK_WEBHOOK_URL_NOTIFICATIONS: '{{resolve:ssm:/gitauto/SLACK_WEBHOOK_URL_NOTIFICATIONS}}'
+          STRIPE_API_KEY: '{{resolve:ssm:/gitauto/STRIPE_API_KEY}}'
+          STRIPE_FREE_TIER_PRICE_ID: '{{resolve:ssm:/gitauto/STRIPE_FREE_TIER_PRICE_ID}}'
+          STRIPE_PRODUCT_ID_FREE: '{{resolve:ssm:/gitauto/STRIPE_PRODUCT_ID_FREE}}'
+          STRIPE_PRODUCT_ID_STANDARD: '{{resolve:ssm:/gitauto/STRIPE_PRODUCT_ID_STANDARD}}'
+          SUPABASE_SERVICE_ROLE_KEY: '{{resolve:ssm:/gitauto/SUPABASE_SERVICE_ROLE_KEY}}'
+          SUPABASE_URL: '{{resolve:ssm:/gitauto/SUPABASE_URL}}'
 
   # =============================================================================
   # Lambda Function URL (public HTTPS endpoint for GitHub webhooks)
