@@ -534,7 +534,11 @@ repo_settings = response.json()
 
 ### Lambda Runtime Environment
 
-**CRITICAL**: GitAuto runs on AWS, not in client environments. See `Dockerfile` for Lambda container, `infrastructure/setup-vpc-nat-efs.yml` for VPC/NAT/EFS/CodeBuild. Lambda settings (memory, timeout) configured via AWS UI - use `aws lambda get-function-configuration` to check.
+**CRITICAL**: GitAuto runs on AWS, not in client environments. Infrastructure is managed via CloudFormation:
+
+- `Dockerfile` - Lambda container image
+- `infrastructure/setup-vpc-nat-efs.yml` - VPC, NAT, EFS, CodeBuild project and IAM role
+- `infrastructure/deploy-lambda-with-vpc-efs.yml` - Lambda function and IAM role (memory, timeout, VPC config, EFS mount, CodeBuild permissions)
 All code analysis, generation, and file processing happens on our Lambda instances. We can install tools via:
 
 - Python packages in requirements.txt (e.g., isort, black, ruff)

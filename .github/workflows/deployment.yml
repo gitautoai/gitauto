@@ -39,31 +39,49 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2 # https://github.com/aws-actions/amazon-ecr-login
 
-      # Register secrets here https://github.com/gitautoai/gitauto/settings/secrets/actions
       - name: Set deployment environment variables
         run: |
           {
             echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}"
-            echo "ECR_REPOSITORY=${{ secrets.PROD_LAMBDA_NAME }}"
             echo "IMAGE_TAG=${{ github.sha }}"
-            echo "LAMBDA_NAME=${{ secrets.PROD_LAMBDA_NAME }}"
             echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD }}"
           } >> $GITHUB_ENV
 
       - name: Build, tag, and push image to Amazon ECR
         run: |
-          docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build -f ./Dockerfile -t $ECR_REGISTRY/pr-agent-prod:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/pr-agent-prod:$IMAGE_TAG
 
-      # CloudFormation manages Lambda (code + VPC/EFS config)
-      - name: Deploy CloudFormation stack
+      - name: Deploy infrastructure stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name gitauto-vpc-nat-efs \
+            --template-file infrastructure/setup-vpc-nat-efs.yml \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Deploy Lambda stack
         run: |
           aws cloudformation deploy \
             --stack-name gitauto-lambda-with-vpc-efs \
             --template-file infrastructure/deploy-lambda-with-vpc-efs.yml \
-            --parameter-overrides \
-              LambdaFunctionName=$LAMBDA_NAME \
-              ECRImageUri=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --parameter-overrides ECRImageUri=$ECR_REGISTRY/pr-agent-prod:$IMAGE_TAG \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Deploy Scheduler stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name gitauto-scheduler \
+            --template-file infrastructure/eventbridge-scheduler.yml \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Deploy Monitoring stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name MonitoringStack \
+            --template-file infrastructure/cloudwatch-alarms-sns.yml \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
