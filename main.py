@@ -18,6 +18,7 @@ from services.slack.slack_notify import slack_notify
 from services.supabase.webhook_deliveries.insert_webhook_delivery import (
     insert_webhook_delivery,
 )
+from services.efs.cleanup_stale_repos_on_efs import cleanup_stale_repos_on_efs
 from services.efs.clone_and_install import clone_and_install
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.webhook_handler import handle_webhook_event
@@ -50,6 +51,13 @@ mangum_handler = Mangum(app=app, lifespan="off")
 def handler(event, context):
     clear_state()  # Prevent metadata from previous invocation bleeding into this one on warm starts
     set_request_id(getattr(context, "aws_request_id", "local"))
+
+    # For EFS cleanup scheduled event
+    if "triggerType" in event and event["triggerType"] == "cleanup":
+        logger.info("EFS cleanup triggered")
+        result = cleanup_stale_repos_on_efs()
+        logger.info("EFS cleanup result: %s", result)
+        return result
 
     # For scheduled event from EventBridge Scheduler
     if "triggerType" in event and event["triggerType"] == "schedule":
