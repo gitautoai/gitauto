@@ -1,5 +1,5 @@
 """
-Test patterns for fix_missing_braces:
+Test patterns for fix_missing_and_stray_braces:
 
 Each test case should follow these 3 patterns:
 
@@ -14,7 +14,7 @@ RULES:
 
 from pathlib import Path
 
-from utils.syntax.fix_missing_braces import fix_missing_braces
+from utils.syntax.fix_missing_and_stray_braces import fix_missing_and_stray_braces
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -30,7 +30,7 @@ def test_no_missing_braces():
     expect(true).toBe(true);
   });
 });"""
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
     assert not result["fixes"]
     assert result["content"] == content
 
@@ -60,7 +60,7 @@ def test_detects_missing_test_close():
     });
   });
 });"""
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 2,
@@ -92,7 +92,7 @@ describe('Component', () => {"""
 
 describe('Component', () => {
 });"""
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 1,
@@ -148,7 +148,7 @@ def test_detects_two_missing_separate_places():
     expect(4).toBe(4);
   });
 });"""
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 2,
@@ -189,7 +189,7 @@ def test_detects_missing_regular_function_close():
     expect(false).toBe(false);
   });
 });"""
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 2,
@@ -233,7 +233,7 @@ def test_detects_missing_waitfor_close_inline():
     });
   });
 });"""
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 5,
@@ -248,14 +248,13 @@ def test_detects_missing_waitfor_close_inline():
 def test_detects_missing_waitfor_close_broken_to_correct():
     """Broken to correct: foxden-admin-portal PR #454 waitFor missing close."""
     broken = (
-        FIXTURES_DIR
-        / "broken_Foxquilt_foxden-admin-portal_pr454_waitfor_missing_close.test.tsx"
+        FIXTURES_DIR / "broken_foxden-admin-portal_pr454_waitfor_missing_close.test.tsx"
     ).read_text()
     correct = (
         FIXTURES_DIR
-        / "correct_Foxquilt_foxden-admin-portal_pr454_waitfor_missing_close.test.tsx"
+        / "correct_foxden-admin-portal_pr454_waitfor_missing_close.test.tsx"
     ).read_text()
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 994,
@@ -271,9 +270,9 @@ def test_no_false_positives_waitfor_correct_to_correct():
     """Correct to correct: foxden-admin-portal PR #454 after fix."""
     content = (
         FIXTURES_DIR
-        / "correct_Foxquilt_foxden-admin-portal_pr454_waitfor_missing_close.test.tsx"
+        / "correct_foxden-admin-portal_pr454_waitfor_missing_close.test.tsx"
     ).read_text()
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
 
@@ -287,7 +286,7 @@ def test_detects_build_hooks_missing():
     """Broken to correct: build_hooks missing one close."""
     broken = (FIXTURES_DIR / "broken_build_hooks.test.tsx").read_text()
     correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 25,
@@ -303,7 +302,7 @@ def test_detects_build_hooks_two_separate():
     """Broken to correct: build_hooks missing two closes in separate places."""
     broken = (FIXTURES_DIR / "broken_build_hooks_two_separate.test.tsx").read_text()
     correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 6,
@@ -325,7 +324,7 @@ def test_detects_build_hooks_two_in_row():
     """Broken to correct: build_hooks missing two closes in a row."""
     broken = (FIXTURES_DIR / "broken_build_hooks_two_in_row.test.tsx").read_text()
     correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 5,
@@ -347,7 +346,7 @@ def test_detects_build_hooks_with_blank():
     """Broken to correct: build_hooks with blank lines."""
     broken = (FIXTURES_DIR / "broken_build_hooks_with_blank.test.tsx").read_text()
     correct = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 6,
@@ -368,7 +367,7 @@ def test_detects_build_hooks_with_blank():
 def test_no_false_positives_build_hooks_correct_to_correct():
     """Correct to correct: build_hooks after fix."""
     content = (FIXTURES_DIR / "correct_build_hooks.test.tsx").read_text()
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
 
@@ -376,7 +375,7 @@ def test_no_false_positives_build_hooks_correct_to_correct():
 def test_no_false_positives_reduxjs_build_hooks():
     """Correct to correct: real reduxjs buildHooks test file."""
     content = (FIXTURES_DIR / "correct_reduxjs_buildHooks.test.tsx").read_text()
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
 
@@ -390,7 +389,7 @@ def test_detects_nested_missing_braces():
     """Broken to correct: nested describe/const missing braces."""
     broken = (FIXTURES_DIR / "missing_braces_nested.spec.ts").read_text()
     correct = (FIXTURES_DIR / "correct_nested.spec.ts").read_text()
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 475,
@@ -411,7 +410,7 @@ def test_detects_nested_missing_braces():
 def test_no_false_positives_nested_correct_to_correct():
     """Correct to correct: nested after fix."""
     content = (FIXTURES_DIR / "correct_nested.spec.ts").read_text()
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
 
@@ -435,7 +434,7 @@ describe('HTML Parsing', () => {
     expect(true).toBe(true);
   });
 });"""
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
 
@@ -445,7 +444,7 @@ def test_no_false_positives_timeout_correct_to_correct():
     content = (
         FIXTURES_DIR / "correct_foxcom_forms_CoverageOption_timeout.test.tsx"
     ).read_text()
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
 
@@ -458,7 +457,7 @@ def test_no_false_positives_timeout_correct_to_correct():
 def test_no_false_positives_zod_to_json_schema():
     """Correct to correct: real zod to-json-schema test file."""
     content = (FIXTURES_DIR / "correct_zod_to-json-schema.test.ts").read_text()
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
 
@@ -468,7 +467,7 @@ def test_no_false_positives_stripe_create_element_component():
     content = (
         FIXTURES_DIR / "correct_stripe_createElementComponent.test.tsx"
     ).read_text()
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
 
@@ -515,7 +514,7 @@ def test_detects_missing_mockreturnvalue_array_close_inline():
     render(<Component />);
   });
 });"""
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 3,
@@ -531,13 +530,13 @@ def test_detects_missing_mockreturnvalue_array_close_broken_to_correct():
     """Broken to correct: foxcom-payment-frontend PR #508 mockReturnValue([ missing close and stray ]);."""
     broken = (
         FIXTURES_DIR
-        / "broken_Foxquilt_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
+        / "broken_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
     ).read_text()
     correct = (
         FIXTURES_DIR
-        / "correct_Foxquilt_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
+        / "correct_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
     ).read_text()
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "block_start_line": 965,
@@ -558,9 +557,9 @@ def test_no_false_positives_mockreturnvalue_array_correct_to_correct():
     """Correct to correct: foxcom-payment-frontend PR #508 after fix."""
     content = (
         FIXTURES_DIR
-        / "correct_Foxquilt_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
+        / "correct_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
     ).read_text()
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
 
@@ -587,7 +586,7 @@ def test_detects_stray_braces_inline():
     });
   });
 });"""
-    result = fix_missing_braces(broken)
+    result = fix_missing_and_stray_braces(broken)
     assert result["fixes"] == [
         {
             "removed_line": 6,
@@ -612,7 +611,7 @@ def test_no_false_positives_stray_braces_inline():
     });
   });
 });"""
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
 
@@ -621,8 +620,96 @@ def test_no_false_positives_stray_braces_correct_to_correct():
     """Correct to correct: files with valid ]); should not be modified."""
     content = (
         FIXTURES_DIR
-        / "correct_Foxquilt_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
+        / "correct_foxcom-payment-frontend_pr508_mockReturnValue_array.test.tsx"
     ).read_text()
-    result = fix_missing_braces(content)
+    result = fix_missing_and_stray_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+# =============================================================================
+# Stray }); (extra block closing braces that should be removed)
+# =============================================================================
+
+
+def test_detects_stray_block_close_inline():
+    """Inline: stray }); after function call close should be detected and removed."""
+    broken = """describe('Test', () => {
+  it('test case', () => {
+    const { req, res } = createMocks({
+      log,
+      query: { redirectTo: 'http://test.com' },
+    });
+
+    logout(req, res, nextHandler);
+
+    expect(log.debug).toHaveBeenNthCalledWith(
+      1,
+      'Attempting to end session',
+      {
+        sessionId: req.sessionID,
+        user: undefined,
+      },
+    );
+    });
+    expect(logoutMock).toBeCalled();
+  });
+});"""
+    fixed = """describe('Test', () => {
+  it('test case', () => {
+    const { req, res } = createMocks({
+      log,
+      query: { redirectTo: 'http://test.com' },
+    });
+
+    logout(req, res, nextHandler);
+
+    expect(log.debug).toHaveBeenNthCalledWith(
+      1,
+      'Attempting to end session',
+      {
+        sessionId: req.sessionID,
+        user: undefined,
+      },
+    );
+    expect(logoutMock).toBeCalled();
+  });
+});"""
+    result = fix_missing_and_stray_braces(broken)
+    assert result["fixes"] == [
+        {
+            "removed_line": 18,
+            "brace_type": "stray",
+            "removed_content": "});",
+        },
+    ]
+    assert result["content"] == fixed
+
+
+def test_detects_stray_block_close_broken_to_correct():
+    """Broken to correct: foxden-auth-service PR #182 stray }); close."""
+    broken = (
+        FIXTURES_DIR / "broken_foxden-auth-service_pr182_stray_close.spec.ts"
+    ).read_text()
+    correct = (
+        FIXTURES_DIR / "correct_foxden-auth-service_pr182_stray_close.spec.ts"
+    ).read_text()
+    result = fix_missing_and_stray_braces(broken)
+    assert result["fixes"] == [
+        {
+            "removed_line": 136,
+            "brace_type": "stray",
+            "removed_content": "});",
+        },
+    ]
+    assert result["content"] == correct
+
+
+def test_no_false_positives_stray_block_close_correct_to_correct():
+    """Correct to correct: foxden-auth-service PR #182 after fix."""
+    content = (
+        FIXTURES_DIR / "correct_foxden-auth-service_pr182_stray_close.spec.ts"
+    ).read_text()
+    result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
