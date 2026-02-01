@@ -3,7 +3,11 @@ from services.eslint.run_eslint import run_eslint
 from services.github.commits.replace_remote_file import replace_remote_file_content
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
+from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.github_types import BaseArgs
+from services.node.ensure_jest_uses_tsconfig_for_tests import (
+    ensure_jest_uses_tsconfig_for_tests,
+)
 from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
 from services.prettier.run_prettier import run_prettier
 from utils.error.handle_exceptions import handle_exceptions
@@ -59,10 +63,21 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
 
     ts_test_files = [f for f in js_test_files if f.endswith(TS_TEST_FILE_EXTENSIONS)]
     if ts_test_files:
-        ensure_tsconfig_for_tests(
-            base_args=base_args,
-            commit_message="Add tsconfig.test.json for relaxed test file checking",
+        tree_items = get_file_tree(
+            owner=owner, repo=repo, ref=new_branch, token=token, root_only=True
         )
+        root_files = [item["path"] for item in tree_items if item["type"] == "blob"]
+
+        tsconfig_path, _ = ensure_tsconfig_for_tests(
+            root_files=root_files,
+            base_args=base_args,
+        )
+        if tsconfig_path:
+            ensure_jest_uses_tsconfig_for_tests(
+                root_files=root_files,
+                base_args=base_args,
+                tsconfig_path=tsconfig_path,
+            )
 
     fixes_applied: list[str] = []
     for file_path in js_test_files:

@@ -13,6 +13,7 @@ from services.git.git_reset import git_reset
 from services.github.branches.create_remote_branch import create_remote_branch
 from services.github.branches.delete_remote_branch import delete_remote_branch
 from services.github.branches.get_default_branch import get_default_branch
+from services.github.trees.get_file_tree import get_file_tree
 from services.github.commits.get_latest_remote_commit_sha import (
     get_latest_remote_commit_sha,
 )
@@ -25,6 +26,9 @@ from services.github.utils.build_setup_pr_body import (
 )
 from services.github.types.owner import OwnerType
 from services.github.types.repository import RepositoryAddedOrRemoved
+from services.node.ensure_jest_uses_tsconfig_for_tests import (
+    ensure_jest_uses_tsconfig_for_tests,
+)
 from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
 from services.supabase.repositories.upsert_repository import upsert_repository
 from services.website.sync_files_from_github_to_coverage import (
@@ -140,12 +144,30 @@ async def process_repositories(
         # Run setup tasks - each adds commits if needed
         changes: list[str] = []
 
-        tsconfig_result = ensure_tsconfig_for_tests(
-            base_args=base_args,
-            commit_message="Configure relaxed TypeScript settings for test files",
+        tree_items = get_file_tree(
+            owner=owner_name,
+            repo=repo_name,
+            ref=new_branch,
+            token=token,
+            root_only=True,
         )
-        if tsconfig_result:
-            changes.append(tsconfig_result)
+        root_files = [item["path"] for item in tree_items if item["type"] == "blob"]
+
+        tsconfig_path, tsconfig_status = ensure_tsconfig_for_tests(
+            root_files=root_files,
+            base_args=base_args,
+        )
+        if tsconfig_status:
+            changes.append(f"{tsconfig_status.capitalize()} {tsconfig_path}")
+
+        if tsconfig_path:
+            jest_path, jest_status = ensure_jest_uses_tsconfig_for_tests(
+                root_files=root_files,
+                base_args=base_args,
+                tsconfig_path=tsconfig_path,
+            )
+            if jest_status:
+                changes.append(f"{jest_status.capitalize()} {jest_path}")
 
         # Future setup tasks can be added here
         # eslint_result = ensure_eslint_config(base_args=base_args, ...)
