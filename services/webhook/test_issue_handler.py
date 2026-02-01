@@ -18,7 +18,10 @@ async def test_create_pr_from_issue_wrong_label_early_return():
     payload_dict = {
         "action": "labeled",
         "label": {"name": "wrong-label"},  # Not "gitauto"
-        "issue": {"number": 123, "title": "Test Issue"},
+        "issue": {
+            "number": 123,
+            "title": "Schedule: Add unit tests to services/test_file.py",
+        },
         "repository": {"name": "test_repo"},
     }
     payload = cast(GitHubLabeledPayload, payload_dict)
@@ -48,7 +51,10 @@ async def test_lambda_info_parameter_exists(mock_create_user_request):
     payload_dict = {
         "action": "labeled",
         "label": {"name": "wrong-label"},  # This will cause early return
-        "issue": {"number": 123, "title": "Test Issue"},
+        "issue": {
+            "number": 123,
+            "title": "Schedule: Add unit tests to services/test_file.py",
+        },
         "repository": {"name": "test_repo"},
     }
     payload = cast(GitHubLabeledPayload, payload_dict)
@@ -97,7 +103,7 @@ def _get_base_args():
         "owner": "test_owner",
         "repo": "test_repo",
         "issue_number": 100,
-        "issue_title": "Test Issue",
+        "issue_title": "Schedule: Add unit tests to services/test_file.py",
         "sender_name": "test_sender",
         "repo_full_name": "test_owner/test_repo",
         "issuer_name": "test_issuer",
@@ -121,7 +127,11 @@ def _get_test_payload():
         {
             "action": "labeled",
             "label": {"name": PRODUCT_ID},
-            "issue": {"number": 100, "title": "Test Issue", "body": "Test body"},
+            "issue": {
+                "number": 100,
+                "title": "Schedule: Add unit tests to services/test_file.py",
+                "body": "Test body",
+            },
             "repository": {"name": "test_repo", "full_name": "test_owner/test_repo"},
             "sender": {"login": "test_sender"},
         },
@@ -1589,7 +1599,7 @@ async def test_issue_handler_token_accumulation(
             "owner": "test_owner",
             "repo": "test_repo",
             "issue_number": 100,
-            "issue_title": "Test Issue",
+            "issue_title": "Schedule: Add unit tests to services/test_file.py",
             "sender_name": "test_sender",
             "repo_full_name": "test_owner/test_repo",
             "issuer_name": "test_issuer",
@@ -1674,7 +1684,11 @@ async def test_issue_handler_token_accumulation(
         {
             "action": "labeled",
             "label": {"name": "gitauto"},
-            "issue": {"number": 100, "title": "Test Issue", "body": "Test body"},
+            "issue": {
+                "number": 100,
+                "title": "Schedule: Add unit tests to services/test_file.py",
+                "body": "Test body",
+            },
             "repository": {"name": "test_repo", "full_name": "test_owner/test_repo"},
             "sender": {"login": "test_sender"},
         },
@@ -1765,7 +1779,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
             "owner": "test_owner",
             "repo": "test_repo",
             "issue_number": 100,
-            "issue_title": "Test Issue",
+            "issue_title": "Schedule: Add unit tests to services/test_file.py",
             "sender_name": "test_sender",
             "repo_full_name": "test_owner/test_repo",
             "issuer_name": "test_issuer",
@@ -1833,7 +1847,11 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
         {
             "action": "labeled",
             "label": {"name": "gitauto"},
-            "issue": {"number": 100, "title": "Test Issue", "body": "Test body"},
+            "issue": {
+                "number": 100,
+                "title": "Schedule: Add unit tests to services/test_file.py",
+                "body": "Test body",
+            },
             "repository": {"name": "test_repo", "full_name": "test_owner/test_repo"},
             "sender": {"login": "test_sender"},
         },

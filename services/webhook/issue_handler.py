@@ -11,17 +11,13 @@ from constants.agent import MAX_ITERATIONS
 from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
+from services.coverages.detect_unreachable_lines import detect_unreachable_lines
 from services.efs.get_efs_dir import get_efs_dir
 from services.node.ensure_node_packages import ensure_node_packages
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
-from services.openai.functions.functions import TOOLS_FOR_ISSUES
-from services.resend.send_email import send_email
-from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
-
-# Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.branches.create_remote_branch import create_remote_branch
 from services.github.comments.create_comment import create_comment
@@ -46,10 +42,11 @@ from services.github.reactions.add_reaction_to_issue import add_reaction_to_issu
 from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import GitHubLabeledPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
+from services.openai.functions.functions import TOOLS_FOR_ISSUES
 from services.openai.vision import describe_image
+from services.resend.send_email import send_email
+from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
 from services.slack.slack_notify import slack_notify
-
-# Local imports (Supabase, Webhook)
 from services.supabase.create_user_request import create_user_request
 from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.owners.get_owner import get_owner
@@ -64,8 +61,6 @@ from services.supabase.users.get_user import get_user
 from services.stripe.check_availability import check_availability
 from services.stripe.create_stripe_customer import create_stripe_customer
 from services.webhook.utils.create_system_message import create_system_message
-
-# Local imports (Utils)
 from utils.files.get_impl_file_from_issue_title import get_impl_file_from_issue_title
 from utils.files.guess_test_file_path import guess_test_file_path
 from utils.files.is_test_file import is_test_file
@@ -323,26 +318,21 @@ async def create_pr_from_issue(
 
     # Extract target implementation file and find test file candidates
     impl_file_path = get_impl_file_from_issue_title(issue_title)
-    test_file_path_candidates = (
-        guess_test_file_path(impl_file_path) if impl_file_path else None
+    test_file_path_candidates = guess_test_file_path(impl_file_path)
+    impl_file_content = get_raw_content(
+        owner=owner_name,
+        repo=repo_name,
+        file_path=impl_file_path,
+        ref=base_branch,
+        token=token,
     )
-    impl_file_content = None
     test_files: dict[str, str] = {}
-
-    if impl_file_path:
-        impl_file_content = get_raw_content(
-            owner=owner_name,
-            repo=repo_name,
-            file_path=impl_file_path,
-            ref=base_branch,
-            token=token,
-        )
-        p += 5
-        add_log_message(f"Read target file: `{impl_file_path}`", log_messages)
-        update_comment(
-            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
-            base_args=base_args,
-        )
+    p += 5
+    add_log_message(f"Read target file: `{impl_file_path}`", log_messages)
+    update_comment(
+        body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+        base_args=base_args,
+    )
 
     logger.info(
         "Test file candidates for %s: %s", impl_file_path, test_file_path_candidates
@@ -367,13 +357,11 @@ async def create_pr_from_issue(
     logger.info("Test files found: %s", list(test_files.keys()))
 
     root_files = get_file_tree_list(base_args=base_args, dir_path="")
-    target_dir: str | None = None
-    target_dir_files: list[str] = []
-    if impl_file_path:
-        parent = str(Path(impl_file_path).parent)
-        if parent != ".":
-            target_dir = parent
-            target_dir_files = get_file_tree_list(base_args=base_args, dir_path=parent)
+    parent = str(Path(impl_file_path).parent)
+    target_dir = parent if parent != "." else None
+    target_dir_files = (
+        get_file_tree_list(base_args=base_args, dir_path=parent) if target_dir else []
+    )
 
     user_input = dumps(
         {
@@ -450,6 +438,26 @@ async def create_pr_from_issue(
         base_args=base_args,
     )
 
+    # Check for unreachable code in target implementation file
+    allowed_to_edit_files: list[str] = []
+    unreachable_lines = await detect_unreachable_lines(
+        impl_file_path, clone_dir, clone_task
+    )
+    if unreachable_lines:
+        details = "\n".join(
+            f"- Line {line}: {msg}" for line, msg in sorted(unreachable_lines.items())
+        )
+        logger.info("Unreachable code detected in %s:\n%s", impl_file_path, details)
+        allowed_to_edit_files = [impl_file_path]
+        messages.append(
+            {
+                "role": "user",
+                "content": f"## Unreachable Code Detected in `{impl_file_path}`\n"
+                f"{details}\n\n"
+                f"This code is unreachable based on TypeScript types and cannot be tested. Remove the unnecessary conditions.",
+            }
+        )
+
     # Loop a process explore repo and commit changes until the ticket is resolved
     total_token_input = 0
     total_token_output = 0
@@ -498,6 +506,7 @@ async def create_pr_from_issue(
             usage_id=usage_id,
             allow_edit_any_file=allow_edit_any_file,
             restrict_edit_to_target_test_file_only=restrict_edit_to_target_test_file_only,
+            allowed_to_edit_files=allowed_to_edit_files,
         )
         total_token_input += token_input
         total_token_output += token_output
@@ -597,7 +606,9 @@ async def create_pr_from_issue(
     slack_notify(end_msg, thread_ts)
 
     # Wait for clone task to complete before Lambda terminates
-    logger.info("Waiting for clone task to complete...")
-    await clone_task
-    logger.info("Clone task completed")
+    if not clone_task.done():
+        logger.info("Waiting for clone task to complete...")
+        await clone_task
+        logger.info("Clone task completed")
+
     return

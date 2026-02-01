@@ -74,10 +74,14 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        expected = (
-            f"Add unit tests for [src/main.py]({expected_url}).\n\nMOCK_SETTINGS_LINKS"
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
+        assert "No coverage data available." in result
+        assert "## Instructions" in result
+        assert (
+            "Create tests for happy paths, error cases, edge cases, and corner cases."
+            in result
         )
-        assert result == expected
+        assert "MOCK_SETTINGS_LINKS" in result
 
     def test_get_issue_body_line_coverage_with_uncovered_lines(self, mock_constants):
         """Test line coverage branch (line 33) with uncovered lines."""
@@ -96,8 +100,8 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
-        assert "- Line Coverage: 85% (Uncovered Lines: 10,15,20)" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
+        assert "- Line Coverage: 85% (Uncovered: 10,15,20)" in result
         assert "Statement Coverage" not in result
         assert "Function Coverage" not in result
         assert "Branch Coverage" not in result
@@ -120,9 +124,9 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
         assert "- Line Coverage: 100%" in result
-        assert "(Uncovered Lines:" not in result
+        assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
     def test_get_issue_body_line_coverage_with_empty_uncovered_lines(
@@ -144,9 +148,9 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
         assert "- Line Coverage: 90%" in result
-        assert "(Uncovered Lines:" not in result
+        assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
     def test_get_issue_body_statement_coverage_only(self, mock_constants):
@@ -166,7 +170,7 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
         assert "- Statement Coverage: 75%" in result
         assert "Line Coverage" not in result
         assert "Function Coverage" not in result
@@ -192,8 +196,8 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
-        assert "- Function Coverage: 80% (Uncovered Functions: func1,func2)" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
+        assert "- Function Coverage: 80% (Uncovered: func1,func2)" in result
         assert "Line Coverage" not in result
         assert "Statement Coverage" not in result
         assert "Branch Coverage" not in result
@@ -218,9 +222,9 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
         assert "- Function Coverage: 100%" in result
-        assert "(Uncovered Functions:" not in result
+        assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
     def test_get_issue_body_function_coverage_with_empty_uncovered_functions(
@@ -242,9 +246,9 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
         assert "- Function Coverage: 85%" in result
-        assert "(Uncovered Functions:" not in result
+        assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
     def test_get_issue_body_branch_coverage_with_uncovered_branches(
@@ -266,8 +270,8 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
-        assert "- Branch Coverage: 65% (Uncovered Branches: branch1,branch2)" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
+        assert "- Branch Coverage: 65% (Uncovered: branch1,branch2)" in result
         assert "Line Coverage" not in result
         assert "Statement Coverage" not in result
         assert "Function Coverage" not in result
@@ -292,9 +296,9 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
         assert "- Branch Coverage: 100%" in result
-        assert "(Uncovered Branches:" not in result
+        assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
     def test_get_issue_body_branch_coverage_with_empty_uncovered_branches(
@@ -316,9 +320,9 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
         assert "- Branch Coverage: 70%" in result
-        assert "(Uncovered Branches:" not in result
+        assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
     def test_get_issue_body_all_coverage_types_with_uncovered_items(
@@ -340,15 +344,12 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
-        assert "- Line Coverage: 70% (Uncovered Lines: 10,15,20)" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
+        assert "- Line Coverage: 70% (Uncovered: 10,15,20)" in result
         assert "- Statement Coverage: 75%" in result
-        assert "- Function Coverage: 80% (Uncovered Functions: func1,func2)" in result
-        assert "- Branch Coverage: 65% (Uncovered Branches: branch1,branch2)" in result
-        assert (
-            "Focus on covering the uncovered areas, including both happy paths, error cases, edge cases, and corner cases."
-            in result
-        )
+        assert "- Function Coverage: 80% (Uncovered: func1,func2)" in result
+        assert "- Branch Coverage: 65% (Uncovered: branch1,branch2)" in result
+        assert "Focus on covering the uncovered areas." in result
         assert "MOCK_SETTINGS_LINKS" in result
 
     def test_get_issue_body_all_coverage_types_without_uncovered_items(
@@ -370,7 +371,7 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"Add unit tests for [src/main.py]({expected_url})" in result
+        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
         assert "- Line Coverage: 100%" in result
         assert "- Statement Coverage: 100%" in result
         assert "- Function Coverage: 100%" in result
@@ -395,17 +396,13 @@ class TestGetIssueBody:
         )
 
         expected_url = "https://github.com/owner/repo/blob/develop/utils/helper.py"
-        assert f"Add unit tests for [utils/helper.py]({expected_url})" in result
-        assert "- Line Coverage: 0% (Uncovered Lines: 1,2,3,4,5)" in result
+        assert f"## Current Coverage for [utils/helper.py]({expected_url})" in result
+        assert "- Line Coverage: 0% (Uncovered: 1,2,3,4,5)" in result
         assert "- Statement Coverage: 0%" in result
         assert (
-            "- Function Coverage: 0% (Uncovered Functions: helper_func1,helper_func2)"
-            in result
+            "- Function Coverage: 0% (Uncovered: helper_func1,helper_func2)" in result
         )
-        assert (
-            "- Branch Coverage: 0% (Uncovered Branches: if_branch1,else_branch1)"
-            in result
-        )
+        assert "- Branch Coverage: 0% (Uncovered: if_branch1,else_branch1)" in result
         assert "MOCK_SETTINGS_LINKS" in result
 
     def test_get_issue_body_decimal_coverage_values(self, mock_constants):
@@ -424,10 +421,10 @@ class TestGetIssueBody:
             uncovered_branches="branch1",
         )
 
-        assert "- Line Coverage: 70% (Uncovered Lines: 1,2)" in result
+        assert "- Line Coverage: 70% (Uncovered: 1,2)" in result
         assert "- Statement Coverage: 75%" in result
-        assert "- Function Coverage: 80% (Uncovered Functions: test_func)" in result
-        assert "- Branch Coverage: 65% (Uncovered Branches: branch1)" in result
+        assert "- Function Coverage: 80% (Uncovered: test_func)" in result
+        assert "- Branch Coverage: 65% (Uncovered: branch1)" in result
 
     def test_get_issue_body_coverage_order(self, mock_constants):
         """Test that coverage details appear in the correct order."""
@@ -615,7 +612,7 @@ class TestGetIssueBody:
         )
 
         # Verify the structure without mocking constants
-        assert "Add unit tests for [src/example.py]" in result
+        assert "Current Coverage for [src/example.py]" in result
         assert (
             "https://github.com/testowner/testrepo/blob/main/src/example.py" in result
         )
@@ -641,7 +638,7 @@ class TestGetIssueBody:
             uncovered_functions=None,
             uncovered_branches=None,
         )
-        assert "- Line Coverage: 80% (Uncovered Lines: 1,2,3)" in result
+        assert "- Line Coverage: 80% (Uncovered: 1,2,3)" in result
         assert "- Statement Coverage: 75%" in result
         assert "Function Coverage:" not in result
         assert "Branch Coverage:" not in result
@@ -660,8 +657,8 @@ class TestGetIssueBody:
             uncovered_functions="func1,func2",
             uncovered_branches="branch1,branch2",
         )
-        assert "- Function Coverage: 85% (Uncovered Functions: func1,func2)" in result
-        assert "- Branch Coverage: 65% (Uncovered Branches: branch1,branch2)" in result
+        assert "- Function Coverage: 85% (Uncovered: func1,func2)" in result
+        assert "- Branch Coverage: 65% (Uncovered: branch1,branch2)" in result
         assert "Line Coverage:" not in result
         assert "Statement Coverage:" not in result
 
@@ -682,5 +679,5 @@ class TestGetIssueBody:
         )
 
         # Whitespace-only strings should be treated as truthy, so uncovered text should appear
-        assert "- Line Coverage: 90% (Uncovered Lines:    )" in result
-        assert "- Function Coverage: 80% (Uncovered Functions:    )" in result
+        assert "- Line Coverage: 90% (Uncovered:    )" in result
+        assert "- Function Coverage: 80% (Uncovered:    )" in result
