@@ -1,3 +1,4 @@
+# pylint: disable=too-many-nested-blocks
 import re
 from typing import TypedDict
 
@@ -210,7 +211,30 @@ def fix_missing_and_stray_braces(content: str):
 
         # Handle const/let/var object literal closing: }; or } or } as any; or } as SomeType;
         if stripped in ("};", "}") or re.match(r"^\}\s+as\s+\w+;$", stripped):
-            _pop_from_stack(const_stack, line_indent, i, "const")
+            if not _pop_from_stack(const_stack, line_indent, i, "const"):
+                # No const to close - check if this is a stray };
+                # Pattern: }; appears right after a complete const/let/var statement
+                # Example of stray:
+                #   const testDate = new Date('2023-06-01');
+                #   };  <-- STRAY
+                #   const question = {
+                if stripped == "};":
+                    prev_idx = i - 1
+                    while prev_idx >= 0 and not lines[prev_idx].strip():
+                        prev_idx -= 1
+                    if prev_idx >= 0:
+                        prev_stripped = lines[prev_idx].strip()
+                        # Only stray if previous line is a complete const/let/var
+                        # assignment ending with ; (not opening an object)
+                        is_complete_const = re.match(
+                            r"^(const|let|var)\s+\w+.*[^{];$", prev_stripped
+                        )
+                        if is_complete_const:
+                            logger.debug(
+                                "Line %d: stray }; detected (after const/let/var)",
+                                i + 1,
+                            )
+                            stray_lines.append(i)
 
     has_issues = any(
         [
