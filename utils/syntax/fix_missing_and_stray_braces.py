@@ -78,7 +78,10 @@ def fix_missing_and_stray_braces(content: str):
     obj_arg_pattern = re.compile(r"^(\s*)(?!.*\bfunction\b).*?(\w+)\s*\(\s*\{\s*$")
 
     # Match function call with array literal argument: something([ or something.method([
-    arr_arg_pattern = re.compile(r"^(\s*)(\w+(?:\.\w+)*)\s*\(\s*\[\s*$")
+    # Also matches: new Map([ or new Set([ or const x = new Map([
+    arr_arg_pattern = re.compile(
+        r"^(\s*)(?:(?:const|let|var)\s+\w+\s*=\s*)?(?:new\s+)?(\w+(?:\.\w+)*)\s*\(\s*\[\s*$"
+    )
 
     # Match const/let/var declarations with object literal opening brace
     const_pattern = re.compile(r"^(\s*)(const|let|var)\s+\w+\s*=\s*\{\s*$")
@@ -97,6 +100,9 @@ def fix_missing_and_stray_braces(content: str):
 
     # Separate stack for const/let/var object literals
     const_stack: list[tuple[int, str, int]] = []
+
+    # Track unclosed consts detected when a new one opens at same indent
+    unclosed_consts: list[tuple[int, str, int, int]] = []
 
     # Track stray ]); lines (orphan closing braces)
     stray_lines: list[int] = []
@@ -165,6 +171,8 @@ def fix_missing_and_stray_braces(content: str):
                     const_stack[j][0] + 1,
                     i + 1,
                 )
+                prev_line, prev_type, prev_indent = const_stack.pop(j)
+                unclosed_consts.append((prev_line, prev_type, prev_indent, i))
                 break
             const_stack.append((i, const_type, indent))
 
@@ -200,23 +208,29 @@ def fix_missing_and_stray_braces(content: str):
                         )
                         stray_lines.append(i)
 
-        if stripped in ("};", "}"):
+        # Handle const/let/var object literal closing: }; or } or } as any; or } as SomeType;
+        if stripped in ("};", "}") or re.match(r"^\}\s+as\s+\w+;$", stripped):
             _pop_from_stack(const_stack, line_indent, i, "const")
 
-    if (
-        not block_stack
-        and not const_stack
-        and not arr_arg_stack
-        and not unclosed_arr_args
-        and not stray_lines
-    ):
-        logger.info(
-            "No issues detected: block_stack=%s, const_stack=%s, arr_arg_stack=%s, "
-            "unclosed_arr_args=%s, stray_lines=%s",
+    has_issues = any(
+        [
             block_stack,
             const_stack,
             arr_arg_stack,
             unclosed_arr_args,
+            unclosed_consts,
+            stray_lines,
+        ]
+    )
+    if not has_issues:
+        logger.info(
+            "No issues detected: block_stack=%s, const_stack=%s, arr_arg_stack=%s, "
+            "unclosed_arr_args=%s, unclosed_consts=%s, stray_lines=%s",
+            block_stack,
+            const_stack,
+            arr_arg_stack,
+            unclosed_arr_args,
+            unclosed_consts,
             stray_lines,
         )
         return FixResult(content=content, fixes=[])
@@ -272,6 +286,21 @@ def fix_missing_and_stray_braces(content: str):
                 block_type=arr_type,
                 insert_after_line=insert_after + 1,
                 missing="]);",
+            )
+        )
+
+    # Process unclosed consts detected during first pass
+    for const_line, const_type, _, next_const_line in unclosed_consts:
+        insert_after = next_const_line - 1
+        while insert_after > const_line and not lines[insert_after].strip():
+            insert_after -= 1
+
+        fixes.append(
+            MissingBrace(
+                block_start_line=const_line + 1,
+                block_type=const_type,
+                insert_after_line=insert_after + 1,
+                missing="};",
             )
         )
 

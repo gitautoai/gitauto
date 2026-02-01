@@ -787,3 +787,78 @@ def test_no_false_positives_foxden_admin_portal_backend_pr838_stray():
     result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
+
+
+# =============================================================================
+# foxcom-payment-frontend PR #510 - stray ]); after await waitFor
+# =============================================================================
+
+
+def test_no_false_positives_await_waitfor_with_mock_inline():
+    """Inline: properly closed await waitFor with mock setup should not trigger fixes."""
+    content = """describe('Test', () => {
+  it('test case', async () => {
+    mockUseGetApplicationbyQuoteIdLazyQuery.mockReturnValue([
+      mockGetApplicationbyQuoteId,
+      {
+        data: mockApplicationData,
+        loading: false
+      } as any
+    ]);
+
+    render(<Component />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Hello')).toBeInTheDocument();
+    });
+  });
+});"""
+    result = fix_missing_and_stray_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+def test_no_false_positives_foxcom_payment_frontend_pr510():
+    """Correct to correct: foxcom-payment-frontend PR #510 before stray braces."""
+    content = (
+        FIXTURES_DIR
+        / "correct_foxcom-payment-frontend_pr510_stray_after_await.test.tsx"
+    ).read_text()
+    result = fix_missing_and_stray_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+# =============================================================================
+# foxcom-forms-backend PR #1444 - stray }; after variable declaration
+# =============================================================================
+
+
+def test_no_false_positives_variable_declaration_inline():
+    """Inline: properly formed variable declaration should not trigger fixes."""
+    content = """describe('getDisplayValueByQuestion', () => {
+  describe('Date handling', () => {
+    it('should handle Date value with different timezone', () => {
+      const testDate = new Date('2023-01-15T08:00:00Z');
+      const usTimeZone: TimeZone = 'America/New_York';
+      const question = {
+        value: testDate,
+      } as any;
+      expect(question.value).toEqual(testDate);
+    });
+  });
+});"""
+    result = fix_missing_and_stray_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+def test_no_false_positives_foxcom_forms_backend_pr1444():
+    """Correct to correct: foxcom-forms-backend PR #1444 before stray braces."""
+    content = (
+        FIXTURES_DIR
+        / "correct_foxcom-forms-backend_pr1444_stray_semicolon_brace.test.ts"
+    ).read_text()
+    result = fix_missing_and_stray_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
