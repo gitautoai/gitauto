@@ -1,6 +1,8 @@
 import json
 import re
 
+import jsonc
+
 from services.github.commits.replace_remote_file import replace_remote_file_content
 from services.github.files.get_raw_content import get_raw_content
 from services.github.trees.get_file_tree import get_file_tree
@@ -10,6 +12,8 @@ from utils.logging.logging_config import logger
 
 TSCONFIG_TEST_PATH = "tsconfig.test.json"
 TSCONFIG_VARIANT_PATTERN = re.compile(r"^tsconfig\..+\.json$")
+
+REQUIRED_OPTIONS = {"noUnusedLocals": False, "noUnusedParameters": False}
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -23,8 +27,6 @@ def ensure_tsconfig_for_tests(base_args: BaseArgs, commit_message: str):
     token = base_args["token"]
     new_branch = base_args["new_branch"]
 
-    required_options = {"noUnusedLocals": False, "noUnusedParameters": False}
-
     tree_items = get_file_tree(
         owner=owner, repo=repo, ref=new_branch, token=token, root_only=True
     )
@@ -35,11 +37,12 @@ def ensure_tsconfig_for_tests(base_args: BaseArgs, commit_message: str):
         return None
 
     variant_files = [f for f in root_files if TSCONFIG_VARIANT_PATTERN.match(f)]
+
     if not variant_files:
         logger.info("No tsconfig.*.json files found, creating %s", TSCONFIG_TEST_PATH)
         default_config = {
             "extends": "./tsconfig.json",
-            "compilerOptions": required_options,
+            "compilerOptions": REQUIRED_OPTIONS,
         }
         content = json.dumps(default_config, indent=2)
         result = replace_remote_file_content(
@@ -54,6 +57,7 @@ def ensure_tsconfig_for_tests(base_args: BaseArgs, commit_message: str):
         return None
 
     logger.info("Found %d tsconfig.*.json files: %s", len(variant_files), variant_files)
+
     for variant_path in variant_files:
         logger.info("Checking %s for relaxed settings", variant_path)
         content = get_raw_content(
@@ -64,16 +68,16 @@ def ensure_tsconfig_for_tests(base_args: BaseArgs, commit_message: str):
             continue
 
         try:
-            config: dict = json.loads(content)
+            config: dict = jsonc.loads(content)
             raw_opts = config.get("compilerOptions")
             compiler_opts = raw_opts if isinstance(raw_opts, dict) else {}
-            if all(compiler_opts.get(k) == v for k, v in required_options.items()):
+            if all(compiler_opts.get(k) == v for k, v in REQUIRED_OPTIONS.items()):
                 logger.info("%s has all required relaxed settings", variant_path)
                 return None
 
             logger.info("%s missing relaxed settings, updating", variant_path)
             config.setdefault("compilerOptions", {})
-            for key, value in required_options.items():
+            for key, value in REQUIRED_OPTIONS.items():
                 config["compilerOptions"][key] = value
 
             updated_content = json.dumps(config, indent=2)
