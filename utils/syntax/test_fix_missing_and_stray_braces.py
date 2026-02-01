@@ -713,3 +713,77 @@ def test_no_false_positives_stray_block_close_correct_to_correct():
     result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
+
+
+# =============================================================================
+# foxden-admin-portal-backend PR #838 - correct file stays correct
+# =============================================================================
+
+
+def test_no_false_positives_nested_describe_it_inline():
+    """Inline: properly closed nested describe/it blocks should not trigger fixes."""
+    content = """describe('outer', () => {
+    describe('inner', () => {
+      it('test one', async () => {
+        const result = await someFunction();
+      });
+    });
+
+    it('test two', async () => {
+      expect(true).toBe(true);
+    });
+});"""
+    result = fix_missing_and_stray_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+def test_no_false_positives_foxden_admin_portal_backend_pr838():
+    """Correct to correct: foxden-admin-portal-backend PR #838 after fix."""
+    content = (
+        FIXTURES_DIR
+        / "correct_foxden-admin-portal-backend_pr838_missing_it_describe_close.test.ts"
+    ).read_text()
+    result = fix_missing_and_stray_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+# =============================================================================
+# foxden-admin-portal-backend PR #838 - stray braces inside object definition
+# =============================================================================
+
+
+def test_no_false_positives_object_definition_inline():
+    """Inline: properly formed object definition should not trigger fixes."""
+    content = """describe('test', () => {
+  it('test case', async () => {
+    const mockResult: APIGatewayProxyResult = {
+      statusCode: 200,
+      body: '{"data":{"test":"success"}}',
+      headers: {
+        'Access-Control-Allow-Origin': 'https://allowed.com',
+      },
+    };
+
+    mockLambdaHandler.mockImplementation(
+      (_event: any, _context: any, callback: any) => {
+        callback(null, mockResult);
+      },
+    );
+  });
+});"""
+    result = fix_missing_and_stray_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
+
+
+def test_no_false_positives_foxden_admin_portal_backend_pr838_stray():
+    """Correct to correct: foxden-admin-portal-backend PR #838 before stray braces."""
+    content = (
+        FIXTURES_DIR
+        / "correct_foxden-admin-portal-backend_pr838_stray_inside_object.test.ts"
+    ).read_text()
+    result = fix_missing_and_stray_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content
