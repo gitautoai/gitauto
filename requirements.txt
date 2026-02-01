@@ -59,6 +59,7 @@ isort==5.13.2
 Jinja2==3.1.6
 jiter==0.8.2
 jmespath==1.0.1
+json-with-comments==1.2.10
 mangum==0.17.0
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
