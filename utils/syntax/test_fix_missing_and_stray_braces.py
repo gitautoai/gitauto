@@ -862,3 +862,69 @@ def test_no_false_positives_foxcom_forms_backend_pr1444():
     result = fix_missing_and_stray_braces(content)
     assert result["fixes"] == []
     assert result["content"] == content
+
+
+# =============================================================================
+# foxcom-forms-backend PR #1444 - stray }; after const declaration
+# =============================================================================
+
+
+def test_detects_stray_semicolon_brace_inline():
+    """Inline: stray }; after const declaration should be detected and removed."""
+    broken = """describe('test', () => {
+  it('test case', () => {
+    const testDate = new Date('2023-06-01');
+    };
+    const question = {
+      value: testDate,
+    } as any;
+    expect(question.value).toEqual(testDate);
+  });
+});"""
+    fixed = """describe('test', () => {
+  it('test case', () => {
+    const testDate = new Date('2023-06-01');
+    const question = {
+      value: testDate,
+    } as any;
+    expect(question.value).toEqual(testDate);
+  });
+});"""
+    result = fix_missing_and_stray_braces(broken)
+    assert result["fixes"] == [
+        {
+            "removed_line": 4,
+            "brace_type": "stray",
+            "removed_content": "};",
+        },
+    ]
+    assert result["content"] == fixed
+
+
+def test_detects_stray_semicolon_brace_broken_to_correct():
+    """Broken to correct: foxcom-forms-backend PR #1444 stray }; after const."""
+    broken = (
+        FIXTURES_DIR
+        / "broken_foxcom-forms-backend_pr1444_stray_semicolon_brace.test.ts"
+    ).read_text()
+    correct = (
+        FIXTURES_DIR
+        / "correct_foxcom-forms-backend_pr1444_stray_semicolon_brace.test.ts"
+    ).read_text()
+    result = fix_missing_and_stray_braces(broken)
+    # Should detect 49 stray }; braces
+    assert len(result["fixes"]) == 49
+    assert all(fix.get("brace_type") == "stray" for fix in result["fixes"])
+    assert all(fix.get("removed_content") == "};" for fix in result["fixes"])
+    assert result["content"] == correct
+
+
+def test_no_false_positives_stray_semicolon_brace_correct_to_correct():
+    """Correct to correct: foxcom-forms-backend PR #1444 after fix."""
+    content = (
+        FIXTURES_DIR
+        / "correct_foxcom-forms-backend_pr1444_stray_semicolon_brace.test.ts"
+    ).read_text()
+    result = fix_missing_and_stray_braces(content)
+    assert result["fixes"] == []
+    assert result["content"] == content

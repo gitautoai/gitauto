@@ -20,6 +20,7 @@ describe('getDisplayValueByQuestion', () => {
   describe('Date value handling', () => {
     it('should format Date value using localizeToDateString', () => {
       const testDate = new Date('2023-12-25T10:30:00Z');
+      };
       const question = {
         value: testDate,
       } as any;
@@ -45,6 +46,7 @@ describe('getDisplayValueByQuestion', () => {
       mockLocalizeToDateString.mockReturnValue('2023-01-15');
 
       const result = getDisplayValueByQuestion(question, usTimeZone);
+      };
 
       expect(mockLocalizeToDateString).toHaveBeenCalledWith({
         date: testDate,
@@ -84,6 +86,7 @@ describe('getDisplayValueByQuestion', () => {
       mockLocalizeToDateString.mockReturnValue('Invalid Date');
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockLocalizeToDateString).toHaveBeenCalledWith({
         date: invalidDate,
@@ -141,6 +144,7 @@ describe('getDisplayValueByQuestion', () => {
       mockGetValueFromChoices.mockReturnValue('One');
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).toHaveBeenCalledWith('1', mockChoices);
       expect(result).toBe('One');
@@ -197,6 +201,7 @@ describe('getDisplayValueByQuestion', () => {
       mockGetValueFromChoices.mockReturnValue(undefined);
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).toHaveBeenCalledWith('non-existent-option', mockChoices);
       expect(result).toBeUndefined();
@@ -227,6 +232,7 @@ describe('getDisplayValueByQuestion', () => {
       mockGetValueFromChoices.mockReturnValue('');
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).toHaveBeenCalledWith('option1', mockChoices);
       expect(result).toBe('');
@@ -270,6 +276,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(result).toBeNull();
     });
@@ -302,6 +309,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(result).toBe(arrayValue);
     });
@@ -342,6 +350,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(result).toBe(3.14159);
     });
@@ -382,6 +391,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(result).toBe(-42);
     });
@@ -412,6 +422,7 @@ describe('getDisplayValueByQuestion', () => {
   describe('edge cases', () => {
     it('should handle question with no value property', () => {
       const question = {} as any;
+      };
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
 
@@ -428,6 +439,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle undefined question', () => {
       const question = undefined as any;
+      };
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
 
@@ -506,6 +518,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(result).toBe(complexValue);
     });
@@ -534,6 +547,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle BigInt values', () => {
       const bigIntValue = BigInt('123456789012345678901234567890');
+      };
       const question = {
         value: bigIntValue,
       } as any;
@@ -579,6 +593,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockLocalizeToDateString).not.toHaveBeenCalled();
       expect(result).toBe(fakeDateObject);
@@ -605,6 +620,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).not.toHaveBeenCalled();
       expect(result).toBe('test-value');
@@ -649,6 +665,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle Date object with epoch time 0', () => {
       const epochDate = new Date(0);
+      };
       const question = {
         value: epochDate,
       } as any;
@@ -683,6 +700,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle Date object with far past date', () => {
       const pastDate = new Date('1900-01-01T00:00:00Z');
+      };
       const question = {
         value: pastDate,
       } as any;
@@ -711,6 +729,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle empty object values', () => {
       const emptyObject = {};
+      };
       const question = {
         value: emptyObject,
       } as any;
@@ -747,6 +766,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle Set objects', () => {
       const setValue = new Set([1, 2, 3, 'string']);
+      };
       const question = {
         value: setValue,
       } as any;
@@ -769,6 +789,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle WeakSet objects', () => {
       const weakSetValue = new WeakSet();
+      };
       const question = {
         value: weakSetValue,
       } as any;
@@ -791,6 +812,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle Error objects', () => {
       const errorValue = new Error('Test error');
+      };
       const question = {
         value: errorValue,
       } as any;
@@ -818,6 +840,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(result).toBe(bufferValue);
     });
@@ -843,6 +866,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(result).toBe(classInstance);
     });
@@ -887,6 +911,7 @@ describe('getDisplayValueByQuestion', () => {
       mockGetValueFromChoices.mockReturnValue('Option 5000');
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).toHaveBeenCalledWith('option5000', largeChoicesArray);
       expect(result).toBe('Option 5000');
@@ -957,6 +982,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(result).toBe('base-computed');
     });
@@ -988,6 +1014,7 @@ describe('getDisplayValueByQuestion', () => {
       const booleanWrapper = new Boolean(true);
 
       const stringQuestion = { value: stringWrapper } as any;
+      };
       const numberQuestion = { value: numberWrapper } as any;
       const booleanQuestion = { value: booleanWrapper } as any;
 
@@ -1025,6 +1052,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should call getValueFromChoices exactly once for choices with length > 0', () => {
       const mockChoices = [{ value: 'test', text: 'Test' }];
+      };
       const question = {
         value: 'test',
         choices: mockChoices,
@@ -1054,6 +1082,7 @@ describe('getDisplayValueByQuestion', () => {
     it('should handle mock function return values correctly', () => {
       const testDate = new Date('2023-01-01');
       const question = { value: testDate } as any;
+      };
 
       mockLocalizeToDateString.mockReturnValue('string-result');
       expect(getDisplayValueByQuestion(question, mockTimeZone)).toBe('string-result');
@@ -1091,6 +1120,7 @@ describe('getDisplayValueByQuestion', () => {
       mockGetValueFromChoices.mockReturnValue('One Two Three');
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).toHaveBeenCalledWith(123, mockChoices);
       expect(result).toBe('One Two Three');
@@ -1129,6 +1159,7 @@ describe('getDisplayValueByQuestion', () => {
       const dateQuestion = { value: new Date() } as any;
       mockLocalizeToDateString.mockReturnValue('date-string');
       const dateResult = getDisplayValueByQuestion(dateQuestion, mockTimeZone);
+      };
       expect(typeof dateResult).toBe('string');
 
       const choicesQuestion = { value: 'test', choices: [{ value: 'test', text: 'Test' }] } as any;
@@ -1143,6 +1174,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle return value type preservation', () => {
       const testDate = new Date();
+      };
       const question = { value: testDate } as any;
 
       const mockReturnValue = { custom: 'object' };
@@ -1158,6 +1190,7 @@ describe('getDisplayValueByQuestion', () => {
   describe('branch coverage for choices condition', () => {
     it('should handle choices with length exactly 1', () => {
       const mockChoices = [{ value: 'single', text: 'Single Option' }];
+      };
       const question = {
         value: 'single',
         choices: mockChoices,
@@ -1193,6 +1226,7 @@ describe('getDisplayValueByQuestion', () => {
       mockGetValueFromChoices.mockReturnValue('result');
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).toHaveBeenCalledWith('test-value', mockChoices);
       expect(result).toBe('result');
@@ -1237,6 +1271,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle choices when question.choices.length is undefined', () => {
       const mockChoices = { length: undefined } as any;
+      };
       const question = {
         value: 'test-value',
         choices: mockChoices,
@@ -1285,6 +1320,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).not.toHaveBeenCalled();
       expect(result).toBeNull();
@@ -1322,6 +1358,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).not.toHaveBeenCalled();
       expect(result).toBe(objectValue);
@@ -1365,6 +1402,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle choices with boolean length property true', () => {
       const mockChoices = { length: true } as any;
+      };
       const question = {
         value: 'test-value',
         choices: mockChoices,
@@ -1393,6 +1431,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle choices with string length property that coerces to number > 0', () => {
       const mockChoices = { length: '5' } as any;
+      };
       const question = {
         value: 'test-value',
         choices: mockChoices,
@@ -1421,6 +1460,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle choices with object length property', () => {
       const mockChoices = { length: {} } as any;
+      };
       const question = {
         value: 'test-value',
         choices: mockChoices,
@@ -1453,6 +1493,7 @@ describe('getDisplayValueByQuestion', () => {
       } as any;
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).not.toHaveBeenCalled();
       expect(result).toBe('test-value');
@@ -1486,6 +1527,7 @@ describe('getDisplayValueByQuestion', () => {
     it('should handle question with Proxy that changes value between accesses', () => {
       let accessCount = 0;
       const mockChoices = [{ value: 'test', text: 'Test' }];
+      };
       const proxyQuestion = new Proxy(
         { value: 'test' },
         {
@@ -1547,6 +1589,7 @@ describe('getDisplayValueByQuestion', () => {
       mockGetValueFromChoices.mockReturnValue('Number Value');
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).toHaveBeenCalledWith(123, mockChoices);
       expect(result).toBe('Number Value');
@@ -1599,6 +1642,7 @@ describe('getDisplayValueByQuestion', () => {
       mockGetValueFromChoices.mockReturnValue(undefined);
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).toHaveBeenCalledWith(null, mockChoices);
       expect(result).toBeUndefined();
@@ -1672,6 +1716,7 @@ describe('getDisplayValueByQuestion', () => {
       mockGetValueFromChoices.mockReturnValue(undefined);
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).toHaveBeenCalledWith(null, mockChoices);
       expect(result).toBeUndefined();
@@ -1737,6 +1782,7 @@ describe('getDisplayValueByQuestion', () => {
         { value: 'obj2', text: 'Object 2' },
       ];
       const objectValue = { key: 'value' };
+      };
       const question = {
         value: objectValue,
         choices: mockChoices,
@@ -1779,6 +1825,7 @@ describe('getDisplayValueByQuestion', () => {
       mockGetValueFromChoices.mockReturnValue('Only Choice Available');
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
       expect(mockGetValueFromChoices).toHaveBeenCalledWith('only-choice', mockChoices);
       expect(result).toBe('Only Choice Available');
     });
@@ -1854,6 +1901,7 @@ describe('getDisplayValueByQuestion', () => {
       mockGetValueFromChoices.mockReturnValue('Test Value');
 
       const result = getDisplayValueByQuestion(question, mockTimeZone);
+      };
 
       expect(mockGetValueFromChoices).toHaveBeenCalledWith('test', mockChoices);
       expect(result).toBe('Test Value');
@@ -1872,6 +1920,7 @@ describe('getDisplayValueByQuestion', () => {
 
     it('should handle question with choices defined via Object.defineProperty', () => {
       const mockChoices = [{ value: 'test', text: 'Test' }];
+      };
       const question = { value: 'test' } as any;
       Object.defineProperty(question, 'choices', {
         get() {
