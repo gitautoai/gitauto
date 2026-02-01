@@ -89,11 +89,19 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
 
         result = fix_missing_and_stray_braces(content)
         if result["fixes"]:
+            has_missing = any("missing" in fix for fix in result["fixes"])
+            has_stray = any("missing" not in fix for fix in result["fixes"])
+            if has_missing and has_stray:
+                fix_type = "missing and stray braces"
+            elif has_missing:
+                fix_type = "missing braces"
+            else:
+                fix_type = "stray braces"
             upload_result = replace_remote_file_content(
                 file_content=result["content"],
                 file_path=file_path,
                 base_args=base_args,
-                commit_message=f"Fix missing braces in {file_path}",
+                commit_message=f"Fix {fix_type} in {file_path}",
             )
             if upload_result:
                 for item in result["fixes"]:
@@ -107,7 +115,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
                         )
 
     if fixes_applied:
-        logger.info("Fixed missing braces in test files:\n%s", "\n".join(fixes_applied))
+        logger.info("Fixed brace issues in test files:\n%s", "\n".join(fixes_applied))
 
     js_ts_files = [
         f["filename"]
@@ -117,38 +125,40 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
 
     formatting_applied: list[str] = []
     for file_path in js_ts_files:
-        original_content = get_raw_content(
+        content = get_raw_content(
             owner=owner, repo=repo, file_path=file_path, ref=new_branch, token=token
         )
-        if not original_content:
+        if not content:
             continue
-
-        content = original_content
 
         prettier_result = await run_prettier(
             base_args=base_args,
             file_path=file_path,
             file_content=content,
         )
-        if prettier_result:
+        if prettier_result and prettier_result != content:
+            replace_remote_file_content(
+                file_content=prettier_result,
+                file_path=file_path,
+                base_args=base_args,
+                commit_message=f"Format {file_path} with Prettier",
+            )
             content = prettier_result
+            formatting_applied.append(f"- {file_path}: Prettier")
 
         eslint_result = await run_eslint(
             base_args=base_args,
             file_path=file_path,
             file_content=content,
         )
-        if eslint_result:
-            content = eslint_result
-
-        if content != original_content:
+        if eslint_result and eslint_result != content:
             replace_remote_file_content(
-                file_content=content,
+                file_content=eslint_result,
                 file_path=file_path,
                 base_args=base_args,
-                commit_message=f"Format {file_path}",
+                commit_message=f"Lint {file_path} with ESLint",
             )
-            formatting_applied.append(f"- {file_path}")
+            formatting_applied.append(f"- {file_path}: ESLint")
 
     if formatting_applied:
         logger.info("Applied formatting to files:\n%s", "\n".join(formatting_applied))
