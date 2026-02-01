@@ -55,56 +55,43 @@ def test_jsonc_handles_complex_tsconfig():
 
 @patch("services.node.ensure_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_tsconfig_for_tests.get_raw_content")
-@patch("services.node.ensure_tsconfig_for_tests.get_file_tree")
 def test_creates_file_when_no_variants_exist(
-    mock_tree: MagicMock, mock_get_raw: MagicMock, mock_replace: MagicMock
+    mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
-    mock_tree.return_value = [{"type": "blob", "path": "tsconfig.json"}]
+    root_files = ["tsconfig.json"]
     mock_get_raw.return_value = None
     mock_replace.return_value = "Success"
 
-    result = ensure_tsconfig_for_tests(
-        base_args=_make_base_args(),
-        commit_message="Add tsconfig.test.json for relaxed test file checking",
-    )
+    path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
-    assert result == "Created tsconfig.test.json"
+    assert path == "tsconfig.test.json"
+    assert status == "added"
     mock_replace.assert_called_once()
 
 
 @patch("services.node.ensure_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_tsconfig_for_tests.get_raw_content")
-@patch("services.node.ensure_tsconfig_for_tests.get_file_tree")
 def test_skips_when_variant_has_correct_settings(
-    mock_tree: MagicMock, mock_get_raw: MagicMock, mock_replace: MagicMock
+    mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
-    mock_tree.return_value = [
-        {"type": "blob", "path": "tsconfig.json"},
-        {"type": "blob", "path": "tsconfig.spec.json"},
-    ]
+    root_files = ["tsconfig.json", "tsconfig.spec.json"]
     mock_get_raw.return_value = json.dumps(
         {"compilerOptions": {"noUnusedLocals": False, "noUnusedParameters": False}}
     )
 
-    result = ensure_tsconfig_for_tests(
-        base_args=_make_base_args(),
-        commit_message="Add tsconfig.test.json for relaxed test file checking",
-    )
+    path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
-    assert result is None
+    assert path == "tsconfig.spec.json"
+    assert status is None
     mock_replace.assert_not_called()
 
 
 @patch("services.node.ensure_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_tsconfig_for_tests.get_raw_content")
-@patch("services.node.ensure_tsconfig_for_tests.get_file_tree")
 def test_updates_variant_when_missing_settings(
-    mock_tree: MagicMock, mock_get_raw: MagicMock, mock_replace: MagicMock
+    mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
-    mock_tree.return_value = [
-        {"type": "blob", "path": "tsconfig.json"},
-        {"type": "blob", "path": "tsconfig.build.json"},
-    ]
+    root_files = ["tsconfig.json", "tsconfig.build.json"]
 
     def get_raw_side_effect(owner, repo, file_path, ref, token):
         if file_path == "tsconfig.build.json":
@@ -114,12 +101,10 @@ def test_updates_variant_when_missing_settings(
     mock_get_raw.side_effect = get_raw_side_effect
     mock_replace.return_value = "Success"
 
-    result = ensure_tsconfig_for_tests(
-        base_args=_make_base_args(),
-        commit_message="Update tsconfig for relaxed test file checking",
-    )
+    path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
-    assert result == "Updated tsconfig.build.json"
+    assert path == "tsconfig.build.json"
+    assert status == "modified"
     call_kwargs = mock_replace.call_args.kwargs
     assert call_kwargs["file_path"] == "tsconfig.build.json"
     assert '"noUnusedLocals": false' in call_kwargs["file_content"]
@@ -128,14 +113,10 @@ def test_updates_variant_when_missing_settings(
 
 @patch("services.node.ensure_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_tsconfig_for_tests.get_raw_content")
-@patch("services.node.ensure_tsconfig_for_tests.get_file_tree")
 def test_updates_existing_tsconfig_test(
-    mock_tree: MagicMock, mock_get_raw: MagicMock, mock_replace: MagicMock
+    mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
-    mock_tree.return_value = [
-        {"type": "blob", "path": "tsconfig.json"},
-        {"type": "blob", "path": "tsconfig.test.json"},
-    ]
+    root_files = ["tsconfig.json", "tsconfig.test.json"]
 
     existing_config = """{
   "extends": "./tsconfig.json",
@@ -153,12 +134,10 @@ def test_updates_existing_tsconfig_test(
     mock_get_raw.side_effect = get_raw_side_effect
     mock_replace.return_value = "Success"
 
-    result = ensure_tsconfig_for_tests(
-        base_args=_make_base_args(),
-        commit_message="Update tsconfig.test.json with relaxed settings",
-    )
+    path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
-    assert result == "Updated tsconfig.test.json"
+    assert path == "tsconfig.test.json"
+    assert status == "modified"
     call_kwargs = mock_replace.call_args.kwargs
     updated_content = json.loads(call_kwargs["file_content"])
     assert updated_content["compilerOptions"]["noUnusedLocals"] is False
@@ -168,75 +147,54 @@ def test_updates_existing_tsconfig_test(
 
 @patch("services.node.ensure_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_tsconfig_for_tests.get_raw_content")
-@patch("services.node.ensure_tsconfig_for_tests.get_file_tree")
 def test_ignores_nested_tsconfig_files(
-    mock_tree: MagicMock, mock_get_raw: MagicMock, mock_replace: MagicMock
+    mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
-    mock_tree.return_value = [
-        {"type": "blob", "path": "tsconfig.json"},
-        {"type": "blob", "path": "packages/foo/tsconfig.test.json"},
-    ]
+    root_files = ["tsconfig.json", "packages/foo/tsconfig.test.json"]
     mock_get_raw.return_value = None
     mock_replace.return_value = "Success"
 
-    result = ensure_tsconfig_for_tests(
-        base_args=_make_base_args(),
-        commit_message="Add tsconfig.test.json for relaxed test file checking",
-    )
+    path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
-    assert result == "Created tsconfig.test.json"
+    assert path == "tsconfig.test.json"
+    assert status == "added"
 
 
 @patch("services.node.ensure_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_tsconfig_for_tests.get_raw_content")
-@patch("services.node.ensure_tsconfig_for_tests.get_file_tree")
 def test_creates_when_only_main_tsconfig_exists(
-    mock_tree: MagicMock, mock_get_raw: MagicMock, mock_replace: MagicMock
+    mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
-    mock_tree.return_value = [{"type": "blob", "path": "tsconfig.json"}]
+    root_files = ["tsconfig.json"]
     mock_get_raw.return_value = None
     mock_replace.return_value = "Success"
 
-    result = ensure_tsconfig_for_tests(
-        base_args=_make_base_args(),
-        commit_message="Add tsconfig.test.json for relaxed test file checking",
-    )
+    path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
-    assert result == "Created tsconfig.test.json"
+    assert path == "tsconfig.test.json"
+    assert status == "added"
 
 
 @patch("services.node.ensure_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_tsconfig_for_tests.get_raw_content")
-@patch("services.node.ensure_tsconfig_for_tests.get_file_tree")
-def test_skips_non_typescript_repo(
-    mock_tree: MagicMock, mock_get_raw: MagicMock, mock_replace: MagicMock
-):
-    mock_tree.return_value = [
-        {"type": "blob", "path": "package.json"},
-        {"type": "blob", "path": "index.js"},
-    ]
+def test_skips_non_typescript_repo(mock_get_raw: MagicMock, mock_replace: MagicMock):
+    root_files = ["package.json", "index.js"]
     mock_get_raw.return_value = None
     mock_replace.return_value = "Success"
 
-    result = ensure_tsconfig_for_tests(
-        base_args=_make_base_args(),
-        commit_message="Add tsconfig.test.json for relaxed test file checking",
-    )
+    path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
-    assert result is None
+    assert path is None
+    assert status is None
     mock_replace.assert_not_called()
 
 
 @patch("services.node.ensure_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_tsconfig_for_tests.get_raw_content")
-@patch("services.node.ensure_tsconfig_for_tests.get_file_tree")
 def test_skips_when_variant_has_invalid_json(
-    mock_tree: MagicMock, mock_get_raw: MagicMock, mock_replace: MagicMock
+    mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
-    mock_tree.return_value = [
-        {"type": "blob", "path": "tsconfig.json"},
-        {"type": "blob", "path": "tsconfig.spec.json"},
-    ]
+    root_files = ["tsconfig.json", "tsconfig.spec.json"]
 
     def get_raw_side_effect(owner, repo, file_path, ref, token):
         if file_path == "tsconfig.spec.json":
@@ -246,25 +204,19 @@ def test_skips_when_variant_has_invalid_json(
     mock_get_raw.side_effect = get_raw_side_effect
     mock_replace.return_value = "Success"
 
-    result = ensure_tsconfig_for_tests(
-        base_args=_make_base_args(),
-        commit_message="Add tsconfig.test.json for relaxed test file checking",
-    )
+    path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
-    assert result is None
+    assert path is None
+    assert status is None
     mock_replace.assert_not_called()
 
 
 @patch("services.node.ensure_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_tsconfig_for_tests.get_raw_content")
-@patch("services.node.ensure_tsconfig_for_tests.get_file_tree")
 def test_handles_tsconfig_with_comments(
-    mock_tree: MagicMock, mock_get_raw: MagicMock, mock_replace: MagicMock
+    mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
-    mock_tree.return_value = [
-        {"type": "blob", "path": "tsconfig.json"},
-        {"type": "blob", "path": "tsconfig.spec.json"},
-    ]
+    root_files = ["tsconfig.json", "tsconfig.spec.json"]
 
     tsconfig_with_comments = """{
   // TypeScript config for tests
@@ -276,10 +228,8 @@ def test_handles_tsconfig_with_comments(
 
     mock_get_raw.return_value = tsconfig_with_comments
 
-    result = ensure_tsconfig_for_tests(
-        base_args=_make_base_args(),
-        commit_message="Add tsconfig.test.json for relaxed test file checking",
-    )
+    path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
-    assert result is None
+    assert path == "tsconfig.spec.json"
+    assert status is None
     mock_replace.assert_not_called()
