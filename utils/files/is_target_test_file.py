@@ -18,10 +18,6 @@ def is_target_test_file(file_path: str, base_args: BaseArgs):
         return True
 
     implementation_file = get_impl_file_from_issue_title(issue_title)
-    if not implementation_file:
-        # Return True (allow edit) for non-schedule issues to avoid blocking GitAuto
-        return True
-
     target_filename = Path(implementation_file).stem
 
     return target_filename.lower() in file_path.lower()

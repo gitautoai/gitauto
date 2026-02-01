@@ -36,6 +36,7 @@ async def chat_with_agent(
     usage_id: int | None = None,
     allow_edit_any_file: bool = False,
     restrict_edit_to_target_test_file_only: bool = True,
+    allowed_to_edit_files: list[str] | None = None,
 ):
     if log_messages is None:
         log_messages = []
@@ -141,19 +142,31 @@ async def chat_with_agent(
             )
 
             validation_error = None
+            is_in_allowed_to_edit_files = any(
+                file_path.endswith(f) for f in (allowed_to_edit_files or [])
+            )
+            is_target = is_target_test_file(file_path, base_args)
             if (
                 file_path
                 and restrict_edit_to_target_test_file_only
-                and not is_target_test_file(file_path, base_args)
+                and not is_target
+                and not is_in_allowed_to_edit_files
             ):
                 validation_error = (
                     f"Error: Cannot modify '{file_path}'. "
-                    f"You can only create/edit/move/delete the test file for the target implementation file mentioned in the issue title."
+                    f"file_path={file_path}, restrict_edit_to_target_test_file_only={restrict_edit_to_target_test_file_only}, "
+                    f"is_target_test_file={is_target}, is_in_allowed_to_edit_files={is_in_allowed_to_edit_files}"
                 )
-            elif file_path and not allow_edit_any_file and not is_test_file(file_path):
+            elif (
+                file_path
+                and not allow_edit_any_file
+                and not is_test_file(file_path)
+                and not is_in_allowed_to_edit_files
+            ):
                 validation_error = (
-                    f"Error: Cannot modify non-test file '{file_path}'. "
-                    f"This repository is in restricted mode - only test files can be created/edited/moved/deleted."
+                    f"Error: Cannot modify '{file_path}'. "
+                    f"file_path={file_path}, allow_edit_any_file={allow_edit_any_file}, "
+                    f"is_test_file={is_test_file(file_path)}, is_in_allowed_to_edit_files={is_in_allowed_to_edit_files}"
                 )
 
             if validation_error:
@@ -181,6 +194,7 @@ async def chat_with_agent(
                     usage_id=usage_id,
                     allow_edit_any_file=allow_edit_any_file,
                     restrict_edit_to_target_test_file_only=restrict_edit_to_target_test_file_only,
+                    allowed_to_edit_files=allowed_to_edit_files,
                 )
 
         if isinstance(tool_args, dict):
