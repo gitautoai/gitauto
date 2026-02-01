@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import subprocess
 
 from utils.error.handle_exceptions import handle_exceptions
@@ -20,6 +21,21 @@ async def detect_unreachable_lines(
     logger.info("Waiting for clone to complete before ESLint check")
     await clone_task
     logger.info("Clone completed, running ESLint check for %s", file_path)
+
+    required_paths = [
+        (
+            "node_modules/@typescript-eslint/eslint-plugin",
+            "@typescript-eslint/eslint-plugin",
+        ),
+        ("node_modules/@typescript-eslint/parser", "@typescript-eslint/parser"),
+        ("node_modules/typescript", "typescript"),
+        ("tsconfig.json", "tsconfig.json"),
+    ]
+    for path, name in required_paths:
+        full_path = os.path.join(repo_dir, path)
+        if not os.path.exists(full_path):
+            logger.info("%s not found, skipping unreachable code detection", name)
+            return unreachable_lines
 
     cmd = f"npx eslint {file_path} --rule '@typescript-eslint/no-unnecessary-condition: error' --format json"
     logger.info("Running ESLint: %s", cmd)
