@@ -444,7 +444,11 @@ async def create_pr_from_issue(
     # Fix unreachable code in target implementation file (auto-fix what we can)
     allowed_to_edit_files: list[str] = []
     unreachable_result = await fix_unreachable_code(
-        impl_file_path, clone_dir, clone_task
+        file_path=impl_file_path,
+        repo_dir=clone_dir,
+        clone_task=clone_task,
+        root_files=root_files,
+        base_args=base_args,
     )
 
     # If ESLint --fix made changes, push them to the remote branch

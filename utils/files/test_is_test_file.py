@@ -11,6 +11,7 @@ from utils.files.is_test_file import is_test_file
         ("test_file.py", True),
         ("tests/Component.js", True),
         ("src/__tests__/Component.tsx", True),
+        ("__tests__/Component.tsx", True),  # __tests__ at root
         ("services/claude/test_client.py", True),
         ("spec_helper.rb", True),
         ("cypress/integration/login.js", True),
