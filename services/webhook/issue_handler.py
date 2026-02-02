@@ -388,8 +388,6 @@ async def create_pr_from_issue(
         user_input_obj["parent_issue_title"] = parent_issue_title
     if parent_issue_body:
         user_input_obj["parent_issue_body"] = parent_issue_body
-    if impl_file_content:
-        user_input_obj["impl_file_content"] = impl_file_content
     if test_files:
         user_input_obj["test_files"] = test_files
     if root_files:
@@ -400,12 +398,12 @@ async def create_pr_from_issue(
         user_input_obj["target_dir_files"] = target_dir_files
     user_input = dumps(user_input_obj)
 
-    # Append reference file contents (same format as get_remote_file_content tool)
-    for content in reference_contents:
-        user_input += "\n\n" + content
-
-    # Create messages
+    # Create messages - each file content as separate message for easy deduplication
     messages: list[MessageParam] = [{"role": "user", "content": user_input}]
+    if impl_file_content:
+        messages.append({"role": "user", "content": impl_file_content})
+    for c in reference_contents:
+        messages.append({"role": "user", "content": c})
 
     # Create a remote branch
     latest_commit_sha = get_latest_remote_commit_sha(

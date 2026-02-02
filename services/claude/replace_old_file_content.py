@@ -17,21 +17,28 @@ def replace_old_file_content(messages: list[MessageParam], file_path: str):
     placeholder = f"[Outdated '{file_path}' content removed]"
 
     for msg in messages:
-        # Skip assistant messages (file content only appears in user messages as tool_result)
-        if msg.get("role") != "user" or not isinstance(
-            (content_list := msg.get("content")), list
-        ):
+        # Skip assistant messages (file content only appears in user messages)
+        if msg.get("role") != "user":
             continue
 
-        for item in content_list:
-            # Skip non-tool_result blocks (file content only comes from tool_result)
+        content = msg.get("content")
+
+        # Handle string content (initial file messages)
+        if isinstance(content, str) and content.startswith(f"```{file_path}"):
+            msg["content"] = placeholder
+            continue
+
+        # Handle list of content blocks (tool_result from get_remote_file_content)
+        if not isinstance(content, list):
+            continue
+
+        for item in content:
             if not is_tool_result(item):
                 continue
 
-            content = item.get("content")
-            # get_remote_file_content always returns string content, skip non-string (e.g., list of blocks)
-            if not isinstance(content, str):
+            item_content = item.get("content")
+            if not isinstance(item_content, str):
                 continue
 
-            if content.startswith(f"```{file_path}"):
+            if item_content.startswith(f"```{file_path}"):
                 item["content"] = placeholder

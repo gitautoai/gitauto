@@ -73,7 +73,30 @@ def test_replace_old_file_content_ignores_assistant_messages():
     assert content[0]["type"] == "tool_use"
 
 
-def test_replace_old_file_content_ignores_string_content():
+def test_replace_old_file_content_replaces_string_content():
+    """Test that string content (initial file messages) is replaced."""
+    messages: list[MessageParam] = [
+        {"role": "user", "content": "```src/main.py\n1\tprint('hello')\n```"},
+    ]
+
+    replace_old_file_content(messages, "src/main.py")
+
+    assert messages[0]["content"] == "[Outdated 'src/main.py' content removed]"
+
+
+def test_replace_old_file_content_string_no_change_when_different_file():
+    """Test that string content for different files is not replaced."""
+    messages: list[MessageParam] = [
+        {"role": "user", "content": "```src/other.py\n1\tprint('other')\n```"},
+    ]
+
+    replace_old_file_content(messages, "src/main.py")
+
+    assert messages[0]["content"] == "```src/other.py\n1\tprint('other')\n```"
+
+
+def test_replace_old_file_content_ignores_non_file_string_content():
+    """Test that non-file string content is not replaced."""
     messages: list[MessageParam] = [
         {"role": "user", "content": "Please read src/main.py"},
     ]
@@ -83,7 +106,8 @@ def test_replace_old_file_content_ignores_string_content():
     assert messages[0]["content"] == "Please read src/main.py"
 
 
-def test_replace_old_file_content_ignores_non_tool_result_blocks():
+def test_replace_old_file_content_ignores_text_blocks():
+    """Test that text blocks are ignored - only string content and tool_result are handled."""
     messages: list[MessageParam] = [
         {
             "role": "user",
@@ -170,8 +194,8 @@ def test_replace_old_file_content_handles_empty_messages():
     assert not messages
 
 
-def test_replace_old_file_content_ignores_list_content():
-    """Test that list content (list of content blocks) is ignored - only string content is handled."""
+def test_replace_old_file_content_ignores_list_tool_result_content():
+    """Test that tool_result with list content is ignored - only string content is handled."""
     original_content = [
         {"type": "text", "text": "```src/main.py\n1\tprint('hello')\n```"}
     ]
@@ -192,12 +216,11 @@ def test_replace_old_file_content_ignores_list_content():
 
     content = messages[0]["content"]
     assert isinstance(content, list)
-    # List content is ignored, only string content is handled
     assert content[0]["content"] == original_content
 
 
-def test_replace_old_file_content_ignores_list_content_without_text_block():
-    """Test that list content without text block is ignored."""
+def test_replace_old_file_content_ignores_image_content():
+    """Test that image content in tool_result is ignored."""
     messages: list[MessageParam] = [
         {
             "role": "user",
@@ -215,7 +238,6 @@ def test_replace_old_file_content_ignores_list_content_without_text_block():
 
     content = messages[0]["content"]
     assert isinstance(content, list)
-    # Content should remain unchanged since it's an image block
     assert content[0]["content"] == [{"type": "image", "source": {"data": "..."}}]
 
 
