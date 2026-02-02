@@ -630,11 +630,11 @@ def test_replace_remote_file_content_function_definition():
     # Verify function definition structure
     assert REPLACE_REMOTE_FILE_CONTENT["name"] == "replace_remote_file_content"
     assert "description" in REPLACE_REMOTE_FILE_CONTENT
-    assert "parameters" in REPLACE_REMOTE_FILE_CONTENT
+    assert "input_schema" in REPLACE_REMOTE_FILE_CONTENT
     assert REPLACE_REMOTE_FILE_CONTENT.get("strict") is True
 
-    # Verify parameters structure
-    params = REPLACE_REMOTE_FILE_CONTENT["parameters"]
+    # Verify input_schema structure (Anthropic format)
+    params = REPLACE_REMOTE_FILE_CONTENT["input_schema"]
     if isinstance(params, dict):
         assert params.get("type") == "object"
         properties = params.get("properties", {})
