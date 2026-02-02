@@ -3,6 +3,7 @@ import inspect
 
 # Third party imports
 from anthropic.types import MessageParam, ToolResultBlockParam, ToolUnionParam
+from services.claude.replace_old_file_content import replace_old_file_content
 
 # Local imports
 from services.claude.chat_with_claude import chat_with_claude
@@ -262,8 +263,15 @@ async def chat_with_agent(
     # Initialize msg variable
     msg = ""
 
-    # Recursively call the function if the mode is "explore" and the tool was called
-    if tool_name == "get_remote_file_content" and isinstance(tool_args, dict):
+    if (
+        tool_name == "get_remote_file_content"
+        and isinstance(tool_args, dict)
+        and isinstance((file_path := tool_args.get("file_path")), str)
+        and file_path
+    ):
+        # Replace old file content if same file was read before
+        replace_old_file_content(messages, file_path)
+
         if "line_number" in tool_args:
             line_number = tool_args["line_number"]
             line_info = (
@@ -272,15 +280,15 @@ async def chat_with_agent(
                 and is_valid_line_number(line_number)
                 else ""
             )
-            msg = f"Read `{tool_args['file_path']}`{line_info}."
+            msg = f"Read `{file_path}`{line_info}."
         elif "keyword" in tool_args:
-            msg = f"Read `{tool_args['file_path']}` around keyword `{tool_args['keyword']}`."
+            msg = f"Read `{file_path}` around keyword `{tool_args['keyword']}`."
         elif "start_line" in tool_args or "end_line" in tool_args:
             start = tool_args.get("start_line", "start")
             end = tool_args.get("end_line", "end")
-            msg = f"Read `{tool_args['file_path']}` lines {start}-{end}."
+            msg = f"Read `{file_path}` lines {start}-{end}."
         else:
-            msg = f"Read `{tool_args['file_path']}`."
+            msg = f"Read `{file_path}`."
 
     elif tool_name == "search_remote_file_contents":
         file_list = []
@@ -319,27 +327,28 @@ async def chat_with_agent(
         else:
             msg = "Root directory is empty or not found."
 
-    # Claude sometimes tries to call functions that don't exist in the list of tools...
     elif (
         tool_name in ["apply_diff_to_file", "replace_remote_file_content"]
         and isinstance(tool_args, dict)
-        and "file_path" in tool_args
+        and isinstance((file_path := tool_args.get("file_path")), str)
+        and file_path
     ):
-        msg = f"Committed changes to `{tool_args['file_path']}`."
+        # Replace old file content since this file was just written
+        replace_old_file_content(messages, file_path)
+        msg = f"Committed changes to `{file_path}`."
 
     elif (
         tool_name == "search_google"
         and isinstance(tool_args, dict)
-        and "query" in tool_args
+        and isinstance((query := tool_args.get("query")), str)
+        and query.strip()
     ):
-        query = str(tool_args.get("query", ""))
-        if query.strip():
-            msg = f"Googled `{query}` and went through the results."
-            add_log_message(msg, log_messages)
-            update_comment(
-                body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
-                base_args=base_args,
-            )
+        msg = f"Googled `{query}` and went through the results."
+        add_log_message(msg, log_messages)
+        update_comment(
+            body=create_progress_bar(p=p + 5, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
 
     elif (
         tool_name == "delete_file"

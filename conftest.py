@@ -39,9 +39,10 @@ def test_installation_id():
     return 60314628
 
 
-@pytest.fixture
-def test_token(test_installation_id):
-    return get_installation_access_token(installation_id=test_installation_id)
+# Session scope to avoid GitHub API rate limiting on CI - 1 call per run, not per test
+@pytest.fixture(scope="session")
+def test_token():
+    return get_installation_access_token(installation_id=60314628)
 
 
 # Helper function as fixture - returns a function that can be called with overrides

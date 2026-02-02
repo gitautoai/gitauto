@@ -1,20 +1,9 @@
-# Standard imports
 import base64
 
-# Third-party imports
 import requests
 
-# Local imports
-from config import (
-    GITHUB_API_URL,
-    TIMEOUT,
-    UTF8,
-)
-
-# Local imports (GitHub)
+from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.github.utils.create_headers import create_headers
-
-# Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.parse_urls import parse_github_url
 
@@ -31,12 +20,12 @@ def get_remote_file_content_by_url(url: str, token: str):
     )
     start, end = parts["start_line"], parts["end_line"]
     api_url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
-    headers: dict[str, str] = create_headers(token=token)
+    headers = create_headers(token=token)
     response = requests.get(url=api_url, headers=headers, timeout=TIMEOUT)
     response.raise_for_status()
     response_json = response.json()
     encoded_content: str = response_json["content"]  # Base64 encoded content
-    decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
+    decoded_content = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
     numbered_lines = [
         f"{i + 1}: {line}" for i, line in enumerate(decoded_content.split("\n"))
     ]
@@ -50,5 +39,5 @@ def get_remote_file_content_by_url(url: str, token: str):
     else:
         file_path_with_lines = file_path
 
-    numbered_content: str = "\n".join(numbered_lines)
-    return file_path, f"## {file_path_with_lines}\n\n{numbered_content}"
+    numbered_content = "\n".join(numbered_lines)
+    return file_path, f"```{file_path_with_lines}\n{numbered_content}\n```"

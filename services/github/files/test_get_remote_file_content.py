@@ -102,10 +102,6 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("src/test.py", base_args)
 
-        assert (
-            "Opened file: 'src/test.py' with line numbers for your information."
-            in result
-        )
         assert "```src/test.py" in result
         assert "1:def hello():" in result
         assert "2:    print('Hello, World!')" in result
@@ -214,10 +210,6 @@ class TestGetRemoteFileContent:
         result = get_remote_file_content("large_file.py", base_args, line_number=100)
 
         assert (
-            "Opened file: 'large_file.py' with line numbers for your information."
-            in result
-        )
-        assert (
             "```large_file.py#L51-L151" in result
         )  # Should show lines around line 100
         assert "100:line 100" in result
@@ -259,10 +251,6 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("test.py", base_args, keyword="target")
 
-        assert (
-            "Opened file: 'test.py' and found multiple occurrences of 'target'."
-            in result
-        )
         assert "target_function" in result
         assert "target_helper" in result
 
@@ -321,10 +309,7 @@ class TestGetRemoteFileContent:
         result = get_remote_file_content(
             "src/test.py", base_args, **{"line_number": "1"}  # type: ignore[arg-type]
         )
-        assert (
-            "Opened file: 'src/test.py' with line numbers for your information."
-            in result
-        )
+        assert "```src/test.py" in result
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
 
@@ -425,10 +410,7 @@ class TestGetRemoteFileContent:
             "src/test.py", base_args, extra_param="ignored", another_param=123
         )
 
-        assert (
-            "Opened file: 'src/test.py' with line numbers for your information."
-            in result
-        )
+        assert "```src/test.py" in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
@@ -522,9 +504,6 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("empty.txt", base_args)
 
-        assert (
-            "Opened file: 'empty.txt' with line numbers for your information." in result
-        )
         assert "```empty.txt" in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -617,10 +596,6 @@ class TestGetRemoteFileContent:
         result = get_remote_file_content("small_file.py", base_args, line_number=25)
 
         # Should show entire file since it's small
-        assert (
-            "Opened file: 'small_file.py' with line numbers for your information."
-            in result
-        )
         assert "```small_file.py" in result
         assert "25:line 25" in result
         assert "1:line 1" in result  # Should include first line
@@ -655,10 +630,6 @@ class TestGetRemoteFileContent:
         result = get_remote_file_content("large_file.py", base_args, line_number=1)
 
         # Should show entire file since line_number <= 1
-        assert (
-            "Opened file: 'large_file.py' with line numbers for your information."
-            in result
-        )
         assert "```large_file.py" in result
         assert "1:line 1" in result
         assert "200:line 200" in result
@@ -685,10 +656,7 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("src/test.py", custom_base_args)
 
-        assert (
-            "Opened file: 'src/test.py' with line numbers for your information."
-            in result
-        )
+        assert "```src/test.py" in result
 
         mock_create_headers.assert_called_once_with(token="different-token")
         mock_get.assert_called_once_with(
@@ -710,10 +678,7 @@ class TestGetRemoteFileContent:
         file_path = "src/files with spaces/test-file.py"
         result = get_remote_file_content(file_path, base_args)
 
-        assert (
-            f"Opened file: '{file_path}' with line numbers for your information."
-            in result
-        )
+        assert f"```{file_path}" in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
         expected_url = f"https://api.github.com/repos/test-owner/test-repo/contents/{file_path}?ref=test-branch"
@@ -753,14 +718,11 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("test.py", base_args, keyword="target")
 
-        assert (
-            "Opened file: 'test.py' and found multiple occurrences of 'target'."
-            in result
-        )
+        # Keyword search returns segments directly without prefix
         assert "50:line 50 with target keyword" in result
         assert "150:line 150 with target keyword" in result
         # Should contain segment separators
-        assert "•\n•\n•" in result
+        assert "..." in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
@@ -869,10 +831,7 @@ class TestGetRemoteFileContent:
         file_path = f"test{file_extension}"
         result = get_remote_file_content(file_path, base_args)
 
-        assert (
-            f"Opened file: '{file_path}' with line numbers for your information."
-            in result
-        )
+        assert f"```{file_path}" in result
         assert f"```{file_path}" in result
         # Check that content is properly decoded and formatted
         for line_num, line in enumerate(content.split("\n"), 1):
@@ -907,10 +866,7 @@ class TestGetRemoteFileContent:
         result = get_remote_file_content("large_file.py", base_args, line_number=200)
 
         # Should show lines around line 200 (150-200)
-        assert (
-            "Opened file: 'large_file.py' with line numbers for your information."
-            in result
-        )
+        assert "```large_file.py" in result
         assert "```large_file.py#L151-L201" in result
         assert "200:line 200" in result
         assert "151:line 151" in result
@@ -939,9 +895,7 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("test.py", base_args, start_line=3, end_line=7)
 
-        assert (
-            "Opened file: 'test.py' with line numbers for your information." in result
-        )
+        assert "```test.py" in result
         assert "```test.py#L3-L7" in result
         assert "3:line 3" in result
         assert "7:line 7" in result
@@ -1042,9 +996,7 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("test.py", base_args, start_line=3, end_line=3)
 
-        assert (
-            "Opened file: 'test.py' with line numbers for your information." in result
-        )
+        assert "```test.py" in result
         assert "```test.py#L3-L3" in result
         assert "3:line 3" in result
         assert "2:line 2" not in result
@@ -1072,9 +1024,7 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("test.py", base_args, start_line=3)
 
-        assert (
-            "Opened file: 'test.py' with line numbers for your information." in result
-        )
+        assert "```test.py" in result
         assert "```test.py#L3-L5" in result  # Should go from line 3 to end (line 5)
         assert "3:line 3" in result
         assert "5:line 5" in result
@@ -1102,9 +1052,7 @@ class TestGetRemoteFileContent:
 
         result = get_remote_file_content("test.py", base_args, end_line=3)
 
-        assert (
-            "Opened file: 'test.py' with line numbers for your information." in result
-        )
+        assert "```test.py" in result
         assert "```test.py#L1-L3" in result  # Should go from start (line 1) to line 3
         assert "1:line 1" in result
         assert "3:line 3" in result
