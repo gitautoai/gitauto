@@ -6,7 +6,7 @@ from anthropic import Anthropic
 
 # Local imports
 from constants.claude import CLAUDE_MODEL_ID_45
-from services.anthropic.message_to_dict import message_to_dict
+from services.claude.message_to_dict import message_to_dict
 from utils.objects.safe_get_attribute import safe_get_attribute
 
 

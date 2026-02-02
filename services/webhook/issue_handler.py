@@ -5,6 +5,9 @@ from json import dumps
 from pathlib import Path
 import time
 
+# Third-party imports
+from anthropic.types import MessageParam
+
 # Local imports
 from config import PRODUCT_ID, PR_BODY_STARTS_WITH
 from constants.agent import MAX_ITERATIONS
@@ -42,7 +45,7 @@ from services.github.reactions.add_reaction_to_issue import add_reaction_to_issu
 from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import GitHubLabeledPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
-from services.openai.functions.functions import TOOLS_FOR_ISSUES
+from services.claude.tools.tools import TOOLS_FOR_ISSUES
 from services.openai.vision import describe_image
 from services.resend.send_email import send_email
 from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
@@ -384,7 +387,7 @@ async def create_pr_from_issue(
     )
 
     # Create messages
-    messages = [{"role": "user", "content": user_input}]
+    messages: list[MessageParam] = [{"role": "user", "content": user_input}]
 
     # Create a remote branch
     latest_commit_sha = get_latest_remote_commit_sha(

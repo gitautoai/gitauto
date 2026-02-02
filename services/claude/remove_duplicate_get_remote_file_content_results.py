@@ -1,12 +1,15 @@
 # Standard imports
 from copy import deepcopy
 
+# Third party imports
+from anthropic.types import MessageParam
+
 # Local imports
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=lambda messages: messages)
-def remove_duplicate_get_remote_file_content_results(messages: list[dict]):
+def remove_duplicate_get_remote_file_content_results(messages: list[MessageParam]):
     if not messages:
         return messages
 

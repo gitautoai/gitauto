@@ -7,7 +7,7 @@ from payloads.aws.event_bridge_scheduler.event_types import EventBridgeScheduler
 from schemas.supabase.types import Coverages, CoveragesInsert
 
 # Local imports (AI)
-from services.anthropic.evaluate_condition import evaluate_condition
+from services.claude.evaluate_condition import evaluate_condition
 
 # Local imports (AWS)
 from services.aws.delete_scheduler import delete_scheduler

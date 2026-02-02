@@ -5,6 +5,9 @@ import json
 from pathlib import Path
 import time
 
+# Third-party imports
+from anthropic.types import MessageParam
+
 # Local imports
 from config import GITHUB_APP_USER_NAME
 from constants.agent import MAX_ITERATIONS
@@ -30,7 +33,7 @@ from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import ReviewBaseArgs
-from services.openai.functions.functions import TOOLS_FOR_PRS
+from services.claude.tools.tools import TOOLS_FOR_PRS
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
@@ -262,7 +265,7 @@ async def handle_review_run(
     user_input = json.dumps(obj=input_message)
 
     # Create messages
-    messages = [{"role": "user", "content": user_input}]
+    messages: list[MessageParam] = [{"role": "user", "content": user_input}]
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     total_token_input = 0

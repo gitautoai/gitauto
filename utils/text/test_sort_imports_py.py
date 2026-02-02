@@ -97,7 +97,7 @@ def main():
 def test_sort_python_imports_multiline():
     """Test with multiline imports"""
     code = """
-from services.openai.functions.functions import (
+from services.claude.tools.tools import (
     APPLY_DIFF_TO_FILE,
     TOOLS_FOR_ISSUES,
     tools_to_call,
@@ -113,9 +113,8 @@ def foo():
 import os
 from typing import Any, Dict, List
 
-from services.openai.functions.functions import (APPLY_DIFF_TO_FILE,
-                                                 TOOLS_FOR_ISSUES,
-                                                 tools_to_call)
+from services.claude.tools.tools import (APPLY_DIFF_TO_FILE, TOOLS_FOR_ISSUES,
+                                         tools_to_call)
 
 
 def foo():

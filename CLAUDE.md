@@ -651,7 +651,7 @@ All code analysis, generation, and file processing happens on our Lambda instanc
 
 ## Coding Standards
 
-- DOCSTRINGS: Do not add docstrings unless explicitly told to. Do not delete existing docstrings unless they are outdated.
+- No DOCSTRINGS: Do not add docstrings unless explicitly told to. Do not delete existing docstrings unless they are outdated.
 - COMMENTS: Do not delete existing comments unless they are outdated. Preserve URL references and API documentation links. Never explain what was removed or why in the code itself. Explanations belong in terminal responses, not in code.
 - LOGGERS: Do not delete existing logger statements unless they are outdated.
 - API URLS: Always verify API documentation URLs using WebFetch before using them. Never guess API endpoints.

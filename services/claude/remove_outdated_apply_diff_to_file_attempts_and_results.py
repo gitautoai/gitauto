@@ -1,12 +1,17 @@
 # Standard imports
 from copy import deepcopy
 
+# Third party imports
+from anthropic.types import MessageParam
+
 # Local imports
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=lambda messages: messages)
-def remove_outdated_apply_diff_to_file_attempts_and_results(messages: list[dict]):
+def remove_outdated_apply_diff_to_file_attempts_and_results(
+    messages: list[MessageParam],
+):
     if not messages:
         return messages
 
@@ -172,7 +177,7 @@ def remove_outdated_apply_diff_to_file_attempts_and_results(messages: list[dict]
                     isinstance(p, dict)
                     and p.get("type") == "tool_use"
                     and isinstance(p.get("input"), dict)
-                    and p["input"].get("file_path") == filename
+                    and p.get("input", {}).get("file_path") == filename
                     for p in messages[i - 1]["content"]
                 )
             )

@@ -6,6 +6,9 @@ import json
 from pathlib import Path
 import time
 
+# Third-party imports
+from anthropic.types import MessageParam
+
 # Local imports
 from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
 from constants.agent import MAX_ITERATIONS
@@ -43,7 +46,7 @@ from services.github.token.get_installation_token import get_installation_access
 from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
-from services.openai.functions.functions import TOOLS_FOR_PRS
+from services.claude.tools.tools import TOOLS_FOR_PRS
 from services.slack.slack_notify import slack_notify
 from services.supabase.check_suites.insert_check_suite import insert_check_suite
 from services.supabase.codecov_tokens.get_codecov_token import get_codecov_token
@@ -544,7 +547,7 @@ async def handle_check_suite(
     user_input = json.dumps(obj=input_message)
 
     # Create messages
-    messages = [{"role": "user", "content": user_input}]
+    messages: list[MessageParam] = [{"role": "user", "content": user_input}]
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     total_token_input = 0

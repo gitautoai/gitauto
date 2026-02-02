@@ -1,5 +1,6 @@
 import json
-from typing import Any
+
+from anthropic.types import MessageParam
 
 from services.supabase.client import supabase
 from services.supabase.llm_requests.calculate_costs import calculate_costs
@@ -11,9 +12,9 @@ def insert_llm_request(
     usage_id: int,
     provider: str,
     model_id: str,
-    input_messages: list[dict[str, Any]],
+    input_messages: list[MessageParam],
     input_tokens: int,
-    output_message: dict[str, Any],
+    output_message: MessageParam,
     output_tokens: int,
     response_time_ms: int | None = None,
     error_message: str | None = None,

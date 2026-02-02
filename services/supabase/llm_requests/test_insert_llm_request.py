@@ -1,5 +1,8 @@
 import json
 from unittest.mock import Mock, patch
+
+from anthropic.types import MessageParam
+
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 
 
@@ -13,8 +16,8 @@ def test_insert_llm_request_success(mock_calculate_costs, mock_supabase):
         mock_result
     )
 
-    input_messages = [{"role": "user", "content": "test"}]
-    output_message = {"role": "assistant", "content": "response"}
+    input_messages: list[MessageParam] = [{"role": "user", "content": "test"}]
+    output_message: MessageParam = {"role": "assistant", "content": "response"}
 
     result = insert_llm_request(
         usage_id=123,

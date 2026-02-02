@@ -1,27 +1,34 @@
 # Standard imports
 import json
 from copy import deepcopy
+from typing import cast
 from unittest.mock import patch
+
+# Third party imports
+from anthropic.types import MessageParam
 
 # Local imports
 from config import UTF8
-from services.anthropic.remove_duplicate_get_remote_file_content_results import (
+from services.claude.remove_duplicate_get_remote_file_content_results import (
     remove_duplicate_get_remote_file_content_results,
 )
 
 
 def test_remove_duplicate_get_remote_file_content_results_only():
     # Function only deduplicates get_remote_file_content, not generic messages
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant"},
-        {"role": "user", "content": "Hello"},
-        {"role": "assistant", "content": "Hi there!"},
-        {"role": "user", "content": "Hello"},  # Not deduplicated - not file content
-        {
-            "role": "assistant",
-            "content": "Hi there!",
-        },  # Not deduplicated - not file content
-    ]
+    messages = cast(
+        list[MessageParam],
+        [
+            {"role": "system", "content": "You are a helpful assistant"},
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi there!"},
+            {"role": "user", "content": "Hello"},  # Not deduplicated - not file content
+            {
+                "role": "assistant",
+                "content": "Hi there!",
+            },  # Not deduplicated - not file content
+        ],
+    )
 
     result = remove_duplicate_get_remote_file_content_results(messages)
 
@@ -30,51 +37,59 @@ def test_remove_duplicate_get_remote_file_content_results_only():
 
 
 def test_remove_duplicate_get_remote_file_content_results_snapshots():
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant"},
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "tool_use_id": "id1",
-                    "content": "Opened file: 'Calculator-MJ/ViewController.swift' with line numbers for your information.\n\nOriginal content",
-                }
-            ],
-        },
-        {"role": "assistant", "content": "OK"},
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "tool_result",
-                    "tool_use_id": "id2",
-                    "content": "Opened file: 'Calculator-MJ/ViewController.swift' with line numbers for your information.\n\nUpdated content",
-                }
-            ],
-        },
-    ]
+    messages = cast(
+        list[MessageParam],
+        [
+            {"role": "system", "content": "You are a helpful assistant"},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "id1",
+                        "content": "Opened file: 'Calculator-MJ/ViewController.swift' with line numbers for your information.\n\nOriginal content",
+                    }
+                ],
+            },
+            {"role": "assistant", "content": "OK"},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "id2",
+                        "content": "Opened file: 'Calculator-MJ/ViewController.swift' with line numbers for your information.\n\nUpdated content",
+                    }
+                ],
+            },
+        ],
+    )
 
     result = remove_duplicate_get_remote_file_content_results(messages)
 
     # Should deduplicate file content, keeping latest
     assert len(result) == 4
     assert result[0]["role"] == "system"
+    content1 = cast(list, result[1]["content"])
     assert (
-        result[1]["content"][0]["content"]
+        content1[0]["content"]
         == "[Outdated 'Calculator-MJ/ViewController.swift' content removed]"
     )
-    assert "Updated content" in result[3]["content"][0]["content"]
+    content3 = cast(list, result[3]["content"])
+    assert "Updated content" in content3[0]["content"]
 
 
 def test_no_duplicates():
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant"},
-        {"role": "user", "content": "First question"},
-        {"role": "assistant", "content": "First answer"},
-        {"role": "user", "content": "Second question"},
-        {"role": "assistant", "content": "Second answer"},
-    ]
+    messages = cast(
+        list[MessageParam],
+        [
+            {"role": "system", "content": "You are a helpful assistant"},
+            {"role": "user", "content": "First question"},
+            {"role": "assistant", "content": "First answer"},
+            {"role": "user", "content": "Second question"},
+            {"role": "assistant", "content": "Second answer"},
+        ],
+    )
 
     original = deepcopy(messages)
     result = remove_duplicate_get_remote_file_content_results(messages)
@@ -84,11 +99,14 @@ def test_no_duplicates():
 
 
 def test_preserve_system_messages():
-    messages = [
-        {"role": "system", "content": "System prompt 1"},
-        {"role": "system", "content": "System prompt 1"},  # Duplicate system
-        {"role": "user", "content": "Hello"},
-    ]
+    messages = cast(
+        list[MessageParam],
+        [
+            {"role": "system", "content": "System prompt 1"},
+            {"role": "system", "content": "System prompt 1"},  # Duplicate system
+            {"role": "user", "content": "Hello"},
+        ],
+    )
 
     result = remove_duplicate_get_remote_file_content_results(messages)
 
@@ -102,7 +120,7 @@ def test_preserve_system_messages():
 def test_with_real_agent_input():
     # Load actual data (formatted/prettified version for readability)
     with open(
-        "payloads/anthropic/llm_request_2816_input_content_formatted.json",
+        "payloads/claude/llm_request_2816_input_content_formatted.json",
         "r",
         encoding=UTF8,
     ) as f:
@@ -110,7 +128,7 @@ def test_with_real_agent_input():
 
     # Load expected result
     with open(
-        "payloads/anthropic/llm_request_2816_input_content_formatted_expected.json",
+        "payloads/claude/llm_request_2816_input_content_formatted_expected.json",
         "r",
         encoding=UTF8,
     ) as f:
@@ -127,7 +145,7 @@ def test_with_production_minified_json():
     # Test with real minified JSON from production database (llm_request ID 2816)
     # This is the actual format used in production - not prettified
     with open(
-        "payloads/anthropic/llm_request_2816_input_content_raw.json", "r", encoding=UTF8
+        "payloads/claude/llm_request_2816_input_content_raw.json", "r", encoding=UTF8
     ) as f:
         messages = json.load(f)
 
@@ -167,7 +185,7 @@ def test_with_production_minified_json():
 def test_handles_exception_gracefully():
     # Test by mocking deepcopy to raise an exception
 
-    messages = [{"role": "user", "content": []}]
+    messages = cast(list[MessageParam], [{"role": "user", "content": []}])
 
     with patch("copy.deepcopy", side_effect=RuntimeError("Simulated failure")):
         result = remove_duplicate_get_remote_file_content_results(messages)
@@ -185,7 +203,7 @@ def test_handles_runtime_exception():
                 raise KeyError("Simulated KeyError")
             return default
 
-    messages: list[dict] = [BadDict()]
+    messages = cast(list[MessageParam], [BadDict()])
 
     result = remove_duplicate_get_remote_file_content_results(messages)
     # Should return original messages unchanged when exception occurs
