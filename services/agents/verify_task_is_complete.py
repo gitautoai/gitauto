@@ -12,7 +12,6 @@ from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
 from services.prettier.run_prettier import run_prettier
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
-from utils.syntax.fix_missing_and_stray_braces import fix_missing_and_stray_braces
 
 TS_TEST_FILE_EXTENSIONS = (
     ".test.ts",
@@ -78,44 +77,6 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
                 base_args=base_args,
                 tsconfig_path=tsconfig_path,
             )
-
-    fixes_applied: list[str] = []
-    for file_path in js_test_files:
-        content = get_raw_content(
-            owner=owner, repo=repo, file_path=file_path, ref=new_branch, token=token
-        )
-        if not content:
-            continue
-
-        result = fix_missing_and_stray_braces(content)
-        if result["fixes"]:
-            has_missing = any("missing" in fix for fix in result["fixes"])
-            has_stray = any("missing" not in fix for fix in result["fixes"])
-            if has_missing and has_stray:
-                fix_type = "missing and stray braces"
-            elif has_missing:
-                fix_type = "missing braces"
-            else:
-                fix_type = "stray braces"
-            upload_result = replace_remote_file_content(
-                file_content=result["content"],
-                file_path=file_path,
-                base_args=base_args,
-                commit_message=f"Fix {fix_type} in {file_path}",
-            )
-            if upload_result:
-                for item in result["fixes"]:
-                    if "missing" in item:
-                        fixes_applied.append(
-                            f"- {file_path}: Inserted '{item['missing']}' after line {item['insert_after_line']} for {item['block_type']} block."
-                        )
-                    else:
-                        fixes_applied.append(
-                            f"- {file_path}: Removed stray '{item['removed_content']}' from line {item['removed_line']}."
-                        )
-
-    if fixes_applied:
-        logger.info("Fixed brace issues in test files:\n%s", "\n".join(fixes_applied))
 
     js_ts_files = [
         f["filename"]
