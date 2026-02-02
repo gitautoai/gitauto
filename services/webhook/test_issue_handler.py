@@ -3,7 +3,7 @@
 
 import inspect
 from typing import cast
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -266,8 +266,9 @@ async def test_stripe_customer_id_update(
 @patch("services.webhook.issue_handler.get_base64")
 @patch("services.webhook.issue_handler.describe_image")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -295,7 +296,8 @@ async def test_image_urls_processing(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_describe_image,
@@ -365,8 +367,9 @@ async def test_image_urls_processing(
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.get_base64")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -394,7 +397,8 @@ async def test_image_unsupported_format_skipped(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_base64,
@@ -456,8 +460,9 @@ async def test_image_unsupported_format_skipped(
 @patch("services.webhook.issue_handler.get_base64")
 @patch("services.webhook.issue_handler.describe_image")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -485,7 +490,8 @@ async def test_image_base64_fetch_failed(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_describe_image,
@@ -549,8 +555,9 @@ async def test_image_base64_fetch_failed(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -580,7 +587,8 @@ async def test_timeout_approaching_breaks_loop(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -641,8 +649,9 @@ async def test_timeout_approaching_breaks_loop(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -672,7 +681,8 @@ async def test_branch_deleted_breaks_loop(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -733,8 +743,9 @@ async def test_branch_deleted_breaks_loop(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -764,7 +775,8 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -841,8 +853,9 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -872,7 +885,8 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -946,8 +960,9 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -977,7 +992,8 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1040,8 +1056,9 @@ async def test_retry_counter_reset_on_successful_loop(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -1071,7 +1088,8 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1135,8 +1153,9 @@ async def test_non_test_file_skipped_in_header_merge(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -1166,7 +1185,8 @@ async def test_test_file_header_merge(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1238,8 +1258,9 @@ async def test_test_file_header_merge(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -1269,7 +1290,8 @@ async def test_test_file_header_merge_no_content(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1340,8 +1362,9 @@ async def test_test_file_header_merge_no_content(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -1371,7 +1394,8 @@ async def test_test_file_header_merge_no_change(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1444,8 +1468,9 @@ async def test_test_file_header_merge_no_change(
 @patch("services.webhook.issue_handler.check_branch_exists")
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.create_user_request")
 @patch("services.webhook.issue_handler.get_stripe_customer_id")
 @patch("services.webhook.issue_handler.get_repository_features")
@@ -1475,7 +1500,8 @@ async def test_credits_depleted_email_sent(
     mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
-    mock_start_async,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1552,8 +1578,9 @@ async def test_credits_depleted_email_sent(
 @patch("services.webhook.issue_handler.update_usage")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.get_owner")
 @patch("services.webhook.issue_handler.create_comment")
 @patch("services.webhook.issue_handler.check_availability")
@@ -1568,6 +1595,7 @@ async def test_issue_handler_token_accumulation(
     mock_create_comment,
     mock_get_owner,
     mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_create_user_request,
     mock_chat_with_agent,
@@ -1736,8 +1764,9 @@ async def test_issue_handler_token_accumulation(
 @patch("services.webhook.issue_handler.get_repository_features")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.prepare_repo_for_work")
-@patch("services.webhook.issue_handler.ensure_node_packages")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.webhook.issue_handler.get_owner")
 @patch("services.webhook.issue_handler.create_comment")
 @patch("services.webhook.issue_handler.check_availability")
@@ -1750,6 +1779,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_create_comment,
     mock_get_owner,
     mock_ensure_node_packages,
+    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_create_user_request,
     mock_chat_with_agent,
