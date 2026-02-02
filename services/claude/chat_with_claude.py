@@ -13,12 +13,6 @@ from services.claude.exceptions import (
     ClaudeAuthenticationError,
     ClaudeOverloadedError,
 )
-from services.claude.remove_duplicate_get_remote_file_content_results import (
-    remove_duplicate_get_remote_file_content_results,
-)
-from services.claude.remove_get_remote_file_content_before_replace_remote_file_content import (
-    remove_get_remote_file_content_before_replace_remote_file_content,
-)
 from services.claude.remove_old_assistant_text import remove_old_assistant_text
 from services.claude.remove_outdated_apply_diff_to_file_attempts_and_results import (
     remove_outdated_apply_diff_to_file_attempts_and_results,
@@ -37,11 +31,7 @@ def chat_with_claude(
     usage_id: int | None = None,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
-    # Apply all message deduplication functions to save tokens
-    messages = remove_duplicate_get_remote_file_content_results(messages)
-    messages = remove_get_remote_file_content_before_replace_remote_file_content(
-        messages
-    )
+    # Apply message optimization functions to save tokens
     messages = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
     messages = remove_old_assistant_text(messages)
 

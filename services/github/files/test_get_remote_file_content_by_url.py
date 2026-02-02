@@ -98,13 +98,14 @@ class TestGetRemoteFileContentByUrl:
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         expected_content = (
-            "## src/test.py\n\n"
+            "```src/test.py\n"
             "1: def hello_world():\n"
             "2:     print('Hello, World!')\n"
             "3:     return 'success'\n"
             "4: \n"
             "5: if __name__ == '__main__':\n"
-            "6:     hello_world()"
+            "6:     hello_world()\n"
+            "```"
         )
         assert file_path == "src/test.py"
         assert content == expected_content
@@ -138,10 +139,11 @@ class TestGetRemoteFileContentByUrl:
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         expected_content = (
-            "## src/test.py#L2-L4\n\n"
+            "```src/test.py#L2-L4\n"
             "2:     print('Hello, World!')\n"
             "3:     return 'success'\n"
-            "4: "
+            "4: \n"
+            "```"
         )
         assert file_path == "src/test.py"
         assert content == expected_content
@@ -173,7 +175,7 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py#L3"
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
-        expected_content = "## src/test.py#L3\n\n3:     return 'success'"
+        expected_content = "```src/test.py#L3\n3:     return 'success'\n```"
         assert file_path == "src/test.py"
         assert content == expected_content
 
@@ -377,7 +379,7 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/empty.txt"
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
-        expected_content = "## src/test.py\n\n1: "
+        expected_content = "```src/test.py\n1: \n```"
         assert file_path == "src/test.py"
         assert content == expected_content
 
@@ -413,10 +415,11 @@ class TestGetRemoteFileContentByUrl:
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         expected_content = (
-            "## src/test.py\n\n"
+            "```src/test.py\n"
             "1: # 测试文件\n"
             "2: print('Hello, 世界!')\n"
-            "3: # 这是一个测试"
+            "3: # 这是一个测试\n"
+            "```"
         )
         assert file_path == "src/test.py"
         assert content == expected_content
@@ -447,7 +450,7 @@ class TestGetRemoteFileContentByUrl:
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         assert file_path == "src/test.py"
-        assert "## src/test.py" in content
+        assert "```src/test.py" in content
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src/test.py?ref=feature-branch",
             headers={"Authorization": "Bearer test-token"},
@@ -480,7 +483,7 @@ class TestGetRemoteFileContentByUrl:
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         assert file_path == "src/utils/helpers/file.py"
-        assert "## src/utils/helpers/file.py" in content
+        assert "```src/utils/helpers/file.py" in content
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src/utils/helpers/file.py?ref=main",
             headers={"Authorization": "Bearer test-token"},
@@ -514,9 +517,10 @@ class TestGetRemoteFileContentByUrl:
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         expected_content = (
-            "## src/test.py#L5-L10\n\n"
+            "```src/test.py#L5-L10\n"
             "5: if __name__ == '__main__':\n"
-            "6:     hello_world()"
+            "6:     hello_world()\n"
+            "```"
         )
         assert file_path == "src/test.py"
         assert content == expected_content
@@ -625,7 +629,7 @@ class TestGetRemoteFileContentByUrl:
         result_file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         assert result_file_path == file_path
-        assert f"## {file_path}" in content
+        assert f"```{file_path}" in content
         expected_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
         mock_requests_get.assert_called_once_with(
             url=expected_url,
@@ -666,7 +670,7 @@ class TestGetRemoteFileContentByUrl:
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         assert file_path == "src/test.py"
-        assert "## src/test.py" in content
+        assert "```src/test.py" in content
         assert "1: # Large file" in content
         assert "101: print('line')" in content
         # Should have 102 lines total (1 header + 100 print lines + 1 empty line at end)

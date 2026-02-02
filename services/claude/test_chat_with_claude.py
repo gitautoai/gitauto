@@ -104,56 +104,30 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
 
 
 @patch(
-    "services.claude.chat_with_claude.remove_duplicate_get_remote_file_content_results"
-)
-@patch(
-    "services.claude.chat_with_claude.remove_get_remote_file_content_before_replace_remote_file_content"
-)
-@patch(
     "services.claude.chat_with_claude.remove_outdated_apply_diff_to_file_attempts_and_results"
 )
 @patch("services.claude.chat_with_claude.insert_llm_request")
 @patch("services.claude.chat_with_claude.claude")
-def test_chat_with_claude_calls_deduplication(
+def test_chat_with_claude_calls_optimization_functions(
     mock_claude,
     _mock_insert_llm_request,
-    mock_remove_duplicate_get_remote_file_content_results,
-    mock_remove_get_remote_file_content_before_replace_remote_file_content,
     mock_remove_outdated_apply_diff_to_file_attempts_and_results,
 ):
-    # Setup mocks
     mock_response = Mock()
     mock_response.content = [Mock(type="text", text="Response")]
     mock_response.usage = Mock(output_tokens=10)
     mock_claude.messages.create.return_value = mock_response
     mock_claude.messages.count_tokens.return_value = Mock(input_tokens=15)
 
-    # Mock all three functions to return the same messages
     original_messages = [{"role": "user", "content": "test"}]
-    mock_remove_duplicate_get_remote_file_content_results.return_value = (
-        original_messages
-    )
-    mock_remove_get_remote_file_content_before_replace_remote_file_content.return_value = (
-        original_messages
-    )
     mock_remove_outdated_apply_diff_to_file_attempts_and_results.return_value = (
         original_messages
     )
 
-    # Call the function
     chat_with_claude(
         messages=cast(list[MessageParam], original_messages),
         system_content="You are helpful",
         tools=[],
     )
 
-    # Verify all three functions were called
-    mock_remove_duplicate_get_remote_file_content_results.assert_called_once_with(
-        original_messages
-    )
-    mock_remove_get_remote_file_content_before_replace_remote_file_content.assert_called_once_with(
-        original_messages
-    )
-    mock_remove_outdated_apply_diff_to_file_attempts_and_results.assert_called_once_with(
-        original_messages
-    )
+    mock_remove_outdated_apply_diff_to_file_attempts_and_results.assert_called_once()

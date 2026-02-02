@@ -382,8 +382,6 @@ async def create_pr_from_issue(
     }
 
     # Only include non-empty values to reduce token usage
-    if reference_contents:
-        user_input_obj["reference_contents"] = reference_contents
     if issue_comments:
         user_input_obj["issue_comments"] = issue_comments
     if parent_issue_title:
@@ -401,6 +399,10 @@ async def create_pr_from_issue(
     if target_dir_files:
         user_input_obj["target_dir_files"] = target_dir_files
     user_input = dumps(user_input_obj)
+
+    # Append reference file contents (same format as get_remote_file_content tool)
+    for content in reference_contents:
+        user_input += "\n\n" + content
 
     # Create messages
     messages: list[MessageParam] = [{"role": "user", "content": user_input}]
