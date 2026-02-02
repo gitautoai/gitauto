@@ -1,6 +1,6 @@
 """Integration tests for review_run_handler.py token accumulation"""
 
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 import pytest
 from services.webhook.review_run_handler import handle_review_run
 
@@ -64,13 +64,19 @@ def mock_review_comment_payload():
 @patch("services.webhook.review_run_handler.chat_with_agent")
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.update_usage")
-@patch("services.webhook.review_run_handler.ensure_node_packages")
-@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch(
+    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
+)
+@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch(
+    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
+)
 @patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
 @pytest.mark.asyncio
 async def test_review_run_handler_accumulates_tokens_correctly(
     _mock_prepare_repo,
-    _mock_start_async,
+    _mock_git_clone_to_efs,
+    _mock_ensure_node_packages,
     mock_update_usage,
     mock_create_empty_commit,
     mock_chat_with_agent,
@@ -175,14 +181,20 @@ async def test_review_run_handler_accumulates_tokens_correctly(
 @patch("services.webhook.review_run_handler.chat_with_agent")
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.update_usage")
-@patch("services.webhook.review_run_handler.ensure_node_packages")
-@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch(
+    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
+)
+@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch(
+    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
+)
 @patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
 @patch("services.webhook.review_run_handler.MAX_ITERATIONS", 2)
 @pytest.mark.asyncio
 async def test_review_run_handler_max_iterations_forces_verification(
     _mock_prepare_repo,
-    _mock_start_async,
+    _mock_git_clone_to_efs,
+    _mock_ensure_node_packages,
     _mock_update_usage,
     _mock_create_empty_commit,
     mock_chat_with_agent,

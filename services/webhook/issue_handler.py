@@ -14,7 +14,7 @@ from constants.agent import MAX_ITERATIONS
 from constants.messages import COMPLETED_PR, SETTINGS_LINKS
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
-from services.coverages.detect_unreachable_lines import detect_unreachable_lines
+from services.coverages.fix_unreachable_code import fix_unreachable_code
 from services.efs.get_efs_dir import get_efs_dir
 from services.node.ensure_node_packages import ensure_node_packages
 from services.git.get_clone_dir import get_clone_dir
@@ -441,14 +441,26 @@ async def create_pr_from_issue(
         base_args=base_args,
     )
 
-    # Check for unreachable code in target implementation file
+    # Fix unreachable code in target implementation file (auto-fix what we can)
     allowed_to_edit_files: list[str] = []
-    unreachable_lines = await detect_unreachable_lines(
+    unreachable_result = await fix_unreachable_code(
         impl_file_path, clone_dir, clone_task
     )
-    if unreachable_lines:
+
+    # If ESLint --fix made changes, push them to the remote branch
+    if unreachable_result.fixed_content:
+        replace_remote_file_content(
+            file_content=unreachable_result.fixed_content,
+            file_path=impl_file_path,
+            base_args=base_args,
+            commit_message=f"Fix unreachable code in {impl_file_path}",
+        )
+
+    # If there are remaining unfixable issues, ask the AI agent to handle them
+    if unreachable_result.unfixable_lines:
         details = "\n".join(
-            f"- Line {line}: {msg}" for line, msg in sorted(unreachable_lines.items())
+            f"- Line {line}: {msg}"
+            for line, msg in sorted(unreachable_result.unfixable_lines.items())
         )
         logger.info("Unreachable code detected in %s:\n%s", impl_file_path, details)
         allowed_to_edit_files = [impl_file_path]
@@ -457,7 +469,7 @@ async def create_pr_from_issue(
                 "role": "user",
                 "content": f"## Unreachable Code Detected in `{impl_file_path}`\n"
                 f"{details}\n\n"
-                f"This code is unreachable based on TypeScript types and cannot be tested. Remove the unnecessary conditions.",
+                f"ESLint `--fix` was already run but couldn't auto-fix these issues. This code is unreachable based on TypeScript types and cannot be tested. Remove the dead code branches or unnecessary conditions.",
             }
         )
 
