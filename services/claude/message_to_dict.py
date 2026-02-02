@@ -9,7 +9,7 @@ def message_to_dict(message: Any) -> dict[str, Any]:
         return message
 
     result = {}
-    for attr in ["role", "content", "tool_calls", "tool_call_id", "name"]:
+    for attr in ["role", "content", "tool_calls", "tool_use_id", "name"]:
         value = safe_get_attribute(message, attr, None)
         if value is not None:
             result[attr] = value

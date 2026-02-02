@@ -2,8 +2,7 @@
 from typing import Any
 
 # Third-party imports
-from openai.types import shared_params
-from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
+from anthropic.types import ToolUnionParam
 
 # Local imports
 from services.agents.verify_task_is_complete import verify_task_is_complete
@@ -20,16 +19,12 @@ from services.github.search.search_remote_file_contents import (
     search_remote_file_contents,
 )
 from services.github.trees.get_file_tree_list import get_file_tree_list
-
-# from services.google.search import google_search
-from services.openai.functions.properties import FILE_PATH
-
-# from services.openai.functions.search_google import SEARCH_GOOGLE
+from services.claude.tools.properties import FILE_PATH
 from utils.prompts.diff import DIFF_DESCRIPTION
 
 # Tool description best practices (Anthropic):
 # - What the tool does, when it should be used, parameter meanings, caveats
-# https://platform.claude.com/docs/en/agents-and-tools/tool-use/implement-tool-use
+# https://docs.anthropic.com/en/docs/build-with-claude/tool-use
 # https://www.anthropic.com/engineering/writing-tools-for-agents
 
 DIFF: dict[str, str] = {
@@ -53,26 +48,27 @@ END_LINE: dict[str, str] = {
     "description": "Ending line number for a specific range of lines to retrieve from the file. If start_line is not provided, will retrieve from beginning of file to end_line.",
 }
 
-# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-APPLY_DIFF_TO_FILE: shared_params.FunctionDefinition = {
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+APPLY_DIFF_TO_FILE: ToolUnionParam = {
     "name": "apply_diff_to_file",
     "description": "Applies a diff to a file in the GitHub repository. Must be called at least once to commit the changes otherwise you can't create a pull request and resolve the issue.",
-    "parameters": {
+    "input_schema": {
         "type": "object",
         "properties": {"file_path": FILE_PATH, "diff": DIFF},
         "required": ["file_path", "diff"],
-        "additionalProperties": False,  # For Structured Outpus
+        "additionalProperties": False,
     },
-    "strict": True,  # For Structured Outpus
+    "strict": True,
 }
 
-# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-GET_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+# NOTE: No strict=True here because line_number, keyword, start_line, end_line are optional
+GET_REMOTE_FILE_CONTENT: ToolUnionParam = {
     "name": "get_remote_file_content",
     "description": """
     Fetches the content of a file from GitHub remote repository given file_paths when you think you need to modify the file content. NEVER EVER call this function on the same file more than once as you will be penalized critically. Only access files that are likely to require modifications or verification, and keep file access to the necessary minimum.
     """,
-    "parameters": {
+    "input_schema": {
         "type": "object",
         "properties": {
             "file_path": FILE_PATH,
@@ -82,9 +78,8 @@ GET_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
             "end_line": END_LINE,
         },
         "required": ["file_path"],
-        # "additionalProperties": False,  # For Structured Outpus
+        "additionalProperties": False,
     },
-    # "strict": True,  # For Structured Outpus
 }
 
 QUERY: dict[str, str] = {
@@ -115,24 +110,25 @@ QUERY: dict[str, str] = {
     """,
 }
 
-# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-SEARCH_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+SEARCH_REMOTE_FILE_CONTENT: ToolUnionParam = {
     "name": "search_remote_file_contents",
     "description": "Search for keywords in a repository to identify files and specific sections that need to be corrected. Especially if you change variable definitions, as they are likely used elsewhere, so you should search for those places. To reduce bugs, search multiple times from as many angles as possible. Must be called at least once.",
-    "parameters": {
+    "input_schema": {
         "type": "object",
         "properties": {"query": QUERY},
         "required": ["query"],
-        "additionalProperties": False,  # For Structured Outpus
+        "additionalProperties": False,
     },
-    "strict": True,  # For Structured Outpus
+    "strict": True,
 }
 
-# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-GET_FILE_TREE_LIST: shared_params.FunctionDefinition = {
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+# NOTE: No strict=True here because dir_path is optional (not in required list)
+GET_FILE_TREE_LIST: ToolUnionParam = {
     "name": "get_file_tree_list",
     "description": "Lists files and directories at a specific directory path in the repository. Works like 'ls' command - shows contents of the specified directory, or root if no dir_path specified.",
-    "parameters": {
+    "input_schema": {
         "type": "object",
         "properties": {
             "dir_path": {
@@ -140,14 +136,15 @@ GET_FILE_TREE_LIST: shared_params.FunctionDefinition = {
                 "description": "Directory path to list contents of. Use empty string or omit for root directory. Examples: 'src', 'src/utils', 'tests/unit'.",
             }
         },
+        "additionalProperties": False,
     },
 }
 
-# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-MOVE_FILE: shared_params.FunctionDefinition = {
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+MOVE_FILE: ToolUnionParam = {
     "name": "move_file",
     "description": "Moves a file to a new location in the GitHub repository. This is useful for resolving naming conflicts, improving code organization, or fixing pytest import collisions caused by duplicate filenames.",
-    "parameters": {
+    "input_schema": {
         "type": "object",
         "properties": {
             "old_file_path": {
@@ -165,11 +162,11 @@ MOVE_FILE: shared_params.FunctionDefinition = {
     "strict": True,
 }
 
-# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-DELETE_FILE: shared_params.FunctionDefinition = {
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+DELETE_FILE: ToolUnionParam = {
     "name": "delete_file",
     "description": "Deletes a file from the GitHub repository. Use this to remove unused or duplicate files that cause conflicts.",
-    "parameters": {
+    "input_schema": {
         "type": "object",
         "properties": {
             "file_path": FILE_PATH,
@@ -180,13 +177,14 @@ DELETE_FILE: shared_params.FunctionDefinition = {
     "strict": True,
 }
 
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
 # No parameters needed - agent calls with empty {} (JSON Schema requires the object structure)
 # In API payload: verify_task_is_complete({}) - the empty object must be explicitly sent
 # Conceptually equivalent to verify_task_is_complete() - a function with no arguments
-VERIFY_TASK_IS_COMPLETE: shared_params.FunctionDefinition = {
+VERIFY_TASK_IS_COMPLETE: ToolUnionParam = {
     "name": "verify_task_is_complete",
     "description": "Call this when you have finished making all required changes for the ENTIRE original issue - not after just one step. You MUST call this to complete the task - do not just stop calling tools.",
-    "parameters": {
+    "input_schema": {
         "type": "object",
         "properties": {},
         "required": [],
@@ -195,10 +193,11 @@ VERIFY_TASK_IS_COMPLETE: shared_params.FunctionDefinition = {
     "strict": True,
 }
 
-CREATE_COMMENT: shared_params.FunctionDefinition = {
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+CREATE_COMMENT: ToolUnionParam = {
     "name": "create_comment",
     "description": "Creates a note/notification on the GitHub issue or pull request. The user is not there - they will see it later. After commenting, continue working on what you CAN do. WHEN TO USE: To inform the user about something they need to know (e.g., you are restricted to test files but the fix requires source file changes, or secrets need to be added via GitHub UI). WHEN NOT TO USE: Status updates, progress reports, or asking questions. WHAT TO SAY: State the fact briefly - what you found and what the user needs to do later. Do not ask questions.",
-    "parameters": {
+    "input_schema": {
         "type": "object",
         "properties": {
             "body": {
@@ -212,25 +211,23 @@ CREATE_COMMENT: shared_params.FunctionDefinition = {
     "strict": True,
 }
 
-# See https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-_TOOLS: list[ChatCompletionToolParam] = [
-    {"type": "function", "function": APPLY_DIFF_TO_FILE},
-    {"type": "function", "function": CREATE_COMMENT},
-    {"type": "function", "function": DELETE_FILE},
-    {"type": "function", "function": GET_FILE_TREE_LIST},
-    {"type": "function", "function": GET_REMOTE_FILE_CONTENT},
-    {"type": "function", "function": MOVE_FILE},
-    {"type": "function", "function": REPLACE_REMOTE_FILE_CONTENT},
-    # {"type": "function", "function": SEARCH_GOOGLE},
-    {"type": "function", "function": VERIFY_TASK_IS_COMPLETE},
+_TOOLS: list[ToolUnionParam] = [
+    APPLY_DIFF_TO_FILE,
+    CREATE_COMMENT,
+    DELETE_FILE,
+    GET_FILE_TREE_LIST,
+    GET_REMOTE_FILE_CONTENT,
+    MOVE_FILE,
+    REPLACE_REMOTE_FILE_CONTENT,
+    VERIFY_TASK_IS_COMPLETE,
 ]
 
-TOOLS_FOR_ISSUES: list[ChatCompletionToolParam] = _TOOLS + [
-    {"type": "function", "function": SEARCH_REMOTE_FILE_CONTENT},
+TOOLS_FOR_ISSUES: list[ToolUnionParam] = _TOOLS + [
+    SEARCH_REMOTE_FILE_CONTENT,
 ]
 
 # search_remote_file_contents only searches default branch, not PR branch
-TOOLS_FOR_PRS: list[ChatCompletionToolParam] = _TOOLS + [
+TOOLS_FOR_PRS: list[ToolUnionParam] = _TOOLS + [
     # TODO: Add search_local_file_contents when implemented
 ]
 

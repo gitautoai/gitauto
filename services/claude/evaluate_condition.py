@@ -2,7 +2,7 @@ import json
 from typing import Literal, TypedDict
 
 from constants.claude import CLAUDE_MAX_TOKENS, CLAUDE_MODEL_ID_45
-from services.anthropic.client import claude
+from services.claude.client import claude
 from utils.error.handle_exceptions import handle_exceptions
 
 

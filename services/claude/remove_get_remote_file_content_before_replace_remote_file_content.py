@@ -1,13 +1,16 @@
 # Standard imports
 from copy import deepcopy
 
+# Third party imports
+from anthropic.types import MessageParam
+
 # Local imports
 from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=lambda messages: messages)
 def remove_get_remote_file_content_before_replace_remote_file_content(
-    messages: list[dict],
+    messages: list[MessageParam],
 ):
     if not messages:
         return messages

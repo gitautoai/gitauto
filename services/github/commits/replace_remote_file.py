@@ -2,24 +2,24 @@
 import base64
 
 # Third party imports
-from openai.types import shared_params
+from anthropic.types import ToolUnionParam
 import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
-from services.openai.functions.properties import FILE_PATH
+from services.claude.tools.properties import FILE_PATH
 from utils.error.handle_exceptions import handle_exceptions
 from utils.text.ensure_final_newline import ensure_final_newline
 from utils.text.sort_imports import sort_imports
 from utils.text.strip_trailing_spaces import strip_trailing_spaces
 
-# Define the function for replacing remote file content
-REPLACE_REMOTE_FILE_CONTENT: shared_params.FunctionDefinition = {
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+REPLACE_REMOTE_FILE_CONTENT: ToolUnionParam = {
     "name": "replace_remote_file_content",
     "description": "Replaces the content of a remote file directly in the GitHub repository. This function is ideal for scenarios where the entire file or many lines need to be rewritten, such as converting a class-based file to a function-based one or making comprehensive updates. Using a unified diff format for such extensive changes can be inefficient, as it requires specifying changes for each line, resulting in a diff size that is twice the number of lines in the file. In contrast, this function allows you to provide the complete updated content, which is more efficient for large-scale changes. For minor modifications, where only a small part of the file needs to be changed, using a diff-based approach is more appropriate.",
-    "parameters": {
+    "input_schema": {
         "type": "object",
         "properties": {
             "file_path": FILE_PATH,

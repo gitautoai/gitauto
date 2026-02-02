@@ -1,5 +1,6 @@
-# OpenAI: We recommend including instructions regarding when to call a function in the system prompt, while using the function definition to provide instructions on how to call the function and how to generate the parameters.
-# https://platform.openai.com/docs/guides/function-calling/should-i-include-function-call-instructions-in-the-tool-specification-or-in-the-system-prompt
+# Anthropic: Put usage instructions in system prompt, technical details in tool definitions
+# https://docs.anthropic.com/en/docs/build-with-claude/tool-use
+# https://www.anthropic.com/engineering/writing-tools-for-agents
 
 DIFF_DESCRIPTION = """
 A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff --unified=0`. This diff must specifically be in one of the following three formats: addition, modification, or deletion:

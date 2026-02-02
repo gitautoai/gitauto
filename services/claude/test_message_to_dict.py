@@ -1,5 +1,5 @@
 # pylint: disable=import-outside-toplevel
-from services.anthropic.message_to_dict import message_to_dict
+from services.claude.message_to_dict import message_to_dict
 
 
 def create_mock_message(**kwargs):
@@ -21,7 +21,7 @@ def test_message_to_dict_with_object_all_attributes():
         role="assistant",
         content="Hello there",
         tool_calls=[{"type": "function", "function": {"name": "get_weather"}}],
-        tool_call_id="call_123",
+        tool_use_id="call_123",
         name="weather_tool",
     )
 
@@ -31,7 +31,7 @@ def test_message_to_dict_with_object_all_attributes():
         "role": "assistant",
         "content": "Hello there",
         "tool_calls": [{"type": "function", "function": {"name": "get_weather"}}],
-        "tool_call_id": "call_123",
+        "tool_use_id": "call_123",
         "name": "weather_tool",
     }
 
@@ -57,7 +57,7 @@ def test_message_to_dict_with_object_no_attributes():
 def test_message_to_dict_with_object_none_values():
     """Test with an object that has attributes with None values."""
     message = create_mock_message(
-        role="user", content=None, tool_calls=None, tool_call_id=None, name=None
+        role="user", content=None, tool_calls=None, tool_use_id=None, name=None
     )
 
     result = message_to_dict(message)

@@ -1,6 +1,6 @@
 import pytest
 
-from services.anthropic.exceptions import (
+from services.claude.exceptions import (
     ClaudeOverloadedError,
     ClaudeAuthenticationError,
 )

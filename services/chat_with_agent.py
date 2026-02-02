@@ -1,18 +1,15 @@
 # Standard imports
 import inspect
-from typing import Any
 
 # Third party imports
-from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
+from anthropic.types import MessageParam, ToolResultBlockParam, ToolUnionParam
 
 # Local imports
-from config import OPENAI_MODEL_ID_GPT_5
-from services.anthropic.chat_with_functions import chat_with_claude
+from services.claude.chat_with_claude import chat_with_claude
 from services.github.comments.update_comment import update_comment
 from services.github.types.github_types import BaseArgs
 from services.model_selection import get_model, try_next_model
-from services.openai.chat_with_functions import chat_with_openai
-from services.openai.functions.functions import FILE_EDIT_TOOLS, tools_to_call
+from services.claude.tools.tools import FILE_EDIT_TOOLS, tools_to_call
 from services.slack.slack_notify import slack_notify
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_target_test_file import is_target_test_file
@@ -27,10 +24,10 @@ from utils.progress_bar.progress_bar import create_progress_bar
 @handle_exceptions(raise_on_error=True)
 async def chat_with_agent(
     *,
-    messages: list[dict[str, Any]],
+    messages: list[MessageParam],
     system_message: str,
     base_args: BaseArgs,
-    tools: list[ChatCompletionToolParam],
+    tools: list[ToolUnionParam],
     p: int = 0,
     log_messages: list[str] | None = None,
     usage_id: int | None = None,
@@ -46,19 +43,14 @@ async def chat_with_agent(
         logger.info("Using model: %s", current_model)
 
         try:
-            provider = (
-                chat_with_openai
-                if current_model == OPENAI_MODEL_ID_GPT_5
-                else chat_with_claude
-            )
             (
                 response_message,
-                tool_call_id,
+                tool_use_id,
                 tool_name,
                 tool_args,
                 token_input,
                 token_output,
-            ) = provider(
+            ) = chat_with_claude(
                 messages=messages,
                 system_content=system_message,
                 tools=tools,
@@ -73,7 +65,7 @@ async def chat_with_agent(
                 raise
 
     # Return if no tool calls (agent returned text without calling a tool)
-    if not tool_name:
+    if not tool_name or not tool_use_id:
         logger.info("No tools were called. Response: %s", response_message)
         messages.append(response_message)
         is_completed = False
@@ -172,18 +164,19 @@ async def chat_with_agent(
             if validation_error:
                 logger.error(validation_error)
                 messages.append(response_message)
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "tool_result",
-                                "tool_use_id": tool_call_id,
-                                "content": validation_error,
-                            }
-                        ],
-                    }
-                )
+                tool_result_block: ToolResultBlockParam = {
+                    "type": "tool_result",
+                    "tool_use_id": tool_use_id,
+                    "content": validation_error,
+                }
+
+                # Claude expects a user message for tool_result
+                # https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#sequential-tools
+                tool_result_msg: MessageParam = {
+                    "role": "user",
+                    "content": [tool_result_block],
+                }
+                messages.append(tool_result_msg)
                 return await chat_with_agent(
                     messages=messages,
                     system_message=system_message,
@@ -210,18 +203,19 @@ async def chat_with_agent(
             is_success = tool_result.get("success", False)
             tool_message = tool_result.get("message", "")
             messages.append(response_message)
-            messages.append(
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": tool_call_id,
-                            "content": tool_message,
-                        }
-                    ],
-                }
-            )
+            tool_result_block: ToolResultBlockParam = {
+                "type": "tool_result",
+                "tool_use_id": tool_use_id,
+                "content": tool_message,
+            }
+
+            # Claude expects a user message for tool_result
+            # https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#sequential-tools
+            tool_result_msg: MessageParam = {
+                "role": "user",
+                "content": [tool_result_block],
+            }
+            messages.append(tool_result_msg)
             if is_success:
                 add_log_message(tool_message, log_messages)
                 update_comment(
@@ -251,18 +245,19 @@ async def chat_with_agent(
     # Append the function call to the messages
     logger.info("Tool called: %s. Response: %s", tool_name, response_message)
     messages.append(response_message)
-    messages.append(
-        {
-            "role": "user",  # Claude expects a user message for tool_result https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#sequential-tools
-            "content": [
-                {
-                    "type": "tool_result",
-                    "tool_use_id": tool_call_id,
-                    "content": str(tool_result),
-                }
-            ],
-        }
-    )
+    tool_result_block: ToolResultBlockParam = {
+        "type": "tool_result",
+        "tool_use_id": tool_use_id,
+        "content": str(tool_result),
+    }
+
+    # Claude expects a user message for tool_result
+    # https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#sequential-tools
+    tool_result_msg: MessageParam = {
+        "role": "user",
+        "content": [tool_result_block],
+    }
+    messages.append(tool_result_msg)
 
     # Initialize msg variable
     msg = ""

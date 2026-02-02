@@ -15,7 +15,7 @@ async def test_chat_with_agent_passes_usage_id_to_claude(
     mock_get_model.return_value = "claude-sonnet-4-0"
     mock_chat_with_claude.return_value = (
         {"role": "assistant", "content": "response"},
-        None,  # tool_call_id
+        None,  # tool_use_id
         None,  # tool_name
         None,  # tool_args
         15,  # token_input
@@ -35,37 +35,6 @@ async def test_chat_with_agent_passes_usage_id_to_claude(
     mock_chat_with_claude.assert_called_once()
     call_args = mock_chat_with_claude.call_args[1]
     assert call_args["usage_id"] == 123
-
-
-@pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_openai")
-async def test_chat_with_agent_passes_usage_id_to_openai(
-    mock_chat_with_openai, mock_get_model
-):
-    mock_get_model.return_value = "gpt-5"
-    mock_chat_with_openai.return_value = (
-        {"role": "assistant", "content": "response"},
-        None,  # tool_call_id
-        None,  # tool_name
-        None,  # tool_args
-        20,  # token_input
-        8,  # token_output
-    )
-
-    base_args = Mock()
-
-    await chat_with_agent(
-        messages=[{"role": "user", "content": "test"}],
-        system_message="test system message",
-        base_args=base_args,
-        tools=[],
-        usage_id=456,
-    )
-
-    mock_chat_with_openai.assert_called_once()
-    call_args = mock_chat_with_openai.call_args[1]
-    assert call_args["usage_id"] == 456
 
 
 @pytest.mark.asyncio
@@ -533,7 +502,8 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
     is_completed = result[3]
     assert is_completed is False
     messages = result[0]
-    last_message = messages[-1]["content"][0]["content"]
+    last_content = cast(list, messages[-1]["content"])
+    last_message = last_content[0]["content"]
     assert "Error: Cannot complete task" in last_message
 
 

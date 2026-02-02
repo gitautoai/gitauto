@@ -2,7 +2,7 @@
 import json
 
 # Local imports
-from services.openai.functions.properties import FILE_PATH
+from services.claude.tools.properties import FILE_PATH
 
 
 def test_file_path_property_structure():

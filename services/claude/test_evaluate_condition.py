@@ -3,12 +3,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from services.anthropic.evaluate_condition import evaluate_condition
+from services.claude.evaluate_condition import evaluate_condition
 
 
 @pytest.fixture
 def mock_claude():
-    with patch("services.anthropic.evaluate_condition.claude") as mock:
+    with patch("services.claude.evaluate_condition.claude") as mock:
         yield mock
 
 

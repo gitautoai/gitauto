@@ -1,12 +1,13 @@
+from typing import cast
 from unittest.mock import Mock, patch
 
-from openai.types.chat import ChatCompletionToolParam
+from anthropic.types import MessageParam, ToolUnionParam
 
-from services.anthropic.chat_with_functions import chat_with_claude
+from services.claude.chat_with_claude import chat_with_claude
 
 
-@patch("services.anthropic.chat_with_functions.insert_llm_request")
-@patch("services.anthropic.chat_with_functions.claude")
+@patch("services.claude.chat_with_claude.insert_llm_request")
+@patch("services.claude.chat_with_claude.claude")
 def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
     mock_response = Mock()
     mock_response.content = [Mock(type="text", text="Hello! How can I help you?")]
@@ -15,16 +16,18 @@ def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
     mock_claude.messages.create.return_value = mock_response
     mock_claude.messages.count_tokens.return_value = Mock(input_tokens=20)
 
-    messages = [{"role": "user", "content": "Hello"}]
+    # Test fixtures use cast as allowed by CLAUDE.md
+    messages = cast(list[MessageParam], [{"role": "user", "content": "Hello"}])
     system_content = "You are a helpful assistant."
-    tools = []
+    tools: list[ToolUnionParam] = []
 
     result = chat_with_claude(
         messages=messages, system_content=system_content, tools=tools, usage_id=123
     )
 
     assert result[0]["role"] == "assistant"
-    assert result[0]["content"][0]["text"] == "Hello! How can I help you?"
+    content = cast(list, result[0]["content"])
+    assert content[0]["text"] == "Hello! How can I help you?"
     assert result[4] == 20  # input tokens
     assert result[5] == 15  # output tokens
 
@@ -36,8 +39,8 @@ def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
     assert call_args["output_tokens"] == 15
 
 
-@patch("services.anthropic.chat_with_functions.insert_llm_request")
-@patch("services.anthropic.chat_with_functions.claude")
+@patch("services.claude.chat_with_claude.insert_llm_request")
+@patch("services.claude.chat_with_claude.claude")
 def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
     mock_tool_use = Mock()
     mock_tool_use.type = "tool_use"
@@ -55,32 +58,32 @@ def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
     mock_claude.messages.create.return_value = mock_response
     mock_claude.messages.count_tokens.return_value = Mock(input_tokens=30)
 
-    messages = [{"role": "user", "content": "Do something"}]
+    messages = cast(list[MessageParam], [{"role": "user", "content": "Do something"}])
     system_content = "You are a helpful assistant."
-    tools: list[ChatCompletionToolParam] = [
-        {
-            "type": "function",
-            "function": {
+    tools = cast(
+        list[ToolUnionParam],
+        [
+            {
                 "name": "test_function",
                 "description": "Test",
-                "parameters": {},
-            },
-        }
-    ]
+                "input_schema": {"type": "object", "properties": {}},
+            }
+        ],
+    )
 
     result = chat_with_claude(
         messages=messages, system_content=system_content, tools=tools, usage_id=None
     )
 
-    assert result[1] == "tool_123"  # tool_call_id
+    assert result[1] == "tool_123"  # tool_use_id
     assert result[2] == "test_function"  # tool_name
     assert result[3] == {"param": "value"}  # tool_args
 
     mock_insert_llm_request.assert_not_called()
 
 
-@patch("services.anthropic.chat_with_functions.insert_llm_request")
-@patch("services.anthropic.chat_with_functions.claude")
+@patch("services.claude.chat_with_claude.insert_llm_request")
+@patch("services.claude.chat_with_claude.claude")
 def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request):
     mock_response = Mock()
     mock_response.content = [Mock(type="text", text="Response")]
@@ -90,7 +93,7 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
     mock_claude.messages.count_tokens.return_value = Mock(input_tokens=10)
 
     result = chat_with_claude(
-        messages=[{"role": "user", "content": "test"}],
+        messages=cast(list[MessageParam], [{"role": "user", "content": "test"}]),
         system_content="assistant",
         tools=[],
         usage_id=None,
@@ -101,16 +104,16 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
 
 
 @patch(
-    "services.anthropic.chat_with_functions.remove_duplicate_get_remote_file_content_results"
+    "services.claude.chat_with_claude.remove_duplicate_get_remote_file_content_results"
 )
 @patch(
-    "services.anthropic.chat_with_functions.remove_get_remote_file_content_before_replace_remote_file_content"
+    "services.claude.chat_with_claude.remove_get_remote_file_content_before_replace_remote_file_content"
 )
 @patch(
-    "services.anthropic.chat_with_functions.remove_outdated_apply_diff_to_file_attempts_and_results"
+    "services.claude.chat_with_claude.remove_outdated_apply_diff_to_file_attempts_and_results"
 )
-@patch("services.anthropic.chat_with_functions.insert_llm_request")
-@patch("services.anthropic.chat_with_functions.claude")
+@patch("services.claude.chat_with_claude.insert_llm_request")
+@patch("services.claude.chat_with_claude.claude")
 def test_chat_with_claude_calls_deduplication(
     mock_claude,
     _mock_insert_llm_request,
@@ -139,7 +142,9 @@ def test_chat_with_claude_calls_deduplication(
 
     # Call the function
     chat_with_claude(
-        messages=original_messages, system_content="You are helpful", tools=[]
+        messages=cast(list[MessageParam], original_messages),
+        system_content="You are helpful",
+        tools=[],
     )
 
     # Verify all three functions were called

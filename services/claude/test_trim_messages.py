@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 # Local imports
-from services.anthropic.trim_messages import trim_messages_to_token_limit
+from services.claude.trim_messages import trim_messages_to_token_limit
 
 
 def make_message(role, content="test"):
