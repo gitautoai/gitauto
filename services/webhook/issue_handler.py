@@ -304,6 +304,7 @@ async def create_pr_from_issue(
         create_comment(body=description, base_args=base_args)
 
     # Check out the URLs in the issue body
+    reference_file_paths: set[str] = set()
     reference_contents: list[str] = []
     for url in github_urls:
         comment_body = "Also checking out the URLs in the issue body."
@@ -313,8 +314,9 @@ async def create_pr_from_issue(
             body=create_progress_bar(p=p, msg="\n".join(log_messages)),
             base_args=base_args,
         )
-        content = get_remote_file_content_by_url(url=url, token=token)
+        file_path, content = get_remote_file_content_by_url(url=url, token=token)
         logger.info("```%s\n%s```\n", url, content)
+        reference_file_paths.add(file_path)
         reference_contents.append(content)
 
     today = datetime.now().strftime("%Y-%m-%d")
@@ -322,13 +324,17 @@ async def create_pr_from_issue(
     # Extract target implementation file and find test file candidates
     impl_file_path = get_impl_file_from_issue_title(issue_title)
     test_file_path_candidates = guess_test_file_path(impl_file_path)
-    impl_file_content = get_raw_content(
-        owner=owner_name,
-        repo=repo_name,
-        file_path=impl_file_path,
-        ref=base_branch,
-        token=token,
-    )
+
+    # Skip fetching impl_file if already in reference_contents (avoids duplicate)
+    impl_file_content = ""
+    if impl_file_path not in reference_file_paths:
+        impl_file_content = get_raw_content(
+            owner=owner_name,
+            repo=repo_name,
+            file_path=impl_file_path,
+            ref=base_branch,
+            token=token,
+        )
     test_files: dict[str, str] = {}
     p += 5
     add_log_message(f"Read target file: `{impl_file_path}`", log_messages)
@@ -366,25 +372,35 @@ async def create_pr_from_issue(
         get_file_tree_list(base_args=base_args, dir_path=parent) if target_dir else []
     )
 
-    user_input = dumps(
-        {
-            "today": today,
-            "owner": owner_name,
-            "repo": repo_name,
-            "issue_title": issue_title,
-            "issue_body": issue_body,
-            "reference_contents": reference_contents,
-            "issue_comments": issue_comments,
-            "parent_issue_title": parent_issue_title,
-            "parent_issue_body": parent_issue_body,
-            "impl_file_path": impl_file_path,
-            "impl_file_content": impl_file_content,
-            "test_files": test_files,
-            "root_files": root_files,
-            "target_dir": target_dir,
-            "target_dir_files": target_dir_files,
-        }
-    )
+    user_input_obj: dict[str, object] = {
+        "today": today,
+        "owner": owner_name,
+        "repo": repo_name,
+        "issue_title": issue_title,
+        "issue_body": issue_body,
+        "impl_file_path": impl_file_path,
+    }
+
+    # Only include non-empty values to reduce token usage
+    if reference_contents:
+        user_input_obj["reference_contents"] = reference_contents
+    if issue_comments:
+        user_input_obj["issue_comments"] = issue_comments
+    if parent_issue_title:
+        user_input_obj["parent_issue_title"] = parent_issue_title
+    if parent_issue_body:
+        user_input_obj["parent_issue_body"] = parent_issue_body
+    if impl_file_content:
+        user_input_obj["impl_file_content"] = impl_file_content
+    if test_files:
+        user_input_obj["test_files"] = test_files
+    if root_files:
+        user_input_obj["root_files"] = root_files
+    if target_dir:
+        user_input_obj["target_dir"] = target_dir
+    if target_dir_files:
+        user_input_obj["target_dir_files"] = target_dir_files
+    user_input = dumps(user_input_obj)
 
     # Create messages
     messages: list[MessageParam] = [{"role": "user", "content": user_input}]
@@ -444,7 +460,11 @@ async def create_pr_from_issue(
     # Fix unreachable code in target implementation file (auto-fix what we can)
     allowed_to_edit_files: list[str] = []
     unreachable_result = await fix_unreachable_code(
-        impl_file_path, clone_dir, clone_task
+        file_path=impl_file_path,
+        repo_dir=clone_dir,
+        clone_task=clone_task,
+        root_files=root_files,
+        base_args=base_args,
     )
 
     # If ESLint --fix made changes, push them to the remote branch

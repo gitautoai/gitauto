@@ -4,15 +4,17 @@ from services.github.types.github_types import BaseArgs
 from services.node.read_file_content import read_file_content
 from utils.error.handle_exceptions import handle_exceptions
 
+# Flat configs first (ESLint 9+ default), then legacy configs
 CONFIG_FILES = [
-    ".eslintrc.json",
+    "eslint.config.mjs",
+    "eslint.config.js",
+    "eslint.config.cjs",
     ".eslintrc.js",
+    ".eslintrc.cjs",
+    ".eslintrc.json",
     ".eslintrc.yml",
     ".eslintrc.yaml",
     ".eslintrc",
-    "eslint.config.js",
-    "eslint.config.mjs",
-    "eslint.config.cjs",
 ]
 
 

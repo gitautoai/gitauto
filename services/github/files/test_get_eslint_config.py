@@ -450,17 +450,18 @@ def test_get_eslint_config_handles_json_decode_error(base_args):
 
 
 def test_get_eslint_config_first_found_wins(base_args):
+    """Test that flat configs are checked before legacy configs."""
     with patch(
         "services.github.files.get_eslint_config.read_file_content"
     ) as mock_read:
 
         def side_effect(file_name, **kwargs):
+            if file_name == "eslint.config.mjs":
+                return "export default [];"
             if file_name == ".eslintrc.json":
                 return '{"rules": {"no-console": "error"}}'
             if file_name == ".eslintrc.js":
                 return "module.exports = { rules: {} };"
-            if file_name == ".eslintrc":
-                return '{"rules": {}}'
             return None
 
         mock_read.side_effect = side_effect
@@ -468,7 +469,8 @@ def test_get_eslint_config_first_found_wins(base_args):
         result = get_eslint_config(base_args)
 
         assert result is not None
-        assert result["filename"] == ".eslintrc.json"
+        # eslint.config.mjs is checked first (flat config priority)
+        assert result["filename"] == "eslint.config.mjs"
 
 
 def test_get_eslint_config_skips_to_package_json_when_no_config_files(base_args):
@@ -499,4 +501,4 @@ def test_get_eslint_config_skips_to_package_json_when_no_config_files(base_args)
 
         assert result is not None
         assert result["filename"] == "package.json"
-        assert call_count == 9
+        assert call_count == 10  # 9 config files + 1 package.json

@@ -6,6 +6,8 @@ import subprocess
 from dataclasses import dataclass, field
 
 from config import UTF8
+from services.github.files.get_eslint_config import get_eslint_config
+from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
@@ -17,7 +19,14 @@ class UnreachableCodeResult:
 
 
 @handle_exceptions(default_return_value=UnreachableCodeResult(), raise_on_error=False)
-async def fix_unreachable_code(file_path: str, repo_dir: str, clone_task: asyncio.Task):
+async def fix_unreachable_code(
+    *,
+    file_path: str,
+    repo_dir: str,
+    clone_task: asyncio.Task,
+    root_files: list[str],
+    base_args: BaseArgs,
+):
     result = UnreachableCodeResult()
 
     if not file_path.endswith((".ts", ".tsx", ".js", ".jsx")):
@@ -35,7 +44,6 @@ async def fix_unreachable_code(file_path: str, repo_dir: str, clone_task: asynci
         ),
         ("node_modules/@typescript-eslint/parser", "@typescript-eslint/parser"),
         ("node_modules/typescript", "typescript"),
-        ("tsconfig.json", "tsconfig.json"),
     ]
     for path, name in required_paths:
         full_path = os.path.join(repo_dir, path)
@@ -43,14 +51,32 @@ async def fix_unreachable_code(file_path: str, repo_dir: str, clone_task: asynci
             logger.info("%s not found, skipping unreachable code fix", name)
             return result
 
+    if "tsconfig.json" not in root_files:
+        logger.info("No tsconfig.json found, skipping unreachable code fix")
+        return result
+
     # Read original content to detect if --fix changed anything
     full_file_path = os.path.join(repo_dir, file_path)
     with open(full_file_path, "r", encoding=UTF8) as f:
         original_content = f.read()
 
-    # Run ESLint with --fix to auto-fix what it can
-    cmd = f"npx eslint {file_path} --fix --rule '@typescript-eslint/no-unnecessary-condition: error' --format json"
+    # Build ESLint command with --parser-options for typed linting fallback
+    # This ensures typed linting works even if repo config lacks parserOptions.project
+    cmd = (
+        f"npx eslint {file_path} --fix "
+        f"--rule '@typescript-eslint/no-unnecessary-condition: error' "
+        f"--parser-options project:tsconfig.json "
+        f"--format json"
+    )
     logger.info("Running ESLint: %s", cmd)
+
+    # Set environment for ESLint config mode (legacy configs need ESLINT_USE_FLAT_CONFIG=false)
+    env = os.environ.copy()
+    eslint_config = get_eslint_config(base_args)
+    if eslint_config and eslint_config["filename"].startswith(".eslintrc"):
+        env["ESLINT_USE_FLAT_CONFIG"] = "false"
+        logger.info("Using legacy ESLint config mode")
+
     eslint_result = subprocess.run(
         cmd,
         cwd=repo_dir,
@@ -59,6 +85,7 @@ async def fix_unreachable_code(file_path: str, repo_dir: str, clone_task: asynci
         timeout=60,
         check=False,
         shell=True,
+        env=env,
     )
     logger.info("ESLint completed with return code %d", eslint_result.returncode)
 

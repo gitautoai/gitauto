@@ -19,8 +19,8 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.urls.parse_urls import parse_github_url
 
 
-@handle_exceptions(default_return_value="", raise_on_error=False)
-def get_remote_file_content_by_url(url: str, token: str) -> str:
+@handle_exceptions(default_return_value=("", ""), raise_on_error=False)
+def get_remote_file_content_by_url(url: str, token: str):
     """https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28"""
     parts = parse_github_url(url)
     owner, repo, ref, file_path = (
@@ -51,4 +51,4 @@ def get_remote_file_content_by_url(url: str, token: str) -> str:
         file_path_with_lines = file_path
 
     numbered_content: str = "\n".join(numbered_lines)
-    return f"## {file_path_with_lines}\n\n{numbered_content}"
+    return file_path, f"## {file_path_with_lines}\n\n{numbered_content}"

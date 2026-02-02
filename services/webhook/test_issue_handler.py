@@ -322,6 +322,7 @@ async def test_image_urls_processing(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -338,7 +339,7 @@ async def test_image_urls_processing(
     ]
     mock_get_base64.return_value = "base64encodedimage"
     mock_describe_image.return_value = "Description of the image"
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -422,6 +423,7 @@ async def test_image_unsupported_format_skipped(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -435,7 +437,7 @@ async def test_image_unsupported_format_skipped(
     mock_extract_image_urls.return_value = [
         {"url": "http://example.com/image.svg", "alt": "svg image"}
     ]
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -516,6 +518,7 @@ async def test_image_base64_fetch_failed(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -530,7 +533,7 @@ async def test_image_base64_fetch_failed(
         {"url": "http://example.com/image.png", "alt": "image"}
     ]
     mock_get_base64.return_value = None
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -612,6 +615,7 @@ async def test_timeout_approaching_breaks_loop(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -623,7 +627,7 @@ async def test_timeout_approaching_breaks_loop(
     }
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -705,6 +709,7 @@ async def test_branch_deleted_breaks_loop(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -716,7 +721,7 @@ async def test_branch_deleted_breaks_loop(
     }
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = False
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -800,6 +805,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -811,7 +817,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     }
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -910,6 +916,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -921,7 +928,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     }
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -1016,6 +1023,7 @@ async def test_retry_counter_reset_on_successful_loop(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -1027,7 +1035,7 @@ async def test_retry_counter_reset_on_successful_loop(
     }
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -1113,6 +1121,7 @@ async def test_non_test_file_skipped_in_header_merge(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -1124,7 +1133,7 @@ async def test_non_test_file_skipped_in_header_merge(
     }
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -1213,6 +1222,7 @@ async def test_test_file_header_merge(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -1224,7 +1234,7 @@ async def test_test_file_header_merge(
     }
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -1318,6 +1328,7 @@ async def test_test_file_header_merge_no_content(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -1329,7 +1340,7 @@ async def test_test_file_header_merge_no_content(
     }
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -1422,6 +1433,7 @@ async def test_test_file_header_merge_no_change(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -1433,7 +1445,7 @@ async def test_test_file_header_merge_no_change(
     }
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -1529,6 +1541,7 @@ async def test_credits_depleted_email_sent(
         "allow_edit_any_file": True,
     }
     mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -1540,7 +1553,7 @@ async def test_credits_depleted_email_sent(
     }
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
-    mock_get_remote_file.return_value = ""
+    mock_get_remote_file.return_value = ("", "")
     mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -1652,7 +1665,7 @@ async def test_issue_handler_token_accumulation(
     mock_create_progress_bar.return_value = "Progress bar content"
     mock_add_reaction_to_issue.return_value = None
     mock_get_comments.return_value = []
-    mock_get_remote_file_content_by_url.return_value = ""
+    mock_get_remote_file_content_by_url.return_value = ("", "")
     mock_get_latest_remote_commit_sha.return_value = "abc123"
     mock_create_remote_branch.return_value = None
 
@@ -1861,7 +1874,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_slack_notify.return_value = "thread_1"
     mock_add_reaction_to_issue.return_value = None
     mock_get_comments.return_value = []
-    mock_get_remote_file_content_by_url.return_value = ""
+    mock_get_remote_file_content_by_url.return_value = ("", "")
     mock_get_latest_remote_commit_sha.return_value = "abc123"
     mock_create_remote_branch.return_value = None
     mock_create_pull_request.return_value = (

@@ -95,7 +95,7 @@ class TestGetRemoteFileContentByUrl:
         mock_requests_get.return_value = mock_github_response
 
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py"
-        result = get_remote_file_content_by_url(url, "test-token")
+        file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         expected_content = (
             "## src/test.py\n\n"
@@ -106,7 +106,8 @@ class TestGetRemoteFileContentByUrl:
             "5: if __name__ == '__main__':\n"
             "6:     hello_world()"
         )
-        assert result == expected_content
+        assert file_path == "src/test.py"
+        assert content == expected_content
 
         mock_parse_url.assert_called_once_with(url)
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -134,7 +135,7 @@ class TestGetRemoteFileContentByUrl:
         mock_requests_get.return_value = mock_github_response
 
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py#L2-L4"
-        result = get_remote_file_content_by_url(url, "test-token")
+        file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         expected_content = (
             "## src/test.py#L2-L4\n\n"
@@ -142,7 +143,8 @@ class TestGetRemoteFileContentByUrl:
             "3:     return 'success'\n"
             "4: "
         )
-        assert result == expected_content
+        assert file_path == "src/test.py"
+        assert content == expected_content
 
         mock_parse_url.assert_called_once_with(url)
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -169,10 +171,11 @@ class TestGetRemoteFileContentByUrl:
         mock_requests_get.return_value = mock_github_response
 
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py#L3"
-        result = get_remote_file_content_by_url(url, "test-token")
+        file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         expected_content = "## src/test.py#L3\n\n3:     return 'success'"
-        assert result == expected_content
+        assert file_path == "src/test.py"
+        assert content == expected_content
 
         mock_parse_url.assert_called_once_with(url)
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -208,8 +211,8 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/nonexistent.py"
         result = get_remote_file_content_by_url(url, "test-token")
 
-        # The handle_exceptions decorator should catch the error and return empty string
-        assert result == ""
+        # The handle_exceptions decorator should catch the error and return empty tuple
+        assert result == ("", "")
         mock_parse_url.assert_called_once_with(url)
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_requests_get.assert_called_once()
@@ -237,8 +240,8 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py"
         result = get_remote_file_content_by_url(url, "test-token")
 
-        # The handle_exceptions decorator should catch the error and return empty string
-        assert result == ""
+        # The handle_exceptions decorator should catch the error and return empty tuple
+        assert result == ("", "")
         mock_parse_url.assert_called_once_with(url)
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_requests_get.assert_called_once()
@@ -269,8 +272,8 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py"
         result = get_remote_file_content_by_url(url, "test-token")
 
-        # The handle_exceptions decorator should catch the error and return empty string
-        assert result == ""
+        # The handle_exceptions decorator should catch the error and return empty tuple
+        assert result == ("", "")
         mock_parse_url.assert_called_once_with(url)
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_requests_get.assert_called_once()
@@ -295,8 +298,8 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py"
         result = get_remote_file_content_by_url(url, "test-token")
 
-        # The handle_exceptions decorator should catch the error and return empty string
-        assert result == ""
+        # The handle_exceptions decorator should catch the error and return empty tuple
+        assert result == ("", "")
         mock_parse_url.assert_called_once_with(url)
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_requests_get.assert_called_once()
@@ -313,8 +316,8 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py"
         result = get_remote_file_content_by_url(url, "test-token")
 
-        # The handle_exceptions decorator should catch the error and return empty string
-        assert result == ""
+        # The handle_exceptions decorator should catch the error and return empty tuple
+        assert result == ("", "")
         mock_parse_url.assert_called_once_with(url)
         # Should not call other functions if parse_github_url fails
         mock_create_headers.assert_not_called()
@@ -337,8 +340,8 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py"
         result = get_remote_file_content_by_url(url, "test-token")
 
-        # The handle_exceptions decorator should catch the error and return empty string
-        assert result == ""
+        # The handle_exceptions decorator should catch the error and return empty tuple
+        assert result == ("", "")
         mock_parse_url.assert_called_once_with(url)
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_requests_get.assert_not_called()
@@ -372,10 +375,11 @@ class TestGetRemoteFileContentByUrl:
         mock_requests_get.return_value = mock_response
 
         url = "https://github.com/test-owner/test-repo/blob/main/empty.txt"
-        result = get_remote_file_content_by_url(url, "test-token")
+        file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         expected_content = "## src/test.py\n\n1: "
-        assert result == expected_content
+        assert file_path == "src/test.py"
+        assert content == expected_content
 
     @patch("services.github.files.get_remote_file_content_by_url.requests.get")
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
@@ -406,7 +410,7 @@ class TestGetRemoteFileContentByUrl:
         mock_requests_get.return_value = mock_response
 
         url = "https://github.com/test-owner/test-repo/blob/main/unicode_test.py"
-        result = get_remote_file_content_by_url(url, "test-token")
+        file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         expected_content = (
             "## src/test.py\n\n"
@@ -414,7 +418,8 @@ class TestGetRemoteFileContentByUrl:
             "2: print('Hello, 世界!')\n"
             "3: # 这是一个测试"
         )
-        assert result == expected_content
+        assert file_path == "src/test.py"
+        assert content == expected_content
 
     @patch("services.github.files.get_remote_file_content_by_url.requests.get")
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
@@ -439,9 +444,10 @@ class TestGetRemoteFileContentByUrl:
         mock_requests_get.return_value = mock_github_response
 
         url = "https://github.com/test-owner/test-repo/blob/feature-branch/src/test.py"
-        result = get_remote_file_content_by_url(url, "test-token")
+        file_path, content = get_remote_file_content_by_url(url, "test-token")
 
-        assert "## src/test.py" in result
+        assert file_path == "src/test.py"
+        assert "## src/test.py" in content
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src/test.py?ref=feature-branch",
             headers={"Authorization": "Bearer test-token"},
@@ -471,9 +477,10 @@ class TestGetRemoteFileContentByUrl:
         mock_requests_get.return_value = mock_github_response
 
         url = "https://github.com/test-owner/test-repo/blob/main/src/utils/helpers/file.py"
-        result = get_remote_file_content_by_url(url, "test-token")
+        file_path, content = get_remote_file_content_by_url(url, "test-token")
 
-        assert "## src/utils/helpers/file.py" in result
+        assert file_path == "src/utils/helpers/file.py"
+        assert "## src/utils/helpers/file.py" in content
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src/utils/helpers/file.py?ref=main",
             headers={"Authorization": "Bearer test-token"},
@@ -504,14 +511,15 @@ class TestGetRemoteFileContentByUrl:
         mock_requests_get.return_value = mock_github_response
 
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py#L5-L10"
-        result = get_remote_file_content_by_url(url, "test-token")
+        file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         expected_content = (
             "## src/test.py#L5-L10\n\n"
             "5: if __name__ == '__main__':\n"
             "6:     hello_world()"
         )
-        assert result == expected_content
+        assert file_path == "src/test.py"
+        assert content == expected_content
 
     @patch("services.github.files.get_remote_file_content_by_url.requests.get")
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
@@ -539,8 +547,8 @@ class TestGetRemoteFileContentByUrl:
         result = get_remote_file_content_by_url(url, "test-token")
 
         # When line number exceeds file length, it should cause an IndexError
-        # which is handled by the @handle_exceptions decorator, returning empty string
-        assert result == ""
+        # which is handled by the @handle_exceptions decorator, returning empty tuple
+        assert result == ("", "")
 
     @pytest.mark.parametrize(
         "status_code",
@@ -574,8 +582,8 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py"
         result = get_remote_file_content_by_url(url, "test-token")
 
-        # The handle_exceptions decorator should catch all HTTP errors and return empty string
-        assert result == ""
+        # The handle_exceptions decorator should catch all HTTP errors and return empty tuple
+        assert result == ("", "")
 
     @pytest.mark.parametrize(
         "owner,repo,ref,file_path",
@@ -614,9 +622,10 @@ class TestGetRemoteFileContentByUrl:
         mock_requests_get.return_value = mock_github_response
 
         url = f"https://github.com/{owner}/{repo}/blob/{ref}/{file_path}"
-        result = get_remote_file_content_by_url(url, "test-token")
+        result_file_path, content = get_remote_file_content_by_url(url, "test-token")
 
-        assert f"## {file_path}" in result
+        assert result_file_path == file_path
+        assert f"## {file_path}" in content
         expected_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
         mock_requests_get.assert_called_once_with(
             url=expected_url,
@@ -654,10 +663,11 @@ class TestGetRemoteFileContentByUrl:
         mock_requests_get.return_value = mock_response
 
         url = "https://github.com/test-owner/test-repo/blob/main/large_file.py"
-        result = get_remote_file_content_by_url(url, "test-token")
+        file_path, content = get_remote_file_content_by_url(url, "test-token")
 
-        assert "## src/test.py" in result
-        assert "1: # Large file" in result
-        assert "101: print('line')" in result
+        assert file_path == "src/test.py"
+        assert "## src/test.py" in content
+        assert "1: # Large file" in content
+        assert "101: print('line')" in content
         # Should have 102 lines total (1 header + 100 print lines + 1 empty line at end)
-        assert len(result.split("\n")) >= 104  # Including the header lines
+        assert len(content.split("\n")) >= 104  # Including the header lines

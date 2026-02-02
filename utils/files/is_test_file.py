@@ -28,7 +28,7 @@ def is_test_file(filename: str) -> bool:
         r"^spec_",  # spec_button.rb, spec_helper.rb
         r"/spec_",  # services/claude/spec_client.py
         # Test directories
-        r"/__tests__/",  # src/__tests__/Button.tsx
+        r"(^|/)__tests__/",  # __tests__/Button.tsx, src/__tests__/Button.tsx
         r"/tests?/",  # src/tests/Button.tsx, src/test/Button.java
         r"^tests?/",  # tests/constants.py, test/utils.py
         r"/e2e/",  # e2e/login.spec.ts
