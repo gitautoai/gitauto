@@ -6,6 +6,7 @@ import subprocess
 from dataclasses import dataclass, field
 
 from config import UTF8
+from constants.aws import EFS_TIMEOUT_SECONDS
 from services.github.files.get_eslint_config import get_eslint_config
 from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
@@ -82,7 +83,7 @@ async def fix_unreachable_code(
         cwd=repo_dir,
         capture_output=True,
         text=True,
-        timeout=60,
+        timeout=EFS_TIMEOUT_SECONDS,
         check=False,
         shell=True,
         env=env,
