@@ -13,14 +13,29 @@ JEST_CONFIG_FILES = [
     "jest.config.cjs",
 ]
 
-# Pattern 1: '^.+\.tsx?$': 'ts-jest' (string, no options)
+# Pattern 1: transform: { '^.+\.tsx?$': 'ts-jest' }
+# Before: '^.+\.tsx?$': 'ts-jest'
+# After:  '^.+\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }]
 TS_JEST_STRING_PATTERN = re.compile(
     r"(['\"])\^\.\+\\\.tsx\?\$\1\s*:\s*(['\"])ts-jest\2"
 )
-# Pattern 2: '^.+\.tsx?$': ['ts-jest', { isolatedModules: true }] (array with options)
+
+# Pattern 2: transform: { '^.+\.tsx?$': ['ts-jest', { isolatedModules: true }] }
+# Before: '^.+\.tsx?$': ['ts-jest', { isolatedModules: true }]
+# After:  '^.+\.tsx?$': ['ts-jest', { isolatedModules: true, tsconfig: 'tsconfig.test.json' }]
 TS_JEST_ARRAY_PATTERN = re.compile(
     r"(['\"])\^\.\+\\\.tsx\?\$\1\s*:\s*\[\s*(['\"])ts-jest\2\s*,\s*\{([^}]*)\}\s*\]"
 )
+
+# Pattern 3: preset: 'ts-jest' (no transform block)
+# Before: preset: 'ts-jest'
+# After:  transform: { '^.+\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }] }
+TS_JEST_PRESET_PATTERN = re.compile(r"preset\s*:\s*(['\"])ts-jest\1")
+
+# Pattern 4: preset: 'ts-jest' with existing transform block
+# Before: preset: 'ts-jest', transform: { '^.+\.handlebars$': 'handlebars-jest' }
+# After:  transform: { '^.+\.tsx?$': ['ts-jest', { tsconfig: '...' }], '^.+\.handlebars$': 'handlebars-jest' }
+TRANSFORM_BLOCK_PATTERN = re.compile(r"(transform\s*:\s*\{)")
 
 
 @handle_exceptions(default_return_value=(None, None), raise_on_error=False)
@@ -73,7 +88,7 @@ def ensure_jest_uses_tsconfig_for_tests(
         quote = match.group(1)
         replacement = f"{quote}^.+\\\\.tsx?${quote}: [{quote}ts-jest{quote}, {{ tsconfig: {quote}{tsconfig_path}{quote} }}]"
         updated_content = content.replace(original, replacement, 1)
-        logger.info("Updated ts-jest string config to array with tsconfig")
+        logger.info("Pattern 1: Converted ts-jest string to array with tsconfig")
 
     # Pattern 2: ts-jest array -> add tsconfig to options
     if not updated_content:
@@ -88,7 +103,32 @@ def ensure_jest_uses_tsconfig_for_tests(
             key_quote = match.group(1)
             replacement = f"{key_quote}^.+\\\\.tsx?${key_quote}: [{quote}ts-jest{quote}, {{ {new_opts} }}]"
             updated_content = content.replace(original, replacement, 1)
-            logger.info("Added tsconfig to existing ts-jest array config")
+            logger.info("Pattern 2: Added tsconfig to existing ts-jest array")
+
+    # Pattern 3 & 4: preset: 'ts-jest'
+    if not updated_content:
+        preset_match = TS_JEST_PRESET_PATTERN.search(content)
+        if preset_match:
+            quote = preset_match.group(1)
+            ts_transform = f"{quote}^.+\\\\.tsx?${quote}: [{quote}ts-jest{quote}, {{ tsconfig: {quote}{tsconfig_path}{quote} }}]"
+            transform_match = TRANSFORM_BLOCK_PATTERN.search(content)
+            if transform_match:
+                # Pattern 4: preset with existing transform -> add ts entry, remove preset
+                updated_content = content.replace(
+                    transform_match.group(0),
+                    f"{transform_match.group(0)}\n    {ts_transform},",
+                    1,
+                )
+                updated_content = re.sub(
+                    r"\s*preset\s*:\s*['\"]ts-jest['\"]\s*,?", "", updated_content
+                )
+                logger.info("Pattern 4: Added ts-jest to transform, removed preset")
+            else:
+                # Pattern 3: preset only -> replace with transform block
+                original = preset_match.group(0)
+                replacement = f"transform: {{\n    {ts_transform}\n  }}"
+                updated_content = content.replace(original, replacement, 1)
+                logger.info("Pattern 3: Replaced preset with transform block")
 
     if not updated_content:
         logger.info("Could not find ts-jest transform pattern to update")
