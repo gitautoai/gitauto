@@ -127,7 +127,9 @@ Resources:
       PackageType: Image
       Code:
         ImageUri: !Ref ECRImageUri
-      MemorySize: 512
+      # 1024 MB to prevent OOM (512 MB hit limit: "Max Memory Used: 513 MB")
+      # Cost: ~$0.015 per 900s invocation vs $0.0075 at 512 MB
+      MemorySize: 1024
       EphemeralStorage:
         Size: 2048
       Timeout: 900
