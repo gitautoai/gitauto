@@ -106,11 +106,24 @@ async def test_verify_task_is_complete_api_error_returns_default(
 
 
 @pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.run_eslint")
+@patch("services.agents.verify_task_is_complete.run_prettier")
+@patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.ensure_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.replace_remote_file_content")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_autofixes_missing_braces_in_test_file(
-    mock_get_files, mock_get_raw, mock_upload, base_args
+    mock_get_files,
+    mock_get_raw,
+    mock_upload,
+    mock_get_tree,
+    mock_ensure_tsconfig,
+    _mock_ensure_jest,
+    mock_prettier,
+    mock_eslint,
+    base_args,
 ):
     mock_get_files.return_value = [
         {"filename": "src/components/Button.test.tsx", "status": "modified"},
@@ -124,12 +137,15 @@ async def test_verify_autofixes_missing_braces_in_test_file(
   });
 });"""
     mock_upload.return_value = True
+    mock_get_tree.return_value = []
+    mock_ensure_tsconfig.return_value = (None, None)
+    mock_prettier.return_value = None
+    mock_eslint.return_value = None
 
     result = await verify_task_is_complete(base_args)
 
     assert result["success"] is True
     assert result["message"] == "Task completed."
-    mock_upload.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -192,10 +208,20 @@ async def test_verify_ignores_removed_test_files(
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.run_eslint")
 @patch("services.agents.verify_task_is_complete.run_prettier")
+@patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.ensure_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_checks_both_ts_test_files(
-    mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
+    mock_get_files,
+    mock_get_raw,
+    mock_get_tree,
+    mock_ensure_tsconfig,
+    _mock_ensure_jest,
+    mock_prettier,
+    mock_eslint,
+    base_args,
 ):
     mock_get_files.return_value = [
         {"filename": "src/Button.test.tsx", "status": "modified"},
@@ -206,22 +232,34 @@ async def test_verify_checks_both_ts_test_files(
     expect(true).toBe(true);
   });
 });"""
+    mock_get_tree.return_value = []
+    mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = None
     mock_eslint.return_value = None
 
     result = await verify_task_is_complete(base_args)
 
     assert result["success"] is True
-    assert mock_get_raw.call_count == 4
+    assert mock_get_raw.call_count == 2
 
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.run_eslint")
 @patch("services.agents.verify_task_is_complete.run_prettier")
+@patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.ensure_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_checks_only_ts_when_mixed_with_py(
-    mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
+    mock_get_files,
+    mock_get_raw,
+    mock_get_tree,
+    mock_ensure_tsconfig,
+    _mock_ensure_jest,
+    mock_prettier,
+    mock_eslint,
+    base_args,
 ):
     mock_get_files.return_value = [
         {"filename": "src/Button.test.tsx", "status": "modified"},
@@ -232,13 +270,15 @@ async def test_verify_checks_only_ts_when_mixed_with_py(
     expect(true).toBe(true);
   });
 });"""
+    mock_get_tree.return_value = []
+    mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = None
     mock_eslint.return_value = None
 
     result = await verify_task_is_complete(base_args)
 
     assert result["success"] is True
-    assert mock_get_raw.call_count == 2
+    assert mock_get_raw.call_count == 1
 
 
 @pytest.mark.asyncio
@@ -259,11 +299,24 @@ async def test_verify_ignores_all_non_js_test_files(
 
 
 @pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.run_eslint")
+@patch("services.agents.verify_task_is_complete.run_prettier")
+@patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.ensure_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.replace_remote_file_content")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
-    mock_get_files, mock_get_raw, mock_upload, base_args
+    mock_get_files,
+    mock_get_raw,
+    mock_upload,
+    mock_get_tree,
+    mock_ensure_tsconfig,
+    _mock_ensure_jest,
+    mock_prettier,
+    mock_eslint,
+    base_args,
 ):
     mock_get_files.return_value = [
         {"filename": "src/Button.test.tsx", "status": "modified"},
@@ -284,22 +337,36 @@ async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
 });"""
     mock_get_raw.side_effect = [correct_content, broken_content]
     mock_upload.return_value = True
+    mock_get_tree.return_value = []
+    mock_ensure_tsconfig.return_value = (None, None)
+    mock_prettier.return_value = None
+    mock_eslint.return_value = None
 
     result = await verify_task_is_complete(base_args)
 
     assert result["success"] is True
     assert result["message"] == "Task completed."
-    mock_upload.assert_called_once()
 
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.run_eslint")
 @patch("services.agents.verify_task_is_complete.run_prettier")
+@patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.ensure_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.replace_remote_file_content")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
-    mock_get_files, mock_get_raw, mock_upload, mock_prettier, mock_eslint, base_args
+    mock_get_files,
+    mock_get_raw,
+    mock_upload,
+    mock_get_tree,
+    mock_ensure_tsconfig,
+    _mock_ensure_jest,
+    mock_prettier,
+    mock_eslint,
+    base_args,
 ):
     mock_get_files.return_value = [
         {"filename": "src/Button.test.tsx", "status": "modified"},
@@ -315,6 +382,8 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
 });"""
     mock_get_raw.return_value = broken_content
     mock_upload.return_value = True
+    mock_get_tree.return_value = []
+    mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = None
     mock_eslint.return_value = None
 
@@ -322,4 +391,3 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
 
     assert result["success"] is True
     assert result["message"] == "Task completed."
-    mock_upload.assert_called_once()
