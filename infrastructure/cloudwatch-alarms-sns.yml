@@ -29,7 +29,7 @@ Resources:
     Properties:
       TopicName: LambdaErrorNotificationTopic
 
-  ErrorNotificationSubscription:
+  ErrorEmailSubscription:
     Type: AWS::SNS::Subscription
     Properties:
       TopicArn: !Ref ErrorNotificationTopic
@@ -38,12 +38,16 @@ Resources:
 
   # =============================================================================
   # CloudWatch Alarm for Lambda Errors
+  # Triggers on ANY Lambda error including:
+  # - Timeout (Task timed out after 900 seconds)
+  # - OOM (Runtime exited with error: signal: killed)
+  # - Unhandled exceptions
   # =============================================================================
   LambdaErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmName: LambdaFunctionErrorAlarm
-      AlarmDescription: Alarm when Lambda function has errors
+      AlarmDescription: Alarm when Lambda function has errors (timeout, OOM, exceptions)
       MetricName: Errors
       Namespace: AWS/Lambda
       Statistic: Sum

@@ -19,6 +19,7 @@ from services.supabase.webhook_deliveries.insert_webhook_delivery import (
     insert_webhook_delivery,
 )
 from services.efs.cleanup_stale_repos_on_efs import cleanup_stale_repos_on_efs
+from services.aws.cleanup_tmp import cleanup_tmp
 from services.efs.clone_and_install import clone_and_install
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.webhook_handler import handle_webhook_event
@@ -50,6 +51,7 @@ mangum_handler = Mangum(app=app, lifespan="off")
 # Here is an entry point for the AWS Lambda function. Mangum is a library that allows you to use FastAPI with AWS Lambda.
 def handler(event, context):
     clear_state()  # Prevent metadata from previous invocation bleeding into this one on warm starts
+    cleanup_tmp()  # Clean at START (not end) so it runs even if previous invocation crashed/timed out
     set_request_id(getattr(context, "aws_request_id", "local"))
 
     # For EFS cleanup scheduled event
