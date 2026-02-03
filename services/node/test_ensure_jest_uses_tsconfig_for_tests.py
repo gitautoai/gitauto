@@ -23,8 +23,12 @@ def _make_base_args():
 
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
-def test_converts_string_to_array(mock_get_raw: MagicMock, mock_replace: MagicMock):
-    """Test converting ts-jest string config to array with tsconfig."""
+def test_pattern1_ts_jest_string(mock_get_raw: MagicMock, mock_replace: MagicMock):
+    """Pattern 1: ts-jest as string in transform.
+
+    Before: '^.+\\.tsx?$': 'ts-jest'
+    After:  '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }]
+    """
     root_files = ["jest.config.js", "tsconfig.json"]
     mock_get_raw.return_value = """module.exports = {
   transform: {
@@ -45,8 +49,12 @@ def test_converts_string_to_array(mock_get_raw: MagicMock, mock_replace: MagicMo
 
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
-def test_adds_to_existing_array(mock_get_raw: MagicMock, mock_replace: MagicMock):
-    """Test adding tsconfig to existing ts-jest array config."""
+def test_pattern2_ts_jest_array(mock_get_raw: MagicMock, mock_replace: MagicMock):
+    """Pattern 2: ts-jest as array with options in transform.
+
+    Before: '^.+\\.tsx?$': ['ts-jest', { isolatedModules: true }]
+    After:  '^.+\\.tsx?$': ['ts-jest', { isolatedModules: true, tsconfig: 'tsconfig.test.json' }]
+    """
     root_files = ["jest.config.js", "tsconfig.json"]
     mock_get_raw.return_value = """module.exports = {
   transform: {
@@ -112,11 +120,71 @@ def test_skips_when_any_tsconfig_configured(
 
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
+def test_pattern3_preset_only(mock_get_raw: MagicMock, mock_replace: MagicMock):
+    """Pattern 3: preset only, no transform block.
+
+    Before: preset: 'ts-jest'
+    After:  transform: { '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }] }
+    """
+    root_files = ["jest.config.js", "tsconfig.json"]
+    mock_get_raw.return_value = """module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+};"""
+    mock_replace.return_value = "Success"
+
+    path, status = ensure_jest_uses_tsconfig_for_tests(
+        root_files, _make_base_args(), "tsconfig.test.json"
+    )
+
+    assert path == "jest.config.js"
+    assert status == "modified"
+    call_kwargs = mock_replace.call_args.kwargs
+    assert "tsconfig.test.json" in call_kwargs["file_content"]
+    assert "transform:" in call_kwargs["file_content"]
+    assert "tsx?$" in call_kwargs["file_content"]
+    assert "preset" not in call_kwargs["file_content"]
+
+
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
+def test_pattern4_preset_with_existing_transform(
+    mock_get_raw: MagicMock, mock_replace: MagicMock
+):
+    """Pattern 4: preset with existing transform block.
+
+    Before: preset: 'ts-jest', transform: { '^.+\\.handlebars$': 'handlebars-jest' }
+    After:  transform: { '^.+\\.tsx?$': ['ts-jest', { tsconfig: '...' }], '^.+\\.handlebars$': 'handlebars-jest' }
+    """
+    root_files = ["jest.config.js", "tsconfig.json"]
+    mock_get_raw.return_value = """module.exports = {
+  preset: 'ts-jest',
+  transform: {
+    '^.+\\.handlebars$': 'handlebars-jest',
+  },
+};"""
+    mock_replace.return_value = "Success"
+
+    path, status = ensure_jest_uses_tsconfig_for_tests(
+        root_files, _make_base_args(), "tsconfig.test.json"
+    )
+
+    assert path == "jest.config.js"
+    assert status == "modified"
+    call_kwargs = mock_replace.call_args.kwargs
+    assert "tsconfig.test.json" in call_kwargs["file_content"]
+    assert "tsx?$" in call_kwargs["file_content"]
+    assert "handlebars-jest" in call_kwargs["file_content"]
+    assert "preset" not in call_kwargs["file_content"]
+
+
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
 def test_returns_none_when_no_pattern(mock_get_raw: MagicMock, mock_replace: MagicMock):
     """Test that None is returned when no ts-jest pattern found."""
     root_files = ["jest.config.js", "tsconfig.json"]
     mock_get_raw.return_value = """module.exports = {
-  preset: 'ts-jest',
+  testEnvironment: 'node',
 };"""
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
