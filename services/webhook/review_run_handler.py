@@ -173,15 +173,13 @@ async def handle_review_run(
         "skip_ci": True,
     }
 
-    # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
-    clone_task = asyncio.create_task(
-        prepare_repo_for_work(
-            owner=owner_name,
-            repo=repo_name,
-            pr_branch=head_branch,
-            token=token,
-            clone_dir=clone_dir,
-        )
+    # Clone repo to tmp
+    await prepare_repo_for_work(
+        owner=owner_name,
+        repo=repo_name,
+        pr_branch=head_branch,
+        token=token,
+        clone_dir=clone_dir,
     )
 
     # Start clone and install tasks
@@ -240,7 +238,7 @@ async def handle_review_run(
     # Validate files for syntax issues before editing
     files_to_validate = [f["filename"] for f in pull_files if f["status"] != "removed"]
     validation_result = await verify_task_is_ready(
-        base_args=base_args, file_paths=files_to_validate
+        base_args=base_args, file_paths=files_to_validate, run_tsc=True
     )
     pre_existing_errors = ""
     if validation_result.errors:
@@ -378,9 +376,4 @@ async def handle_review_run(
             pr_number=pull_number,
             is_completed=True,
         )
-
-    # Wait for clone task to complete before Lambda terminates
-    logger.info("Waiting for clone task to complete...")
-    await clone_task
-    logger.info("Clone task completed")
     return

@@ -5,6 +5,7 @@ from services.github.commits.replace_remote_file import replace_remote_file_cont
 from services.github.files.get_raw_content import get_raw_content
 from services.github.types.github_types import BaseArgs
 from services.prettier.run_prettier_fix import run_prettier_fix
+from services.tsc.run_tsc_check import run_tsc_check
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.filter_js_ts_files import filter_js_ts_files
 from utils.logging.logging_config import logger
@@ -23,7 +24,7 @@ class VerifyTaskIsReadyResult:
     raise_on_error=False,
 )
 async def verify_task_is_ready(
-    *, base_args: BaseArgs, file_paths: list[str]
+    *, base_args: BaseArgs, file_paths: list[str], run_tsc: bool = False
 ) -> VerifyTaskIsReadyResult:
     owner = base_args.get("owner", "")
     repo = base_args.get("repo", "")
@@ -87,6 +88,14 @@ async def verify_task_is_ready(
 
     if formatting_applied:
         logger.info("Applied formatting to files:\n%s", "\n".join(formatting_applied))
+
+    # Run tsc type check if requested (for check_suite and review handlers)
+    if run_tsc:
+        tsc_result = await run_tsc_check(base_args=base_args, file_paths=file_paths)
+        if tsc_result.errors:
+            for err in tsc_result.errors:
+                errors.append(f"- tsc: {err}")
+            files_with_errors.update(tsc_result.error_files)
 
     if errors:
         return VerifyTaskIsReadyResult(

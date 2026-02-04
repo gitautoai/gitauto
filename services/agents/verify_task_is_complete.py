@@ -10,6 +10,7 @@ from services.node.ensure_jest_uses_tsconfig_for_tests import (
 )
 from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
 from services.prettier.run_prettier_fix import run_prettier_fix
+from services.tsc.run_tsc_check import run_tsc_check
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.filter_js_ts_files import filter_js_ts_files
 from utils.logging.logging_config import logger
@@ -125,12 +126,18 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
     if formatting_applied:
         logger.info("Applied formatting to files:\n%s", "\n".join(formatting_applied))
 
+    # Run tsc type check on all non-removed files
+    tsc_result = await run_tsc_check(base_args=base_args, file_paths=non_removed_files)
+    if tsc_result.errors:
+        for err in tsc_result.errors:
+            remaining_errors.append(f"- tsc: {err}")
+
     if remaining_errors:
         error_msg = "\n".join(remaining_errors)
         logger.warning("Remaining errors after fixes:\n%s", error_msg)
         return {
             "success": False,
-            "message": f"Task NOT complete. Prettier/ESLint --fix was applied but these errors remain. Fix them:\n{error_msg}",
+            "message": f"Task NOT complete. Fix these errors:\n{error_msg}",
             "fixes_applied": formatting_applied,
         }
 

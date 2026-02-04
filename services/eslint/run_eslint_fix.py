@@ -8,8 +8,6 @@ import sentry_sdk
 
 from config import UTF8
 from constants.aws import EFS_TIMEOUT_SECONDS
-from services.efs.extract_dependencies import extract_dependencies
-from services.efs.get_efs_dir import get_efs_dir
 from services.github.files.get_eslint_config import get_eslint_config
 from services.github.types.github_types import BaseArgs
 from services.node.get_npm_cache_dir import set_npm_cache_env
@@ -57,13 +55,7 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
     config_filename = eslint_config.get("filename", "")
     is_legacy_config = config_filename.startswith(".eslintrc")
 
-    owner = base_args["owner"]
-    repo = base_args["repo"]
     clone_dir = base_args.get("clone_dir", "")
-
-    # Extract EFS deps to clone_dir
-    efs_dir = get_efs_dir(owner, repo)
-    extract_dependencies(efs_dir, clone_dir)
 
     # Write to disk and use --fix (alternative: stdin/stdout without file)
     full_path = os.path.join(clone_dir, file_path)

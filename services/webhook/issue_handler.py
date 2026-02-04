@@ -439,14 +439,12 @@ async def create_pr_from_issue(
     # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args["clone_dir"] = clone_dir
-    clone_task = asyncio.create_task(
-        prepare_repo_for_work(
-            owner=owner_name,
-            repo=repo_name,
-            pr_branch=new_branch_name,
-            token=token,
-            clone_dir=clone_dir,
-        )
+    await prepare_repo_for_work(
+        owner=owner_name,
+        repo=repo_name,
+        pr_branch=new_branch_name,
+        token=token,
+        clone_dir=clone_dir,
     )
 
     # Validate files for syntax issues before editing
@@ -454,7 +452,9 @@ async def create_pr_from_issue(
         {impl_file_path, *reference_file_paths, *test_files.keys()}
     )
     validation_result = await verify_task_is_ready(
-        base_args=base_args, file_paths=files_to_validate
+        base_args=base_args,
+        file_paths=files_to_validate,
+        run_tsc=False,
     )
     pre_existing_errors = ""
     if validation_result.errors:
@@ -629,11 +629,4 @@ async def create_pr_from_issue(
     # End notification
     end_msg = "Completed" if is_completed else "@channel Failed"
     slack_notify(end_msg, thread_ts)
-
-    # Wait for clone task to complete before Lambda terminates
-    if not clone_task.done():
-        logger.info("Waiting for clone task to complete...")
-        await clone_task
-        logger.info("Clone task completed")
-
     return
