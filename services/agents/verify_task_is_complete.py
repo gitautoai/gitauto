@@ -1,10 +1,12 @@
 # Local imports
+from constants.files import JS_TEST_FILE_EXTENSIONS, TS_TEST_FILE_EXTENSIONS
 from services.eslint.run_eslint_fix import run_eslint_fix
 from services.github.commits.replace_remote_file import replace_remote_file_content
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.github_types import BaseArgs
+from services.jest.run_jest_test import run_jest_test
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
     ensure_jest_uses_tsconfig_for_tests,
 )
@@ -14,20 +16,6 @@ from services.tsc.run_tsc_check import run_tsc_check
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.filter_js_ts_files import filter_js_ts_files
 from utils.logging.logging_config import logger
-
-TS_TEST_FILE_EXTENSIONS = (
-    ".test.ts",
-    ".test.tsx",
-    ".spec.ts",
-    ".spec.tsx",
-)
-
-JS_TEST_FILE_EXTENSIONS = (
-    ".test.js",
-    ".test.jsx",
-    ".spec.js",
-    ".spec.jsx",
-) + TS_TEST_FILE_EXTENSIONS
 
 
 @handle_exceptions(
@@ -131,6 +119,12 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
     if tsc_result.errors:
         for err in tsc_result.errors:
             remaining_errors.append(f"- tsc: {err}")
+
+    # Run jest/vitest tests on test files
+    jest_result = await run_jest_test(base_args=base_args, file_paths=non_removed_files)
+    if jest_result.errors:
+        for err in jest_result.errors:
+            remaining_errors.append(f"- {jest_result.runner_name}: {err}")
 
     if remaining_errors:
         error_msg = "\n".join(remaining_errors)

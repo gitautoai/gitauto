@@ -1,6 +1,5 @@
+from constants.files import JS_TS_FILE_EXTENSIONS
 from utils.error.handle_exceptions import handle_exceptions
-
-JS_TS_FILE_EXTENSIONS = (".js", ".jsx", ".ts", ".tsx")
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
