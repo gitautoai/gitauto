@@ -1,5 +1,5 @@
 # Local imports
-from services.eslint.run_eslint import run_eslint
+from services.eslint.run_eslint_fix import run_eslint_fix
 from services.github.commits.replace_remote_file import replace_remote_file_content
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
@@ -9,8 +9,9 @@ from services.node.ensure_jest_uses_tsconfig_for_tests import (
     ensure_jest_uses_tsconfig_for_tests,
 )
 from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
-from services.prettier.run_prettier import run_prettier
+from services.prettier.run_prettier_fix import run_prettier_fix
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.filter_js_ts_files import filter_js_ts_files
 from utils.logging.logging_config import logger
 
 TS_TEST_FILE_EXTENSIONS = (
@@ -26,8 +27,6 @@ JS_TEST_FILE_EXTENSIONS = (
     ".spec.js",
     ".spec.jsx",
 ) + TS_TEST_FILE_EXTENSIONS
-
-JS_TS_FILE_EXTENSIONS = (".js", ".jsx", ".ts", ".tsx")
 
 
 @handle_exceptions(
@@ -78,13 +77,11 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
                 tsconfig_path=tsconfig_path,
             )
 
-    js_ts_files = [
-        f["filename"]
-        for f in pr_files
-        if f["filename"].endswith(JS_TS_FILE_EXTENSIONS) and f["status"] != "removed"
-    ]
+    non_removed_files = [f["filename"] for f in pr_files if f["status"] != "removed"]
+    js_ts_files = filter_js_ts_files(non_removed_files)
 
     formatting_applied: list[str] = []
+    remaining_errors: list[str] = []
     for file_path in js_ts_files:
         content = get_raw_content(
             owner=owner, repo=repo, file_path=file_path, ref=new_branch, token=token
@@ -92,36 +89,53 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
         if not content:
             continue
 
-        prettier_result = await run_prettier(
+        prettier_result = await run_prettier_fix(
             base_args=base_args,
             file_path=file_path,
             file_content=content,
         )
-        if prettier_result and prettier_result != content:
+        if prettier_result.content and prettier_result.content != content:
             replace_remote_file_content(
-                file_content=prettier_result,
+                file_content=prettier_result.content,
                 file_path=file_path,
                 base_args=base_args,
                 commit_message=f"Format {file_path} with Prettier",
             )
-            content = prettier_result
+            content = prettier_result.content
             formatting_applied.append(f"- {file_path}: Prettier")
+        if prettier_result.error:
+            remaining_errors.append(f"- {file_path}: Prettier: {prettier_result.error}")
 
-        eslint_result = await run_eslint(
+        eslint_result = await run_eslint_fix(
             base_args=base_args,
             file_path=file_path,
             file_content=content,
         )
-        if eslint_result and eslint_result != content:
+        if eslint_result.content and eslint_result.content != content:
             replace_remote_file_content(
-                file_content=eslint_result,
+                file_content=eslint_result.content,
                 file_path=file_path,
                 base_args=base_args,
                 commit_message=f"Lint {file_path} with ESLint",
             )
             formatting_applied.append(f"- {file_path}: ESLint")
+        if eslint_result.error:
+            remaining_errors.append(f"- {file_path}: ESLint: {eslint_result.error}")
 
     if formatting_applied:
         logger.info("Applied formatting to files:\n%s", "\n".join(formatting_applied))
 
-    return {"success": True, "message": "Task completed."}
+    if remaining_errors:
+        error_msg = "\n".join(remaining_errors)
+        logger.warning("Remaining errors after fixes:\n%s", error_msg)
+        return {
+            "success": False,
+            "message": f"Task NOT complete. Prettier/ESLint --fix was applied but these errors remain. Fix them:\n{error_msg}",
+            "fixes_applied": formatting_applied,
+        }
+
+    return {
+        "success": True,
+        "message": "Task completed.",
+        "fixes_applied": formatting_applied,
+    }

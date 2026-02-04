@@ -14,6 +14,7 @@ from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
 from constants.agent import MAX_ITERATIONS
 from constants.general import MAX_GITAUTO_COMMITS_PER_PR
 from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE
+from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
 from services.circleci.get_build_logs import get_circleci_build_logs
@@ -343,6 +344,19 @@ async def handle_check_suite(
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
+    # Validate files for syntax issues before editing
+    files_to_validate = [
+        f["filename"] for f in changed_files if f["status"] != "removed"
+    ]
+    validation_result = await verify_task_is_ready(
+        base_args=base_args, file_paths=files_to_validate
+    )
+    pre_existing_errors = ""
+    if validation_result.errors:
+        pre_existing_errors = "\n".join(validation_result.errors)
+        logger.warning("Syntax issues found in PR files:\n%s", pre_existing_errors)
+    fixes_applied = validation_result.fixes_applied
+
     # Get the error log from the workflow run
     if is_circleci:
         circleci_token = get_circleci_token(owner_id)
@@ -538,12 +552,21 @@ async def handle_check_suite(
     input_message: dict[str, str | list[str] | None] = {
         "pull_request_title": pull_title,
         "changed_files": json.dumps(obj=changed_files),
-        "error_log": minimized_log,
+        "step_1_ci_error_log": minimized_log,
         "today": today,
         "root_files": root_files,
         "target_dir": target_dir,
         "target_dir_files": target_dir_files,
     }
+    if fixes_applied or pre_existing_errors:
+        input_message["step_2_prettier_eslint_note"] = (
+            "After the CI failure, we ran Prettier/ESLint --fix. "
+            "Files may have changed. Read the latest content."
+        )
+    if fixes_applied:
+        input_message["step_2a_auto_fixed_and_committed"] = fixes_applied
+    if pre_existing_errors:
+        input_message["step_2b_remaining_unfixable_errors"] = pre_existing_errors
     user_input = json.dumps(obj=input_message)
 
     # Create messages

@@ -228,6 +228,7 @@ ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 - NO ANY: Do not use Any type. Fix the specific type issues instead. When you have to use `as any` in TypeScript/JavaScript, ALWAYS add a comment above explaining why it's needed. Example:
 - No annotations: Don't use annotations like var: type = value. Fix the root cause of type issues instead.
 - NO UNNECESSARY HELPER FUNCTIONS: Do not extract code into helper functions unless the code is used multiple times. Single-use helper functions add unnecessary indirection and make code harder to follow. Keep logic inline when it's only used once.
+- NO `__init__.py`: Do not create `__init__.py` files. Python 3.3+ supports implicit namespace packages, so `__init__.py` is not required. This project uses Python 3.13.
 
 ## Testing Anti-Patterns to Avoid
 
@@ -363,8 +364,8 @@ When refactoring or replacing old systems, always be PROACTIVE and think compreh
 
 When asked "should we inline `is_efs_install_ready.py` since it has 1 caller?":
 
-- SHORT-TERM: "Yes, only run_eslint uses it"
-- LONG-TERM: "No, run_prettier, run_tsc, run_pylint, run_pyright, run_flake8 will all need it"
+- SHORT-TERM: "Yes, only run_eslint_fix uses it"
+- LONG-TERM: "No, run_prettier_fix, run_tsc, run_pylint, run_pyright, run_flake8 will all need it"
 
 ### Rule
 

@@ -1,5 +1,6 @@
 import os
 import subprocess
+from dataclasses import dataclass
 
 from config import UTF8
 from constants.aws import EFS_TIMEOUT_SECONDS
@@ -12,23 +13,33 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-async def run_prettier(*, base_args: BaseArgs, file_path: str, file_content: str):
+@dataclass
+class PrettierResult:
+    success: bool
+    content: str | None
+    error: str | None
+
+
+@handle_exceptions(
+    default_return_value=PrettierResult(success=True, content=None, error=None),
+    raise_on_error=False,
+)
+async def run_prettier_fix(*, base_args: BaseArgs, file_path: str, file_content: str):
     if not file_content.strip():
         logger.info("Prettier: Skipping %s - empty content", file_path)
-        return None
+        return PrettierResult(success=True, content=None, error=None)
 
     if not file_path.endswith(
         (".js", ".jsx", ".ts", ".tsx", ".json", ".css", ".scss", ".md", ".yaml", ".yml")
     ):
         logger.info("Prettier: Skipping %s - not a Prettier-supported file", file_path)
-        return None
+        return PrettierResult(success=True, content=None, error=None)
 
     if not get_prettier_config(base_args):
         logger.info(
             "Prettier: Skipping %s - no Prettier config found in repo", file_path
         )
-        return None
+        return PrettierResult(success=True, content=None, error=None)
 
     owner = base_args["owner"]
     repo = base_args["repo"]
@@ -62,10 +73,12 @@ async def run_prettier(*, base_args: BaseArgs, file_path: str, file_content: str
     )
 
     if result.returncode != 0:
-        raise RuntimeError(f"Prettier failed for {file_path}: {result.stderr}")
+        error_msg = result.stderr.strip() or result.stdout.strip()
+        logger.warning("Prettier failed for %s: %s", file_path, error_msg)
+        return PrettierResult(success=False, content=None, error=error_msg)
 
     with open(full_path, "r", encoding=UTF8) as f:
         fixed_content = f.read()
 
     logger.info("Prettier: Successfully formatted %s", file_path)
-    return fixed_content
+    return PrettierResult(success=True, content=fixed_content, error=None)
