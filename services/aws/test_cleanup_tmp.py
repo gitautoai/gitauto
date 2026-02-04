@@ -31,7 +31,9 @@ def test_cleanup_tmp_skips_system_directories():
         # Create system directories that should be preserved
         for sys_dir in [".cache", "pip", "npm", "yarn", "cache"]:
             os.makedirs(os.path.join(tmp_dir, sys_dir))
-            with open(os.path.join(tmp_dir, sys_dir, "file.txt"), "w", encoding="utf-8") as f:
+            with open(
+                os.path.join(tmp_dir, sys_dir, "file.txt"), "w", encoding="utf-8"
+            ) as f:
                 f.write("keep me")
 
         # Create an owner folder that should be deleted

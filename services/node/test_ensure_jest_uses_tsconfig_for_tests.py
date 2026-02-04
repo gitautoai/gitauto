@@ -3,10 +3,18 @@
 from typing import cast
 from unittest.mock import MagicMock, patch
 
+from services.claude.tools.file_modify_result import FileWriteResult
 from services.github.types.github_types import BaseArgs
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
     ensure_jest_uses_tsconfig_for_tests,
 )
+
+
+def _mock_success_result(file_path: str = "test.py"):
+    """Create a successful FileWriteResult for mocking."""
+    return FileWriteResult(
+        success=True, message=f"Updated {file_path}", file_path=file_path, content=""
+    )
 
 
 def _make_base_args():
@@ -35,7 +43,7 @@ def test_pattern1_ts_jest_string(mock_get_raw: MagicMock, mock_replace: MagicMoc
     '^.+\\.tsx?$': 'ts-jest',
   },
 };"""
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
         root_files, _make_base_args(), "tsconfig.test.json"
@@ -61,7 +69,7 @@ def test_pattern2_ts_jest_array(mock_get_raw: MagicMock, mock_replace: MagicMock
     '^.+\\.tsx?$': ['ts-jest', { isolatedModules: true }],
   },
 };"""
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
         root_files, _make_base_args(), "tsconfig.test.json"
@@ -131,7 +139,7 @@ def test_pattern3_preset_only(mock_get_raw: MagicMock, mock_replace: MagicMock):
   preset: 'ts-jest',
   testEnvironment: 'node',
 };"""
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
         root_files, _make_base_args(), "tsconfig.test.json"
@@ -163,7 +171,7 @@ def test_pattern4_preset_with_existing_transform(
     '^.+\\.handlebars$': 'handlebars-jest',
   },
 };"""
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
         root_files, _make_base_args(), "tsconfig.test.json"
@@ -206,7 +214,7 @@ def test_handles_double_quotes(mock_get_raw: MagicMock, mock_replace: MagicMock)
     "^.+\\.tsx?$": "ts-jest",
   },
 };"""
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
         root_files, _make_base_args(), "tsconfig.test.json"

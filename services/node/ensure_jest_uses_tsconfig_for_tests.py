@@ -140,8 +140,9 @@ def ensure_jest_uses_tsconfig_for_tests(
         base_args=base_args,
         commit_message=f"Configure Jest to use {tsconfig_path}",
     )
-    if result:
+    if result.success:
         logger.info("Modified %s to use %s", jest_config_file, tsconfig_path)
         return jest_config_file, "modified"
 
+    logger.warning("Failed to modify %s: %s", jest_config_file, result.message)
     return None, None

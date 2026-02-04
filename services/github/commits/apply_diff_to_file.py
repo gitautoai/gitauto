@@ -6,6 +6,7 @@ import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
+from services.claude.tools.file_modify_result import FileWriteResult
 from services.github.types.contents import Contents
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
@@ -13,7 +14,15 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.files.apply_patch import apply_patch
 
 
-@handle_exceptions(default_return_value=False, raise_on_error=False)
+@handle_exceptions(
+    default_return_value=lambda diff, file_path, base_args, **kwargs: FileWriteResult(
+        success=False,
+        message="Unexpected error occurred.",
+        file_path=file_path,
+        content="",
+    ),
+    raise_on_error=False,
+)
 def apply_diff_to_file(
     diff: str,
     file_path: str,
@@ -40,11 +49,21 @@ def apply_diff_to_file(
 
         # Handle case where response is a list (directory listing) instead of a single file
         if isinstance(file_info, list):
-            return f"file_path: '{file_path}' returned multiple files '{file_info}'. Please specify a single file path."
+            return FileWriteResult(
+                success=False,
+                message=f"'{file_path}' returned multiple files. Specify a single file path.",
+                file_path=file_path,
+                content="",
+            )
 
         # Return if the file_path is a directory. See Example2 at https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
         if file_info.get("type") == "dir":
-            return f"file_path: '{file_path}' is a directory. It should be a file path."
+            return FileWriteResult(
+                success=False,
+                message=f"'{file_path}' is a directory, not a file.",
+                file_path=file_path,
+                content="",
+            )
 
         # Get the original text and SHA of the file
         s1: str = file_info.get("content", "")
@@ -54,16 +73,31 @@ def apply_diff_to_file(
 
     # Check for deletion diff (safety check)
     if "+++ /dev/null" in diff:
-        return f"Cannot delete files using apply_diff_to_file. Use the delete_file tool instead for file path: {file_path}"
+        return FileWriteResult(
+            success=False,
+            message=f"Cannot delete files with apply_diff_to_file. Use delete_file for '{file_path}'.",
+            file_path=file_path,
+            content=original_text,
+        )
 
     # Create a new commit
     modified_text, rej_text = apply_patch(original_text=original_text, diff_text=diff)
 
     if modified_text == "":
-        return f"diff format is incorrect. No changes were made to the file: {file_path}. Review the diff, correct it, and try again.\n\n{diff=}"
+        return FileWriteResult(
+            success=False,
+            message=f"Invalid diff format. No changes made to '{file_path}'. Review and retry.\n\n{diff=}",
+            file_path=file_path,
+            content=original_text,
+        )
 
     if modified_text != "" and rej_text != "":
-        return f"diff partially applied to the file: {file_path}. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\n{diff=}\n\n{rej_text=}"
+        return FileWriteResult(
+            success=False,
+            message=f"Diff partially applied to '{file_path}'. Some changes rejected. Review and retry.\n\n{diff=}\n\n{rej_text=}",
+            file_path=file_path,
+            content=modified_text,
+        )
 
     # Normal file update
     s2 = modified_text.encode(encoding=UTF8)
@@ -83,4 +117,9 @@ def apply_diff_to_file(
         timeout=TIMEOUT,
     )
     put_response.raise_for_status()
-    return f"diff applied to the file: {file_path} successfully by {apply_diff_to_file.__name__}()."
+    return FileWriteResult(
+        success=True,
+        message=f"Applied diff to {file_path}.",
+        file_path=file_path,
+        content=modified_text,
+    )

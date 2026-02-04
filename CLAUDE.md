@@ -70,6 +70,19 @@ source .env && psql "postgresql://postgres.awegqusxzsmlgxaxyyrq:$SUPABASE_DB_PAS
 # - Example: psql ... -x -c "SELECT structured_rules FROM repositories WHERE ..."
 ```
 
+**CRITICAL: Do NOT use pipes with psql commands**
+
+```bash
+# WRONG - pipe causes $SUPABASE_DB_PASSWORD_PRD to not expand
+source .env && psql "postgresql://...:$SUPABASE_DB_PASSWORD_PRD@..." -c "SELECT ..." | head -50
+
+# CORRECT - no pipe, use SQL LIMIT instead
+source .env && psql "postgresql://...:$SUPABASE_DB_PASSWORD_PRD@..." -c "SELECT ... LIMIT 50;"
+
+# CORRECT - if you need to truncate output, use SQL functions
+source .env && psql "postgresql://..." -c "SELECT LEFT(long_column, 3000) FROM table;"
+```
+
 ### Sentry CLI
 
 Sentry CLI is available for accessing error logs and issues.

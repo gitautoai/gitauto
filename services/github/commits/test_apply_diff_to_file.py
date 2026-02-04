@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
+from services.claude.tools.file_modify_result import FileWriteResult
 from services.github.commits.apply_diff_to_file import apply_diff_to_file
 from services.github.types.github_types import BaseArgs
 
@@ -119,9 +120,11 @@ def test_successful_file_update(
         diff=diff, file_path="test.py", base_args=sample_base_args
     )
 
-    assert isinstance(result, str)
-    assert "diff applied to the file: test.py successfully" in result
-    assert "apply_diff_to_file()" in result
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert result.file_path == "test.py"
+    assert "Applied diff to test.py" in result.message
+    assert result.content == "print('hello modified world')\n"
 
     # Verify GET request was made
     mock_requests_get_existing_file.assert_called_once()
@@ -156,8 +159,9 @@ def test_successful_file_update_with_skip_ci(
         diff=diff, file_path="test.py", base_args=sample_base_args_with_skip_ci
     )
 
-    assert isinstance(result, str)
-    assert "diff applied to the file: test.py successfully" in result
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert "Applied diff to test.py" in result.message
 
     # Verify PUT request has [skip ci] in message
     mock_requests_put_success.assert_called_once()
@@ -182,8 +186,10 @@ def test_new_file_creation(
         diff=diff, file_path="new_file.py", base_args=sample_base_args
     )
 
-    assert isinstance(result, str)
-    assert "diff applied to the file: new_file.py successfully" in result
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert result.file_path == "new_file.py"
+    assert "Applied diff to new_file.py" in result.message
 
     # Verify GET request returned 404
     mock_requests_get_404.assert_called_once()
@@ -217,14 +223,14 @@ def test_deletion_diff_rejected(mock_requests_get_existing_file):
         diff=deletion_diff, file_path="utils/files/test_file.py", base_args=base_args
     )
 
-    assert isinstance(result, str)
-    assert "Cannot delete files using apply_diff_to_file" in result
-    assert "Use the delete_file tool instead" in result
-    assert "utils/files/test_file.py" in result
+    assert isinstance(result, FileWriteResult)
+    assert result.success is False
+    assert "Cannot delete files" in result.message
+    assert "delete_file" in result.message
 
 
 def test_missing_new_branch_error():
-    """Test that missing new_branch returns False due to handle_exceptions."""
+    """Test that missing new_branch returns FileWriteResult due to handle_exceptions."""
     base_args = cast(
         BaseArgs,
         {
@@ -241,11 +247,13 @@ def test_missing_new_branch_error():
         base_args=base_args,
     )
 
-    assert result is False
+    assert isinstance(result, FileWriteResult)
+    assert result.success is False
+    assert result.file_path == "test.py"
 
 
 def test_empty_new_branch_error():
-    """Test that empty new_branch returns False due to handle_exceptions."""
+    """Test that empty new_branch returns FileWriteResult due to handle_exceptions."""
     base_args = cast(
         BaseArgs,
         {
@@ -262,7 +270,9 @@ def test_empty_new_branch_error():
         base_args=base_args,
     )
 
-    assert result is False
+    assert isinstance(result, FileWriteResult)
+    assert result.success is False
+    assert result.file_path == "test.py"
 
 
 def test_directory_path_error(mock_create_headers):
@@ -293,9 +303,9 @@ def test_directory_path_error(mock_create_headers):
             base_args=base_args,
         )
 
-        assert isinstance(result, str)
-        assert "file_path: 'test_directory' is a directory" in result
-        assert "It should be a file path" in result
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert "directory" in result.message
 
 
 def test_multiple_files_error(mock_create_headers):
@@ -326,9 +336,9 @@ def test_multiple_files_error(mock_create_headers):
             base_args=base_args,
         )
 
-        assert isinstance(result, str)
-        assert "file_path: 'ambiguous_path' returned multiple files" in result
-        assert "Please specify a single file path" in result
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert "multiple files" in result.message
 
 
 def test_incorrect_diff_format(
@@ -347,11 +357,10 @@ def test_incorrect_diff_format(
             diff=diff, file_path="test.py", base_args=sample_base_args
         )
 
-        assert isinstance(result, str)
-        assert "diff format is incorrect" in result
-        assert "No changes were made to the file: test.py" in result
-        assert "Review the diff, correct it, and try again" in result
-        assert "diff=" in result
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert "Invalid diff format" in result.message
+        assert "diff=" in result.message
 
 
 def test_partially_applied_diff(
@@ -374,12 +383,12 @@ def test_partially_applied_diff(
             diff=diff, file_path="test.py", base_args=sample_base_args
         )
 
-        assert isinstance(result, str)
-        assert "diff partially applied to the file: test.py" in result
-        assert "some changes were rejected" in result
-        assert "Review rejected changes, modify the diff, and try again" in result
-        assert "diff=" in result
-        assert "rej_text=" in result
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert "partially applied" in result.message
+        assert "rejected" in result.message
+        assert "diff=" in result.message
+        assert "rej_text=" in result.message
 
 
 def test_http_error_on_get_request(sample_base_args, mock_create_headers):
@@ -398,8 +407,9 @@ def test_http_error_on_get_request(sample_base_args, mock_create_headers):
             base_args=sample_base_args,
         )
 
-        # Should return False due to handle_exceptions decorator
-        assert result is False
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert result.file_path == "test.py"
 
 
 def test_http_error_on_put_request(
@@ -422,8 +432,9 @@ def test_http_error_on_put_request(
             base_args=sample_base_args,
         )
 
-        # Should return False due to handle_exceptions decorator
-        assert result is False
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert result.file_path == "test.py"
 
 
 def test_base64_decoding_with_special_characters(
@@ -463,8 +474,9 @@ def test_base64_decoding_with_special_characters(
                 diff=diff, file_path="test.py", base_args=sample_base_args
             )
 
-            assert isinstance(result, str)
-            assert "diff applied to the file: test.py successfully" in result
+            assert isinstance(result, FileWriteResult)
+            assert result.success is True
+            assert "Applied diff to test.py" in result.message
 
             # Verify apply_patch was called with decoded content
             mock_patch.assert_called_once()
@@ -496,8 +508,9 @@ def test_missing_content_field_in_response(
             base_args=sample_base_args,
         )
 
-        assert isinstance(result, str)
-        assert "diff applied to the file: test.py successfully" in result
+        assert isinstance(result, FileWriteResult)
+        assert result.success is True
+        assert "Applied diff to test.py" in result.message
 
 
 def test_missing_sha_field_in_response(
@@ -524,8 +537,9 @@ def test_missing_sha_field_in_response(
             base_args=sample_base_args,
         )
 
-        assert isinstance(result, str)
-        assert "diff applied to the file: test.py successfully" in result
+        assert isinstance(result, FileWriteResult)
+        assert result.success is True
+        assert "Applied diff to test.py" in result.message
 
         # Verify PUT request was made without SHA
         mock_requests_put_success.assert_called_once()
@@ -558,11 +572,10 @@ def test_url_construction_with_special_characters(
         base_args=base_args,
     )
 
-    assert isinstance(result, str)
-    assert (
-        "diff applied to the file: src/utils/test_file-name_123.py successfully"
-        in result
-    )
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert result.file_path == "src/utils/test_file-name_123.py"
+    assert "Applied diff to src/utils/test_file-name_123.py" in result.message
 
     # Verify GET request URL construction
     mock_requests_get_existing_file.assert_called_once()
@@ -600,8 +613,9 @@ def test_base64_encoding_in_put_request(
                 base_args=sample_base_args,
             )
 
-            assert isinstance(result, str)
-            assert "diff applied to the file: test.py successfully" in result
+            assert isinstance(result, FileWriteResult)
+            assert result.success is True
+            assert "Applied diff to test.py" in result.message
 
             # Verify PUT request content is base64 encoded
             mock_put.assert_called_once()
@@ -651,8 +665,9 @@ def test_kwargs_parameter_ignored():
                     another_param=123,
                 )
 
-                assert isinstance(result, str)
-                assert "diff applied to the file: test.py successfully" in result
+                assert isinstance(result, FileWriteResult)
+                assert result.success is True
+                assert "Applied diff to test.py" in result.message
 
 
 @pytest.mark.parametrize(
@@ -676,6 +691,7 @@ def test_various_exceptions_handled(sample_base_args, error_type, error_message)
             base_args=sample_base_args,
         )
 
-        # Should return False due to handle_exceptions decorator
-        assert result is False
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert result.file_path == "test.py"
         mock_get.assert_called_once()

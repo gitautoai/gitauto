@@ -1,4 +1,5 @@
 # Local imports
+from services.claude.tools.file_modify_result import FileMoveResult
 from services.github.commits.create_commit import create_commit
 from services.github.commits.get_commit import get_commit
 from services.github.refs.get_reference import get_reference
@@ -9,7 +10,15 @@ from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(
+    default_return_value=lambda old_file_path, new_file_path, base_args, **kwargs: FileMoveResult(
+        success=False,
+        message="Unexpected error occurred.",
+        old_file_path=old_file_path,
+        new_file_path=new_file_path,
+    ),
+    raise_on_error=False,
+)
 def move_file(
     old_file_path: str,
     new_file_path: str,
@@ -18,7 +27,12 @@ def move_file(
 ):
     """Move a file in the GitHub repository using Trees API to ensure Git recognizes it as a rename."""
     if old_file_path == new_file_path:
-        return f"Error: old_file_path and new_file_path cannot be the same: {old_file_path}"
+        return FileMoveResult(
+            success=False,
+            message=f"Source and destination cannot be the same: '{old_file_path}'.",
+            old_file_path=old_file_path,
+            new_file_path=new_file_path,
+        )
 
     owner = base_args["owner"]
     repo = base_args["repo"]
@@ -29,12 +43,22 @@ def move_file(
     # Get the latest commit SHA
     latest_commit_sha = get_reference(base_args)
     if not latest_commit_sha:
-        return f"Error: Could not get reference for branch {new_branch}"
+        return FileMoveResult(
+            success=False,
+            message=f"Could not get reference for branch '{new_branch}'.",
+            old_file_path=old_file_path,
+            new_file_path=new_file_path,
+        )
 
     # Get the tree SHA from the commit
     base_tree_sha = get_commit(base_args, latest_commit_sha)
     if not base_tree_sha:
-        return f"Error: Could not get tree SHA for commit {latest_commit_sha}"
+        return FileMoveResult(
+            success=False,
+            message=f"Could not get tree SHA for commit '{latest_commit_sha}'.",
+            old_file_path=old_file_path,
+            new_file_path=new_file_path,
+        )
 
     # Get the current tree
     tree_items = get_file_tree(owner, repo, base_tree_sha, token)
@@ -47,12 +71,22 @@ def move_file(
             break
 
     if not file_blob:
-        return f"Error: File {old_file_path} not found"
+        return FileMoveResult(
+            success=False,
+            message=f"File '{old_file_path}' not found.",
+            old_file_path=old_file_path,
+            new_file_path=new_file_path,
+        )
 
     # Check if new file already exists
     for item in tree_items:
         if item["path"] == new_file_path and item["type"] == "blob":
-            return f"Error: Target file {new_file_path} already exists"
+            return FileMoveResult(
+                success=False,
+                message=f"Target file '{new_file_path}' already exists.",
+                old_file_path=old_file_path,
+                new_file_path=new_file_path,
+            )
 
     # Create tree items for move operation
     move_tree_items = [
@@ -75,7 +109,12 @@ def move_file(
     # Create the new tree
     new_tree_sha = create_tree(base_args, base_tree_sha, move_tree_items)
     if not new_tree_sha:
-        return "Error: Could not create new tree"
+        return FileMoveResult(
+            success=False,
+            message="Could not create new tree.",
+            old_file_path=old_file_path,
+            new_file_path=new_file_path,
+        )
 
     # Create commit message
     commit_message = (
@@ -89,9 +128,19 @@ def move_file(
         base_args, commit_message, new_tree_sha, latest_commit_sha
     )
     if not new_commit_sha:
-        return "Error: Could not create commit"
+        return FileMoveResult(
+            success=False,
+            message="Could not create commit.",
+            old_file_path=old_file_path,
+            new_file_path=new_file_path,
+        )
 
     # Update the branch reference
     update_reference(base_args, new_commit_sha)
 
-    return f"File successfully moved from {old_file_path} to {new_file_path}"
+    return FileMoveResult(
+        success=True,
+        message=f"Moved {old_file_path} to {new_file_path}.",
+        old_file_path=old_file_path,
+        new_file_path=new_file_path,
+    )
