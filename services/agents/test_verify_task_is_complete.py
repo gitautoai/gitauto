@@ -9,6 +9,7 @@ import pytest
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.eslint.run_eslint_fix import ESLintResult
 from services.github.types.github_types import BaseArgs
+from services.jest.run_jest_test import JestResult
 from services.prettier.run_prettier_fix import PrettierResult
 from services.tsc.run_tsc_check import TscResult
 
@@ -20,6 +21,19 @@ def mock_tsc_check():
         "services.agents.verify_task_is_complete.run_tsc_check",
         new_callable=AsyncMock,
         return_value=TscResult(success=True, errors=[], error_files=set()),
+    ):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def mock_jest_test():
+    """Auto-mock run_jest_test for all tests to prevent actual test execution."""
+    with patch(
+        "services.agents.verify_task_is_complete.run_jest_test",
+        new_callable=AsyncMock,
+        return_value=JestResult(
+            success=True, errors=[], error_files=set(), runner_name=""
+        ),
     ):
         yield
 
@@ -435,3 +449,30 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
 
     assert result["success"] is True
     assert result["message"] == "Task completed."
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_verify_fails_when_jest_tests_fail(
+    mock_get_files, mock_get_raw, mock_tsc, mock_jest, base_args
+):
+    mock_get_files.return_value = [
+        {"filename": "src/index.test.ts", "status": "modified"},
+    ]
+    mock_get_raw.return_value = "const x = 1;"
+    mock_tsc.return_value = TscResult(success=True, errors=[], error_files=set())
+    mock_jest.return_value = JestResult(
+        success=False,
+        errors=["FAIL src/index.test.ts", "Expected true to be false"],
+        error_files={"src/index.test.ts"},
+        runner_name="jest",
+    )
+
+    result = await verify_task_is_complete(base_args)
+
+    assert result["success"] is False
+    assert "NOT complete" in result["message"]
+    assert "jest:" in result["message"]

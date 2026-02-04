@@ -8,6 +8,7 @@ import pytest
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.eslint.run_eslint_fix import ESLintResult
 from services.github.types.github_types import BaseArgs
+from services.jest.run_jest_test import JestResult
 from services.prettier.run_prettier_fix import PrettierResult
 from services.tsc.run_tsc_check import TscResult
 
@@ -281,3 +282,43 @@ async def test_run_tsc_reports_type_errors(
     assert len(result.errors) == 1
     assert "TS2322" in result.errors[0]
     assert result.files_with_errors == {"src/index.ts"}
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_ready.run_jest_test")
+@patch("services.agents.verify_task_is_ready.replace_remote_file_content")
+@patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_ready.get_raw_content")
+async def test_run_jest_reports_test_failures(
+    mock_get_raw_content, mock_prettier, mock_eslint, mock_replace, mock_jest
+):
+    mock_get_raw_content.return_value = (
+        "describe('test', () => { it('fails', () => { expect(true).toBe(false); }); });"
+    )
+    mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_jest.return_value = JestResult(
+        success=False,
+        errors=["FAIL src/index.test.ts", "Expected true to be false"],
+        error_files={"src/index.test.ts"},
+        runner_name="jest",
+    )
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "token": "test",
+            "base_branch": "main",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    result = await verify_task_is_ready(
+        base_args=base_args, file_paths=["src/index.test.ts"], run_jest=True
+    )
+    assert result.success is False
+    assert len(result.errors) == 2
+    assert "jest:" in result.errors[0]
+    assert result.files_with_errors == {"src/index.test.ts"}
