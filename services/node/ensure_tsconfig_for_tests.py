@@ -46,10 +46,11 @@ def ensure_tsconfig_for_tests(root_files: list[str], base_args: BaseArgs):
             base_args=base_args,
             commit_message=f"Add {TSCONFIG_TEST_PATH} with relaxed settings",
         )
-        if result:
+        if result.success:
             logger.info("Added %s", TSCONFIG_TEST_PATH)
             return TSCONFIG_TEST_PATH, "added"
 
+        logger.warning("Failed to add %s: %s", TSCONFIG_TEST_PATH, result.message)
         return TSCONFIG_TEST_PATH, None
 
     logger.info("Found %d tsconfig.*.json files: %s", len(variant_files), variant_files)
@@ -83,10 +84,11 @@ def ensure_tsconfig_for_tests(root_files: list[str], base_args: BaseArgs):
                 base_args=base_args,
                 commit_message=f"Modify {variant_path} with relaxed settings",
             )
-            if result:
+            if result.success:
                 logger.info("Modified %s", variant_path)
                 return variant_path, "modified"
 
+            logger.warning("Failed to modify %s: %s", variant_path, result.message)
             return variant_path, None
 
         except json.JSONDecodeError as e:

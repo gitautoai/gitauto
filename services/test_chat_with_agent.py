@@ -3,6 +3,7 @@ from typing import cast
 from unittest.mock import Mock, patch
 import pytest
 from services.chat_with_agent import chat_with_agent
+from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
 from services.github.types.github_types import BaseArgs
 
 
@@ -578,3 +579,176 @@ async def test_no_tool_call_returns_is_completed_false(
 
     is_completed = result[3]
     assert is_completed is False
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.update_comment")
+async def test_file_write_result_success_includes_formatted_content(
+    _mock_update_comment, mock_chat_with_claude, mock_get_model
+):
+    """Test that FileWriteResult with success=True includes formatted content with line numbers."""
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "apply_diff_to_file",
+                    "input": {"file_path": "test.py", "diff": "some diff"},
+                }
+            ],
+        },
+        "test_id",
+        "apply_diff_to_file",
+        {"file_path": "test.py", "diff": "some diff"},
+        15,
+        10,
+    )
+
+    base_args = Mock()
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        mock_tools.__contains__.return_value = True
+        mock_tools.__getitem__.return_value = Mock(
+            return_value=FileWriteResult(
+                success=True,
+                message="Applied diff to test.py.",
+                file_path="test.py",
+                content="line1\nline2",
+            )
+        )
+
+        result = await chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            system_message="test system message",
+            base_args=base_args,
+            tools=[],
+            allow_edit_any_file=True,
+        )
+
+    messages = result[0]
+    tool_result_content_list = cast(list, messages[-1]["content"])
+    tool_result_content = tool_result_content_list[0]["content"]
+
+    assert "Applied diff to test.py." in tool_result_content
+    assert "```test.py" in tool_result_content
+    assert "1:line1" in tool_result_content
+    assert "2:line2" in tool_result_content
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.update_comment")
+async def test_file_write_result_failure_returns_message_only(
+    _mock_update_comment, mock_chat_with_claude, mock_get_model
+):
+    """Test that FileWriteResult with success=False returns only the message."""
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "apply_diff_to_file",
+                    "input": {"file_path": "test.py", "diff": "bad diff"},
+                }
+            ],
+        },
+        "test_id",
+        "apply_diff_to_file",
+        {"file_path": "test.py", "diff": "bad diff"},
+        15,
+        10,
+    )
+
+    base_args = Mock()
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        mock_tools.__contains__.return_value = True
+        mock_tools.__getitem__.return_value = Mock(
+            return_value=FileWriteResult(
+                success=False,
+                message="Invalid diff format.",
+                file_path="test.py",
+                content="original content",
+            )
+        )
+
+        result = await chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            system_message="test system message",
+            base_args=base_args,
+            tools=[],
+            allow_edit_any_file=True,
+        )
+
+    messages = result[0]
+    tool_result_content_list = cast(list, messages[-1]["content"])
+    tool_result_content = tool_result_content_list[0]["content"]
+
+    assert tool_result_content == "Invalid diff format."
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.update_comment")
+async def test_file_move_result_returns_message(
+    _mock_update_comment, mock_chat_with_claude, mock_get_model
+):
+    """Test that FileMoveResult returns the message."""
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "move_file",
+                    "input": {
+                        "old_file_path": "old.py",
+                        "new_file_path": "new.py",
+                    },
+                }
+            ],
+        },
+        "test_id",
+        "move_file",
+        {"old_file_path": "old.py", "new_file_path": "new.py"},
+        15,
+        10,
+    )
+
+    base_args = Mock()
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        mock_tools.__contains__.return_value = True
+        mock_tools.__getitem__.return_value = Mock(
+            return_value=FileMoveResult(
+                success=True,
+                message="Moved old.py to new.py.",
+                old_file_path="old.py",
+                new_file_path="new.py",
+            )
+        )
+
+        result = await chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            system_message="test system message",
+            base_args=base_args,
+            tools=[],
+        )
+
+    messages = result[0]
+    tool_result_content_list = cast(list, messages[-1]["content"])
+    tool_result_content = tool_result_content_list[0]["content"]
+
+    assert tool_result_content == "Moved old.py to new.py."

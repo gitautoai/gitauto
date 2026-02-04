@@ -1,12 +1,13 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
 import base64
-from unittest.mock import MagicMock, patch
 from typing import cast
+from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
 
+from services.claude.tools.file_modify_result import FileWriteResult
 from services.github.commits.replace_remote_file import (
     REPLACE_REMOTE_FILE_CONTENT,
     replace_remote_file_content,
@@ -108,7 +109,10 @@ def test_replace_existing_file_success(
     )
 
     # Verify the result
-    assert result == f"Content replaced in the file: {file_path} successfully."
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert result.file_path == file_path
+    assert "Replaced" in result.message
 
     # Verify GET request was made to check existing file
     expected_get_url = f"https://api.github.com/repos/test-owner/test-repo/contents/{file_path}?ref=test-branch"
@@ -168,7 +172,10 @@ def test_replace_nonexistent_file_success(
     )
 
     # Verify the result
-    assert result == f"Content replaced in the file: {file_path} successfully."
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert result.file_path == file_path
+    assert "Replaced" in result.message
 
     # Verify GET request was made
     expected_get_url = f"https://api.github.com/repos/test-owner/test-repo/contents/{file_path}?ref=test-branch"
@@ -224,7 +231,9 @@ def test_replace_file_with_skip_ci(
     )
 
     # Verify the result
-    assert result == f"Content replaced in the file: {file_path} successfully."
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert "Replaced" in result.message
 
     # Verify PUT request includes [skip ci] in message
     call_args = mock_requests_put_success.call_args
@@ -259,10 +268,9 @@ def test_replace_file_directory_error(
         )
 
         # Verify error message
-        assert (
-            result
-            == f"file_path: '{file_path}' is a directory. It should be a file path."
-        )
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert "directory" in result.message
 
 
 def test_replace_file_multiple_files_error(
@@ -290,10 +298,9 @@ def test_replace_file_multiple_files_error(
         )
 
         # Verify error message
-        assert (
-            result
-            == f"file_path: '{file_path}' returned multiple files. Please specify a single file path."
-        )
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert "multiple files" in result.message
 
 
 def test_replace_file_with_special_characters(
@@ -313,7 +320,9 @@ def test_replace_file_with_special_characters(
     )
 
     # Verify the result
-    assert result == f"Content replaced in the file: {file_path} successfully."
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert "Replaced" in result.message
 
     # Verify content was properly encoded
     call_args = mock_requests_put_success.call_args
@@ -342,7 +351,9 @@ def test_replace_file_with_empty_content(
     )
 
     # Verify the result
-    assert result == f"Content replaced in the file: {file_path} successfully."
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert "Replaced" in result.message
 
     # Verify empty content was properly encoded
     call_args = mock_requests_put_success.call_args
@@ -367,7 +378,9 @@ def test_replace_file_with_large_content(
     )
 
     # Verify the result
-    assert result == f"Content replaced in the file: {file_path} successfully."
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert "Replaced" in result.message
 
     # Verify large content was properly encoded
     call_args = mock_requests_put_success.call_args
@@ -399,8 +412,9 @@ def test_replace_file_get_request_error_handled(sample_base_args):
             base_args=sample_base_args,
         )
 
-        # Function should return None due to handle_exceptions decorator
-        assert result is None
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert result.file_path == "test.py"
 
 
 def test_replace_file_put_request_error_handled(
@@ -423,8 +437,9 @@ def test_replace_file_put_request_error_handled(
             base_args=sample_base_args,
         )
 
-        # Function should return None due to handle_exceptions decorator
-        assert result is None
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert result.file_path == "test.py"
 
 
 def test_replace_file_connection_error_handled(sample_base_args):
@@ -438,8 +453,9 @@ def test_replace_file_connection_error_handled(sample_base_args):
             base_args=sample_base_args,
         )
 
-        # Function should return None due to handle_exceptions decorator
-        assert result is None
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert result.file_path == "test.py"
 
 
 def test_replace_file_timeout_error_handled(sample_base_args):
@@ -453,8 +469,9 @@ def test_replace_file_timeout_error_handled(sample_base_args):
             base_args=sample_base_args,
         )
 
-        # Function should return None due to handle_exceptions decorator
-        assert result is None
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert result.file_path == "test.py"
 
 
 def test_replace_file_uses_correct_timeout(
@@ -499,7 +516,10 @@ def test_replace_file_with_different_base_args(
     )
 
     # Verify the result
-    assert result == "Content replaced in the file: different/path.py successfully."
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert result.file_path == "different/path.py"
+    assert "Replaced" in result.message
 
     # Verify correct URL was constructed
     get_call_args = mock_requests_get_existing_file.call_args
@@ -533,8 +553,9 @@ def test_replace_file_handles_various_exceptions(
             base_args=sample_base_args,
         )
 
-        # Function should return None due to handle_exceptions decorator
-        assert result is None
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert result.file_path == "test.py"
         mock_get.assert_called_once()
 
 
@@ -573,7 +594,9 @@ def test_replace_file_missing_sha_in_existing_file(
         )
 
         # Should still succeed with empty SHA
-        assert result == "Content replaced in the file: test.py successfully."
+        assert isinstance(result, FileWriteResult)
+        assert result.success is True
+        assert "Replaced" in result.message
 
         # Verify PUT request includes empty SHA
         call_args = mock_put.call_args
@@ -597,7 +620,10 @@ def test_replace_file_with_nested_file_path(
     )
 
     # Verify the result
-    assert result == f"Content replaced in the file: {file_path} successfully."
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert result.file_path == file_path
+    assert "Replaced" in result.message
 
     # Verify correct URL construction with nested path
     get_call_args = mock_requests_get_existing_file.call_args
@@ -620,8 +646,9 @@ def test_replace_file_json_decode_error_on_get(sample_base_args):
             base_args=sample_base_args,
         )
 
-        # Function should return None due to handle_exceptions decorator
-        assert result is None
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert result.file_path == "test.py"
 
 
 def test_replace_remote_file_content_function_definition():
@@ -668,4 +695,6 @@ def test_replace_file_with_extra_kwargs(
     )
 
     # Should work normally despite extra parameters
-    assert result == "Content replaced in the file: test.py successfully."
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert "Replaced" in result.message

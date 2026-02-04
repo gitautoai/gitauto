@@ -6,8 +6,16 @@ from unittest.mock import MagicMock, patch
 
 import jsonc
 
+from services.claude.tools.file_modify_result import FileWriteResult
 from services.github.types.github_types import BaseArgs
 from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
+
+
+def _mock_success_result(file_path: str = "test.py"):
+    """Create a successful FileWriteResult for mocking."""
+    return FileWriteResult(
+        success=True, message=f"Updated {file_path}", file_path=file_path, content=""
+    )
 
 
 def _make_base_args():
@@ -60,7 +68,7 @@ def test_creates_file_when_no_variants_exist(
 ):
     root_files = ["tsconfig.json"]
     mock_get_raw.return_value = None
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
@@ -99,7 +107,7 @@ def test_updates_variant_when_missing_settings(
         return None
 
     mock_get_raw.side_effect = get_raw_side_effect
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
@@ -132,7 +140,7 @@ def test_updates_existing_tsconfig_test(
         return None
 
     mock_get_raw.side_effect = get_raw_side_effect
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
@@ -152,7 +160,7 @@ def test_ignores_nested_tsconfig_files(
 ):
     root_files = ["tsconfig.json", "packages/foo/tsconfig.test.json"]
     mock_get_raw.return_value = None
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
@@ -167,7 +175,7 @@ def test_creates_when_only_main_tsconfig_exists(
 ):
     root_files = ["tsconfig.json"]
     mock_get_raw.return_value = None
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
@@ -180,7 +188,7 @@ def test_creates_when_only_main_tsconfig_exists(
 def test_skips_non_typescript_repo(mock_get_raw: MagicMock, mock_replace: MagicMock):
     root_files = ["package.json", "index.js"]
     mock_get_raw.return_value = None
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 
@@ -202,7 +210,7 @@ def test_skips_when_variant_has_invalid_json(
         return None
 
     mock_get_raw.side_effect = get_raw_side_effect
-    mock_replace.return_value = "Success"
+    mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_tsconfig_for_tests(root_files, _make_base_args())
 

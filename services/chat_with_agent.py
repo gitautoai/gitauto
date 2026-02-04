@@ -3,10 +3,11 @@ import inspect
 
 # Third party imports
 from anthropic.types import MessageParam, ToolResultBlockParam, ToolUnionParam
-from services.claude.replace_old_file_content import replace_old_file_content
 
 # Local imports
 from services.claude.chat_with_claude import chat_with_claude
+from services.claude.replace_old_file_content import replace_old_file_content
+from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
 from services.github.comments.update_comment import update_comment
 from services.github.types.github_types import BaseArgs
 from services.model_selection import get_model, try_next_model
@@ -16,6 +17,7 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_target_test_file import is_target_test_file
 from utils.files.is_test_file import is_test_file
 from utils.formatting.collapse_list import collapse_list
+from utils.formatting.format_with_line_numbers import format_content_with_line_numbers
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger
 from utils.number.is_valid_line_number import is_valid_line_number
@@ -246,10 +248,25 @@ async def chat_with_agent(
     # Append the function call to the messages
     logger.info("Tool called: %s. Response: %s", tool_name, response_message)
     messages.append(response_message)
+
+    # Format tool result content based on result type
+    if isinstance(tool_result, FileWriteResult):
+        if tool_result.success and tool_result.content:
+            formatted_content = format_content_with_line_numbers(
+                file_path=tool_result.file_path, content=tool_result.content
+            )
+            tool_result_content = f"{tool_result.message}\n\n{formatted_content}"
+        else:
+            tool_result_content = tool_result.message
+    elif isinstance(tool_result, FileMoveResult):
+        tool_result_content = tool_result.message
+    else:
+        tool_result_content = str(tool_result)
+
     tool_result_block: ToolResultBlockParam = {
         "type": "tool_result",
         "tool_use_id": tool_use_id,
-        "content": str(tool_result),
+        "content": tool_result_content,
     }
 
     # Claude expects a user message for tool_result

@@ -7,9 +7,10 @@ import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
+from services.claude.tools.file_modify_result import FileWriteResult
+from services.claude.tools.properties import FILE_PATH
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
-from services.claude.tools.properties import FILE_PATH
 from utils.error.handle_exceptions import handle_exceptions
 from utils.text.ensure_final_newline import ensure_final_newline
 from utils.text.sort_imports import sort_imports
@@ -35,7 +36,15 @@ REPLACE_REMOTE_FILE_CONTENT: ToolUnionParam = {
 }
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
+@handle_exceptions(
+    default_return_value=lambda file_content, file_path, base_args, **kwargs: FileWriteResult(
+        success=False,
+        message="Unexpected error occurred.",
+        file_path=file_path,
+        content="",
+    ),
+    raise_on_error=False,
+)
 def replace_remote_file_content(
     file_content: str,
     file_path: str,
@@ -75,10 +84,20 @@ def replace_remote_file_content(
 
         # Check if the response is a file (not a directory)
         if isinstance(file_info, list):
-            return f"file_path: '{file_path}' returned multiple files. Please specify a single file path."
+            return FileWriteResult(
+                success=False,
+                message=f"'{file_path}' returned multiple files. Specify a single file path.",
+                file_path=file_path,
+                content="",
+            )
 
         if file_info.get("type") == "dir":
-            return f"file_path: '{file_path}' is a directory. It should be a file path."
+            return FileWriteResult(
+                success=False,
+                message=f"'{file_path}' is a directory, not a file.",
+                file_path=file_path,
+                content="",
+            )
 
         # Add SHA to the request data
         data["sha"] = file_info.get("sha", "")
@@ -86,4 +105,9 @@ def replace_remote_file_content(
     # Replace the content of the remote file
     put_response = requests.put(url=url, json=data, headers=headers, timeout=TIMEOUT)
     put_response.raise_for_status()
-    return f"Content replaced in the file: {file_path} successfully."
+    return FileWriteResult(
+        success=True,
+        message=f"Replaced {file_path}.",
+        file_path=file_path,
+        content=file_content,
+    )

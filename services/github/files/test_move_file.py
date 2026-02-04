@@ -1,11 +1,12 @@
 # Standard imports
-from unittest.mock import patch
 import json
+from unittest.mock import patch
 
 # Third-party imports
 import pytest
 
 # Local imports
+from services.claude.tools.file_modify_result import FileMoveResult
 from services.github.files.move_file import move_file
 
 
@@ -37,10 +38,9 @@ def mock_tree_items():
 def test_same_file_paths_error(base_args):
     """Test error when old_file_path and new_file_path are the same."""
     result = move_file("same/path.py", "same/path.py", base_args)
-    assert (
-        result
-        == "Error: old_file_path and new_file_path cannot be the same: same/path.py"
-    )
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert "same" in result.message
 
 
 @patch("services.github.files.move_file.get_reference")
@@ -50,7 +50,9 @@ def test_get_reference_failure(mock_get_reference, base_args):
 
     result = move_file("old/path.py", "new/path.py", base_args)
 
-    assert result == "Error: Could not get reference for branch test-branch"
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert "reference" in result.message
     mock_get_reference.assert_called_once_with(base_args)
 
 
@@ -63,7 +65,9 @@ def test_get_commit_failure(mock_get_reference, mock_get_commit, base_args):
 
     result = move_file("old/path.py", "new/path.py", base_args)
 
-    assert result == "Error: Could not get tree SHA for commit commit_sha_123"
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert "tree SHA" in result.message
     mock_get_reference.assert_called_once_with(base_args)
     mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
 
@@ -85,7 +89,9 @@ def test_file_not_found_error(
 
     result = move_file("nonexistent/file.py", "new/path.py", base_args)
 
-    assert result == "Error: File nonexistent/file.py not found"
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert "not found" in result.message
     mock_get_reference.assert_called_once_with(base_args)
     mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
     mock_get_file_tree.assert_called_once_with(
@@ -110,7 +116,9 @@ def test_target_file_exists_error(
 
     result = move_file("old/file.py", "other/file.py", base_args)
 
-    assert result == "Error: Target file other/file.py already exists"
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert "already exists" in result.message
     mock_get_reference.assert_called_once_with(base_args)
     mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
     mock_get_file_tree.assert_called_once_with(
@@ -138,7 +146,9 @@ def test_create_tree_failure(
 
     result = move_file("old/file.py", "new/path.py", base_args)
 
-    assert result == "Error: Could not create new tree"
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert "tree" in result.message
     mock_get_reference.assert_called_once_with(base_args)
     mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
     mock_get_file_tree.assert_called_once_with(
@@ -187,7 +197,9 @@ def test_create_commit_failure(
 
     result = move_file("old/file.py", "new/path.py", base_args)
 
-    assert result == "Error: Could not create commit"
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert "commit" in result.message
     mock_get_reference.assert_called_once_with(base_args)
     mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
     mock_get_file_tree.assert_called_once_with(
@@ -228,7 +240,11 @@ def test_successful_move_without_skip_ci(
 
     result = move_file("old/file.py", "new/path.py", base_args)
 
-    assert result == "File successfully moved from old/file.py to new/path.py"
+    assert isinstance(result, FileMoveResult)
+    assert result.success is True
+    assert result.old_file_path == "old/file.py"
+    assert result.new_file_path == "new/path.py"
+    assert "Moved" in result.message
     mock_get_reference.assert_called_once_with(base_args)
     mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
     mock_get_file_tree.assert_called_once_with(
@@ -271,7 +287,11 @@ def test_successful_move_with_skip_ci(
 
     result = move_file("old/file.py", "new/path.py", base_args)
 
-    assert result == "File successfully moved from old/file.py to new/path.py"
+    assert isinstance(result, FileMoveResult)
+    assert result.success is True
+    assert result.old_file_path == "old/file.py"
+    assert result.new_file_path == "new/path.py"
+    assert "Moved" in result.message
     mock_get_reference.assert_called_once_with(base_args)
     mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
     mock_get_file_tree.assert_called_once_with(
@@ -312,7 +332,9 @@ def test_file_search_with_non_blob_items(
         mock_create_tree.return_value = None  # Force failure to check tree items
         result = move_file("old/file.py", "new/path.py", base_args)
 
-        assert result == "Error: Could not create new tree"
+        assert isinstance(result, FileMoveResult)
+        assert result.success is False
+        assert "tree" in result.message
         # Verify the correct blob was found by checking the tree items passed to create_tree
         expected_tree_items = [
             {
@@ -360,7 +382,9 @@ def test_target_file_check_with_non_blob_items(
         )
         result = move_file("old/file.py", "new/path.py", base_args)
 
-        assert result == "Error: Could not create new tree"
+        assert isinstance(result, FileMoveResult)
+        assert result.success is False
+        assert "tree" in result.message
         # If we got here, it means the target file check passed (tree was ignored)
 
 
@@ -377,7 +401,9 @@ def test_empty_tree_items(
 
     result = move_file("old/file.py", "new/path.py", base_args)
 
-    assert result == "Error: File old/file.py not found"
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert "not found" in result.message
     mock_get_reference.assert_called_once_with(base_args)
     mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
     mock_get_file_tree.assert_called_once_with(
@@ -396,7 +422,9 @@ def test_skip_ci_default_value(base_args):
         result = move_file("old/file.py", "new/path.py", base_args)
 
         # The function should handle missing skip_ci gracefully
-        assert result == "Error: Could not get reference for branch test-branch"
+        assert isinstance(result, FileMoveResult)
+        assert result.success is False
+        assert "reference" in result.message
 
 
 @patch("services.github.files.move_file.update_reference")
@@ -432,7 +460,11 @@ def test_different_file_modes(
 
     result = move_file("old/script.sh", "new/script.sh", base_args)
 
-    assert result == "File successfully moved from old/script.sh to new/script.sh"
+    assert isinstance(result, FileMoveResult)
+    assert result.success is True
+    assert result.old_file_path == "old/script.sh"
+    assert result.new_file_path == "new/script.sh"
+    assert "Moved" in result.message
 
     # Verify the executable mode is preserved
     expected_tree_items = [
@@ -455,15 +487,17 @@ def test_different_file_modes(
 
 
 @patch("services.github.files.move_file.get_reference")
-def test_exception_handling_returns_none(mock_get_reference, base_args):
-    """Test that exceptions are handled and None is returned due to decorator."""
+def test_exception_handling_returns_result(mock_get_reference, base_args):
+    """Test that exceptions are handled and FileMoveResult is returned due to decorator."""
     # Make get_reference raise an exception
     mock_get_reference.side_effect = Exception("Test exception")
 
     result = move_file("old/file.py", "new/file.py", base_args)
 
-    # The handle_exceptions decorator should catch the exception and return None
-    assert result is None
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert result.old_file_path == "old/file.py"
+    assert result.new_file_path == "new/file.py"
 
 
 @patch("services.github.files.move_file.get_reference")
@@ -474,8 +508,10 @@ def test_json_decode_error_handling(mock_get_reference, base_args):
 
     result = move_file("old/file.py", "new/file.py", base_args)
 
-    # The handle_exceptions decorator should catch the exception and return None
-    assert result is None
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert result.old_file_path == "old/file.py"
+    assert result.new_file_path == "new/file.py"
 
 
 @patch("services.github.files.move_file.get_reference")
@@ -486,8 +522,10 @@ def test_attribute_error_handling(mock_get_reference, base_args):
 
     result = move_file("old/file.py", "new/file.py", base_args)
 
-    # The handle_exceptions decorator should catch the exception and return None
-    assert result is None
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert result.old_file_path == "old/file.py"
+    assert result.new_file_path == "new/file.py"
 
 
 @patch("services.github.files.move_file.get_reference")
@@ -498,14 +536,15 @@ def test_key_error_handling(mock_get_reference, base_args):
 
     result = move_file("old/file.py", "new/file.py", base_args)
 
-    # The handle_exceptions decorator should catch the exception and return None
-    assert result is None
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert result.old_file_path == "old/file.py"
+    assert result.new_file_path == "new/file.py"
 
 
 def test_kwargs_parameter_ignored(base_args):
     """Test that additional kwargs are ignored."""
     result = move_file("same/path.py", "same/path.py", base_args, extra_param="ignored")
-    assert (
-        result
-        == "Error: old_file_path and new_file_path cannot be the same: same/path.py"
-    )
+    assert isinstance(result, FileMoveResult)
+    assert result.success is False
+    assert "same" in result.message
