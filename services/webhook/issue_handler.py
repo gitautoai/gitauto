@@ -455,6 +455,7 @@ async def create_pr_from_issue(
         base_args=base_args,
         file_paths=files_to_validate,
         run_tsc=False,
+        run_jest=False,
     )
     pre_existing_errors = ""
     if validation_result.errors:
