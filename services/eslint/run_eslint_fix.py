@@ -1,6 +1,8 @@
 import json
 import os
 import subprocess
+from dataclasses import dataclass
+from typing import TypedDict
 
 import sentry_sdk
 
@@ -15,20 +17,42 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
 
-@handle_exceptions(default_return_value=None, raise_on_error=False)
-async def run_eslint(*, base_args: BaseArgs, file_path: str, file_content: str):
+class ESLintMessage(TypedDict, total=False):
+    line: int
+    column: int
+    message: str
+    ruleId: str
+    fatal: bool
+
+
+class ESLintFileResult(TypedDict):
+    messages: list[ESLintMessage]
+
+
+@dataclass
+class ESLintResult:
+    success: bool
+    content: str | None
+    error: str | None
+
+
+@handle_exceptions(
+    default_return_value=ESLintResult(success=True, content=None, error=None),
+    raise_on_error=False,
+)
+async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: str):
     if not file_content.strip():
         logger.info("ESLint: Skipping %s - empty content", file_path)
-        return None
+        return ESLintResult(success=True, content=None, error=None)
 
     if not file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
         logger.info("ESLint: Skipping %s - not a JS/TS file", file_path)
-        return None
+        return ESLintResult(success=True, content=None, error=None)
 
     eslint_config = get_eslint_config(base_args)
     if not eslint_config:
         logger.info("ESLint: Skipping %s - no ESLint config found in repo", file_path)
-        return None
+        return ESLintResult(success=True, content=None, error=None)
 
     config_filename = eslint_config.get("filename", "")
     is_legacy_config = config_filename.startswith(".eslintrc")
@@ -68,10 +92,34 @@ async def run_eslint(*, base_args: BaseArgs, file_path: str, file_content: str):
         eslint_bin,
     )
 
+    # Check if we can enable typed linting for unreachable code detection
+    tsconfig_exists = os.path.exists(os.path.join(clone_dir, "tsconfig.json"))
+    ts_eslint_plugin = os.path.exists(
+        os.path.join(clone_dir, "node_modules", "@typescript-eslint", "eslint-plugin")
+    )
+    ts_eslint_parser = os.path.exists(
+        os.path.join(clone_dir, "node_modules", "@typescript-eslint", "parser")
+    )
+    can_use_typed_linting = tsconfig_exists and ts_eslint_plugin and ts_eslint_parser
+
+    # Build ESLint command
+    cmd = ["npx", "--yes", "eslint", "--fix", "--format", "json"]
+    if can_use_typed_linting:
+        cmd.extend(
+            [
+                "--rule",
+                "@typescript-eslint/no-unnecessary-condition: error",
+                "--parser-options",
+                "project:tsconfig.json",
+            ]
+        )
+        logger.info("ESLint: Typed linting enabled for unreachable code detection")
+    cmd.append(full_path)
+
     # --yes: fallback to download if not in node_modules
     logger.info("ESLint: Running eslint with --fix...")
     result = subprocess.run(
-        ["npx", "--yes", "eslint", "--fix", "--format", "json", full_path],
+        cmd,
         capture_output=True,
         text=True,
         timeout=EFS_TIMEOUT_SECONDS,
@@ -84,43 +132,32 @@ async def run_eslint(*, base_args: BaseArgs, file_path: str, file_content: str):
     # 0 = no linting errors
     # 1 = linting errors found (some fixable, some not)
     # 2+ = fatal error (bad config, missing file, crash)
-    if result.returncode not in [0, 1]:
-        raise RuntimeError(
-            f"ESLint failed with code {result.returncode}: {result.stderr}"
-        )
+    if result.returncode >= 2:
+        error_msg = result.stderr.strip() or "Fatal ESLint error"
+        logger.warning("ESLint failed for %s: %s", file_path, error_msg)
+        return ESLintResult(success=False, content=None, error=error_msg)
 
     with open(full_path, "r", encoding=UTF8) as f:
         fixed_content = f.read()
 
+    remaining_errors: list[str] = []
     if result.stdout:
         try:
-            eslint_output = json.loads(result.stdout)
-            errors = []
+            eslint_output: list[ESLintFileResult] = json.loads(result.stdout)
             for file_result in eslint_output:
                 for message in file_result.get("messages", []):
-                    errors.append(
-                        {
-                            "line": message.get("line"),
-                            "column": message.get("column"),
-                            "message": message.get("message"),
-                            "ruleId": message.get("ruleId"),
-                            "severity": message.get("severity"),
-                        }
-                    )
-
-            if errors:
-                sentry_sdk.capture_message(
-                    f"ESLint: {len(errors)} unfixable errors in {file_path}: {errors}",
-                    level="warning",
-                )
-            else:
-                logger.info("ESLint: Successfully fixed %s with no errors", file_path)
-
-            return fixed_content
+                    line = message.get("line", "?")
+                    msg = message.get("message", "Unknown error")
+                    rule_id = message.get("ruleId", "")
+                    rule_suffix = f" ({rule_id})" if rule_id else ""
+                    remaining_errors.append(f"Line {line}: {msg}{rule_suffix}")
         except json.JSONDecodeError as e:
             sentry_sdk.capture_exception(e)
 
-    logger.info(
-        "ESLint: Completed for %s (return code: %d)", file_path, result.returncode
-    )
-    return fixed_content
+    if remaining_errors:
+        error_msg = "; ".join(remaining_errors)
+        logger.warning("ESLint: Remaining errors in %s: %s", file_path, error_msg)
+        return ESLintResult(success=False, content=fixed_content, error=error_msg)
+
+    logger.info("ESLint: Successfully fixed %s", file_path)
+    return ESLintResult(success=True, content=fixed_content, error=None)

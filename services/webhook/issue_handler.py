@@ -12,9 +12,9 @@ from anthropic.types import MessageParam
 from config import PRODUCT_ID, PR_BODY_STARTS_WITH
 from constants.agent import MAX_ITERATIONS
 from constants.messages import COMPLETED_PR, SETTINGS_LINKS
+from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
-from services.coverages.fix_unreachable_code import fix_unreachable_code
 from services.efs.get_efs_dir import get_efs_dir
 from services.node.ensure_node_packages import ensure_node_packages
 from services.git.get_clone_dir import get_clone_dir
@@ -449,6 +449,19 @@ async def create_pr_from_issue(
         )
     )
 
+    # Validate files for syntax issues before editing
+    files_to_validate = list(
+        {impl_file_path, *reference_file_paths, *test_files.keys()}
+    )
+    validation_result = await verify_task_is_ready(
+        base_args=base_args, file_paths=files_to_validate
+    )
+    pre_existing_errors = ""
+    if validation_result.errors:
+        pre_existing_errors = "\n".join(validation_result.errors)
+        logger.warning("Syntax issues found in source files:\n%s", pre_existing_errors)
+    fixes_applied = validation_result.fixes_applied
+
     comment_body = f"Created pull request: {pr_url}"
     p += 5
     add_log_message(comment_body, log_messages)
@@ -457,41 +470,18 @@ async def create_pr_from_issue(
         base_args=base_args,
     )
 
-    # Fix unreachable code in target implementation file (auto-fix what we can)
-    allowed_to_edit_files: list[str] = []
-    unreachable_result = await fix_unreachable_code(
-        file_path=impl_file_path,
-        repo_dir=clone_dir,
-        clone_task=clone_task,
-        root_files=root_files,
-        base_args=base_args,
-    )
-
-    # If ESLint --fix made changes, push them to the remote branch
-    if unreachable_result.fixed_content:
-        replace_remote_file_content(
-            file_content=unreachable_result.fixed_content,
-            file_path=impl_file_path,
-            base_args=base_args,
-            commit_message=f"Fix unreachable code in {impl_file_path}",
-        )
-
-    # If there are remaining unfixable issues, ask the AI agent to handle them
-    if unreachable_result.unfixable_lines:
-        details = "\n".join(
-            f"- Line {line}: {msg}"
-            for line, msg in sorted(unreachable_result.unfixable_lines.items())
-        )
-        logger.info("Unreachable code detected in %s:\n%s", impl_file_path, details)
-        allowed_to_edit_files = [impl_file_path]
-        messages.append(
-            {
-                "role": "user",
-                "content": f"## Unreachable Code Detected in `{impl_file_path}`\n"
-                f"{details}\n\n"
-                f"ESLint `--fix` was already run but couldn't auto-fix these issues. This code is unreachable based on TypeScript types and cannot be tested. Remove the dead code branches or unnecessary conditions.",
-            }
-        )
+    # Notify agent of auto-fixes and remaining errors (in timeline order)
+    allowed_to_edit_files = list(validation_result.files_with_errors)
+    if fixes_applied or pre_existing_errors:
+        parts = ["## Prettier/ESLint Results\n"]
+        parts.append("We ran Prettier and ESLint with --fix on the source files.\n")
+        if fixes_applied:
+            fixes_str = "\n".join(fixes_applied)
+            parts.append(f"**Auto-fixed and committed:**\n{fixes_str}\n")
+        if pre_existing_errors:
+            parts.append(f"**Remaining unfixable errors:**\n{pre_existing_errors}\n")
+        parts.append("Read the latest file content before making changes.")
+        messages.append({"role": "user", "content": "\n".join(parts)})
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     total_token_input = 0

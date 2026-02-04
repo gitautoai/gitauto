@@ -15,6 +15,7 @@ from payloads.github.pull_request_review_comment.types import (
     PullRequestReviewCommentPayload,
 )
 from services.agents.verify_task_is_complete import verify_task_is_complete
+from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.chat_with_agent import chat_with_agent
 from services.efs.get_efs_dir import get_efs_dir
 from services.node.ensure_node_packages import ensure_node_packages
@@ -236,6 +237,17 @@ async def handle_review_run(
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
+    # Validate files for syntax issues before editing
+    files_to_validate = [f["filename"] for f in pull_files if f["status"] != "removed"]
+    validation_result = await verify_task_is_ready(
+        base_args=base_args, file_paths=files_to_validate
+    )
+    pre_existing_errors = ""
+    if validation_result.errors:
+        pre_existing_errors = "\n".join(validation_result.errors)
+        logger.warning("Syntax issues found in PR files:\n%s", pre_existing_errors)
+    fixes_applied = validation_result.fixes_applied
+
     # Get repository settings
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
 
@@ -252,9 +264,9 @@ async def handle_review_run(
             target_dir_files = get_file_tree_list(base_args=base_args, dir_path=parent)
 
     input_message = {
+        "step_1_review_comment": review_comment,
         "pull_request_title": pull_title,
         "pull_request_body": pull_body,
-        "review_comment": review_comment,
         "review_file": review_file,
         "pull_files": pull_files,
         "today": today,
@@ -262,6 +274,15 @@ async def handle_review_run(
         "target_dir": target_dir,
         "target_dir_files": target_dir_files,
     }
+    if fixes_applied or pre_existing_errors:
+        input_message["step_2_prettier_eslint_note"] = (
+            "Before you start, we ran Prettier/ESLint --fix. "
+            "Files may have changed. Read the latest content."
+        )
+    if fixes_applied:
+        input_message["step_2a_auto_fixed_and_committed"] = fixes_applied
+    if pre_existing_errors:
+        input_message["step_2b_remaining_unfixable_errors"] = pre_existing_errors
     user_input = json.dumps(obj=input_message)
 
     # Create messages
