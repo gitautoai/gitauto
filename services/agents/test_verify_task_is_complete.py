@@ -1,7 +1,8 @@
+# pylint: disable=unused-argument
 # pyright: reportArgumentType=false
 # pyright: reportUnusedVariable=false
 from typing import cast
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 import pytest
 
@@ -9,6 +10,18 @@ from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.eslint.run_eslint_fix import ESLintResult
 from services.github.types.github_types import BaseArgs
 from services.prettier.run_prettier_fix import PrettierResult
+from services.tsc.run_tsc_check import TscResult
+
+
+@pytest.fixture(autouse=True)
+def mock_tsc_check():
+    """Auto-mock run_tsc_check for all tests to prevent actual tsc execution."""
+    with patch(
+        "services.agents.verify_task_is_complete.run_tsc_check",
+        new_callable=AsyncMock,
+        return_value=TscResult(success=True, errors=[], error_files=set()),
+    ):
+        yield
 
 
 @pytest.fixture
