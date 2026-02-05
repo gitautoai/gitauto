@@ -1,5 +1,6 @@
 # Standard imports
 import base64
+import os
 
 # Third party imports
 import requests
@@ -12,6 +13,7 @@ from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.apply_patch import apply_patch
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(
@@ -117,6 +119,15 @@ def apply_diff_to_file(
         timeout=TIMEOUT,
     )
     put_response.raise_for_status()
+
+    # Also create or overwrite local file for verification (tsc, jest, eslint, etc.)
+    clone_dir = base_args["clone_dir"]
+    local_path = os.path.join(clone_dir, file_path)
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    with open(local_path, "w", encoding=UTF8) as f:
+        f.write(modified_text)
+    logger.info("Wrote to local: %s", local_path)
+
     return FileWriteResult(
         success=True,
         message=f"Applied diff to {file_path}.",

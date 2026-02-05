@@ -1,5 +1,6 @@
 # Standard imports
 import base64
+import os
 
 # Third party imports
 from anthropic.types import ToolUnionParam
@@ -12,6 +13,7 @@ from services.claude.tools.properties import FILE_PATH
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 from utils.text.ensure_final_newline import ensure_final_newline
 from utils.text.sort_imports import sort_imports
 from utils.text.strip_trailing_spaces import strip_trailing_spaces
@@ -105,6 +107,15 @@ def replace_remote_file_content(
     # Replace the content of the remote file
     put_response = requests.put(url=url, json=data, headers=headers, timeout=TIMEOUT)
     put_response.raise_for_status()
+
+    # Also create or overwrite local file for verification (tsc, jest, eslint, etc.)
+    clone_dir = base_args["clone_dir"]
+    local_path = os.path.join(clone_dir, file_path)
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    with open(local_path, "w", encoding=UTF8) as f:
+        f.write(file_content)
+    logger.info("Wrote to local: %s", local_path)
+
     return FileWriteResult(
         success=True,
         message=f"Replaced {file_path}.",

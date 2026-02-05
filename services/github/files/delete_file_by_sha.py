@@ -1,3 +1,6 @@
+# Standard imports
+import os
+
 # Third party imports
 import requests
 
@@ -6,6 +9,7 @@ from config import GITHUB_API_URL, TIMEOUT
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -42,5 +46,12 @@ def delete_file_by_sha(
         url=url, json=delete_data, headers=headers, timeout=TIMEOUT
     )
     response.raise_for_status()
+
+    # Also delete local file for verification (tsc, jest, eslint, etc.)
+    clone_dir = base_args["clone_dir"]
+    local_path = os.path.join(clone_dir, file_path)
+    if os.path.exists(local_path):
+        os.remove(local_path)
+        logger.info("Deleted local: %s", local_path)
 
     return f"File {file_path} successfully deleted"

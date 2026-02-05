@@ -54,13 +54,13 @@ def test_parse_lcov_javascript_sample_exact_counts():
 
     result = parse_lcov_coverage(lcov_content)
 
-    assert len(result) == 402
+    assert len(result) == 403
 
     repo_level = [r for r in result if r["level"] == "repository"]
     assert len(repo_level) == 1
 
     file_level = [r for r in result if r["level"] == "file"]
-    assert len(file_level) == 300
+    assert len(file_level) == 301
 
     repo_coverage = repo_level[0]
     assert repo_coverage["full_path"] == "All"
@@ -69,7 +69,7 @@ def test_parse_lcov_javascript_sample_exact_counts():
     assert repo_coverage["branch_coverage"] == 2.54
     assert repo_coverage["line_coverage"] == 3.58
     assert repo_coverage["lines_covered"] == 141
-    assert repo_coverage["lines_total"] == 3935
+    assert repo_coverage["lines_total"] == 3937
     assert repo_coverage["functions_covered"] == 40
     assert repo_coverage["functions_total"] == 1484
     assert repo_coverage["branches_covered"] == 43

@@ -7,13 +7,14 @@ from services.github.files.delete_file_by_sha import delete_file_by_sha
 
 
 @pytest.fixture
-def base_args():
+def base_args(tmp_path):
     """Fixture for base arguments."""
     return {
         "owner": "test-owner",
         "repo": "test-repo",
         "token": "test-token",
         "new_branch": "test-branch",
+        "clone_dir": str(tmp_path),
     }
 
 
@@ -33,16 +34,27 @@ def mock_create_headers():
         yield mock
 
 
-def test_delete_file_successful(base_args, mock_requests, mock_create_headers):
+def test_delete_file_successful(
+    base_args, mock_requests, mock_create_headers, tmp_path
+):
     """Test successful file deletion."""
     file_path = "test/file.txt"
     sha = "abc123"
+
+    # Create local file to verify deletion
+    local_dir = tmp_path / "test"
+    local_dir.mkdir(parents=True, exist_ok=True)
+    local_file = local_dir / "file.txt"
+    local_file.write_text("test content")
 
     result = delete_file_by_sha(file_path=file_path, sha=sha, base_args=base_args)
 
     assert result == f"File {file_path} successfully deleted"
     mock_requests.delete.assert_called_once()
     mock_create_headers.assert_called_once_with(token=base_args["token"])
+
+    # Verify local file was deleted
+    assert not local_file.exists()
 
 
 def test_delete_file_with_custom_message(base_args, mock_requests, mock_create_headers):

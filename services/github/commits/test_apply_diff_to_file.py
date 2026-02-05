@@ -13,7 +13,7 @@ from services.github.types.github_types import BaseArgs
 
 
 @pytest.fixture
-def sample_base_args():
+def sample_base_args(tmp_path):
     """Fixture providing sample BaseArgs for testing."""
     return cast(
         BaseArgs,
@@ -23,12 +23,13 @@ def sample_base_args():
             "token": "test_token",
             "new_branch": "test_branch",
             "skip_ci": False,
+            "clone_dir": str(tmp_path),
         },
     )
 
 
 @pytest.fixture
-def sample_base_args_with_skip_ci():
+def sample_base_args_with_skip_ci(tmp_path):
     """Fixture providing sample BaseArgs with skip_ci enabled."""
     return cast(
         BaseArgs,
@@ -38,6 +39,7 @@ def sample_base_args_with_skip_ci():
             "token": "test_token",
             "new_branch": "test_branch",
             "skip_ci": True,
+            "clone_dir": str(tmp_path),
         },
     )
 
@@ -108,6 +110,7 @@ def test_successful_file_update(
     mock_requests_put_success,
     mock_apply_patch_success,
     mock_create_headers,
+    tmp_path,
 ):
     """Test successful file update with existing file."""
     diff = """--- test.py
@@ -125,6 +128,11 @@ def test_successful_file_update(
     assert result.file_path == "test.py"
     assert "Applied diff to test.py" in result.message
     assert result.content == "print('hello modified world')\n"
+
+    # Verify local file was created
+    local_path = tmp_path / "test.py"
+    assert local_path.exists()
+    assert local_path.read_text() == "print('hello modified world')\n"
 
     # Verify GET request was made
     mock_requests_get_existing_file.assert_called_once()
@@ -552,6 +560,7 @@ def test_url_construction_with_special_characters(
     mock_requests_put_success,
     mock_apply_patch_success,
     mock_create_headers,
+    tmp_path,
 ):
     """Test URL construction with special characters in owner, repo, and file path."""
     base_args = cast(
@@ -561,6 +570,7 @@ def test_url_construction_with_special_characters(
             "repo": "test.repo-name_456",
             "token": "test_token",
             "new_branch": "feature/test-branch_789",
+            "clone_dir": str(tmp_path),
         },
     )
 
@@ -627,7 +637,7 @@ def test_base64_encoding_in_put_request(
             assert decoded_content == modified_content
 
 
-def test_kwargs_parameter_ignored():
+def test_kwargs_parameter_ignored(tmp_path):
     """Test that additional kwargs are ignored."""
     base_args = cast(
         BaseArgs,
@@ -636,6 +646,7 @@ def test_kwargs_parameter_ignored():
             "repo": "test_repo",
             "token": "test_token",
             "new_branch": "test_branch",
+            "clone_dir": str(tmp_path),
         },
     )
 
