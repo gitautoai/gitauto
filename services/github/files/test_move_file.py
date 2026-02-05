@@ -11,13 +11,14 @@ from services.github.files.move_file import move_file
 
 
 @pytest.fixture
-def base_args(create_test_base_args):
+def base_args(create_test_base_args, tmp_path):
     """Create base args for testing."""
     return create_test_base_args(
         owner="test-owner",
         repo="test-repo",
         token="test-token",
         new_branch="test-branch",
+        clone_dir=str(tmp_path),
     )
 
 
@@ -229,6 +230,7 @@ def test_successful_move_without_skip_ci(
     mock_update_reference,
     base_args,
     mock_tree_items,
+    tmp_path,
 ):
     """Test successful file move without skip_ci."""
     mock_get_reference.return_value = "commit_sha_123"
@@ -237,6 +239,12 @@ def test_successful_move_without_skip_ci(
     mock_create_tree.return_value = "new_tree_sha_789"
     mock_create_commit.return_value = "new_commit_sha_abc"
     mock_update_reference.return_value = True
+
+    # Create local file to verify move
+    old_dir = tmp_path / "old"
+    old_dir.mkdir(parents=True, exist_ok=True)
+    old_file = old_dir / "file.py"
+    old_file.write_text("test content")
 
     result = move_file("old/file.py", "new/path.py", base_args)
 
@@ -258,6 +266,12 @@ def test_successful_move_without_skip_ci(
         "commit_sha_123",
     )
     mock_update_reference.assert_called_once_with(base_args, "new_commit_sha_abc")
+
+    # Verify local file was moved
+    assert not old_file.exists()
+    new_file = tmp_path / "new" / "path.py"
+    assert new_file.exists()
+    assert new_file.read_text() == "test content"
 
 
 @patch("services.github.files.move_file.update_reference")

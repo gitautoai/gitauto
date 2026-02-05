@@ -1,3 +1,7 @@
+# Standard imports
+import os
+import shutil
+
 # Local imports
 from services.claude.tools.file_modify_result import FileMoveResult
 from services.github.commits.create_commit import create_commit
@@ -8,6 +12,7 @@ from services.github.trees.create_tree import create_tree
 from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(
@@ -137,6 +142,15 @@ def move_file(
 
     # Update the branch reference
     update_reference(base_args, new_commit_sha)
+
+    # Also move local file for verification (tsc, jest, eslint, etc.)
+    clone_dir = base_args["clone_dir"]
+    old_local_path = os.path.join(clone_dir, old_file_path)
+    new_local_path = os.path.join(clone_dir, new_file_path)
+    if os.path.exists(old_local_path):
+        os.makedirs(os.path.dirname(new_local_path), exist_ok=True)
+        shutil.move(old_local_path, new_local_path)
+        logger.info("Moved local: %s -> %s", old_local_path, new_local_path)
 
     return FileMoveResult(
         success=True,

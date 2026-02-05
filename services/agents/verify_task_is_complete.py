@@ -117,16 +117,17 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
     if formatting_applied:
         logger.info("Applied formatting to files:\n%s", "\n".join(formatting_applied))
 
-    # TODO: Enable after fixing point 6 (local file modification)
-    # tsc_result = await run_tsc_check(base_args=base_args, file_paths=non_removed_files)
-    # if tsc_result.errors:
-    #     for err in tsc_result.errors:
-    #         remaining_errors.append(f"- tsc: {err}")
+    # Run tsc type check on all non-removed files
+    tsc_result = await run_tsc_check(base_args=base_args, file_paths=non_removed_files)
+    if tsc_result.errors:
+        for err in tsc_result.errors:
+            remaining_errors.append(f"- tsc: {err}")
 
-    # jest_result = await run_jest_test(base_args=base_args, file_paths=non_removed_files)
-    # if jest_result.errors:
-    #     for err in jest_result.errors:
-    #         remaining_errors.append(f"- {jest_result.runner_name}: {err}")
+    # Run jest/vitest tests on test files
+    jest_result = await run_jest_test(base_args=base_args, file_paths=non_removed_files)
+    if jest_result.errors:
+        for err in jest_result.errors:
+            remaining_errors.append(f"- {jest_result.runner_name}: {err}")
 
     if remaining_errors:
         error_msg = "\n".join(remaining_errors)

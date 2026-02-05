@@ -123,8 +123,8 @@ async def test_verify_task_is_complete_no_pull_number_returns_default(mock_get_f
 
     result = await verify_task_is_complete(args)
 
-    assert result["success"] is True
-    assert result["message"] == "Task completed."
+    assert result["success"] is False
+    assert "error" in result["message"].lower()
     mock_get_files.assert_not_called()
 
 
@@ -145,8 +145,8 @@ async def test_verify_task_is_complete_no_pull_number_with_issue_returns_default
 
     result = await verify_task_is_complete(args)
 
-    assert result["success"] is True
-    assert result["message"] == "Task completed."
+    assert result["success"] is False
+    assert "error" in result["message"].lower()
     mock_get_files.assert_not_called()
 
 
@@ -159,8 +159,8 @@ async def test_verify_task_is_complete_api_error_returns_default(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is True
-    assert result["message"] == "Task completed."
+    assert result["success"] is False
+    assert "error" in result["message"].lower()
 
 
 @pytest.mark.asyncio

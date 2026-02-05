@@ -16,7 +16,7 @@ from services.github.types.github_types import BaseArgs
 
 
 @pytest.fixture
-def sample_base_args():
+def sample_base_args(tmp_path):
     """Fixture providing sample BaseArgs for testing."""
     return {
         "owner": "test-owner",
@@ -24,11 +24,12 @@ def sample_base_args():
         "token": "test-token",
         "new_branch": "test-branch",
         "skip_ci": False,
+        "clone_dir": str(tmp_path),
     }
 
 
 @pytest.fixture
-def sample_base_args_with_skip_ci():
+def sample_base_args_with_skip_ci(tmp_path):
     """Fixture providing sample BaseArgs with skip_ci enabled."""
     return {
         "owner": "test-owner",
@@ -36,6 +37,7 @@ def sample_base_args_with_skip_ci():
         "token": "test-token",
         "new_branch": "test-branch",
         "skip_ci": True,
+        "clone_dir": str(tmp_path),
     }
 
 
@@ -97,6 +99,7 @@ def test_replace_existing_file_success(
     mock_requests_put_success,
     mock_create_headers,
     sample_base_args,
+    tmp_path,
 ):
     """Test successful replacement of existing file content."""
     file_path = "src/test.py"
@@ -113,6 +116,11 @@ def test_replace_existing_file_success(
     assert result.success is True
     assert result.file_path == file_path
     assert "Replaced" in result.message
+
+    # Verify local file was created
+    local_path = tmp_path / "src" / "test.py"
+    assert local_path.exists()
+    assert local_path.read_text() == "print('Hello, World!')\n"
 
     # Verify GET request was made to check existing file
     expected_get_url = f"https://api.github.com/repos/test-owner/test-repo/contents/{file_path}?ref=test-branch"
@@ -499,6 +507,7 @@ def test_replace_file_with_different_base_args(
     mock_requests_get_existing_file,
     mock_requests_put_success,
     mock_create_headers,
+    tmp_path,
 ):
     """Test file replacement with different BaseArgs values."""
     base_args = {
@@ -507,6 +516,7 @@ def test_replace_file_with_different_base_args(
         "token": "different-token",
         "new_branch": "feature-branch",
         "skip_ci": False,
+        "clone_dir": str(tmp_path),
     }
 
     result = replace_remote_file_content(

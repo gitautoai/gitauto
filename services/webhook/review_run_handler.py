@@ -240,7 +240,7 @@ async def handle_review_run(
     # Validate files for syntax issues before editing
     files_to_validate = [f["filename"] for f in pull_files if f["status"] != "removed"]
     validation_result = await verify_task_is_ready(
-        base_args=base_args, file_paths=files_to_validate, run_tsc=False, run_jest=False
+        base_args=base_args, file_paths=files_to_validate, run_tsc=True, run_jest=True
     )
     pre_existing_errors = ""
     if validation_result.errors:
