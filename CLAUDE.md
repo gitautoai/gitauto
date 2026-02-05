@@ -65,9 +65,11 @@ source .env && psql "postgresql://postgres.dkrxtcbaqzrodvsagwwn:$SUPABASE_DB_PAS
 source .env && psql "postgresql://postgres.awegqusxzsmlgxaxyyrq:$SUPABASE_DB_PASSWORD_PRD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
 
 # Query tips:
+# - NEVER specify columns first when querying unfamiliar tables - always use SELECT * ... LIMIT 1 with -x first
+# - Then narrow down to specific columns after seeing the schema - guessing column names wastes time
 # - Use -c "SELECT ..." for single queries
 # - Use -x for vertical (expanded) display when rows have many columns or wide values (e.g., JSON)
-# - Example: psql ... -x -c "SELECT structured_rules FROM repositories WHERE ..."
+# - Example: psql ... -x -c "SELECT * FROM repositories LIMIT 1;"
 ```
 
 **CRITICAL: Do NOT use pipes with psql commands**

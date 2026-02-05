@@ -311,22 +311,21 @@ async def handle_webhook_event(
                 installation_id=payload["installation"]["id"],
                 run_id=payload["workflow_run"]["id"],
                 head_branch=payload["workflow_run"]["head_branch"],
+                head_sha=payload["workflow_run"]["head_sha"],
                 user_name=payload["sender"]["login"],
             )
         return
 
     # Handle check_suite events
     if event_name == "check_suite" and action == "completed":
-        check_suite = payload["check_suite"]
+        typed_payload = cast(CheckSuiteCompletedPayload, payload)
+        check_suite = typed_payload["check_suite"]
         app_slug = check_suite["app"]["slug"]
         conclusion = check_suite["conclusion"]
 
         # Handle failures (test failures)
         if conclusion in GITHUB_CHECK_RUN_FAILURES:
-            await handle_check_suite(
-                payload=cast(CheckSuiteCompletedPayload, payload),
-                lambda_info=lambda_info,
-            )
+            await handle_check_suite(payload=typed_payload, lambda_info=lambda_info)
             return
 
         # Skip non-success conclusions
@@ -334,28 +333,26 @@ async def handle_webhook_event(
             return
 
         # Handle successful check for all CI systems
-        handle_successful_check_suite(payload=cast(CheckSuiteCompletedPayload, payload))
+        handle_successful_check_suite(payload=typed_payload)
 
         # CircleCI: Handle coverage report
         if app_slug == "circleci-checks":
             set_trigger(f"{event_name}_{action}")
-            repository = payload["repository"]
-            owner_id = repository["owner"]["id"]
-            owner_name = repository["owner"]["login"]
-            repo_name = repository["name"]
+            repo = typed_payload["repository"]
             logger.info(
                 "Processing CircleCI check_suite completion (run_id: %s)",
                 check_suite["id"],
             )
             handle_coverage_report(
-                owner_id=owner_id,
-                owner_name=owner_name,
-                repo_id=repository["id"],
-                repo_name=repo_name,
-                installation_id=payload["installation"]["id"],
+                owner_id=repo["owner"]["id"],
+                owner_name=repo["owner"]["login"],
+                repo_id=repo["id"],
+                repo_name=repo["name"],
+                installation_id=typed_payload["installation"]["id"],
                 run_id=check_suite["id"],
                 head_branch=check_suite["head_branch"],
-                user_name=payload["sender"]["login"],
+                head_sha=check_suite["head_sha"],
+                user_name=typed_payload["sender"]["login"],
                 source="circleci",
             )
 
