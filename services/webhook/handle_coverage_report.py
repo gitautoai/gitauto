@@ -11,6 +11,7 @@ from services.github.artifacts.get_workflow_artifacts import get_workflow_artifa
 from services.circleci.download_circleci_artifact import download_circleci_artifact
 from services.circleci.get_job_artifacts import get_circleci_job_artifacts
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
+from services.github.branches.get_branch_head import get_branch_head
 from services.github.branches.get_default_branch import get_default_branch
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 from services.supabase.repositories.get_repository import get_repository
@@ -39,6 +40,7 @@ def handle_coverage_report(
     installation_id: int,
     run_id: int,
     head_branch: str | None,
+    head_sha: str,
     user_name: str,
     source: str = "github",
 ):
@@ -64,11 +66,26 @@ def handle_coverage_report(
         target_branch, _ = get_default_branch(
             owner=owner_name, repo=repo_name, token=github_token
         )
-    if head_branch != target_branch:
+
+    # Check if head_sha is the HEAD of target branch. This handles: PR merge, direct push, manual trigger on target branch
+    target_head = get_branch_head(
+        owner=owner_name, repo=repo_name, branch=target_branch, token=github_token
+    )
+    if head_sha == target_head:
         logger.info(
-            "Skipping saving coverage to Supabase: head_branch=%s != target_branch=%s",
+            "Commit %s is HEAD of %s, saving coverage (head_branch was %s)",
+            head_sha[:7],
+            target_branch,
+            head_branch,
+        )
+        head_branch = target_branch
+    elif head_branch != target_branch:
+        logger.info(
+            "Skipping saving coverage to Supabase: head_branch=%s != target_branch=%s, head_sha=%s != target_head=%s",
             head_branch,
             target_branch,
+            head_sha[:7],
+            target_head[:7] if target_head else None,
         )
         return None
 

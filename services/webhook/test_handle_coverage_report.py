@@ -1,3 +1,4 @@
+# pylint: disable=C0302
 from unittest.mock import patch
 
 from config import UTF8
@@ -40,6 +41,7 @@ def test_handle_coverage_report_with_python_sample():
             installation_id=111,
             run_id=222,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
@@ -116,6 +118,7 @@ def test_handle_coverage_report_with_coverage_report_artifact():
             installation_id=111,
             run_id=222,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
@@ -160,6 +163,7 @@ def test_handle_coverage_report_with_default_artifact_name():
             installation_id=111,
             run_id=333,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
@@ -194,6 +198,7 @@ def test_handle_coverage_report_skips_non_coverage_artifacts():
             installation_id=111,
             run_id=444,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
@@ -237,6 +242,7 @@ def test_handle_coverage_report_with_javascript_sample():
             installation_id=111,
             run_id=222,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
@@ -265,11 +271,14 @@ def test_handle_coverage_report_with_null_head_branch():
     ) as mock_token, patch(
         "services.webhook.handle_coverage_report.get_repository"
     ) as mock_repo, patch(
+        "services.webhook.handle_coverage_report.get_branch_head"
+    ) as mock_branch_head, patch(
         "services.webhook.handle_coverage_report.logger"
     ) as mock_logger:
 
         mock_token.return_value = "fake-token"
         mock_repo.return_value = {"target_branch": "main"}
+        mock_branch_head.return_value = "abc1234567890"
 
         result = handle_coverage_report(
             owner_id=12345,
@@ -279,6 +288,7 @@ def test_handle_coverage_report_with_null_head_branch():
             installation_id=111,
             run_id=222,
             head_branch=None,
+            head_sha="def9876543210",
             user_name="test-user",
         )
 
@@ -289,9 +299,11 @@ def test_handle_coverage_report_with_null_head_branch():
             "github",
         )
         mock_logger.info.assert_any_call(
-            "Skipping saving coverage to Supabase: head_branch=%s != target_branch=%s",
+            "Skipping saving coverage to Supabase: head_branch=%s != target_branch=%s, head_sha=%s != target_head=%s",
             "detached",
             "main",
+            "def9876",
+            "abc1234",
         )
 
 
@@ -344,6 +356,7 @@ def test_handle_coverage_report_circleci():
             installation_id=111,
             run_id=333,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
             source="circleci",
         )
@@ -398,6 +411,7 @@ def test_scenario1_file_exists_and_in_lcov_updates_coverage():
             installation_id=111,
             run_id=222,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
@@ -454,6 +468,7 @@ def test_scenario2_file_exists_but_not_in_lcov_not_touched():
             installation_id=111,
             run_id=222,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
@@ -509,6 +524,7 @@ def test_scenario3_file_deleted_from_repo_removes_coverage():
             installation_id=111,
             run_id=222,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
@@ -529,12 +545,15 @@ def test_handle_coverage_report_fallback_to_default_branch():
     ) as mock_repo, patch(
         "services.webhook.handle_coverage_report.get_default_branch"
     ) as mock_default, patch(
+        "services.webhook.handle_coverage_report.get_branch_head"
+    ) as mock_branch_head, patch(
         "services.webhook.handle_coverage_report.logger"
     ) as mock_logger:
 
         mock_token.return_value = "fake-token"
         mock_repo.return_value = {"target_branch": ""}
         mock_default.return_value = ("main", "abc123")
+        mock_branch_head.return_value = "def4567890123"
 
         result = handle_coverage_report(
             owner_id=12345,
@@ -544,6 +563,7 @@ def test_handle_coverage_report_fallback_to_default_branch():
             installation_id=111,
             run_id=222,
             head_branch="feature-branch",
+            head_sha="xyz9876543210",
             user_name="test-user",
         )
 
@@ -552,9 +572,11 @@ def test_handle_coverage_report_fallback_to_default_branch():
             owner="test-owner", repo="test-repo", token="fake-token"
         )
         mock_logger.info.assert_any_call(
-            "Skipping saving coverage to Supabase: head_branch=%s != target_branch=%s",
+            "Skipping saving coverage to Supabase: head_branch=%s != target_branch=%s, head_sha=%s != target_head=%s",
             "feature-branch",
             "main",
+            "xyz9876",
+            "def4567",
         )
 
 
@@ -598,6 +620,7 @@ def test_handle_coverage_report_multi_language_artifact_names():
             installation_id=111,
             run_id=222,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
@@ -645,6 +668,7 @@ def test_handle_coverage_report_coverage_prefix_artifact_names():
             installation_id=111,
             run_id=222,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
@@ -692,6 +716,7 @@ def test_handle_coverage_report_case_insensitive_coverage():
             installation_id=111,
             run_id=222,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
@@ -751,6 +776,7 @@ def test_handle_coverage_report_circleci_coverage_pattern():
             installation_id=111,
             run_id=333,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
             source="circleci",
         )
@@ -810,6 +836,7 @@ def test_handle_coverage_report_circleci_coverage_prefix():
             installation_id=111,
             run_id=333,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
             source="circleci",
         )
@@ -869,6 +896,7 @@ def test_handle_coverage_report_circleci_case_insensitive():
             installation_id=111,
             run_id=333,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
             source="circleci",
         )
@@ -917,11 +945,81 @@ def test_handle_coverage_report_github_lcov_pattern():
             installation_id=111,
             run_id=222,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
         )
 
         assert result is True
         assert mock_download.call_count == 2
+
+
+def test_handle_coverage_report_pr_merge_to_target_branch():
+    """Test coverage report when PR merges to target branch.
+
+    When a PR is merged, head_branch still shows the PR branch name,
+    but head_sha is now the HEAD of the target branch. We should save
+    coverage in this case.
+    """
+    with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
+        sample_lcov = f.read()
+
+    with patch(
+        "services.webhook.handle_coverage_report.get_installation_access_token"
+    ) as mock_token, patch(
+        "services.webhook.handle_coverage_report.get_repository"
+    ) as mock_repo, patch(
+        "services.webhook.handle_coverage_report.get_branch_head"
+    ) as mock_branch_head, patch(
+        "services.webhook.handle_coverage_report.get_workflow_artifacts"
+    ) as mock_artifacts, patch(
+        "services.webhook.handle_coverage_report.download_artifact"
+    ) as mock_download, patch(
+        "services.webhook.handle_coverage_report.get_coverages"
+    ) as mock_get_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_coverages"
+    ) as mock_upsert_cov, patch(
+        "services.webhook.handle_coverage_report.upsert_repo_coverage"
+    ) as mock_upsert_repo, patch(
+        "services.webhook.handle_coverage_report.get_file_tree"
+    ) as mock_tree, patch(
+        "services.webhook.handle_coverage_report.delete_stale_coverages"
+    ), patch(
+        "services.webhook.handle_coverage_report.logger"
+    ) as mock_logger:
+
+        mock_token.return_value = "fake-token"
+        mock_repo.return_value = {"target_branch": "main"}
+        # head_sha equals target branch HEAD (merge scenario)
+        mock_branch_head.return_value = "abc1234567890"
+        mock_artifacts.return_value = [{"id": 123, "name": "coverage-lcov.info"}]
+        mock_download.return_value = sample_lcov
+        mock_get_cov.return_value = {}
+        mock_upsert_cov.return_value = True
+        mock_upsert_repo.return_value = True
+        mock_tree.return_value = [
+            {"path": "services/github/github_manager.py", "type": "blob"},
+        ]
+
+        result = handle_coverage_report(
+            owner_id=12345,
+            owner_name="test-owner",
+            repo_id=67890,
+            repo_name="test-repo",
+            installation_id=111,
+            run_id=222,
+            head_branch="feature/my-pr-branch",  # PR branch name
+            head_sha="abc1234567890",  # Same as target branch HEAD
+            user_name="test-user",
+        )
+
+        assert result is True
+        mock_upsert_cov.assert_called_once()
+        mock_logger.info.assert_any_call(
+            "Commit %s is HEAD of %s, saving coverage (head_branch was %s)",
+            "abc1234",
+            "main",
+            "feature/my-pr-branch",
+        )
 
 
 def test_handle_coverage_report_circleci_directory_paths():
@@ -976,6 +1074,7 @@ def test_handle_coverage_report_circleci_directory_paths():
             installation_id=111,
             run_id=333,
             head_branch="main",
+            head_sha="abc1234567890",
             user_name="test-user",
             source="circleci",
         )
