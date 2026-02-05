@@ -17,6 +17,7 @@ from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
 from services.efs.get_efs_dir import get_efs_dir
 from services.node.ensure_node_packages import ensure_node_packages
+from services.node.set_npm_token_env import set_npm_token_env
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
@@ -142,16 +143,21 @@ async def create_pr_from_issue(
     comment_url = create_comment(body=comment_body, base_args=base_args)
     base_args["comment_url"] = comment_url
 
-    # Get some base args
+    # Get owner and repo metadata
     installation_id = base_args["installation_id"]
     owner_id = base_args["owner_id"]
     owner_type = base_args["owner_type"]
     repo_id = base_args["repo_id"]
+    set_npm_token_env(owner_id)
+
+    # Extract issue metadata
     issue_body = base_args["issue_body"].replace(SETTINGS_LINKS, "").strip()
     issue_body_rendered = render_text(base_args=base_args, text=issue_body)
     issuer_name = base_args["issuer_name"]
     parent_issue_title = base_args.get("parent_issue_title")
     parent_issue_body = base_args.get("parent_issue_body")
+
+    # Extract more base args
     new_branch_name = base_args["new_branch"]
     sender_id = base_args["sender_id"]
     sender_email = base_args["sender_email"]
@@ -159,6 +165,7 @@ async def create_pr_from_issue(
     # other_urls = base_args["other_urls"]
     is_automation = base_args["is_automation"]
 
+    # Get repository features
     repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)
     restrict_edit_to_target_test_file_only = (
         repo_features["restrict_edit_to_target_test_file_only"]

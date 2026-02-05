@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from constants.aws import EFS_TIMEOUT_SECONDS
 from constants.files import JS_TEST_FILE_EXTENSIONS
 from services.github.types.github_types import BaseArgs
+from services.node.detect_package_manager import detect_package_manager
+from services.node.get_test_script import get_test_script
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
@@ -34,23 +36,41 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
         logger.warning("test: No clone_dir provided, skipping")
         return JestResult(success=True, errors=[], error_files=set(), runner_name="")
 
-    # Check if jest or vitest exists locally
+    # Determine runner name for logging (jest vs vitest)
     jest_bin = os.path.join(clone_dir, "node_modules", ".bin", "jest")
     vitest_bin = os.path.join(clone_dir, "node_modules", ".bin", "vitest")
-
-    if os.path.exists(jest_bin):
-        test_bin = jest_bin
-        runner_name = "jest"
-    elif os.path.exists(vitest_bin):
-        test_bin = vitest_bin
+    if os.path.exists(vitest_bin):
         runner_name = "vitest"
+    elif os.path.exists(jest_bin):
+        runner_name = "jest"
     else:
         logger.info("test: No test runner (jest/vitest) installed locally, skipping")
         return JestResult(success=True, errors=[], error_files=set(), runner_name="")
 
-    # Run tests on the specific test files
-    cmd = [test_bin, "--no-coverage"] + test_files
-    logger.info("%s: Running tests on %d files...", runner_name, len(test_files))
+    # Prefer npm/yarn/pnpm test if package.json has a test script
+    test_script = get_test_script(clone_dir)
+    if test_script:
+        owner = base_args.get("owner", "")
+        repo = base_args.get("repo", "")
+        branch = base_args.get("new_branch", "")
+        token = base_args.get("token", "")
+        pkg_manager, _, _ = detect_package_manager(
+            clone_dir, owner, repo, branch, token
+        )
+        # Pass test files after -- to forward them to the test runner
+        cmd = [pkg_manager, "test", "--"] + test_files
+        logger.info(
+            "%s test: Running tests on %d files...", pkg_manager, len(test_files)
+        )
+    else:
+        # Fallback to direct binary call
+        test_bin = vitest_bin if runner_name == "vitest" else jest_bin
+        cmd = [test_bin] + test_files
+        logger.info("%s: Running tests on %d files...", runner_name, len(test_files))
+
+    # CI=true disables watch mode and interactive prompts for both jest and vitest
+    env = os.environ.copy()
+    env["CI"] = "true"
 
     result = subprocess.run(
         cmd,
@@ -59,6 +79,7 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
         timeout=EFS_TIMEOUT_SECONDS,
         check=False,
         cwd=clone_dir,
+        env=env,
     )
 
     if result.returncode == 0:

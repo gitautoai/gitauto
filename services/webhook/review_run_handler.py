@@ -19,6 +19,7 @@ from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.chat_with_agent import chat_with_agent
 from services.efs.get_efs_dir import get_efs_dir
 from services.node.ensure_node_packages import ensure_node_packages
+from services.node.set_npm_token_env import set_npm_token_env
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
@@ -81,6 +82,7 @@ async def handle_review_run(
     owner_type = owner["type"]
     owner_id = owner["id"]
     owner_name = owner["login"]
+    set_npm_token_env(owner_id)
 
     # Extract PR related variables
     pull_request = payload["pull_request"]
