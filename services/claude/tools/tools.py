@@ -65,9 +65,7 @@ APPLY_DIFF_TO_FILE: ToolUnionParam = {
 # NOTE: No strict=True here because line_number, keyword, start_line, end_line are optional
 GET_REMOTE_FILE_CONTENT: ToolUnionParam = {
     "name": "get_remote_file_content",
-    "description": """
-    Fetches the content of a file from GitHub remote repository given file_paths when you think you need to modify the file content. NEVER EVER call this function on the same file more than once as you will be penalized critically. Only access files that are likely to require modifications or verification, and keep file access to the necessary minimum.
-    """,
+    "description": "Fetches the content of a file from GitHub remote repository given a file_path when you need to read or modify the file content.",
     "input_schema": {
         "type": "object",
         "properties": {
@@ -80,6 +78,18 @@ GET_REMOTE_FILE_CONTENT: ToolUnionParam = {
         "required": ["file_path"],
         "additionalProperties": False,
     },
+}
+
+# Full file read only (for PR handlers that need full context)
+GET_REMOTE_FILE_CONTENT_FULL_ONLY: ToolUnionParam = {
+    **GET_REMOTE_FILE_CONTENT,
+    "input_schema": {
+        "type": "object",
+        "properties": {"file_path": FILE_PATH},
+        "required": ["file_path"],
+        "additionalProperties": False,
+    },
+    "strict": True,
 }
 
 QUERY: dict[str, str] = {
@@ -211,23 +221,25 @@ CREATE_COMMENT: ToolUnionParam = {
     "strict": True,
 }
 
-_TOOLS: list[ToolUnionParam] = [
+_TOOLS_BASE: list[ToolUnionParam] = [
     APPLY_DIFF_TO_FILE,
     CREATE_COMMENT,
     DELETE_FILE,
     GET_FILE_TREE_LIST,
-    GET_REMOTE_FILE_CONTENT,
     MOVE_FILE,
     REPLACE_REMOTE_FILE_CONTENT,
     VERIFY_TASK_IS_COMPLETE,
 ]
 
-TOOLS_FOR_ISSUES: list[ToolUnionParam] = _TOOLS + [
+TOOLS_FOR_ISSUES: list[ToolUnionParam] = _TOOLS_BASE + [
+    GET_REMOTE_FILE_CONTENT,
     SEARCH_REMOTE_FILE_CONTENT,
 ]
 
+# PR handlers need full file reads (no partial read options)
 # search_remote_file_contents only searches default branch, not PR branch
-TOOLS_FOR_PRS: list[ToolUnionParam] = _TOOLS + [
+TOOLS_FOR_PRS: list[ToolUnionParam] = _TOOLS_BASE + [
+    GET_REMOTE_FILE_CONTENT_FULL_ONLY,
     # TODO: Add search_local_file_contents when implemented
 ]
 
