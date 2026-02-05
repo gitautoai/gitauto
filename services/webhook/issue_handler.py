@@ -66,6 +66,7 @@ from services.stripe.create_stripe_customer import create_stripe_customer
 from services.webhook.utils.create_system_message import create_system_message
 from utils.files.get_impl_file_from_issue_title import get_impl_file_from_issue_title
 from utils.files.guess_test_file_path import guess_test_file_path
+from utils.files.is_config_file import is_config_file
 from utils.files.is_test_file import is_test_file
 from utils.files.merge_test_file_headers import merge_test_file_headers
 from utils.images.get_base64 import get_base64
@@ -558,7 +559,7 @@ async def create_pr_from_issue(
 
     for file_change in changed_files:
         file_path = file_change["filename"]
-        if not is_test_file(file_path):
+        if not is_test_file(file_path) or is_config_file(file_path):
             continue
 
         file_content = get_raw_content(

@@ -19,8 +19,8 @@ def is_test_file(filename: str) -> bool:
         # Direct test file patterns
         r"\.test\.",  # Button.test.tsx, utils.test.js
         r"\.spec\.",  # Button.spec.tsx, api.spec.js
-        r"test\.",  # ButtonTest.java, UserTest.cs
-        r"tests\.",  # ButtonTests.java, UserTests.cs
+        r"(?<!vi)test\.",  # ButtonTest.java, UserTest.cs (but not vitest.config.ts)
+        r"(?<!vi)tests\.",  # ButtonTests.java, UserTests.cs
         r"_test\.",  # button_test.py, user_test.go
         r"_spec\.",  # button_spec.rb, user_spec.rb
         r"^test_",  # test_button.py, test_utils.py
@@ -48,25 +48,6 @@ def is_test_file(filename: str) -> bool:
         r"(^|/)__fixtures__/",  # __fixtures__/user.json
         r"(^|/)fixtures/",  # fixtures/sample_data.json
         r"\.fixture\.",  # user.fixture.ts
-        # Test and build configuration files
-        r"jest\.config\.",  # jest.config.js, jest.config.ts
-        r"vitest\.config\.",  # vitest.config.js
-        r"karma\.conf\.",  # karma.conf.js
-        r"webpack\.config\.",  # webpack.config.js
-        r"rollup\.config\.",  # rollup.config.js
-        r"vite\.config\.",  # vite.config.js
-        r"babel\.config\.",  # babel.config.js
-        r"eslint\.config\.",  # eslint.config.js (flat config)
-        r"prettier\.config\.",  # prettier.config.js
-        r"tailwind\.config\.",  # tailwind.config.js
-        r"postcss\.config\.",  # postcss.config.js
-        r"next\.config\.",  # next.config.js
-        r"nuxt\.config\.",  # nuxt.config.js
-        r"tsconfig\.",  # tsconfig.json
-        r"\.eslintrc",  # .eslintrc, .eslintrc.js, .eslintrc.json
-        r"\.prettierrc",  # .prettierrc, .prettierrc.js
-        r"\.spec\.snap$",  # component.spec.snap
-        r"\.test\.snap$",  # component.test.snap
         # Test helpers and utilities
         r"(^|/)test[-_]utils?/",  # test-utils/, test_utils/
         r"(^|/)test[-_]helpers?/",  # test-helpers/, test_helper/

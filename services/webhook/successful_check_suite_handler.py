@@ -22,6 +22,7 @@ from services.supabase.repository_features.get_repository_features import (
     get_repository_features,
 )
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.is_config_file import is_config_file
 from utils.files.is_test_file import is_test_file
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 
@@ -214,7 +215,9 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     only_test_files = repo_features.get("auto_merge_only_test_files", False)
     if only_test_files:
         non_test_files = [
-            f["filename"] for f in changed_files if not is_test_file(f["filename"])
+            f["filename"]
+            for f in changed_files
+            if not is_test_file(f["filename"]) and not is_config_file(f["filename"])
         ]
         if non_test_files:
             non_test_files_str = "\n".join(f"- `{f}`" for f in non_test_files)
