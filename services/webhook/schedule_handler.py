@@ -38,6 +38,7 @@ from services.stripe.check_availability import check_availability
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
+from utils.files.is_config_file import is_config_file
 from utils.files.is_migration_file import is_migration_file
 from utils.files.is_test_file import is_test_file
 from utils.files.is_type_file import is_type_file
@@ -214,6 +215,14 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             logger.info("Skipping %s: test file", item_path)
             exclude_from_testing(
                 owner_id, repo_id, item_path, target_branch, "test file", user_name
+            )
+            continue
+
+        # Skip config files
+        if is_config_file(item_path):
+            logger.info("Skipping %s: config file", item_path)
+            exclude_from_testing(
+                owner_id, repo_id, item_path, target_branch, "config file", user_name
             )
             continue
 
