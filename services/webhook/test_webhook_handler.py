@@ -590,6 +590,7 @@ class TestHandleWebhookEvent:
                 "conclusion": "success",
                 "id": 12345,
                 "head_branch": "main",
+                "head_sha": "abc123def456",
             },
             "repository": {
                 "owner": {"id": 67890, "login": "owner-name"},
@@ -610,6 +611,7 @@ class TestHandleWebhookEvent:
             installation_id=98765,
             run_id=12345,
             head_branch="main",
+            head_sha="abc123def456",
             user_name="sender-name",
         )
 
@@ -953,6 +955,7 @@ class TestHandleWebhookEvent:
             installation_id=60314628,
             run_id=44556199312,
             head_branch="wes",
+            head_sha="c083a8965106b8dff1b251fc3b0bffd194448694",
             user_name="hiroshinishio",
             source="circleci",
         )

@@ -459,15 +459,16 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
 async def test_verify_fails_when_jest_tests_fail(
     mock_get_files, mock_get_raw, mock_tsc, mock_jest, base_args
 ):
+    # Use JS file (not TS) to avoid triggering get_file_tree call for tsconfig
     mock_get_files.return_value = [
-        {"filename": "src/index.test.ts", "status": "modified"},
+        {"filename": "src/index.test.js", "status": "modified"},
     ]
     mock_get_raw.return_value = "const x = 1;"
     mock_tsc.return_value = TscResult(success=True, errors=[], error_files=set())
     mock_jest.return_value = JestResult(
         success=False,
-        errors=["FAIL src/index.test.ts", "Expected true to be false"],
-        error_files={"src/index.test.ts"},
+        errors=["FAIL src/index.test.js", "Expected true to be false"],
+        error_files={"src/index.test.js"},
         runner_name="jest",
     )
 
