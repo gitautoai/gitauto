@@ -12,9 +12,15 @@ def is_tool_result(item: object) -> TypeGuard[ToolResultBlockParam]:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def replace_old_file_content(messages: list[MessageParam], file_path: str):
-    """Replace old file content with placeholder when the same file is read again."""
-    placeholder = f"[Outdated '{file_path}' content removed]"
+def replace_old_file_content(
+    messages: list[MessageParam], identifier: str, is_full_file_read: bool
+):
+    """Replace old file content with placeholder.
+
+    - Full file read (is_full_file_read=True): identifier is file_path, removes ALL content
+    - Partial read (is_full_file_read=False): identifier is file_path#L10-L20, removes exact match only
+    """
+    placeholder = f"[Outdated '{identifier}' content removed]"
 
     for msg in messages:
         # Skip assistant messages (file content only appears in user messages)
@@ -24,8 +30,13 @@ def replace_old_file_content(messages: list[MessageParam], file_path: str):
         content = msg.get("content")
 
         # Handle string content (initial file messages)
-        if isinstance(content, str) and content.startswith(f"```{file_path}"):
-            msg["content"] = placeholder
+        if isinstance(content, str):
+            if is_full_file_read:
+                if content.startswith(f"```{identifier}"):
+                    msg["content"] = placeholder
+            else:
+                if content.startswith(f"```{identifier}\n"):
+                    msg["content"] = placeholder
             continue
 
         # Handle list of content blocks (tool_result from get_remote_file_content)
@@ -40,5 +51,9 @@ def replace_old_file_content(messages: list[MessageParam], file_path: str):
             if not isinstance(item_content, str):
                 continue
 
-            if item_content.startswith(f"```{file_path}"):
-                item["content"] = placeholder
+            if is_full_file_read:
+                if item_content.startswith(f"```{identifier}"):
+                    item["content"] = placeholder
+            else:
+                if item_content.startswith(f"```{identifier}\n"):
+                    item["content"] = placeholder

@@ -752,3 +752,109 @@ async def test_file_move_result_returns_message(
     tool_result_content = tool_result_content_list[0]["content"]
 
     assert tool_result_content == "Moved old.py to new.py."
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.update_comment")
+@patch("services.chat_with_agent.replace_old_file_content")
+async def test_full_file_read_calls_replace_with_is_full_file_read_true(
+    mock_replace, _mock_update_comment, mock_chat_with_claude, mock_get_model
+):
+    """Test that reading a full file calls replace_old_file_content with is_full_file_read=True."""
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "get_remote_file_content",
+                    "input": {"file_path": "src/main.py"},
+                }
+            ],
+        },
+        "test_id",
+        "get_remote_file_content",
+        {"file_path": "src/main.py"},
+        15,
+        10,
+    )
+
+    base_args = Mock()
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        # Full file read returns content without line range in identifier
+        mock_tools.__getitem__.return_value = Mock(
+            return_value="```src/main.py\n1:print('hello')\n```"
+        )
+        mock_tools.__contains__.return_value = True
+
+        await chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            system_message="test system message",
+            base_args=base_args,
+            tools=[],
+        )
+
+    mock_replace.assert_called_once()
+    call_args = mock_replace.call_args
+    assert call_args[0][1] == "src/main.py"
+    assert call_args[1]["is_full_file_read"] is True
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.update_comment")
+@patch("services.chat_with_agent.replace_old_file_content")
+async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
+    mock_replace, _mock_update_comment, mock_chat_with_claude, mock_get_model
+):
+    """Test that reading a partial file calls replace_old_file_content with is_full_file_read=False."""
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "get_remote_file_content",
+                    "input": {
+                        "file_path": "src/main.py",
+                        "start_line": 10,
+                        "end_line": 20,
+                    },
+                }
+            ],
+        },
+        "test_id",
+        "get_remote_file_content",
+        {"file_path": "src/main.py", "start_line": 10, "end_line": 20},
+        15,
+        10,
+    )
+
+    base_args = Mock()
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        # Partial read returns content with line range in identifier
+        mock_tools.__getitem__.return_value = Mock(
+            return_value="```src/main.py#L10-L20\n10:code here\n```"
+        )
+        mock_tools.__contains__.return_value = True
+
+        await chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            system_message="test system message",
+            base_args=base_args,
+            tools=[],
+        )
+
+    mock_replace.assert_called_once()
+    call_args = mock_replace.call_args
+    assert call_args[0][1] == "src/main.py#L10-L20"
+    assert call_args[1]["is_full_file_read"] is False

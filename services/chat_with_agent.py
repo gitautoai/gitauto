@@ -288,8 +288,13 @@ async def chat_with_agent(
         and isinstance((file_path := tool_args.get("file_path")), str)
         and file_path
     ):
-        # Replace old file content if same file was read before
-        replace_old_file_content(messages, file_path)
+        # Replace old file content if same file/portion was read before
+        first_line = tool_result_content.split("\n")[0]
+        identifier = first_line[3:] if first_line.startswith("```") else file_path
+        is_full_file_read = identifier == file_path
+        replace_old_file_content(
+            messages, identifier, is_full_file_read=is_full_file_read
+        )
 
         if "line_number" in tool_args:
             line_number = tool_args["line_number"]
@@ -353,7 +358,7 @@ async def chat_with_agent(
         and file_path
     ):
         # Replace old file content since this file was just written
-        replace_old_file_content(messages, file_path)
+        replace_old_file_content(messages, file_path, is_full_file_read=True)
         msg = f"Committed changes to `{file_path}`."
 
     elif (
