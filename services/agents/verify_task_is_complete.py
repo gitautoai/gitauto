@@ -19,7 +19,10 @@ from utils.logging.logging_config import logger
 
 
 @handle_exceptions(
-    default_return_value={"success": True, "message": "Task completed."},
+    default_return_value={
+        "success": False,
+        "message": "Verification failed due to an unexpected error.",
+    },
     raise_on_error=False,
 )
 async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):

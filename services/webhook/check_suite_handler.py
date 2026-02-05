@@ -22,6 +22,7 @@ from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
 from services.codecov.get_commit_coverage import get_codecov_commit_coverage
 from services.efs.get_efs_dir import get_efs_dir
 from services.node.ensure_node_packages import ensure_node_packages
+from services.node.set_npm_token_env import set_npm_token_env
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
@@ -165,10 +166,9 @@ async def handle_check_suite(
 
     # Extract owner related variables
     owner = repo.get("owner", None)
-    if owner is None:
-        return
     owner_type = owner["type"]
     owner_id = owner["id"]
+    set_npm_token_env(owner_id)
 
     # Extract sender related variables
     sender_id = payload["sender"]["id"]
