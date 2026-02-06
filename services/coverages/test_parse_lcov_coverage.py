@@ -6,7 +6,7 @@ def test_parse_lcov_python_sample_exact_counts():
     with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
         lcov_content = f.read()
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
 
     assert len(result) == 329
 
@@ -34,7 +34,7 @@ def test_parse_lcov_python_sample_specific_file():
     with open("payloads/lcov/lcov-python-sample.info", "r", encoding=UTF8) as f:
         lcov_content = f.read()
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
     file_level = [r for r in result if r["level"] == "file"]
 
     config_file = next((f for f in file_level if f["full_path"] == "config.py"), None)
@@ -52,7 +52,7 @@ def test_parse_lcov_javascript_sample_exact_counts():
     with open("payloads/lcov/lcov-javascript-sample.info", "r", encoding=UTF8) as f:
         lcov_content = f.read()
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
 
     assert len(result) == 403
 
@@ -80,7 +80,7 @@ def test_parse_lcov_javascript_sample_specific_file():
     with open("payloads/lcov/lcov-javascript-sample.info", "r", encoding=UTF8) as f:
         lcov_content = f.read()
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
     file_level = [r for r in result if r["level"] == "file"]
 
     if file_level:
@@ -94,7 +94,7 @@ def test_parse_lcov_dotnet_real():
     with open("payloads/lcov/lcov-dotnet-real.info", "r", encoding=UTF8) as f:
         lcov_content = f.read()
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
 
     assert len(result) > 0
 
@@ -122,7 +122,7 @@ def test_fn_parsing_python():
     assert "FN:12,16,get_env_var" in lcov_content
     assert "FN:9,10,test_owner" in lcov_content
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
     # Should parse without errors
     assert len(result) > 0
     assert any(
@@ -139,7 +139,7 @@ def test_fnda_parsing_python():
     # Example: FNDA:1,get_env_var
     assert "FNDA:1,get_env_var" in lcov_content
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
     # Check that function coverage is calculated correctly
     repo = [r for r in result if r["level"] == "repository"][0]
     assert repo["function_coverage"] == 80.0
@@ -155,7 +155,7 @@ def test_fn_parsing_javascript():
     assert "FN:7,GlobalError" in lcov_content
     assert "FN:30,RootLayout" in lcov_content
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
     # Should parse without errors
     assert len(result) > 0
     assert any(
@@ -172,7 +172,7 @@ def test_fnda_parsing_javascript():
     # Example: FNDA:0,GlobalError
     assert "FNDA:0,GlobalError" in lcov_content
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
     # Check that function coverage is calculated correctly
     repo = [r for r in result if r["level"] == "repository"][0]
     assert repo["function_coverage"] == 2.7
@@ -194,7 +194,7 @@ def test_fn_parsing_dotnet():
         in lcov_content
     )
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
     # Should parse without errors
     assert len(result) > 0
     assert any(
@@ -218,7 +218,7 @@ def test_fnda_parsing_dotnet():
         in lcov_content
     )
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
     # Check that function coverage is calculated correctly
     repo = [r for r in result if r["level"] == "repository"][0]
     assert repo["function_coverage"] == 13.95
@@ -258,7 +258,7 @@ LH:1
 LF:2
 end_of_record"""
 
-    result = parse_lcov_coverage(test_lcov)
+    result = parse_lcov_coverage(test_lcov, set())
 
     # Should parse successfully
     assert len(result) > 0
@@ -301,7 +301,7 @@ end_of_record
 TN:
 """
 
-    result = parse_lcov_coverage(test_lcov)
+    result = parse_lcov_coverage(test_lcov, set())
 
     files = [r for r in result if r["level"] == "file"]
     assert len(files) == 1
@@ -320,7 +320,7 @@ def test_parse_lcov_gitauto_real_exact_counts():
     with open("payloads/lcov/lcov-gitauto-20250922.info", "r", encoding=UTF8) as f:
         lcov_content = f.read()
 
-    result = parse_lcov_coverage(lcov_content)
+    result = parse_lcov_coverage(lcov_content, set())
 
     # Total reports should be: files + directories + repository
     # Expected: 281 files + 77 directories + 1 repository = 359 total
