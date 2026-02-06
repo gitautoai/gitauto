@@ -272,10 +272,11 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             continue
 
         # Final check: Use Claude AI to determine if this file should be tested (expensive, so run last)
-        should_test, reason = evaluate_condition(
+        eval_result = evaluate_condition(
             content=f"File path: {item_path}\n\nContent:\n{content}",
             system_prompt=SHOULD_TEST_FILE_PROMPT,
         )
+        should_test, reason = eval_result.result, eval_result.reason
         if not should_test:
             logger.info("Skipping %s: %s", item_path, reason)
             exclude_from_testing(

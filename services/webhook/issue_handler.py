@@ -65,6 +65,9 @@ from services.supabase.users.get_user import get_user
 from services.stripe.check_availability import check_availability
 from services.stripe.create_stripe_customer import create_stripe_customer
 from services.webhook.utils.create_system_message import create_system_message
+from services.claude.evaluate_condition import EvaluationResult
+from services.claude.is_code_untestable import is_code_untestable
+from services.supabase.coverages.get_coverages import get_coverages
 from utils.files.get_impl_file_from_issue_title import get_impl_file_from_issue_title
 from utils.files.guess_test_file_path import guess_test_file_path
 from utils.files.is_config_file import is_config_file
@@ -373,6 +376,35 @@ async def create_pr_from_issue(
         )
     logger.info("Test files found: %s", list(test_files.keys()))
 
+    # Check if uncovered code is untestable (for schedule-triggered coverage issues)
+    untestable_code_info: EvaluationResult | None = None
+    coverage_dict = get_coverages(owner_id, repo_id, [impl_file_path])
+    coverage_data = coverage_dict.get(impl_file_path)
+    if coverage_data and impl_file_content:
+        uncovered_lines = coverage_data.get("uncovered_lines")
+        uncovered_functions = coverage_data.get("uncovered_functions")
+        uncovered_branches = coverage_data.get("uncovered_branches")
+        if uncovered_lines or uncovered_functions or uncovered_branches:
+            untestable_code_info = is_code_untestable(
+                file_path=impl_file_path,
+                file_content=impl_file_content,
+                uncovered_lines=uncovered_lines,
+                uncovered_functions=uncovered_functions,
+                uncovered_branches=uncovered_branches,
+            )
+            logger.info(
+                "Untestable code check for %s: %s", impl_file_path, untestable_code_info
+            )
+            if untestable_code_info.result:
+                p += 5
+                add_log_message(
+                    f"Detected untestable code in `{impl_file_path}`", log_messages
+                )
+                update_comment(
+                    body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+                    base_args=base_args,
+                )
+
     root_files = get_file_tree_list(base_args=base_args, dir_path="")
     parent = str(Path(impl_file_path).parent)
     target_dir = parent if parent != "." else None
@@ -481,6 +513,16 @@ async def create_pr_from_issue(
 
     # Notify agent of auto-fixes and remaining errors (in timeline order)
     allowed_to_edit_files = list(validation_result.files_with_errors)
+
+    # If uncovered code is untestable, allow editing impl file and notify agent
+    if untestable_code_info and untestable_code_info.result:
+        untestable_reason = untestable_code_info.reason
+        if impl_file_path not in allowed_to_edit_files:
+            allowed_to_edit_files.append(impl_file_path)
+        untestable_msg = f"Untestable code in `{impl_file_path}`: {untestable_reason}"
+        messages.append({"role": "user", "content": untestable_msg})
+        logger.info("Added untestable code message for %s", impl_file_path)
+
     if fixes_applied or pre_existing_errors:
         parts = ["## Prettier/ESLint Results\n"]
         parts.append("We ran Prettier and ESLint with --fix on the source files.\n")

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from services.claude.evaluate_condition import evaluate_condition
+from services.claude.evaluate_condition import EvaluationResult, evaluate_condition
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ class TestEvaluateCondition:
             system_prompt="Return true if this code should have unit tests.",
         )
 
-        assert result == (True, "has business logic")
+        assert result == EvaluationResult(True, "has business logic")
 
     def test_returns_false_with_reason(self, mock_claude):
         mock_response = MagicMock()
@@ -39,22 +39,22 @@ class TestEvaluateCondition:
             system_prompt="Return true if this code contains business logic.",
         )
 
-        assert result == (False, "only imports")
+        assert result == EvaluationResult(False, "only imports")
 
     def test_returns_empty_input_for_empty_content(self):
         result = evaluate_condition(content="", system_prompt="test prompt")
-        assert result == (False, "empty input")
+        assert result == EvaluationResult(False, "empty input")
 
     def test_returns_empty_input_for_empty_prompt(self):
         result = evaluate_condition(content="test content", system_prompt="")
-        assert result == (False, "empty input")
+        assert result == EvaluationResult(False, "empty input")
 
     def test_returns_evaluation_failed_on_exception(self, mock_claude):
         mock_claude.beta.messages.create.side_effect = RuntimeError("API Error")
 
         result = evaluate_condition(content="test content", system_prompt="test prompt")
 
-        assert result == (False, "evaluation failed")
+        assert result == EvaluationResult(False, "evaluation failed")
 
     def test_returns_evaluation_failed_on_invalid_json(self, mock_claude):
         mock_response = MagicMock()
@@ -63,7 +63,7 @@ class TestEvaluateCondition:
 
         result = evaluate_condition(content="test content", system_prompt="test prompt")
 
-        assert result == (False, "evaluation failed")
+        assert result == EvaluationResult(False, "evaluation failed")
 
     def test_uses_structured_output_schema(self, mock_claude):
         mock_response = MagicMock()
@@ -82,21 +82,21 @@ class TestEvaluateCondition:
 
 @pytest.mark.skip(reason="Integration test - calls real API")
 def test_integration_returns_true_for_testable_code():
-    result, reason = evaluate_condition(
+    eval_result = evaluate_condition(
         content="def calculate_total(items): return sum(item.price for item in items)",
         system_prompt="Decide if this code needs unit tests.",
     )
-    assert result is True
-    assert isinstance(reason, str)
-    assert len(reason) > 0
+    assert eval_result.result is True
+    assert isinstance(eval_result.reason, str)
+    assert len(eval_result.reason) > 0
 
 
 @pytest.mark.skip(reason="Integration test - calls real API")
 def test_integration_returns_false_for_non_testable_code():
-    result, reason = evaluate_condition(
+    eval_result = evaluate_condition(
         content="from .models import User, Order, Product",
         system_prompt="Decide if this code needs unit tests.",
     )
-    assert result is False
-    assert isinstance(reason, str)
-    assert len(reason) > 0
+    assert eval_result.result is False
+    assert isinstance(eval_result.reason, str)
+    assert len(eval_result.reason) > 0

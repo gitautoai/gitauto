@@ -7,6 +7,7 @@ import pytest
 
 # Local imports
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
+from services.claude.evaluate_condition import EvaluationResult
 from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.webhook.schedule_handler import schedule_handler
 
@@ -183,7 +184,7 @@ def test_schedule_handler_skips_export_only_files(
         return False
 
     mock_should_skip_test.side_effect = mock_should_skip_side_effect
-    mock_evaluate_condition.return_value = (True, "has testable logic")
+    mock_evaluate_condition.return_value = EvaluationResult(True, "has testable logic")
     mock_get_open_pull_requests.return_value = []
 
     result = schedule_handler(mock_event)
@@ -250,7 +251,9 @@ def test_schedule_handler_skips_empty_files(
         return content_map.get(file_path or "")
 
     mock_get_raw_content.side_effect = mock_empty_content_side_effect
-    mock_evaluate_condition.return_value = (True, "has logic worth testing")
+    mock_evaluate_condition.return_value = EvaluationResult(
+        True, "has logic worth testing"
+    )
     mock_create_issue.return_value = (
         200,
         {"html_url": "https://github.com/test/issue/2"},
@@ -351,7 +354,7 @@ def test_schedule_handler_410_issues_disabled(
     mock_is_migration_file.return_value = False
     mock_get_raw_content.return_value = "def test_function(): return True"
     mock_should_skip_test.return_value = False
-    mock_evaluate_condition.return_value = (True, "has testable logic")
+    mock_evaluate_condition.return_value = EvaluationResult(True, "has testable logic")
     mock_get_open_pull_requests.return_value = []
     mock_get_issue_title.return_value = "Test Title"
     mock_get_issue_body.return_value = "Test Body"
@@ -475,7 +478,7 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
     ]
     mock_get_raw_content.return_value = "def test(): pass"
     mock_should_skip_test.return_value = False
-    mock_evaluate_condition.return_value = (True, "has testable logic")
+    mock_evaluate_condition.return_value = EvaluationResult(True, "has testable logic")
     mock_get_open_pull_requests.return_value = []
     mock_create_issue.return_value = (
         200,
