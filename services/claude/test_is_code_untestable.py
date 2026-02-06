@@ -132,3 +132,91 @@ def test_skips_invalid_line_numbers(mock_evaluate):
     content = call_args.kwargs["content"]
     assert "1: line1" in content
     assert "999" not in content
+
+
+# Skip: Calls real Claude API - run manually to verify dead code detection works
+@pytest.mark.skip(reason="Integration test - calls Claude API, costs money")
+def test_detects_logic_based_dead_code():
+    """Test if Claude detects logic-based dead code as untestable.
+
+    This is the actual code from foxden-shared-lib PR #564:
+    - Line 35: if (!resourceParts[2] || !targetParts[2]) return false;
+    - Line 38: if (resourceParts[2] === '' || targetParts[2] === '') return false;
+
+    Line 38 is dead code because !x on line 35 already catches empty strings
+    ('' is falsy in JavaScript). So line 38 can never execute.
+    """
+    file_content = """import { AuthorizationError } from '../../errors/authorization-error';
+import { User } from '../../tenancy/user';
+import { Permission, Role } from '..';
+import { AuthorizationHandler } from '.';
+
+export class AgencyAuthorizationHandler implements AuthorizationHandler {
+  canHandleResource(resource: string): boolean {
+    if (!resource) {
+      return false;
+    }
+    // Matches "/agency/{agencyId}/..."
+    const regex = /^\\/agency\\/([a-fA-F0-9]+|\\*)(\\/.*)?$/;
+    const testResult = regex.test(resource);
+    return testResult;
+  }
+
+  private resourceMatches(resource: string, target: string): boolean {
+    if (!resource || !target) {
+      return false;
+    }
+    // For now, this will just match on the string with no clever processing.
+    // E.g. "/agency/{agencyId}/policy/{policyId}"
+    const resourceParts = resource.split('/');
+    const targetParts = target.split('/');
+
+    if (resourceParts.length < 2 || targetParts.length < 2) {
+      return false;
+    }
+
+    if (resourceParts[1] === 'platform') return true;
+    if (resourceParts[1] !== 'agency') return false;
+
+    // Check for empty agency ID (e.g., "/agency//something")
+    // Note: !resourceParts[2] catches empty strings since '' is falsy
+    if (!resourceParts[2] || !targetParts[2]) return false;
+
+    // THIS LINE IS DEAD CODE - the check above already catches empty strings
+    if (resourceParts[2] === '' || targetParts[2] === '') return false;
+
+    return resourceParts[2] === '*' || resourceParts[2] === targetParts[2];
+  }
+}"""
+
+    result = is_code_untestable(
+        file_path="src/authorization/authorizers/agencyAuthorizationHandler.handler.ts",
+        file_content=file_content,
+        uncovered_lines="38",
+    )
+
+    assert result.result is True, (
+        f"Expected Claude to detect dead code as untestable. "
+        f"Got result={result.result}, reason={result.reason}"
+    )
+
+
+# Skip: Calls real Claude API - run manually to verify dead code detection works
+@pytest.mark.skip(reason="Integration test - calls Claude API, costs money")
+def test_detects_logic_based_dead_code_simple():
+    """Test dead code detection with minimal example."""
+    file_content = """function check(x: string | undefined): boolean {
+  if (!x) return false;
+  if (x === '') return false;  // DEAD - !x already caught ''
+  return true;
+}"""
+
+    result = is_code_untestable(
+        file_path="src/utils.ts",
+        file_content=file_content,
+        uncovered_lines="3",
+    )
+
+    assert (
+        result.result is True
+    ), f"Expected dead code detection. Got result={result.result}, reason={result.reason}"

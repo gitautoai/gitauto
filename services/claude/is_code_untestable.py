@@ -1,13 +1,14 @@
 from services.claude.evaluate_condition import EvaluationResult, evaluate_condition
 from utils.formatting.format_with_line_numbers import format_content_with_line_numbers
 
-SYSTEM_PROMPT = """You are a code analysis expert. Determine if the given uncovered code is UNTESTABLE due to testing library constraints.
+SYSTEM_PROMPT = """You are a code analysis expert. Determine if the given uncovered code is UNTESTABLE or DEAD CODE that should be removed.
 
-Code is UNTESTABLE if:
+Code is UNTESTABLE or DEAD (return true) if:
 1. Async error handlers in React/Vue/Angular event handlers (onClick, onSubmit) that throw errors - become unhandled promise rejections
 2. Error throws inside callbacks that test frameworks cannot catch
 3. Code paths only executing in specific runtime environments tests cannot simulate
 4. Race condition handlers depending on timing
+5. DEAD CODE: Logically unreachable code due to earlier conditions already handling the case (e.g., checking `x === ''` after `!x` already returned, since empty string is falsy)
 
 Code is TESTABLE (return false) if:
 1. Can be tested by mocking dependencies
@@ -16,8 +17,8 @@ Code is TESTABLE (return false) if:
 4. Simply missing test coverage but technically testable
 
 Return:
-- result: true if genuinely untestable due to testing library constraints
-- reason: include which line numbers are untestable and why
+- result: true if genuinely untestable due to testing library constraints OR if dead/unreachable code that should be removed
+- reason: include which line numbers are untestable/dead and why
 """
 
 
