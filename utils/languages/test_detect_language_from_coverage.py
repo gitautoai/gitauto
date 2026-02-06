@@ -12,7 +12,7 @@ def test_detect_language_from_python_coverage():
     with open("payloads/lcov/lcov-python-sample.info", "r", encoding="utf-8") as f:
         lcov_content = f.read()
 
-    coverage_data = parse_lcov_coverage(lcov_content)
+    coverage_data = parse_lcov_coverage(lcov_content, set())
     language = detect_language_from_coverage(coverage_data)
 
     assert language == "python"
@@ -23,7 +23,7 @@ def test_detect_language_from_javascript_coverage():
     with open("payloads/lcov/lcov-javascript-sample.info", "r", encoding="utf-8") as f:
         lcov_content = f.read()
 
-    coverage_data = parse_lcov_coverage(lcov_content)
+    coverage_data = parse_lcov_coverage(lcov_content, set())
     language = detect_language_from_coverage(coverage_data)
 
     assert language == "javascript"

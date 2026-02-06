@@ -131,6 +131,10 @@ def handle_coverage_report(
     else:
         return None
 
+    # Fetch file tree early to normalize absolute paths in lcov files
+    tree_items = get_file_tree(owner_name, repo_name, head_branch, github_token)
+    repo_files = {item["path"] for item in tree_items if item["type"] == "blob"}
+
     coverage_data: list[CoverageReport] = []
     logger.info(
         "Processing %d artifacts for %s/%s", len(artifacts), owner_name, repo_name
@@ -176,7 +180,7 @@ def handle_coverage_report(
             continue
 
         logger.info("Downloaded lcov content, size: %d chars", len(lcov_content))
-        parsed_coverage = parse_lcov_coverage(lcov_content)
+        parsed_coverage = parse_lcov_coverage(lcov_content, repo_files)
 
         if parsed_coverage:
             logger.info("Parsed %d coverage items", len(parsed_coverage))
@@ -314,12 +318,10 @@ def handle_coverage_report(
     logger.info("Upserted %d coverage records", len(upsert_data))
 
     # Delete coverage records for files that no longer exist in the repo
-    tree_items = get_file_tree(owner_name, repo_name, head_branch, github_token)
-    current_files = {item["path"] for item in tree_items if item["type"] == "blob"}
     delete_stale_coverages(
         owner_id=owner_id,
         repo_id=repo_id,
-        current_files=current_files,
+        current_files=repo_files,
     )
 
     return upsert_result
