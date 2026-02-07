@@ -30,30 +30,47 @@ class ESLintFileResult(TypedDict):
     messages: list[ESLintMessage]
 
 
+# Rules relevant to coverage/testability (dead code, unreachable code, parsing errors).
+# Style-only rules like no-explicit-any that --fix can't resolve don't affect coverage.
+COVERAGE_RELEVANT_RULES = {
+    "@typescript-eslint/no-unnecessary-condition",
+    "no-unreachable",
+}
+
+
 @dataclass
 class ESLintResult:
     success: bool
     content: str | None
-    error: str | None
+    lint_errors: str | None
+    coverage_errors: str | None
 
 
 @handle_exceptions(
-    default_return_value=ESLintResult(success=True, content=None, error=None),
+    default_return_value=ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    ),
     raise_on_error=False,
 )
 async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: str):
     if not file_content.strip():
         logger.info("ESLint: Skipping %s - empty content", file_path)
-        return ESLintResult(success=True, content=None, error=None)
+        return ESLintResult(
+            success=True, content=None, lint_errors=None, coverage_errors=None
+        )
 
     if not file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
         logger.info("ESLint: Skipping %s - not a JS/TS file", file_path)
-        return ESLintResult(success=True, content=None, error=None)
+        return ESLintResult(
+            success=True, content=None, lint_errors=None, coverage_errors=None
+        )
 
     eslint_config = get_eslint_config(base_args)
     if not eslint_config:
         logger.info("ESLint: Skipping %s - no ESLint config found in repo", file_path)
-        return ESLintResult(success=True, content=None, error=None)
+        return ESLintResult(
+            success=True, content=None, lint_errors=None, coverage_errors=None
+        )
 
     config_filename = eslint_config.get("filename", "")
     is_legacy_config = config_filename.startswith(".eslintrc")
@@ -131,12 +148,15 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
     if result.returncode >= 2:
         error_msg = result.stderr.strip() or "Fatal ESLint error"
         logger.warning("ESLint failed for %s: %s", file_path, error_msg)
-        return ESLintResult(success=False, content=None, error=error_msg)
+        return ESLintResult(
+            success=False, content=None, lint_errors=error_msg, coverage_errors=None
+        )
 
     with open(full_path, "r", encoding=UTF8) as f:
         fixed_content = f.read()
 
-    remaining_errors: list[str] = []
+    lint_errors: list[str] = []
+    coverage_errors: list[str] = []
     if result.stdout:
         try:
             eslint_output: list[ESLintFileResult] = json.loads(result.stdout)
@@ -145,15 +165,29 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
                     line = message.get("line", "?")
                     msg = message.get("message", "Unknown error")
                     rule_id = message.get("ruleId", "")
+                    is_fatal = message.get("fatal", False)
                     rule_suffix = f" ({rule_id})" if rule_id else ""
-                    remaining_errors.append(f"Line {line}: {msg}{rule_suffix}")
+                    error_str = f"Line {line}: {msg}{rule_suffix}"
+                    if is_fatal or rule_id in COVERAGE_RELEVANT_RULES:
+                        coverage_errors.append(error_str)
+                    else:
+                        lint_errors.append(error_str)
         except json.JSONDecodeError as e:
             sentry_sdk.capture_exception(e)
 
-    if remaining_errors:
-        error_msg = "; ".join(remaining_errors)
-        logger.warning("ESLint: Remaining errors in %s: %s", file_path, error_msg)
-        return ESLintResult(success=False, content=fixed_content, error=error_msg)
+    if lint_errors or coverage_errors:
+        all_errors = lint_errors + coverage_errors
+        logger.warning(
+            "ESLint: Remaining errors in %s: %s", file_path, "; ".join(all_errors)
+        )
+        return ESLintResult(
+            success=False,
+            content=fixed_content,
+            lint_errors="; ".join(lint_errors) if lint_errors else None,
+            coverage_errors="; ".join(coverage_errors) if coverage_errors else None,
+        )
 
     logger.info("ESLint: Successfully fixed %s", file_path)
-    return ESLintResult(success=True, content=fixed_content, error=None)
+    return ESLintResult(
+        success=True, content=fixed_content, lint_errors=None, coverage_errors=None
+    )

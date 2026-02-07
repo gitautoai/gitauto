@@ -87,7 +87,8 @@ async def test_verify_partial_fix_with_remaining_errors(
     mock_eslint.return_value = ESLintResult(
         success=False,
         content=fixed,
-        error="Line 2: 'unused' is defined but never used (no-unused-vars)",
+        lint_errors="Line 2: 'unused' is defined but never used (no-unused-vars)",
+        coverage_errors=None,
     )
 
     result = await verify_task_is_complete(base_args)
@@ -198,7 +199,9 @@ async def test_verify_autofixes_missing_braces_in_test_file(
     mock_get_tree.return_value = []
     mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
-    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
 
     result = await verify_task_is_complete(base_args)
 
@@ -240,7 +243,9 @@ async def test_verify_ignores_non_test_files(
     ]
     mock_get_raw.return_value = "const x = 1;\n"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
-    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
 
     result = await verify_task_is_complete(base_args)
 
@@ -293,7 +298,9 @@ async def test_verify_checks_both_ts_test_files(
     mock_get_tree.return_value = []
     mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
-    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
 
     result = await verify_task_is_complete(base_args)
 
@@ -331,7 +338,9 @@ async def test_verify_checks_only_ts_when_mixed_with_py(
     mock_get_tree.return_value = []
     mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
-    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
 
     result = await verify_task_is_complete(base_args)
 
@@ -398,7 +407,9 @@ async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
     mock_get_tree.return_value = []
     mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
-    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
 
     result = await verify_task_is_complete(base_args)
 
@@ -443,7 +454,9 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
     mock_get_tree.return_value = []
     mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
-    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
 
     result = await verify_task_is_complete(base_args)
 

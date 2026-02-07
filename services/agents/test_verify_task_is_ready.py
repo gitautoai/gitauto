@@ -23,7 +23,9 @@ async def test_valid_file_returns_success(
 ):
     mock_get_raw_content.return_value = "function foo() { return 1; }"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
-    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
     base_args = cast(
         BaseArgs,
         {
@@ -55,7 +57,9 @@ async def test_prettier_fails_returns_errors(
     mock_prettier.return_value = PrettierResult(
         success=False, content=None, error="SyntaxError: Unexpected token"
     )
-    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
     base_args = cast(
         BaseArgs,
         {
@@ -86,7 +90,10 @@ async def test_eslint_fails_returns_errors(
     mock_get_raw_content.return_value = "function foo() { return 1; }"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
     mock_eslint.return_value = ESLintResult(
-        success=False, content=None, error="Parsing error: Unexpected token"
+        success=False,
+        content=None,
+        lint_errors=None,
+        coverage_errors="Parsing error: Unexpected token",
     )
     base_args = cast(
         BaseArgs,
@@ -188,7 +195,9 @@ async def test_fixes_applied_and_pushed(
     mock_prettier.return_value = PrettierResult(
         success=True, content=formatted, error=None
     )
-    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
     base_args = cast(
         BaseArgs,
         {
@@ -223,7 +232,8 @@ async def test_eslint_partial_fix_pushes_and_reports_errors(
     mock_eslint.return_value = ESLintResult(
         success=False,
         content=fixed,
-        error="Line 2: 'unused' is defined but never used (no-unused-vars)",
+        lint_errors="Line 2: 'unused' is defined but never used (no-unused-vars)",
+        coverage_errors=None,
     )
     base_args = cast(
         BaseArgs,
@@ -237,12 +247,51 @@ async def test_eslint_partial_fix_pushes_and_reports_errors(
     result = await verify_task_is_ready(
         base_args=base_args, file_paths=["src/index.ts"]
     )
-    assert result.success is False
-    assert len(result.errors) == 1
-    assert "unused" in result.errors[0]
+    # Lint-only errors (no-unused-vars) are ignored by verify_task_is_ready
+    # Only coverage-relevant errors cause failure
+    assert result.success is True
+    assert result.errors == []
     assert result.fixes_applied == ["- src/index.ts: ESLint"]
-    assert result.files_with_errors == {"src/index.ts"}
+    assert result.files_with_errors == set()
     mock_replace.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_ready.replace_remote_file_content")
+@patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_ready.get_raw_content")
+async def test_no_explicit_any_ignored(
+    mock_get_raw_content, mock_prettier, mock_eslint, mock_replace
+):
+    mock_get_raw_content.return_value = (
+        "export async function getUsers(): Promise<any[]> { return []; }"
+    )
+    mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=False,
+        content=None,
+        lint_errors="Line 79: Unexpected any. Specify a different type (@typescript-eslint/no-explicit-any); Line 111: Unexpected any. Specify a different type (@typescript-eslint/no-explicit-any)",
+        coverage_errors=None,
+    )
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "Foxquilt",
+            "repo": "foxden-auth-service",
+            "token": "test",
+            "base_branch": "main",
+        },
+    )
+    result = await verify_task_is_ready(
+        base_args=base_args, file_paths=["src/utils/auth0.ts"]
+    )
+    # no-explicit-any is a lint-only error, not coverage-relevant
+    # Previously this caused the agent to loop for 900s trying to fix unfixable errors
+    assert result.success is True
+    assert result.errors == []
+    assert result.files_with_errors == set()
+    mock_replace.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -256,7 +305,9 @@ async def test_run_tsc_reports_type_errors(
 ):
     mock_get_raw_content.return_value = "const x: number = 'hello';"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
-    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
     mock_tsc.return_value = TscResult(
         success=False,
         errors=[
@@ -297,7 +348,9 @@ async def test_run_jest_reports_test_failures(
         "describe('test', () => { it('fails', () => { expect(true).toBe(false); }); });"
     )
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
-    mock_eslint.return_value = ESLintResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
     mock_jest.return_value = JestResult(
         success=False,
         errors=["FAIL src/index.test.ts", "Expected true to be false"],
