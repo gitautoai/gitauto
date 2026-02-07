@@ -500,7 +500,7 @@ async def create_pr_from_issue(
     pre_existing_errors = ""
     if validation_result.errors:
         pre_existing_errors = "\n".join(validation_result.errors)
-        logger.warning("Syntax issues found in source files:\n%s", pre_existing_errors)
+        logger.warning("Remaining errors:\n%s", pre_existing_errors)
     fixes_applied = validation_result.fixes_applied
 
     comment_body = f"Created pull request: {pr_url}"

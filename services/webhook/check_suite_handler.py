@@ -352,7 +352,7 @@ async def handle_check_suite(
     pre_existing_errors = ""
     if validation_result.errors:
         pre_existing_errors = "\n".join(validation_result.errors)
-        logger.warning("Syntax issues found in PR files:\n%s", pre_existing_errors)
+        logger.warning("Remaining errors:\n%s", pre_existing_errors)
     fixes_applied = validation_result.fixes_applied
 
     # Get the error log from the workflow run
@@ -662,15 +662,19 @@ async def handle_check_suite(
             "Agent loop hit MAX_ITERATIONS (%d) without calling verify_task_is_complete. Forcing verification.",
             MAX_ITERATIONS,
         )
-        await verify_task_is_complete(base_args=base_args)
+        final_result = await verify_task_is_complete(base_args=base_args)
+        is_completed = final_result.success
 
     # Trigger final test workflows with an empty commit
     comment_body = "Creating final empty commit to trigger workflows..."
     update_comment(body=comment_body, base_args=base_args)
     create_empty_commit(base_args=base_args)
 
-    # Create final message
-    final_msg = f"Finished fixing the `{check_run_name}` check run error!"
+    # Create final message based on verification result
+    if is_completed:
+        final_msg = f"Finished fixing the `{check_run_name}` check run error!"
+    else:
+        final_msg = f"I tried to fix `{check_run_name}` but verification still shows errors. Please review the changes."
     update_comment(body=final_msg, base_args=base_args)
 
     # Update usage record
