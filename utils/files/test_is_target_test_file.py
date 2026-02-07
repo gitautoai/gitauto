@@ -65,3 +65,19 @@ def test_is_target_test_file_with_non_schedule_title():
     )
 
     assert is_target_test_file("services/test_payment.py", base_args)
+
+
+def test_is_target_test_file_blocks_config_files():
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "issue_title": "Schedule: Add unit tests to src/utils/shouldSkipQuestion.ts",
+        },
+    )
+
+    assert not is_target_test_file("tsconfig.eslint.json", base_args)
+    assert not is_target_test_file("jest.config.ts", base_args)
+    assert not is_target_test_file(".eslintrc", base_args)
+    assert not is_target_test_file("tsconfig.json", base_args)
