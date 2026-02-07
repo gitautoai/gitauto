@@ -101,6 +101,16 @@ def apply_diff_to_file(
             content=modified_text,
         )
 
+    # Skip if content is identical (avoids empty commits and misleading logs)
+    if modified_text == original_text:
+        logger.info("No changes to %s, skipping", file_path)
+        return FileWriteResult(
+            success=True,
+            message=f"No changes to {file_path}.",
+            file_path=file_path,
+            content=modified_text,
+        )
+
     # Normal file update
     s2 = modified_text.encode(encoding=UTF8)
     data = {
@@ -126,7 +136,7 @@ def apply_diff_to_file(
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
     with open(local_path, "w", encoding=UTF8) as f:
         f.write(modified_text)
-    logger.info("Wrote to local: %s", local_path)
+    logger.info("Wrote to local (changed): %s", local_path)
 
     return FileWriteResult(
         success=True,

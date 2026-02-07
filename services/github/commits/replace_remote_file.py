@@ -101,6 +101,17 @@ def replace_remote_file_content(
                 content="",
             )
 
+        # Skip if content is identical (avoids empty commits and misleading logs)
+        existing_content = base64.b64decode(file_info.get("content", "")).decode(UTF8)
+        if existing_content == file_content:
+            logger.info("No changes to %s, skipping", file_path)
+            return FileWriteResult(
+                success=True,
+                message=f"No changes to {file_path}.",
+                file_path=file_path,
+                content=file_content,
+            )
+
         # Add SHA to the request data
         data["sha"] = file_info.get("sha", "")
 
@@ -114,7 +125,7 @@ def replace_remote_file_content(
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
     with open(local_path, "w", encoding=UTF8) as f:
         f.write(file_content)
-    logger.info("Wrote to local: %s", local_path)
+    logger.info("Wrote to local (changed): %s", local_path)
 
     return FileWriteResult(
         success=True,
