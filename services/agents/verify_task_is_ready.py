@@ -85,11 +85,22 @@ async def verify_task_is_ready(
                 commit_message=f"Lint {file_path} with ESLint",
             )
             formatting_applied.append(f"- {file_path}: ESLint")
-        # Report remaining unfixable errors
-        if eslint_result.error:
-            errors.append(f"- {file_path}: ESLint: {eslint_result.error}")
+        # Report only coverage-relevant errors (dead code, unreachable code, parsing).
+        # Style-only errors like no-explicit-any are irrelevant to coverage.
+        if eslint_result.coverage_errors:
+            errors.append(f"- {file_path}: ESLint: {eslint_result.coverage_errors}")
             files_with_errors.add(file_path)
-            logger.warning("ESLint failed on %s: %s", file_path, eslint_result.error)
+            logger.warning(
+                "ESLint coverage-relevant errors on %s: %s",
+                file_path,
+                eslint_result.coverage_errors,
+            )
+        if eslint_result.lint_errors:
+            logger.info(
+                "ESLint style-only errors on %s (ignored): %s",
+                file_path,
+                eslint_result.lint_errors,
+            )
 
     if formatting_applied:
         logger.info("Applied formatting to files:\n%s", "\n".join(formatting_applied))

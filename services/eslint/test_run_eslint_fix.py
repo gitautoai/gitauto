@@ -182,6 +182,9 @@ async def test_run_eslint_fix_with_unfixable_errors(base_args):
                         result = await coro
 
     assert result.content == file_content
+    assert result.lint_errors is not None
+    assert "no-var" in result.lint_errors
+    assert result.coverage_errors is None
 
 
 @pytest.mark.asyncio

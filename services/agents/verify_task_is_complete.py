@@ -111,8 +111,11 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
                 commit_message=f"Lint {file_path} with ESLint",
             )
             formatting_applied.append(f"- {file_path}: ESLint")
-        if eslint_result.error:
-            remaining_errors.append(f"- {file_path}: ESLint: {eslint_result.error}")
+        eslint_all = [
+            e for e in [eslint_result.lint_errors, eslint_result.coverage_errors] if e
+        ]
+        if eslint_all:
+            remaining_errors.append(f"- {file_path}: ESLint: {'; '.join(eslint_all)}")
 
     if formatting_applied:
         logger.info("Applied formatting to files:\n%s", "\n".join(formatting_applied))
