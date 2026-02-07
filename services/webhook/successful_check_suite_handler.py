@@ -59,6 +59,17 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     installation_id = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
 
+    # CRITICAL: Skip [skip ci] commits FIRST before any auto-merge logic.
+    # When GitAuto creates a PR with an initial [skip ci] commit, GitHub fires
+    # check_suite completed with conclusion=success (no checks ran = success).
+    # Without this early check, the handler could attempt to auto-merge an empty PR.
+    head_sha = check_suite["head_sha"]
+    if check_commit_has_skip_ci(
+        owner=owner_name, repo=repo_name, commit_sha=head_sha, token=token
+    ):
+        logger.info("Last commit has [skip ci], skipping auto-merge check")
+        return
+
     # Create args for create_comment calls
     comment_args = cast(
         BaseArgs,
@@ -70,7 +81,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         },
     )
 
-    head_sha = check_suite["head_sha"]
     base_branch = pull_request["base"]["ref"]
 
     all_suites = get_check_suites(
@@ -137,13 +147,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)
     if not repo_features or not repo_features.get("auto_merge"):
         logger.info("Auto-merge disabled for repo_id=%s", repo_id)
-        return
-
-    # If last commit has [skip ci], GitAuto is either still working or abandoned - either way, skip
-    if check_commit_has_skip_ci(
-        owner=owner_name, repo=repo_name, commit_sha=head_sha, token=token
-    ):
-        logger.info("Last commit has [skip ci], skipping auto-merge check")
         return
 
     # Fetch full PR details to get mergeable_state (not in simplified PR from check_suite webhook)
