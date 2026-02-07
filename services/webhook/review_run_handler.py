@@ -245,7 +245,7 @@ async def handle_review_run(
     pre_existing_errors = ""
     if validation_result.errors:
         pre_existing_errors = "\n".join(validation_result.errors)
-        logger.warning("Syntax issues found in PR files:\n%s", pre_existing_errors)
+        logger.warning("Remaining errors:\n%s", pre_existing_errors)
     fixes_applied = validation_result.fixes_applied
 
     # Get repository settings
@@ -356,15 +356,19 @@ async def handle_review_run(
             "Agent loop hit MAX_ITERATIONS (%d) without calling verify_task_is_complete. Forcing verification.",
             MAX_ITERATIONS,
         )
-        await verify_task_is_complete(base_args=base_args)
+        final_result = await verify_task_is_complete(base_args=base_args)
+        is_completed = final_result.success
 
     # Trigger final test workflows with an empty commit
     body = "Creating final empty commit to trigger workflows..."
     update_comment(body=body, base_args=base_args)
     create_empty_commit(base_args=base_args)
 
-    # Create a pull request to the base branch
-    msg = "Resolved your feedback! Looks good?"
+    # Create final message based on verification result
+    if is_completed:
+        msg = "Resolved your feedback! Looks good?"
+    else:
+        msg = "I tried to address your feedback but verification still shows errors. Please review the changes."
     update_comment(body=msg, base_args=base_args)
 
     # Update usage record

@@ -61,9 +61,9 @@ async def test_verify_task_is_complete_success_with_changes(mock_get_files, base
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is True
-    assert result["message"] == "Task completed."
-    assert result["fixes_applied"] == []
+    assert result.success is True
+    assert result.message == "Task completed."
+    assert result.fixes_applied == []
     mock_get_files.assert_called_once_with(
         owner="test-owner", repo="test-repo", pull_number=123, token="test-token"
     )
@@ -93,9 +93,9 @@ async def test_verify_partial_fix_with_remaining_errors(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is False
-    assert "NOT complete" in result["message"]
-    assert "unused" in result["message"]
+    assert result.success is False
+    assert "NOT complete" in result.message
+    assert "unused" in result.message
 
 
 @pytest.mark.asyncio
@@ -105,8 +105,8 @@ async def test_verify_task_is_complete_failure_no_changes(mock_get_files, base_a
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is False
-    assert "no changes" in result["message"]
+    assert result.success is False
+    assert "no changes" in result.message
 
 
 @pytest.mark.asyncio
@@ -124,8 +124,8 @@ async def test_verify_task_is_complete_no_pull_number_returns_default(mock_get_f
 
     result = await verify_task_is_complete(args)
 
-    assert result["success"] is False
-    assert "error" in result["message"].lower()
+    assert result.success is False
+    assert "error" in result.message.lower()
     mock_get_files.assert_not_called()
 
 
@@ -146,8 +146,8 @@ async def test_verify_task_is_complete_no_pull_number_with_issue_returns_default
 
     result = await verify_task_is_complete(args)
 
-    assert result["success"] is False
-    assert "error" in result["message"].lower()
+    assert result.success is False
+    assert "error" in result.message.lower()
     mock_get_files.assert_not_called()
 
 
@@ -160,8 +160,8 @@ async def test_verify_task_is_complete_api_error_returns_default(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is False
-    assert "error" in result["message"].lower()
+    assert result.success is False
+    assert "error" in result.message.lower()
 
 
 @pytest.mark.asyncio
@@ -205,8 +205,8 @@ async def test_verify_autofixes_missing_braces_in_test_file(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is True
-    assert result["message"] == "Task completed."
+    assert result.success is True
+    assert result.message == "Task completed."
 
 
 @pytest.mark.asyncio
@@ -226,8 +226,8 @@ async def test_verify_passes_with_correct_test_syntax(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is True
-    assert result["message"] == "Task completed."
+    assert result.success is True
+    assert result.message == "Task completed."
 
 
 @pytest.mark.asyncio
@@ -249,7 +249,7 @@ async def test_verify_ignores_non_test_files(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is True
+    assert result.success is True
 
 
 @pytest.mark.asyncio
@@ -264,7 +264,7 @@ async def test_verify_ignores_removed_test_files(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is True
+    assert result.success is True
     mock_get_raw.assert_not_called()
 
 
@@ -304,7 +304,7 @@ async def test_verify_checks_both_ts_test_files(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is True
+    assert result.success is True
     assert mock_get_raw.call_count == 2
 
 
@@ -344,7 +344,7 @@ async def test_verify_checks_only_ts_when_mixed_with_py(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is True
+    assert result.success is True
     assert mock_get_raw.call_count == 1
 
 
@@ -361,7 +361,7 @@ async def test_verify_ignores_all_non_js_test_files(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is True
+    assert result.success is True
     mock_get_raw.assert_not_called()
 
 
@@ -413,8 +413,8 @@ async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is True
-    assert result["message"] == "Task completed."
+    assert result.success is True
+    assert result.message == "Task completed."
 
 
 @pytest.mark.asyncio
@@ -460,8 +460,8 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is True
-    assert result["message"] == "Task completed."
+    assert result.success is True
+    assert result.message == "Task completed."
 
 
 @pytest.mark.asyncio
@@ -487,6 +487,6 @@ async def test_verify_fails_when_jest_tests_fail(
 
     result = await verify_task_is_complete(base_args)
 
-    assert result["success"] is False
-    assert "NOT complete" in result["message"]
-    assert "jest:" in result["message"]
+    assert result.success is False
+    assert "NOT complete" in result.message
+    assert "jest:" in result.message

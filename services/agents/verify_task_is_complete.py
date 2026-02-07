@@ -1,4 +1,5 @@
-# Local imports
+from dataclasses import dataclass, field
+
 from constants.files import JS_TEST_FILE_EXTENSIONS, TS_TEST_FILE_EXTENSIONS
 from services.eslint.run_eslint_fix import run_eslint_fix
 from services.github.commits.replace_remote_file import replace_remote_file_content
@@ -18,11 +19,18 @@ from utils.files.filter_js_ts_files import filter_js_ts_files
 from utils.logging.logging_config import logger
 
 
+@dataclass
+class VerifyTaskIsCompleteResult:
+    success: bool
+    message: str
+    fixes_applied: list[str] = field(default_factory=list)
+
+
 @handle_exceptions(
-    default_return_value={
-        "success": False,
-        "message": "Verification failed due to an unexpected error.",
-    },
+    default_return_value=VerifyTaskIsCompleteResult(
+        success=False,
+        message="Verification failed due to an unexpected error.",
+    ),
     raise_on_error=False,
 )
 async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
@@ -40,10 +48,10 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
     )
 
     if not pr_files:
-        return {
-            "success": False,
-            "message": "Error: Cannot complete task - the PR has no changes. You must make actual code changes before calling verify_task_is_complete. Use apply_diff_to_file or replace_remote_file_content to commit your changes first.",
-        }
+        return VerifyTaskIsCompleteResult(
+            success=False,
+            message="Error: Cannot complete task - the PR has no changes. You must make actual code changes before calling verify_task_is_complete. Use apply_diff_to_file or replace_remote_file_content to commit your changes first.",
+        )
 
     js_test_files = [
         f["filename"]
@@ -135,14 +143,14 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
     if remaining_errors:
         error_msg = "\n".join(remaining_errors)
         logger.warning("Remaining errors after fixes:\n%s", error_msg)
-        return {
-            "success": False,
-            "message": f"Task NOT complete. Fix these errors:\n{error_msg}",
-            "fixes_applied": formatting_applied,
-        }
+        return VerifyTaskIsCompleteResult(
+            success=False,
+            message=f"Task NOT complete. Fix these errors:\n{error_msg}",
+            fixes_applied=formatting_applied,
+        )
 
-    return {
-        "success": True,
-        "message": "Task completed.",
-        "fixes_applied": formatting_applied,
-    }
+    return VerifyTaskIsCompleteResult(
+        success=True,
+        message="Task completed.",
+        fixes_applied=formatting_applied,
+    )

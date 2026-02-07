@@ -5,6 +5,7 @@ import inspect
 from anthropic.types import MessageParam, ToolResultBlockParam, ToolUnionParam
 
 # Local imports
+from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.claude.chat_with_claude import chat_with_claude
 from services.claude.replace_old_file_content import replace_old_file_content
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
@@ -202,9 +203,11 @@ async def chat_with_agent(
             tool_result = await tool_result
 
         # Handle verify_task_is_complete result
-        if tool_name == "verify_task_is_complete" and isinstance(tool_result, dict):
-            is_success = tool_result.get("success", False)
-            tool_message = tool_result.get("message", "")
+        if tool_name == "verify_task_is_complete" and isinstance(
+            tool_result, VerifyTaskIsCompleteResult
+        ):
+            is_success = tool_result.success
+            tool_message = tool_result.message
             messages.append(response_message)
             tool_result_block: ToolResultBlockParam = {
                 "type": "tool_result",
