@@ -422,3 +422,72 @@ async def test_run_eslint_fix_legacy_config_variants(base_args, config_filename)
                     mock_run.assert_called_once()
                     call_kwargs = mock_run.call_args[1]
                     assert call_kwargs["env"]["ESLINT_USE_FLAT_CONFIG"] == "false"
+
+
+@pytest.mark.asyncio
+async def test_run_eslint_fix_skips_parser_options_when_config_has_project(base_args):
+    """When the repo's ESLint config already has parserOptions.project,
+    don't override it with --parser-options project:tsconfig.json."""
+    eslint_config_content = json.dumps(
+        {"parserOptions": {"project": "./tsconfig.eslint.json"}}
+    )
+    eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
+
+    with patch(
+        "services.eslint.run_eslint_fix.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": eslint_config_content},
+    ):
+        with patch("services.eslint.run_eslint_fix.os.path.exists", return_value=True):
+            with patch("services.eslint.run_eslint_fix.os.makedirs"):
+                with patch("builtins.open", mock_open(read_data="formatted")):
+                    with patch(
+                        "services.eslint.run_eslint_fix.subprocess.run"
+                    ) as mock_run:
+                        mock_run.return_value = MagicMock(
+                            returncode=0, stdout=eslint_output
+                        )
+
+                        coro = run_eslint_fix(
+                            base_args=base_args,
+                            file_path="test.ts",
+                            file_content="const x = 1;",
+                        )
+                        assert coro is not None
+                        await coro
+
+                        cmd = mock_run.call_args[0][0]
+                        assert "--parser-options" not in cmd
+                        assert "--rule" in cmd
+
+
+@pytest.mark.asyncio
+async def test_run_eslint_fix_adds_parser_options_when_config_lacks_project(base_args):
+    """When the repo's ESLint config doesn't have parserOptions.project,
+    add --parser-options project:tsconfig.json."""
+    eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
+
+    with patch(
+        "services.eslint.run_eslint_fix.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch("services.eslint.run_eslint_fix.os.path.exists", return_value=True):
+            with patch("services.eslint.run_eslint_fix.os.makedirs"):
+                with patch("builtins.open", mock_open(read_data="formatted")):
+                    with patch(
+                        "services.eslint.run_eslint_fix.subprocess.run"
+                    ) as mock_run:
+                        mock_run.return_value = MagicMock(
+                            returncode=0, stdout=eslint_output
+                        )
+
+                        coro = run_eslint_fix(
+                            base_args=base_args,
+                            file_path="test.ts",
+                            file_content="const x = 1;",
+                        )
+                        assert coro is not None
+                        await coro
+
+                        cmd = mock_run.call_args[0][0]
+                        assert "--parser-options" in cmd
+                        assert "project:tsconfig.json" in cmd

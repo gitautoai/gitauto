@@ -8,6 +8,9 @@ import sentry_sdk
 
 from config import UTF8
 from constants.aws import EFS_TIMEOUT_SECONDS
+from services.eslint.eslint_config_has_parser_project import (
+    eslint_config_has_parser_project,
+)
 from services.github.files.get_eslint_config import get_eslint_config
 from services.github.types.github_types import BaseArgs
 from services.node.get_npm_cache_dir import set_npm_cache_env
@@ -101,10 +104,11 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
             [
                 "--rule",
                 "@typescript-eslint/no-unnecessary-condition: error",
-                "--parser-options",
-                "project:tsconfig.json",
             ]
         )
+        # Only add --parser-options if the repo's ESLint config doesn't already specify a project. CLI --parser-options overrides config file settings, which breaks repos that use a dedicated tsconfig for linting (e.g., tsconfig.eslint.json).
+        if not eslint_config_has_parser_project(eslint_config):
+            cmd.extend(["--parser-options", "project:tsconfig.json"])
         logger.info("ESLint: Typed linting enabled for unreachable code detection")
     cmd.append(full_path)
 
