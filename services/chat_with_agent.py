@@ -14,7 +14,6 @@ from services.model_selection import get_model, try_next_model
 from services.claude.tools.tools import FILE_EDIT_TOOLS, tools_to_call
 from services.slack.slack_notify import slack_notify
 from utils.error.handle_exceptions import handle_exceptions
-from utils.files.is_config_file import is_config_file
 from utils.files.is_target_test_file import is_target_test_file
 from utils.files.is_test_file import is_test_file
 from utils.formatting.collapse_list import collapse_list
@@ -157,7 +156,6 @@ async def chat_with_agent(
                 file_path
                 and not allow_edit_any_file
                 and not is_test_file(file_path)
-                and not is_config_file(file_path)
                 and not is_in_allowed_to_edit_files
             ):
                 validation_error = (
