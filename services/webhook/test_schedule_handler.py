@@ -6,6 +6,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 # Local imports
+from config import PRODUCT_ID
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 from services.claude.evaluate_condition import EvaluationResult
 from services.supabase.coverages.get_all_coverages import get_all_coverages
@@ -199,6 +200,7 @@ def test_schedule_handler_skips_export_only_files(
     mock_create_issue.assert_called_once()
     call_kwargs = mock_create_issue.call_args.kwargs
     assert "src/utils/helper.ts" in call_kwargs["title"]
+    assert call_kwargs["labels"] == [PRODUCT_ID]
     assert result["status"] == "success"
 
 

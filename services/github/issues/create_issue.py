@@ -1,6 +1,6 @@
 from typing import cast
 import requests
-from config import GITHUB_API_URL, PRODUCT_ID, TIMEOUT
+from config import GITHUB_API_URL, TIMEOUT
 from services.github.types.issue import Issue
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
@@ -16,9 +16,9 @@ def create_issue(
     title: str,
     body: str,
     assignees: list[str],
+    labels: list[str],
 ):
     """https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#create-an-issue"""
-    labels = [PRODUCT_ID]
 
     payload = {
         "title": title,

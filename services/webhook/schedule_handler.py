@@ -2,6 +2,8 @@
 from datetime import datetime, timezone
 from typing import cast
 
+from config import PRODUCT_ID
+
 # Local imports (Types)
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 from schemas.supabase.types import Coverages, CoveragesInsert
@@ -323,6 +325,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         title=title,
         body=body,
         assignees=[user_name],
+        labels=[PRODUCT_ID],
     )
 
     # Handle 410 - issues are disabled for this repository

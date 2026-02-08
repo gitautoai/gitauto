@@ -1910,3 +1910,8 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     assert call_kwargs["allow_edit_any_file"] is True
     assert "system_message" in call_kwargs
     assert isinstance(call_kwargs["system_message"], str)
+
+    # Verify baseline_tsc_errors is set on base_args
+    base_args = call_kwargs["base_args"]
+    assert "baseline_tsc_errors" in base_args
+    assert isinstance(base_args["baseline_tsc_errors"], set)

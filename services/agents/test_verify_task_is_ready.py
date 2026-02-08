@@ -333,6 +333,9 @@ async def test_run_tsc_reports_type_errors(
     assert len(result.errors) == 1
     assert "TS2322" in result.errors[0]
     assert result.files_with_errors == {"src/index.ts"}
+    assert result.tsc_errors == [
+        "src/index.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'."
+    ]
 
 
 @pytest.mark.asyncio

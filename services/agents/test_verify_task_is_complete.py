@@ -26,6 +26,15 @@ def mock_tsc_check():
 
 
 @pytest.fixture(autouse=True)
+def mock_create_tsc_issue():
+    """Auto-mock create_tsc_issue for all tests to prevent actual issue creation."""
+    with patch(
+        "services.agents.verify_task_is_complete.create_tsc_issue",
+    ):
+        yield
+
+
+@pytest.fixture(autouse=True)
 def mock_jest_test():
     """Auto-mock run_jest_test for all tests to prevent actual test execution."""
     with patch(
@@ -490,3 +499,97 @@ async def test_verify_fails_when_jest_tests_fail(
     assert result.success is False
     assert "NOT complete" in result.message
     assert "jest:" in result.message
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_baseline_tsc_errors_filtered(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    pre_existing_error = (
+        "src/passport-oidc.ts(217,32): error TS2339: "
+        "Property 'id' does not exist on type 'Profile'."
+    )
+    new_error = (
+        "src/index.ts(10,5): error TS2322: "
+        "Type 'string' is not assignable to type 'number'."
+    )
+
+    mock_get_files.return_value = [
+        {"filename": "src/index.ts", "status": "modified"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[pre_existing_error, new_error],
+        error_files={"src/passport-oidc.ts", "src/index.ts"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "baseline_tsc_errors": {pre_existing_error},
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    # Pre-existing error filtered, new error reported
+    assert result.success is False
+    assert "TS2322" in result.message
+    assert "TS2339" not in result.message
+
+    # create_tsc_issue called with the pre-existing error
+    mock_create_tsc_issue.assert_called_once()
+    call_kwargs = mock_create_tsc_issue.call_args.kwargs
+    assert call_kwargs["unrelated_errors"] == [pre_existing_error]
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_all_tsc_errors_pre_existing_passes(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    pre_existing = "src/old.ts(1,1): error TS2339: Property 'x' does not exist."
+
+    mock_get_files.return_value = [
+        {"filename": "src/index.ts", "status": "modified"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[pre_existing],
+        error_files={"src/old.ts"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "baseline_tsc_errors": {pre_existing},
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    # All errors are pre-existing, so task passes
+    assert result.success is True
+    assert result.message == "Task completed."
+    mock_create_tsc_issue.assert_called_once()

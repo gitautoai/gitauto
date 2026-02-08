@@ -18,6 +18,7 @@ class VerifyTaskIsReadyResult:
     errors: list[str] = field(default_factory=list)
     fixes_applied: list[str] = field(default_factory=list)
     files_with_errors: set[str] = field(default_factory=set)
+    tsc_errors: list[str] = field(default_factory=list)
 
 
 @handle_exceptions(
@@ -106,9 +107,11 @@ async def verify_task_is_ready(
         logger.info("Applied formatting to files:\n%s", "\n".join(formatting_applied))
 
     # Run tsc type check if requested (for check_suite and review handlers)
+    tsc_errors: list[str] = []
     if run_tsc:
         tsc_result = await run_tsc_check(base_args=base_args, file_paths=file_paths)
         if tsc_result.errors:
+            tsc_errors = tsc_result.errors
             for err in tsc_result.errors:
                 errors.append(f"- tsc: {err}")
             files_with_errors.update(tsc_result.error_files)
@@ -127,6 +130,9 @@ async def verify_task_is_ready(
             errors=errors,
             fixes_applied=formatting_applied,
             files_with_errors=files_with_errors,
+            tsc_errors=tsc_errors,
         )
 
-    return VerifyTaskIsReadyResult(fixes_applied=formatting_applied)
+    return VerifyTaskIsReadyResult(
+        fixes_applied=formatting_applied, tsc_errors=tsc_errors
+    )
