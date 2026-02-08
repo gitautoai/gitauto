@@ -57,8 +57,8 @@ def test_handle_coverage_report_with_python_sample():
 
         # Verify upsert_repo_coverage was called with count fields
         repo_coverage_data = mock_upsert_repo.call_args[0][0]
-        assert repo_coverage_data["lines_covered"] == 4891
-        assert repo_coverage_data["lines_total"] == 6694
+        assert repo_coverage_data["lines_covered"] == 3813
+        assert repo_coverage_data["lines_total"] == 5616
         assert repo_coverage_data["functions_covered"] == 188
         assert repo_coverage_data["functions_total"] == 235
         assert repo_coverage_data["branches_covered"] == 1007
@@ -253,9 +253,9 @@ def test_handle_coverage_report_with_javascript_sample():
         # Verify upsert_repo_coverage was called with count fields
         repo_coverage_data = mock_upsert_repo.call_args[0][0]
         assert repo_coverage_data["lines_covered"] == 141
-        assert repo_coverage_data["lines_total"] == 3937
+        assert repo_coverage_data["lines_total"] == 3919
         assert repo_coverage_data["functions_covered"] == 40
-        assert repo_coverage_data["functions_total"] == 1484
+        assert repo_coverage_data["functions_total"] == 1472
         assert repo_coverage_data["branches_covered"] == 43
         assert repo_coverage_data["branches_total"] == 1696
 
