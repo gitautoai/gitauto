@@ -1,7 +1,10 @@
 """Integration tests for review_run_handler.py token accumulation"""
 
 from unittest.mock import AsyncMock, patch
+
 import pytest
+
+from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.webhook.review_run_handler import handle_review_run
 
 
@@ -233,10 +236,10 @@ async def test_review_run_handler_max_iterations_forces_verification(
     mock_check_branch_exists.return_value = True
     mock_timeout_check.return_value = (False, 0)
     mock_update_comment.return_value = None
-    mock_verify_task_is_complete.return_value = {
-        "success": True,
-        "message": "Task completed.",
-    }
+    mock_verify_task_is_complete.return_value = VerifyTaskIsCompleteResult(
+        success=True,
+        message="Task completed.",
+    )
 
     mock_chat_with_agent.side_effect = [
         ([{"role": "user", "content": "review"}], 120, 80, False, 40),

@@ -7,8 +7,11 @@
 import hashlib
 import random
 from unittest.mock import AsyncMock, patch
+
 import pytest
+
 from config import GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
+from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.webhook.check_suite_handler import handle_check_suite
 
 
@@ -1513,10 +1516,10 @@ async def test_handle_check_suite_max_iterations_forces_verification(
     mock_is_pr_open.return_value = True
     mock_check_branch_exists.return_value = True
     mock_timeout_check.return_value = (False, 0)
-    mock_verify_task_is_complete.return_value = {
-        "success": True,
-        "message": "Task completed.",
-    }
+    mock_verify_task_is_complete.return_value = VerifyTaskIsCompleteResult(
+        success=True,
+        message="Task completed.",
+    )
 
     mock_chat_agent.side_effect = [
         ([], 50, 25, False, 50),
