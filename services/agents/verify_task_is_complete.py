@@ -13,6 +13,7 @@ from services.node.ensure_jest_uses_tsconfig_for_tests import (
 )
 from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
 from services.prettier.run_prettier_fix import run_prettier_fix
+from services.tsc.create_tsc_issue import create_tsc_issue
 from services.tsc.run_tsc_check import run_tsc_check
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.filter_js_ts_files import filter_js_ts_files
@@ -131,8 +132,18 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
     # Run tsc type check on all non-removed files
     tsc_result = await run_tsc_check(base_args=base_args, file_paths=non_removed_files)
     if tsc_result.errors:
+        baseline = base_args.get("baseline_tsc_errors", set())
+        unrelated_tsc_errors: list[str] = []
         for err in tsc_result.errors:
-            remaining_errors.append(f"- tsc: {err}")
+            if err in baseline:
+                unrelated_tsc_errors.append(err)
+            else:
+                remaining_errors.append(f"- tsc: {err}")
+        if unrelated_tsc_errors:
+            logger.info(
+                "tsc: %d pre-existing errors skipped", len(unrelated_tsc_errors)
+            )
+            create_tsc_issue(base_args=base_args, unrelated_errors=unrelated_tsc_errors)
 
     # Run jest/vitest tests on test files
     jest_result = await run_jest_test(base_args=base_args, file_paths=non_removed_files)

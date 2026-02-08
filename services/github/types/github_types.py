@@ -57,6 +57,7 @@ class BaseArgs(TypedDict):
     parent_issue_title: NotRequired[str | None]
     pr_body: NotRequired[str]
     pr_number: NotRequired[int]
+    baseline_tsc_errors: NotRequired[set[str]]
     review_id: NotRequired[int]
     skip_ci: NotRequired[bool]
 

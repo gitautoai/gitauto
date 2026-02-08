@@ -242,6 +242,7 @@ async def handle_review_run(
     validation_result = await verify_task_is_ready(
         base_args=base_args, file_paths=files_to_validate, run_tsc=True, run_jest=True
     )
+    base_args["baseline_tsc_errors"] = set(validation_result.tsc_errors)
     pre_existing_errors = ""
     if validation_result.errors:
         pre_existing_errors = "\n".join(validation_result.errors)

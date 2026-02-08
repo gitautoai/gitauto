@@ -16,9 +16,7 @@ def test_create_issue_success_with_assignees(test_owner, test_repo, test_token):
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
-    ) as mock_create_headers, patch(
-        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
-    ):
+    ) as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
@@ -29,6 +27,7 @@ def test_create_issue_success_with_assignees(test_owner, test_repo, test_token):
             title="Test Title",
             body="Test Body",
             assignees=["user1", "user2"],
+            labels=["test-product-id"],
         )
 
     mock_post.assert_called_once()
@@ -54,9 +53,7 @@ def test_create_issue_success_without_assignees(test_owner, test_repo, test_toke
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
-    ) as mock_create_headers, patch(
-        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
-    ):
+    ) as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
@@ -67,6 +64,7 @@ def test_create_issue_success_without_assignees(test_owner, test_repo, test_toke
             title="Test Title",
             body="Test Body",
             assignees=[],
+            labels=["test-product-id"],
         )
 
     mock_post.assert_called_once()
@@ -94,9 +92,7 @@ def test_create_issue_success_with_empty_assignees_list(
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
-    ) as mock_create_headers, patch(
-        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
-    ):
+    ) as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
@@ -107,6 +103,7 @@ def test_create_issue_success_with_empty_assignees_list(
             title="Test Title",
             body="Test Body",
             assignees=[],
+            labels=["test-product-id"],
         )
 
     call_args = mock_post.call_args
@@ -129,9 +126,7 @@ def test_create_issue_http_error(test_owner, test_repo, test_token):
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
-    ) as mock_create_headers, patch(
-        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
-    ):
+    ) as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
@@ -142,6 +137,7 @@ def test_create_issue_http_error(test_owner, test_repo, test_token):
             title="Test Title",
             body="Test Body",
             assignees=["user1"],
+            labels=["test-product-id"],
         )
 
     mock_response.raise_for_status.assert_called_once()
@@ -152,9 +148,7 @@ def test_create_issue_http_error(test_owner, test_repo, test_token):
 def test_create_issue_request_exception(test_owner, test_repo, test_token):
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
-    ) as mock_create_headers, patch(
-        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
-    ):
+    ) as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.side_effect = requests.RequestException("Connection error")
 
@@ -165,6 +159,7 @@ def test_create_issue_request_exception(test_owner, test_repo, test_token):
             title="Test Title",
             body="Test Body",
             assignees=["user1"],
+            labels=["test-product-id"],
         )
 
     assert status_code == 500
@@ -182,9 +177,7 @@ def test_create_issue_with_none_assignees(test_owner, test_repo, test_token):
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
-    ) as mock_create_headers, patch(
-        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
-    ):
+    ) as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
@@ -195,6 +188,7 @@ def test_create_issue_with_none_assignees(test_owner, test_repo, test_token):
             title="Test Title",
             body="Test Body",
             assignees=[],
+            labels=["test-product-id"],
         )
 
     call_args = mock_post.call_args
@@ -217,8 +211,6 @@ def test_create_issue_api_url_construction():
         "services.github.issues.create_issue.create_headers"
     ) as mock_create_headers, patch(
         "services.github.issues.create_issue.GITHUB_API_URL", "https://api.github.com"
-    ), patch(
-        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
     ):
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_post.return_value = mock_response
@@ -230,6 +222,7 @@ def test_create_issue_api_url_construction():
             title="Test Title",
             body="Test Body",
             assignees=["user1"],
+            labels=["test-product-id"],
         )
 
     call_args = mock_post.call_args
@@ -250,11 +243,7 @@ def test_create_issue_timeout_parameter(test_owner, test_repo, test_token):
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
-    ) as mock_create_headers, patch(
-        "services.github.issues.create_issue.TIMEOUT", 60
-    ), patch(
-        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
-    ):
+    ) as mock_create_headers, patch("services.github.issues.create_issue.TIMEOUT", 60):
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         mock_post.return_value = mock_response
 
@@ -265,6 +254,7 @@ def test_create_issue_timeout_parameter(test_owner, test_repo, test_token):
             title="Test Title",
             body="Test Body",
             assignees=["user1"],
+            labels=["test-product-id"],
         )
 
     call_args = mock_post.call_args
@@ -282,9 +272,7 @@ def test_create_issue_headers_creation(test_owner, test_repo):
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
-    ) as mock_create_headers, patch(
-        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
-    ):
+    ) as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": "Bearer test-token-123"}
         mock_post.return_value = mock_response
 
@@ -295,6 +283,7 @@ def test_create_issue_headers_creation(test_owner, test_repo):
             title="Test Title",
             body="Test Body",
             assignees=[],
+            labels=["test-product-id"],
         )
 
     mock_create_headers.assert_called_once_with(token="test-token-123")
@@ -319,9 +308,7 @@ def test_create_issue_retry_on_invalid_assignees(test_owner, test_repo, test_tok
 
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
-    ) as mock_create_headers, patch(
-        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
-    ):
+    ) as mock_create_headers:
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
         # First call returns 422, second call succeeds
         mock_post.side_effect = [mock_first_response, mock_second_response]
@@ -333,6 +320,7 @@ def test_create_issue_retry_on_invalid_assignees(test_owner, test_repo, test_tok
             title="Test Title",
             body="Test Body",
             assignees=["Copilot"],
+            labels=["test-product-id"],
         )
 
     # Should make two calls - first with assignees, second without
@@ -364,8 +352,6 @@ def test_create_issue_410_issues_disabled(test_owner, test_repo, test_token):
     with patch("services.github.issues.create_issue.requests.post") as mock_post, patch(
         "services.github.issues.create_issue.create_headers"
     ) as mock_create_headers, patch(
-        "services.github.issues.create_issue.PRODUCT_ID", "test-product-id"
-    ), patch(
         "services.github.issues.create_issue.logger"
     ) as mock_logger:
         mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
@@ -378,6 +364,7 @@ def test_create_issue_410_issues_disabled(test_owner, test_repo, test_token):
             title="Test Title",
             body="Test Body",
             assignees=["user1"],
+            labels=["test-product-id"],
         )
 
     # Verify the function returns 410 status and None
