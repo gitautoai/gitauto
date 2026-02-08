@@ -434,7 +434,7 @@ async def test_run_eslint_fix_skips_parser_options_when_config_has_project(base_
     eslint_config_content = json.dumps(
         {"parserOptions": {"project": "./tsconfig.eslint.json"}}
     )
-    eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
+    eslint_output = json.dumps([{"filePath": "src/index.ts", "messages": []}])
 
     with patch(
         "services.eslint.run_eslint_fix.get_eslint_config",
@@ -452,7 +452,7 @@ async def test_run_eslint_fix_skips_parser_options_when_config_has_project(base_
 
                         coro = run_eslint_fix(
                             base_args=base_args,
-                            file_path="test.ts",
+                            file_path="src/index.ts",
                             file_content="const x = 1;",
                         )
                         assert coro is not None
@@ -467,7 +467,7 @@ async def test_run_eslint_fix_skips_parser_options_when_config_has_project(base_
 async def test_run_eslint_fix_adds_parser_options_when_config_lacks_project(base_args):
     """When the repo's ESLint config doesn't have parserOptions.project,
     add --parser-options project:tsconfig.json."""
-    eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
+    eslint_output = json.dumps([{"filePath": "src/index.ts", "messages": []}])
 
     with patch(
         "services.eslint.run_eslint_fix.get_eslint_config",
@@ -485,7 +485,7 @@ async def test_run_eslint_fix_adds_parser_options_when_config_lacks_project(base
 
                         coro = run_eslint_fix(
                             base_args=base_args,
-                            file_path="test.ts",
+                            file_path="src/index.ts",
                             file_content="const x = 1;",
                         )
                         assert coro is not None

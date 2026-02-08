@@ -51,6 +51,7 @@ def ensure_jest_uses_tsconfig_for_tests(
     token = base_args["token"]
     new_branch = base_args["new_branch"]
 
+    logger.info("Ensuring Jest uses tsconfig with relaxed settings for test files")
     jest_config_file = None
     for config_file in JEST_CONFIG_FILES:
         if config_file in root_files:

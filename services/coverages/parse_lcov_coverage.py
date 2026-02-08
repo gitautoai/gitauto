@@ -7,10 +7,7 @@ from services.coverages.create_coverage_report import create_coverage_report
 from services.coverages.create_empty_stats import create_empty_stats
 from services.coverages.find_common_prefix import find_common_prefix
 from utils.error.handle_exceptions import handle_exceptions
-from utils.files.is_code_file import is_code_file
-from utils.files.is_config_file import is_config_file
-from utils.files.is_migration_file import is_migration_file
-from utils.files.is_test_file import is_test_file
+from utils.files.is_source_file import is_source_file
 from utils.logging.logging_config import logger
 
 
@@ -38,13 +35,7 @@ def parse_lcov_coverage(lcov_content: str, repo_files: set[str]):
             if prefix and current_file.startswith(prefix):
                 current_file = current_file[len(prefix) :]
 
-            # Skip non-code files, test files, config files, and migration files
-            if (
-                not is_code_file(current_file)
-                or is_test_file(current_file)
-                or is_config_file(current_file)
-                or is_migration_file(current_file)
-            ):
+            if not is_source_file(current_file):
                 current_file = None
 
                 # Skip to the next SF:
