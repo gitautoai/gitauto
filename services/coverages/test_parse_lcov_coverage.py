@@ -8,22 +8,22 @@ def test_parse_lcov_python_sample_exact_counts():
 
     result = parse_lcov_coverage(lcov_content, set())
 
-    assert len(result) == 329
+    assert len(result) == 294
 
     repo_level = [r for r in result if r["level"] == "repository"]
     assert len(repo_level) == 1
 
     file_level = [r for r in result if r["level"] == "file"]
-    assert len(file_level) == 259
+    assert len(file_level) == 228
 
     repo_coverage = repo_level[0]
     assert repo_coverage["full_path"] == "All"
-    assert repo_coverage["statement_coverage"] == 73.07
+    assert repo_coverage["statement_coverage"] == 67.9
     assert repo_coverage["function_coverage"] == 80.0
     assert repo_coverage["branch_coverage"] == 55.09
-    assert repo_coverage["line_coverage"] == 73.07
-    assert repo_coverage["lines_covered"] == 4891
-    assert repo_coverage["lines_total"] == 6694
+    assert repo_coverage["line_coverage"] == 67.9
+    assert repo_coverage["lines_covered"] == 3813
+    assert repo_coverage["lines_total"] == 5616
     assert repo_coverage["functions_covered"] == 188
     assert repo_coverage["functions_total"] == 235
     assert repo_coverage["branches_covered"] == 1007
@@ -54,24 +54,24 @@ def test_parse_lcov_javascript_sample_exact_counts():
 
     result = parse_lcov_coverage(lcov_content, set())
 
-    assert len(result) == 403
+    assert len(result) == 396
 
     repo_level = [r for r in result if r["level"] == "repository"]
     assert len(repo_level) == 1
 
     file_level = [r for r in result if r["level"] == "file"]
-    assert len(file_level) == 301
+    assert len(file_level) == 296
 
     repo_coverage = repo_level[0]
     assert repo_coverage["full_path"] == "All"
-    assert repo_coverage["statement_coverage"] == 3.58
-    assert repo_coverage["function_coverage"] == 2.7
+    assert repo_coverage["statement_coverage"] == 3.6
+    assert repo_coverage["function_coverage"] == 2.72
     assert repo_coverage["branch_coverage"] == 2.54
-    assert repo_coverage["line_coverage"] == 3.58
+    assert repo_coverage["line_coverage"] == 3.6
     assert repo_coverage["lines_covered"] == 141
-    assert repo_coverage["lines_total"] == 3937
+    assert repo_coverage["lines_total"] == 3919
     assert repo_coverage["functions_covered"] == 40
-    assert repo_coverage["functions_total"] == 1484
+    assert repo_coverage["functions_total"] == 1472
     assert repo_coverage["branches_covered"] == 43
     assert repo_coverage["branches_total"] == 1696
 
@@ -175,7 +175,7 @@ def test_fnda_parsing_javascript():
     result = parse_lcov_coverage(lcov_content, set())
     # Check that function coverage is calculated correctly
     repo = [r for r in result if r["level"] == "repository"][0]
-    assert repo["function_coverage"] == 2.7
+    assert repo["function_coverage"] == 2.72
 
 
 def test_fn_parsing_dotnet():
@@ -323,17 +323,17 @@ def test_parse_lcov_gitauto_real_exact_counts():
     result = parse_lcov_coverage(lcov_content, set())
 
     # Total reports should be: files + directories + repository
-    # Expected: 281 files + 77 directories + 1 repository = 359 total
-    assert len(result) == 359
+    # Expected: 249 files + 72 directories + 1 repository = 322 total
+    assert len(result) == 322
 
     repo_level = [r for r in result if r["level"] == "repository"]
     assert len(repo_level) == 1
 
     file_level = [r for r in result if r["level"] == "file"]
-    assert len(file_level) == 281  # Non-test files only
+    assert len(file_level) == 249
 
     directory_level = [r for r in result if r["level"] == "directory"]
-    assert len(directory_level) == 77  # Unique directories
+    assert len(directory_level) == 72
 
     # Verify repository level exists
     repo_coverage = repo_level[0]

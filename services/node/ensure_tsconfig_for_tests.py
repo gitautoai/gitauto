@@ -31,6 +31,7 @@ def ensure_tsconfig_for_tests(root_files: list[str], base_args: BaseArgs):
         logger.debug("Not a TypeScript repo, skipping")
         return None, None
 
+    logger.info("Ensuring tsconfig has relaxed settings for test files")
     variant_files = [f for f in root_files if TSCONFIG_VARIANT_PATTERN.match(f)]
 
     if not variant_files:

@@ -15,6 +15,7 @@ from services.github.files.get_eslint_config import get_eslint_config
 from services.github.types.github_types import BaseArgs
 from services.node.get_npm_cache_dir import set_npm_cache_env
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.is_source_file import is_source_file
 from utils.logging.logging_config import logger
 
 
@@ -112,7 +113,15 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
     ts_eslint_parser = os.path.exists(
         os.path.join(clone_dir, "node_modules", "@typescript-eslint", "parser")
     )
-    can_use_typed_linting = tsconfig_exists and ts_eslint_plugin and ts_eslint_parser
+    # Typed linting is only for source files (dead code detection for coverage).
+    # Non-source files are typically excluded from tsconfig.json, which causes
+    # ESLint to fail entirely (losing all linting including --fix).
+    can_use_typed_linting = (
+        tsconfig_exists
+        and ts_eslint_plugin
+        and ts_eslint_parser
+        and is_source_file(file_path)
+    )
 
     # Build ESLint command
     cmd = ["npx", "--yes", "eslint", "--fix", "--format", "json"]
@@ -165,10 +174,9 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
                     line = message.get("line", "?")
                     msg = message.get("message", "Unknown error")
                     rule_id = message.get("ruleId", "")
-                    is_fatal = message.get("fatal", False)
                     rule_suffix = f" ({rule_id})" if rule_id else ""
                     error_str = f"Line {line}: {msg}{rule_suffix}"
-                    if is_fatal or rule_id in COVERAGE_RELEVANT_RULES:
+                    if rule_id in COVERAGE_RELEVANT_RULES:
                         coverage_errors.append(error_str)
                     else:
                         lint_errors.append(error_str)

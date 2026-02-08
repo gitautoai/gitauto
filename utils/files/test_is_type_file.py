@@ -130,6 +130,18 @@ def test_case_insensitive_matching():
     assert is_type_file("ENUMS/STATUS.PY") is True
 
 
+def test_verb_prefix_files_are_not_type_files():
+    # Files with verb prefixes are functions, not type definitions
+    assert is_type_file("get_billing_type.py") is False
+    assert is_type_file("services/stripe/get_billing_type.py") is False
+    assert is_type_file("check_result_type.py") is False
+    assert is_type_file("create_user_type.py") is False
+    assert is_type_file("validate_schema.py") is False
+    assert is_type_file("parse_enum.py") is False
+    assert is_type_file("test_get_billing_type.py") is False
+    assert is_type_file("is_type_file.py") is False
+
+
 def test_non_type_files():
     # Regular files that should not be considered type files
     assert is_type_file("user_service.py") is False

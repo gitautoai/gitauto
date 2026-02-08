@@ -8,6 +8,50 @@ def is_type_file(filename: str) -> bool:
     # Convert to lowercase for case-insensitive matching
     filename_lower = filename.lower()
 
+    # Files with verb prefixes are functions, not type definitions
+    basename = filename_lower.rsplit("/", 1)[-1]
+    verb_prefixes = [
+        "get_",
+        "set_",
+        "put_",
+        "post_",
+        "delete_",
+        "patch_",
+        "create_",
+        "update_",
+        "remove_",
+        "add_",
+        "insert_",
+        "check_",
+        "is_",
+        "has_",
+        "can_",
+        "should_",
+        "handle_",
+        "process_",
+        "parse_",
+        "validate_",
+        "verify_",
+        "run_",
+        "execute_",
+        "send_",
+        "fetch_",
+        "find_",
+        "build_",
+        "make_",
+        "generate_",
+        "compute_",
+        "calculate_",
+        "convert_",
+        "transform_",
+        "format_",
+        "ensure_",
+        "apply_",
+        "test_",
+    ]
+    if any(basename.startswith(prefix) for prefix in verb_prefixes):
+        return False
+
     # Type definition patterns
     type_patterns = [
         # Type directories
