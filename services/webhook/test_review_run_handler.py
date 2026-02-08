@@ -151,6 +151,11 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     assert "system_message" in first_call_kwargs
     assert isinstance(first_call_kwargs["system_message"], str)
 
+    # Verify baseline_tsc_errors is set on base_args
+    base_args = first_call_kwargs["base_args"]
+    assert "baseline_tsc_errors" in base_args
+    assert isinstance(base_args["baseline_tsc_errors"], set)
+
     # CRITICAL: Verify update_usage was called with tokens
     mock_update_usage.assert_called_once()
     usage_call_kwargs = mock_update_usage.call_args.kwargs

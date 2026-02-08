@@ -458,6 +458,11 @@ async def test_handle_check_suite_full_workflow(
     assert "system_message" in first_call.kwargs
     assert isinstance(first_call.kwargs["system_message"], str)
 
+    # Verify baseline_tsc_errors is set on base_args
+    base_args = first_call.kwargs["base_args"]
+    assert "baseline_tsc_errors" in base_args
+    assert isinstance(base_args["baseline_tsc_errors"], set)
+
     second_call = mock_chat_agent.call_args_list[1]
     assert "system_message" in second_call.kwargs
     assert isinstance(second_call.kwargs["system_message"], str)
