@@ -46,7 +46,7 @@ OPENAI_MAX_CONTEXT_TOKENS = 120000  # Secured 8,000 as a buffer. https://gitauto
 OPENAI_MAX_RETRIES = 3
 OPENAI_MAX_TOOL_OUTPUTS_SIZE = 512 * 1024  # in bytes
 OPENAI_MAX_TOKENS = 4096
-OPENAI_MODEL_ID_GPT_5 = "gpt-5"  # https://platform.openai.com/docs/models
+OPENAI_MODEL_ID = "gpt-5.2"  # https://platform.openai.com/docs/models/gpt-5.2
 OPENAI_MODEL_ID_FOR_TIKTOKEN = (
     "gpt-4.1"  # https://github.com/openai/tiktoken/blob/main/tiktoken/model.py
 )

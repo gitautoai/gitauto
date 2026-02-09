@@ -1,7 +1,6 @@
 # pylint: disable=global-statement
 # pylint: disable=invalid-name
 
-from config import OPENAI_MODEL_ID_GPT_5
 from constants.claude import (
     CLAUDE_MODEL_ID_37,
     CLAUDE_MODEL_ID_40,
@@ -13,7 +12,6 @@ MODEL_CHAIN = [
     CLAUDE_MODEL_ID_45,
     CLAUDE_MODEL_ID_40,
     CLAUDE_MODEL_ID_37,
-    OPENAI_MODEL_ID_GPT_5,
 ]
 
 _current_model = MODEL_CHAIN[0]

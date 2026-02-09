@@ -22,9 +22,9 @@ def test_calculate_costs_claude():
 
 
 def test_calculate_costs_openai():
-    input_cost, output_cost = calculate_costs("openai", "gpt-5", 1000, 500)
-    expected_input = (1000 / 1_000_000) * 1.25
-    expected_output = (500 / 1_000_000) * 10.00
+    input_cost, output_cost = calculate_costs("openai", "gpt-5.2", 1000, 500)
+    expected_input = (1000 / 1_000_000) * 1.75
+    expected_output = (500 / 1_000_000) * 14.00
 
     assert input_cost == expected_input
     assert output_cost == expected_output
