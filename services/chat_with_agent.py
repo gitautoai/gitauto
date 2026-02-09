@@ -8,6 +8,7 @@ from anthropic.types import MessageParam, ToolResultBlockParam, ToolUnionParam
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.claude.chat_with_claude import chat_with_claude
 from services.claude.replace_old_file_content import replace_old_file_content
+from services.claude.sanitize_tool_args import sanitize_tool_args
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
 from services.github.comments.update_comment import update_comment
 from services.github.types.github_types import BaseArgs
@@ -126,6 +127,9 @@ async def chat_with_agent(
         )
         tool_name = corrected_tool[0]
         tool_args = corrected_tool[1]
+
+    if isinstance(tool_args, dict):
+        sanitize_tool_args(tool_args)
 
     if tool_name in tools_to_call:
         is_file_edit_tool = tool_name in FILE_EDIT_TOOLS
