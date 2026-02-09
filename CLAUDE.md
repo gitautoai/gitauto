@@ -526,7 +526,12 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
     - Pushing to a branch with an existing PR will add commits to that PR, potentially mixing unrelated changes
     - Options: close the existing PR, create a new branch, or confirm adding to the existing PR
 16. Push to remote: `git push`
-17. Create pull request: `gh pr create --title "PR title" --body "PR description" --assignee @me`. Example:
+17. If the PR includes a Social Media Post section, check recent posts to avoid repeating patterns:
+    ```bash
+    gh pr list --state merged --limit 10 --json body --jq '.[].body' | grep -A1 "## Social Media Post" | grep -v "^--$" | grep -v "## Social Media Post"
+    ```
+    Read the output and ensure your new post uses a different sentence structure and opener.
+18. Create pull request: `gh pr create --title "PR title" --body "PR description" --assignee @me`. Example:
 
     ```bash
     gh pr create --title "PR title" --body "$(cat <<'EOF'
@@ -549,12 +554,16 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
       - **Be straightforward and honest** like a dev talking to other devs
       - **Users don't know GitAuto internals** - They don't know we clone repos, install dependencies, set up working environments, etc. When relevant, educate them on what GitAuto does
       - **Frame bug fixes as features** - Don't say "fixed X" or "fixed error". Instead describe the improvement positively
+      - **Sound like a human wrote it** - AI-generated posts are obvious and get ignored. Write like a real dev sharing something they built. Be casual, imperfect, opinionated. No polished marketing tone.
+      - **Vary the opening every time** - NEVER use patterns like "GitAuto now...", "We just...", or any formula that gets stale. Start with the substance — what changed, why it matters, or a hook.
       - Good example: "We're dropping Jira integration to focus on GitHub. Less code to maintain, fewer edge cases to handle, and we can ship GitHub features faster."
+      - Bad example: "GitAuto now supports private npm packages" (repetitive "GitAuto now" opener)
+      - Bad example: "Private npm packages in your repo? GitAuto handles..." (clickbait question opener)
       - Bad example: "GitAuto is sunsetting Jira integration to deliver the best possible GitHub experience" (too corporate)
       - Bad example: "Removed unused Jira code paths" (sounds like failure)
       - Bad example: "Fixed a race condition that caused GitAuto to occasionally fail" (exposes internals, sounds like bug)
 
-18. If fixing a Sentry issue, list similar issues and resolve them:
+19. If fixing a Sentry issue, list similar issues and resolve them:
     - Use `python3 scripts/sentry/get_issue.py AGENT-XXX` to check related issues
     - Use `python3 scripts/sentry/resolve_issue.py AGENT-XXX AGENT-YYY ...` to resolve fixed issues
 
