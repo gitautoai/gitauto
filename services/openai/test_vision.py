@@ -5,7 +5,7 @@ from openai import OpenAIError
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 from openai.types.chat.chat_completion import Choice
 
-from config import OPENAI_MODEL_ID_GPT_5
+from config import OPENAI_MODEL_ID
 from services.openai.vision import describe_image
 from utils.prompts.describe_image import DESCRIBE_IMAGE
 
@@ -111,7 +111,7 @@ def test_describe_image_success_without_context(
                 ],
             },
         ],
-        model=OPENAI_MODEL_ID_GPT_5,
+        model=OPENAI_MODEL_ID,
         n=1,
     )
 
@@ -152,7 +152,7 @@ def test_describe_image_success_with_context(
                 ],
             },
         ],
-        model=OPENAI_MODEL_ID_GPT_5,
+        model=OPENAI_MODEL_ID,
         n=1,
     )
 

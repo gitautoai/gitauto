@@ -9,6 +9,7 @@ from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 # Local imports
 from constants.claude import CLAUDE_MAX_TOKENS, CLAUDE_MODEL_ID_45
 from services.claude.client import claude
+from services.claude.strip_strict_from_tools import strip_strict_from_tools
 from services.claude.exceptions import (
     ClaudeAuthenticationError,
     ClaudeOverloadedError,
@@ -41,6 +42,10 @@ def chat_with_claude(
     messages, token_input = trim_messages_to_token_limit(
         messages=messages, client=claude, model=model_id, max_input=max_input
     )
+
+    # Strip "strict" from tools for models that don't support it (only claude-sonnet-4-5 does)
+    if model_id != CLAUDE_MODEL_ID_45:
+        tools = strip_strict_from_tools(tools)
 
     # https://docs.anthropic.com/en/api/messages
     start_time = time.time()

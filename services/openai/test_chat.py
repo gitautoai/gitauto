@@ -5,7 +5,7 @@ from openai.types.chat import ChatCompletion, ChatCompletionMessage
 from openai.types.chat.chat_completion import Choice
 import pytest
 
-from config import OPENAI_MODEL_ID_GPT_5
+from config import OPENAI_MODEL_ID
 from services.openai.chat import chat_with_ai
 
 
@@ -73,7 +73,7 @@ def test_chat_with_ai_success(
                 "content": "truncated user input",
             },
         ],
-        model=OPENAI_MODEL_ID_GPT_5,
+        model=OPENAI_MODEL_ID,
     )
 
 
@@ -108,7 +108,7 @@ def test_chat_with_ai_empty_truncated_message(
                 "content": user_input,  # Should use original user_input when truncated is empty
             },
         ],
-        model=OPENAI_MODEL_ID_GPT_5,
+        model=OPENAI_MODEL_ID,
     )
 
 
@@ -172,7 +172,7 @@ def test_chat_with_ai_with_long_inputs(
                 "content": truncated_input,
             },
         ],
-        model=OPENAI_MODEL_ID_GPT_5,
+        model=OPENAI_MODEL_ID,
     )
 
 
@@ -201,7 +201,7 @@ def test_chat_with_ai_empty_inputs(
             {"role": "developer", "content": ""},
             {"role": "user", "content": ""},  # Uses original empty user_input
         ],
-        model=OPENAI_MODEL_ID_GPT_5,
+        model=OPENAI_MODEL_ID,
     )
 
 
@@ -317,7 +317,7 @@ def test_chat_with_ai_model_configuration(
 
     # Verify the model parameter
     call_args = mock_openai_client.chat.completions.create.call_args[1]
-    assert call_args["model"] == OPENAI_MODEL_ID_GPT_5
+    assert call_args["model"] == OPENAI_MODEL_ID
 
 
 @patch("services.openai.chat.create_openai_client")

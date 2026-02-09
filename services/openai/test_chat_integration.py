@@ -1,4 +1,4 @@
-"""Integration tests for chat.py with GPT-5"""
+"""Integration tests for chat.py with OpenAI"""
 
 import os
 
@@ -8,8 +8,8 @@ from services.openai.chat import chat_with_ai
 
 
 @pytest.mark.skipif(bool(os.getenv("CI")), reason="Skip integration tests in CI")
-def test_chat_with_ai_gpt5_integration():
-    """Test chat_with_ai function with real GPT-5 API call"""
+def test_chat_with_ai_integration():
+    """Test chat_with_ai function with real OpenAI API call"""
     response = chat_with_ai("You are a test assistant", "Say exactly: test")
 
     assert isinstance(response, str)
@@ -17,8 +17,8 @@ def test_chat_with_ai_gpt5_integration():
 
 
 @pytest.mark.skipif(bool(os.getenv("CI")), reason="Skip integration tests in CI")
-def test_chat_with_ai_gpt5_properties():
-    """Test that GPT-5 supports all properties used in chat_with_ai"""
+def test_chat_with_ai_properties():
+    """Test that OpenAI supports all properties used in chat_with_ai"""
     # Test with system and user input (the actual parameters used)
     response = chat_with_ai("Be concise", "What is 2+2?")
 

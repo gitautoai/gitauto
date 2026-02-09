@@ -15,8 +15,7 @@ def calculate_costs(
             "claude-3-7-sonnet-latest": {"input": 3.00, "output": 15.00},
         },
         "openai": {
-            "gpt-5": {"input": 1.25, "output": 10.00},
-            "gpt-4.1": {"input": 2.00, "output": 8.00},
+            "gpt-5.2": {"input": 1.75, "output": 14.00},
         },
     }
 
