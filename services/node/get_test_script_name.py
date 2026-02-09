@@ -6,8 +6,11 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_test_script(clone_dir: str):
-    """Get test script from package.json, or None if not found."""
+def get_test_script_name(clone_dir: str):
+    """Get the best test script name from package.json, or None if not found.
+
+    Prefers "test:unit" over "test" because we only run unit tests.
+    """
     package_json_path = os.path.join(clone_dir, "package.json")
     if not os.path.exists(package_json_path):
         return None
@@ -22,8 +25,13 @@ def get_test_script(clone_dir: str):
     if not isinstance(scripts, dict):
         return None
 
+    # Prefer "test:unit" because we only run unit tests
+    test_unit = scripts.get("test:unit")
+    if isinstance(test_unit, str) and test_unit:
+        return "test:unit"
+
     test_script = scripts.get("test")
     if isinstance(test_script, str) and test_script:
-        return test_script
+        return "test"
 
     return None

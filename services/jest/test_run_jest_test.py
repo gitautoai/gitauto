@@ -155,10 +155,8 @@ async def test_run_jest_test_spec_files(mock_exists, mock_subprocess):
     )
     assert result.success is True
 
-    # Verify both spec files were passed to the runner
-    cmd = mock_subprocess.call_args[0][0]
-    assert "src/utils.spec.ts" in cmd
-    assert "src/helper.spec.jsx" in cmd
+    # Each file is run individually — verify subprocess was called twice
+    assert mock_subprocess.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -166,9 +164,10 @@ async def test_run_jest_test_spec_files(mock_exists, mock_subprocess):
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_multiple_failures(mock_exists, mock_subprocess):
     mock_exists.return_value = True
+    # Both files fail
     mock_subprocess.return_value = MagicMock(
         returncode=1,
-        stdout="FAIL src/a.test.ts\nFAIL src/b.test.ts\n● Error in test",
+        stdout="Error in test",
         stderr="",
     )
 
@@ -237,3 +236,115 @@ async def test_run_jest_test_sets_mongoms_download_dir(mock_exists, mock_subproc
     assert "test-owner" in env["MONGOMS_DOWNLOAD_DIR"]
     assert "test-repo" in env["MONGOMS_DOWNLOAD_DIR"]
     assert env["MONGOMS_DOWNLOAD_DIR"].endswith(".cache/mongodb-binaries")
+
+
+# Real Jest error output from SPIDERPLUS-web PR #13518
+REAL_JEST_ESM_ERROR = """FAIL unit tests/js/unit/annotation/print_dialog.kyuden.test.js
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /tmp/spiderplus/SPIDERPLUS-web/pr-13518/tests/js/unit/_globalSetup.mjs:2
+    import {JSDOM} from 'jsdom';
+    ^^^^^^
+
+    SyntaxError: Cannot use import statement outside a module
+
+      at Runtime.createScriptFromCode (node_modules/jest-runtime/build/index.js:1505:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.216 s
+Ran all test suites matching /tests\\/js\\/unit\\/annotation\\/print_dialog.kyuden.test.js/i."""
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_test_script_name", return_value=None)
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_captures_full_esm_error(
+    mock_exists, mock_subprocess, _mock_get_test_script_name
+):
+    """Verify the full error output is kept, including the file path and stack trace."""
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(
+        returncode=1,
+        stdout=REAL_JEST_ESM_ERROR,
+        stderr="",
+    )
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "spiderplus",
+            "repo": "SPIDERPLUS-web",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    result = await run_jest_test(
+        base_args=base_args,
+        file_paths=["tests/js/unit/annotation/print_dialog.kyuden.test.js"],
+    )
+    assert result.success is False
+    assert "tests/js/unit/annotation/print_dialog.kyuden.test.js" in result.error_files
+    errors_joined = "\n".join(result.errors)
+    assert "_globalSetup.mjs:2" in errors_joined
+    assert "SyntaxError: Cannot use import statement outside a module" in errors_joined
+    assert "Runtime.createScriptFromCode" in errors_joined
+
+
+@pytest.mark.asyncio
+@patch(
+    "services.jest.run_jest_test.detect_package_manager", return_value=("npm", "", "")
+)
+@patch("services.jest.run_jest_test.get_test_script_name", return_value="test:unit")
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_uses_test_unit_script(
+    mock_exists, mock_subprocess, _mock_get_test_script_name, _mock_detect_pm
+):
+    """Verify that when get_test_script_name returns 'test:unit', the command uses
+    'npm run test:unit --' instead of 'npm test --'."""
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "clone_dir": "/tmp/clone",
+            "new_branch": "feature",
+            "token": "token",
+        },
+    )
+    result = await run_jest_test(
+        base_args=base_args,
+        file_paths=["tests/js/unit/annotation/print_dialog.kyuden.test.js"],
+    )
+    assert result.success is True
+
+    cmd = mock_subprocess.call_args[0][0]
+    assert "run" in cmd
+    assert "test:unit" in cmd
