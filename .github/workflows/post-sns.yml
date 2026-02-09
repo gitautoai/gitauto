@@ -17,7 +17,7 @@ jobs:
     outputs:
       has_python_changes: ${{ steps.check.outputs.has_python_changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -29,30 +29,24 @@ jobs:
             echo "has_python_changes=false" >> $GITHUB_OUTPUT
           fi
 
-  post-x-linkedin:
+  post-x:
     needs: check-python-changes
     if: needs.check-python-changes.outputs.has_python_changes == 'true'
     runs-on: ubuntu-latest
     steps:
-      # https://github.com/actions/checkout
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      # https://github.com/actions/setup-node
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: '20' # Updated to latest LTS version
+          node-version: '24'
 
       # https://github.com/plhery/node-twitter-api-v2
-      # https://github.com/linkedin-developers/linkedin-api-js-client#linkedin-api-javascript-client
       - name: Install dependencies
-        run: |
-          npm install twitter-api-v2
-          npm install linkedin-api-client
+        run: npm install twitter-api-v2
 
       # https://github.com/actions/github-script
       - name: Post to X
-        uses: actions/github-script@v7
-        continue-on-error: true
+        uses: actions/github-script@v8
         with:
           script: |
             const postTwitter = require('.github/scripts/post-twitter.js');
@@ -67,8 +61,23 @@ jobs:
           TWITTER_ACCESS_TOKEN_WES: ${{ secrets.TWITTER_ACCESS_TOKEN_WES }}
           TWITTER_ACCESS_TOKEN_SECRET_WES: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET_WES }}
 
+  post-linkedin:
+    needs: check-python-changes
+    if: needs.check-python-changes.outputs.has_python_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # https://github.com/linkedin-developers/linkedin-api-js-client#linkedin-api-javascript-client
+      - name: Install dependencies
+        run: npm install linkedin-api-client
+
       - name: Post to LinkedIn
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         continue-on-error: true
         with:
           script: |
@@ -81,11 +90,11 @@ jobs:
     if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'sns')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install dependencies
         run: npm install playwright
@@ -94,7 +103,7 @@ jobs:
         run: npx playwright install chromium
 
       - name: Post to Hacker News
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         continue-on-error: true
         with:
           script: |
