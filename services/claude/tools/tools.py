@@ -15,6 +15,10 @@ from services.github.commits.replace_remote_file import (
 from services.github.files.delete_file import delete_file
 from services.github.files.get_remote_file_content import get_remote_file_content
 from services.github.files.move_file import move_file
+from services.github.search.search_local_file_contents import (
+    SEARCH_LOCAL_FILE_CONTENT,
+    search_local_file_contents,
+)
 from services.github.search.search_remote_file_contents import (
     search_remote_file_contents,
 )
@@ -51,7 +55,7 @@ END_LINE: dict[str, str] = {
 # See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
 APPLY_DIFF_TO_FILE: ToolUnionParam = {
     "name": "apply_diff_to_file",
-    "description": "Applies a diff to a file in the GitHub repository. Must be called at least once to commit the changes otherwise you can't create a pull request and resolve the issue.",
+    "description": "Applies a diff to a file in the local clone and commits the change to the PR branch.",
     "input_schema": {
         "type": "object",
         "properties": {"file_path": FILE_PATH, "diff": DIFF},
@@ -123,7 +127,7 @@ QUERY: dict[str, str] = {
 # See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
 SEARCH_REMOTE_FILE_CONTENT: ToolUnionParam = {
     "name": "search_remote_file_contents",
-    "description": "Search for keywords in a repository to identify files and specific sections that need to be corrected. Especially if you change variable definitions, as they are likely used elsewhere, so you should search for those places. To reduce bugs, search multiple times from as many angles as possible. Must be called at least once.",
+    "description": "Search for keywords in the repository's DEFAULT branch via GitHub API. WARNING: This only searches the default branch, NOT the current PR branch. Prefer search_local_file_contents when available, as it searches the actual PR branch. Use this only as a fallback. Rate limited to 10 requests per minute.",
     "input_schema": {
         "type": "object",
         "properties": {"query": QUERY},
@@ -233,6 +237,7 @@ _TOOLS_BASE: list[ToolUnionParam] = [
 
 TOOLS_FOR_ISSUES: list[ToolUnionParam] = _TOOLS_BASE + [
     GET_REMOTE_FILE_CONTENT,
+    SEARCH_LOCAL_FILE_CONTENT,
     SEARCH_REMOTE_FILE_CONTENT,
 ]
 
@@ -240,7 +245,7 @@ TOOLS_FOR_ISSUES: list[ToolUnionParam] = _TOOLS_BASE + [
 # search_remote_file_contents only searches default branch, not PR branch
 TOOLS_FOR_PRS: list[ToolUnionParam] = _TOOLS_BASE + [
     GET_REMOTE_FILE_CONTENT_FULL_ONLY,
-    # TODO: Add search_local_file_contents when implemented
+    SEARCH_LOCAL_FILE_CONTENT,
 ]
 
 
@@ -262,6 +267,7 @@ tools_to_call: dict[str, Any] = {
     "move_file": move_file,
     "replace_remote_file_content": replace_remote_file_content,
     # "search_google": google_search,
+    "search_local_file_contents": search_local_file_contents,
     "search_remote_file_contents": search_remote_file_contents,
     "verify_task_is_complete": verify_task_is_complete,
 }
