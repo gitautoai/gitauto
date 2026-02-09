@@ -210,3 +210,30 @@ async def test_run_jest_test_type_error_in_output(mock_exists, mock_subprocess):
     result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
     assert result.success is False
     assert any("TypeError" in e for e in result.errors)
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_sets_mongoms_download_dir(mock_exists, mock_subprocess):
+    """Verify MONGOMS_DOWNLOAD_DIR is set so MongoMemoryServer can cache mongod on EFS."""
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+
+    # Verify subprocess was called with MONGOMS_DOWNLOAD_DIR in env
+    call_kwargs = mock_subprocess.call_args.kwargs
+    env = call_kwargs["env"]
+    assert "MONGOMS_DOWNLOAD_DIR" in env
+    assert "test-owner" in env["MONGOMS_DOWNLOAD_DIR"]
+    assert "test-repo" in env["MONGOMS_DOWNLOAD_DIR"]
+    assert env["MONGOMS_DOWNLOAD_DIR"].endswith(".cache/mongodb-binaries")
