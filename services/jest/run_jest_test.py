@@ -7,7 +7,7 @@ from constants.files import JS_TEST_FILE_EXTENSIONS
 from services.efs.get_efs_dir import get_efs_dir
 from services.github.types.github_types import BaseArgs
 from services.node.detect_package_manager import detect_package_manager
-from services.node.get_test_script import get_test_script
+from services.node.get_test_script_name import get_test_script_name
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
@@ -48,26 +48,19 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
         logger.info("test: No test runner (jest/vitest) installed locally, skipping")
         return JestResult(success=True, errors=[], error_files=set(), runner_name="")
 
-    # Prefer npm/yarn/pnpm test if package.json has a test script
+    # Build base command
     owner = base_args["owner"]
     repo = base_args["repo"]
-    test_script = get_test_script(clone_dir)
-    if test_script:
+    test_script_name = get_test_script_name(clone_dir)
+    if test_script_name:
         branch = base_args.get("new_branch", "")
         token = base_args.get("token", "")
         pkg_manager, _, _ = detect_package_manager(
             clone_dir, owner, repo, branch, token
         )
-        # Pass test files after -- to forward them to the test runner
-        cmd = [pkg_manager, "test", "--"] + test_files
-        logger.info(
-            "%s test: Running tests on %d files...", pkg_manager, len(test_files)
-        )
+        base_cmd = [pkg_manager, "run", test_script_name, "--"]
     else:
-        # Fallback to direct binary call
-        test_bin = vitest_bin if runner_name == "vitest" else jest_bin
-        cmd = [test_bin] + test_files
-        logger.info("%s: Running tests on %d files...", runner_name, len(test_files))
+        base_cmd = [vitest_bin if runner_name == "vitest" else jest_bin]
 
     # CI=true disables watch mode and interactive prompts for both jest and vitest
     env = os.environ.copy()
@@ -78,50 +71,36 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
     efs_dir = get_efs_dir(owner, repo)
     env["MONGOMS_DOWNLOAD_DIR"] = os.path.join(efs_dir, ".cache", "mongodb-binaries")
 
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=EFS_TIMEOUT_SECONDS,
-        check=False,
-        cwd=clone_dir,
-        env=env,
-    )
+    # Run each test file individually so we know exactly which files fail
+    all_errors: list[str] = []
+    error_files: set[str] = set()
+    for test_file in test_files:
+        cmd = base_cmd + [test_file]
+        logger.info("%s: Running %s...", runner_name, test_file)
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=EFS_TIMEOUT_SECONDS,
+            check=False,
+            cwd=clone_dir,
+            env=env,
+        )
+        if result.returncode != 0:
+            error_files.add(test_file)
+            output = result.stdout + result.stderr
+            all_errors.append(output.strip())
+            logger.warning("%s: %s failed:\n%s", runner_name, test_file, output.strip())
 
-    if result.returncode == 0:
+    if not error_files:
         logger.info("%s: All tests passed", runner_name)
         return JestResult(
             success=True, errors=[], error_files=set(), runner_name=runner_name
         )
 
-    # Parse test output for errors
-    errors: list[str] = []
-    error_files: set[str] = set()
-    output = result.stdout + result.stderr
-
-    # Extract failing test info
-    for line in output.split("\n"):
-        line = line.strip()
-        if not line:
-            continue
-        # Jest/Vitest error patterns: "FAIL path/to/test.ts" or "● Test suite failed"
-        if line.startswith("FAIL "):
-            file_path = line[5:].strip()
-            error_files.add(file_path)
-            errors.append(line)
-        elif "FAIL" in line and any(f in line for f in test_files):
-            for f in test_files:
-                if f in line:
-                    error_files.add(f)
-            errors.append(line)
-        elif line.startswith("●") or "Error:" in line or "TypeError:" in line:
-            errors.append(line)
-
-    # If no specific errors parsed, include raw output
-    if not errors and output.strip():
-        errors = [line for line in output.split("\n") if line.strip()]
-
-    logger.warning("%s: Test failures:\n%s", runner_name, "\n".join(errors))
     return JestResult(
-        success=False, errors=errors, error_files=error_files, runner_name=runner_name
+        success=False,
+        errors=all_errors,
+        error_files=error_files,
+        runner_name=runner_name,
     )
