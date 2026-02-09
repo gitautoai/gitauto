@@ -20,7 +20,6 @@ async function postTwitter({ context }) {
     accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET_WES,
   });
 
-  const message = "🚀 New release";
   const description = context.payload.pull_request.body || "";
 
   // Extract social media post from PR body - skip posting if not present
@@ -36,7 +35,7 @@ async function postTwitter({ context }) {
   }
 
   // Non-paid account, we can only post 280 characters. Paid account can post 250,000 characters.
-  const tweet = `${message}: ${title}`;
+  const tweet = title;
 
   // Senders have to be in the community
   // https://x.com/hnishio0105/communities

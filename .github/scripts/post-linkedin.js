@@ -10,7 +10,6 @@ async function postLinkedIn({ context }) {
   const restliClient = new RestliClient();
   const accessToken = process.env.LINKEDIN_ACCESS_TOKEN;
 
-  const message = "🚀 New release";
   const description = context.payload.pull_request.body || "";
   const url = "https://gitauto.ai?utm_source=linkedin&utm_medium=referral"
 
@@ -36,7 +35,7 @@ async function postLinkedIn({ context }) {
       resourcePath: "/posts",
       entity: {
         author: authorUrn,
-        commentary: `${message}: ${title}`,
+        commentary: title,
         visibility: "PUBLIC",
         distribution: {
           feedDistribution: "MAIN_FEED",
