@@ -1,4 +1,4 @@
-# pylint: disable=unused-argument
+# pylint: disable=too-many-lines,unused-argument
 # pyright: reportArgumentType=false
 # pyright: reportUnusedVariable=false
 from typing import cast
@@ -593,3 +593,486 @@ async def test_all_tsc_errors_pre_existing_passes(
     assert result.success is True
     assert result.message == "Task completed."
     mock_create_tsc_issue.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_baseline_tsc_errors_in_pr_files_still_reported(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    """Errors in PR-changed files should be reported even if in baseline.
+
+    This tests the check_suite/review_run scenario where baseline captures
+    errors from the PR branch before fixes. Errors in PR files must always
+    be reported so the agent fixes them.
+    """
+    pr_file_error = (
+        "src/models/InProgressPolicy.test.ts(15,21): error TS2339: "
+        "Property 'collection' does not exist on type 'FoxcomObject'."
+    )
+
+    mock_get_files.return_value = [
+        {"filename": "src/models/InProgressPolicy.test.ts", "status": "modified"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[pr_file_error],
+        error_files={"src/models/InProgressPolicy.test.ts"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "baseline_tsc_errors": {pr_file_error},
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    # Error is in baseline BUT also in PR files → must be reported
+    assert result.success is False
+    assert "TS2339" in result.message
+    mock_create_tsc_issue.assert_not_called()
+
+
+# ============================================================
+# 9 handler × error-case matrix tests
+# ============================================================
+# 3 handlers: issue_handler, check_suite_handler, review_run_handler
+# 3 cases per handler:
+#   1. Error in PR file → always report
+#   2. Error in non-PR file AND in baseline → skip (pre-existing)
+#   3. Error in non-PR file AND NOT in baseline → report
+
+
+# --- issue_handler: baseline comes from master (base) branch ---
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_issue_handler_error_in_pr_file_reported(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    """issue_handler: Agent wrote new code with a type error in a PR file.
+
+    Baseline is from master (clean), so error is NOT in baseline.
+    Error must be reported because the file is in the PR.
+    """
+    pr_file_error = "src/utils.ts(10,5): error TS2322: Type 'string' is not assignable."
+
+    mock_get_files.return_value = [
+        {"filename": "src/utils.ts", "status": "modified"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[pr_file_error],
+        error_files={"src/utils.ts"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "baseline_tsc_errors": set(),  # Master was clean
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    assert result.success is False
+    assert "TS2322" in result.message
+    mock_create_tsc_issue.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_issue_handler_preexisting_non_pr_file_error_skipped(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    """issue_handler: Master has a pre-existing tsc error in an unrelated file.
+
+    Error is in a non-PR file AND in baseline → skip.
+    Task should pass since the error is not caused by the PR.
+    """
+    preexisting = "src/legacy.ts(50,10): error TS2339: Property 'x' does not exist."
+
+    mock_get_files.return_value = [
+        {"filename": "src/new-feature.ts", "status": "added"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[preexisting],
+        error_files={"src/legacy.ts"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "baseline_tsc_errors": {preexisting},
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    assert result.success is True
+    assert result.message == "Task completed."
+    mock_create_tsc_issue.assert_called_once()
+    assert mock_create_tsc_issue.call_args.kwargs["unrelated_errors"] == [preexisting]
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_issue_handler_new_non_pr_file_error_reported(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    """issue_handler: PR changes caused a type error in a file the agent didn't modify.
+
+    Error is in a non-PR file AND NOT in baseline → report.
+    The PR changes broke an importing file.
+    """
+    new_error = "src/consumer.ts(20,3): error TS2345: Argument type mismatch."
+
+    mock_get_files.return_value = [
+        {"filename": "src/api.ts", "status": "modified"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[new_error],
+        error_files={"src/consumer.ts"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "baseline_tsc_errors": set(),  # Master was clean
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    assert result.success is False
+    assert "TS2345" in result.message
+    mock_create_tsc_issue.assert_not_called()
+
+
+# --- check_suite_handler: baseline comes from PR branch before fixes ---
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_check_suite_error_in_pr_file_in_baseline_reported(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    """check_suite: PR file has error that was also in baseline (PR branch state).
+
+    Baseline captured this error from the PR branch before fix attempts.
+    Error must still be reported because it's in a PR file - agent must fix it.
+    This is the bug fix: baseline should NOT suppress errors in PR files.
+    """
+    pr_file_error = (
+        "src/models/Policy.test.ts(15,21): error TS2339: "
+        "Property 'collection' does not exist on type 'FoxcomObject'."
+    )
+
+    mock_get_files.return_value = [
+        {"filename": "src/models/Policy.test.ts", "status": "modified"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[pr_file_error],
+        error_files={"src/models/Policy.test.ts"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            # Baseline from PR branch contains this error
+            "baseline_tsc_errors": {pr_file_error},
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    assert result.success is False
+    assert "TS2339" in result.message
+    mock_create_tsc_issue.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_check_suite_preexisting_non_pr_file_error_skipped(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    """check_suite: Pre-existing error in unrelated file on PR branch.
+
+    Error is in a non-PR file AND in baseline → skip.
+    The PR didn't cause this, it was already broken.
+    """
+    preexisting = "src/passport-oidc.ts(217,32): error TS2339: Property 'id' missing."
+
+    mock_get_files.return_value = [
+        {"filename": "src/models/Policy.test.ts", "status": "modified"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[preexisting],
+        error_files={"src/passport-oidc.ts"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "baseline_tsc_errors": {preexisting},
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    assert result.success is True
+    assert result.message == "Task completed."
+    mock_create_tsc_issue.assert_called_once()
+    assert mock_create_tsc_issue.call_args.kwargs["unrelated_errors"] == [preexisting]
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_check_suite_new_non_pr_file_error_reported(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    """check_suite: Agent's fix attempt introduced error in a non-PR file.
+
+    Error is in a non-PR file AND NOT in baseline → report.
+    The agent's changes broke a dependent file.
+    """
+    new_error = "src/auth.ts(30,8): error TS2345: Argument type mismatch."
+
+    mock_get_files.return_value = [
+        {"filename": "src/models/Policy.test.ts", "status": "modified"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[new_error],
+        error_files={"src/auth.ts"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "baseline_tsc_errors": set(),
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    assert result.success is False
+    assert "TS2345" in result.message
+    mock_create_tsc_issue.assert_not_called()
+
+
+# --- review_run_handler: baseline comes from PR branch before fixes ---
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_review_run_error_in_pr_file_in_baseline_reported(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    """review_run: Reviewer pointed out issue, PR file has error in baseline.
+
+    Baseline captured this error from the PR branch before fix attempts.
+    Error must still be reported because it's in a PR file.
+    """
+    pr_file_error = (
+        "src/components/Form.tsx(42,10): error TS2322: "
+        "Type 'string' is not assignable to type 'number'."
+    )
+
+    mock_get_files.return_value = [
+        {"filename": "src/components/Form.tsx", "status": "modified"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[pr_file_error],
+        error_files={"src/components/Form.tsx"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "baseline_tsc_errors": {pr_file_error},
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    assert result.success is False
+    assert "TS2322" in result.message
+    mock_create_tsc_issue.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_review_run_preexisting_non_pr_file_error_skipped(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    """review_run: Pre-existing error in unrelated file on PR branch.
+
+    Error is in a non-PR file AND in baseline → skip.
+    """
+    preexisting = "src/legacy-auth.ts(100,5): error TS2339: Property 'role' missing."
+
+    mock_get_files.return_value = [
+        {"filename": "src/components/Form.tsx", "status": "modified"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[preexisting],
+        error_files={"src/legacy-auth.ts"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "baseline_tsc_errors": {preexisting},
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    assert result.success is True
+    assert result.message == "Task completed."
+    mock_create_tsc_issue.assert_called_once()
+    assert mock_create_tsc_issue.call_args.kwargs["unrelated_errors"] == [preexisting]
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.create_tsc_issue")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_review_run_new_non_pr_file_error_reported(
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+):
+    """review_run: Agent's fix introduced error in a non-PR file.
+
+    Error is in a non-PR file AND NOT in baseline → report.
+    """
+    new_error = "src/validators.ts(15,3): error TS2345: Argument type mismatch."
+
+    mock_get_files.return_value = [
+        {"filename": "src/components/Form.tsx", "status": "modified"},
+    ]
+    mock_tsc.return_value = TscResult(
+        success=False,
+        errors=[new_error],
+        error_files={"src/validators.ts"},
+    )
+    mock_jest.return_value = JestResult(
+        success=True, errors=[], error_files=set(), runner_name=""
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "baseline_tsc_errors": set(),
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    assert result.success is False
+    assert "TS2345" in result.message
+    mock_create_tsc_issue.assert_not_called()

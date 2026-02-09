@@ -4,7 +4,7 @@ const { TwitterApi } = require("twitter-api-v2");
  * @see https://developer.x.com/en/docs/x-api/tweets/manage-tweets/api-reference/post-tweets
  */
 async function postTwitter({ context }) {
-  // Company account
+  // Company account: https://console.x.com/accounts/1868157094207295489/apps
   const clientCompany = new TwitterApi({
     appKey: process.env.TWITTER_API_KEY,
     appSecret: process.env.TWITTER_API_SECRET,
@@ -12,7 +12,7 @@ async function postTwitter({ context }) {
     accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
   });
 
-  // Wes personal account
+  // Wes personal account: https://console.x.com/accounts/1880785843574677504/apps
   const clientWes = new TwitterApi({
     appKey: process.env.TWITTER_API_KEY_WES,
     appSecret: process.env.TWITTER_API_SECRET_WES,
