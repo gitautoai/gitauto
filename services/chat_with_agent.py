@@ -319,7 +319,7 @@ async def chat_with_agent(
         else:
             msg = f"Read `{file_path}`."
 
-    elif tool_name == "search_remote_file_contents":
+    elif tool_name in ("search_local_file_contents", "search_remote_file_contents"):
         file_list = []
         if isinstance(tool_result, str):
             result_lines = tool_result.split("\n")

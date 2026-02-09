@@ -9,6 +9,8 @@ def sanitize_tool_args(tool_args: dict[str, object]):
             cleaned = val.split("</antml")[0].strip()
             logger.warning(
                 "Stripped malformed XML from tool_args[%s]: %r -> %r",
-                key, val, cleaned,
+                key,
+                val,
+                cleaned,
             )
             tool_args[key] = cleaned
