@@ -33,3 +33,17 @@ def test_get_all_coverages_integration_function_signature():
     # All items should be dictionaries (Coverages objects)
     if result:
         assert all(isinstance(item, dict) for item in result)
+
+
+def test_get_all_coverages_integration_paginates_beyond_1000():
+    """Integration test: dev DB has a repo with 2251 coverage records.
+    Verify pagination fetches all of them (not just the default 1000 limit)."""
+    # owner_id=159883862, repo_id=1048247380 has 2251 records in dev DB
+    result = get_all_coverages(owner_id=159883862, repo_id=1048247380)
+
+    # Must be more than 1000 (Supabase default limit) to confirm pagination works
+    assert len(result) > 1000
+
+    # Verify a known file is included
+    paths = [item["full_path"] for item in result]
+    assert "coverage/block-navigation.js" in paths
