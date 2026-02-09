@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from constants.aws import EFS_TIMEOUT_SECONDS
 from constants.files import JS_TEST_FILE_EXTENSIONS
+from services.efs.get_efs_dir import get_efs_dir
 from services.github.types.github_types import BaseArgs
 from services.node.detect_package_manager import detect_package_manager
 from services.node.get_test_script import get_test_script
@@ -48,10 +49,10 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
         return JestResult(success=True, errors=[], error_files=set(), runner_name="")
 
     # Prefer npm/yarn/pnpm test if package.json has a test script
+    owner = base_args["owner"]
+    repo = base_args["repo"]
     test_script = get_test_script(clone_dir)
     if test_script:
-        owner = base_args.get("owner", "")
-        repo = base_args.get("repo", "")
         branch = base_args.get("new_branch", "")
         token = base_args.get("token", "")
         pkg_manager, _, _ = detect_package_manager(
@@ -71,6 +72,11 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
     # CI=true disables watch mode and interactive prompts for both jest and vitest
     env = os.environ.copy()
     env["CI"] = "true"
+
+    # MongoMemoryServer needs a writable cache dir for the mongod binary.
+    # Lambda's home dir (/home/sbx_user1051) doesn't exist, so point it to the EFS repo dir.
+    efs_dir = get_efs_dir(owner, repo)
+    env["MONGOMS_DOWNLOAD_DIR"] = os.path.join(efs_dir, ".cache", "mongodb-binaries")
 
     result = subprocess.run(
         cmd,
