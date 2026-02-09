@@ -70,6 +70,35 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         logger.info("Last commit has [skip ci], skipping auto-merge check")
         return
 
+    # Mark only the latest attempt as test-passed. A PR may have multiple usage
+    # records (initial run failed → retry failed → final attempt succeeded).
+    # The most recent record is the one whose code CI just validated.
+    result = (
+        supabase.table("usage")
+        .select("id")
+        .eq("repo_id", repo_id)
+        .eq("pr_number", pr_number)
+        .eq("owner_id", owner_id)
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if result.data:
+        usage_id = result.data[0]["id"]
+        (
+            supabase.table("usage")
+            .update({"is_test_passed": True})
+            .eq("id", usage_id)
+            .execute()
+        )
+
+    # Check if auto-merge is enabled BEFORE doing expensive API calls
+    # (branch protection, check suites, PR details, etc.)
+    repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)
+    if not repo_features or not repo_features.get("auto_merge"):
+        logger.info("Auto-merge disabled for repo_id=%s", repo_id)
+        return
+
     # Create args for create_comment calls
     comment_args = cast(
         BaseArgs,
@@ -91,7 +120,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         logger.error(msg)
         raise RuntimeError(msg)
 
-    _, required_checks = get_required_status_checks(
+    status_code, required_checks = get_required_status_checks(
         owner=owner_name, repo=repo_name, branch=base_branch, token=token
     )
 
@@ -107,9 +136,17 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
                 return
         logger.info("All required checks completed")
     else:
-        logger.info(
-            "No required checks configured, waiting for all check suites to complete"
-        )
+        if required_checks is None:
+            logger.info(
+                "Could not read branch protection (status=%s), "
+                "waiting for all check suites to complete",
+                status_code,
+            )
+        else:
+            logger.info(
+                "No required checks configured, "
+                "waiting for all check suites to complete"
+            )
         for suite in all_suites:
             app_name = suite["app"]["name"]
             status = suite["status"]
@@ -120,34 +157,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
                 return
 
         logger.info("All %s check suites completed", len(all_suites))
-
-    # Get the most recent usage record for this PR
-    result = (
-        supabase.table("usage")
-        .select("id")
-        .eq("repo_id", repo_id)
-        .eq("pr_number", pr_number)
-        .eq("owner_id", owner_id)
-        .order("created_at", desc=True)
-        .limit(1)
-        .execute()
-    )
-
-    # Update that record to mark test as passed
-    if result.data:
-        usage_id = result.data[0]["id"]
-        (
-            supabase.table("usage")
-            .update({"is_test_passed": True})
-            .eq("id", usage_id)
-            .execute()
-        )
-
-    # Check if auto-merge should be performed
-    repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)
-    if not repo_features or not repo_features.get("auto_merge"):
-        logger.info("Auto-merge disabled for repo_id=%s", repo_id)
-        return
 
     # Fetch full PR details to get mergeable_state (not in simplified PR from check_suite webhook)
     full_pr = get_pull_request(
