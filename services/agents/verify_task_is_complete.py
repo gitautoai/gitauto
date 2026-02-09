@@ -133,15 +133,24 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
     tsc_result = await run_tsc_check(base_args=base_args, file_paths=non_removed_files)
     if tsc_result.errors:
         baseline = base_args.get("baseline_tsc_errors", set())
+        pr_file_set = {f["filename"] for f in pr_files}
         unrelated_tsc_errors: list[str] = []
         for err in tsc_result.errors:
-            if err in baseline:
+            # Extract file path from tsc error format "file(line,col): error ..."
+            err_file = err.split("(")[0] if "(" in err else ""
+            if err_file in pr_file_set:
+                # Always report errors in PR files (agent must fix these)
+                remaining_errors.append(f"- tsc: {err}")
+            elif err in baseline:
+                # Pre-existing error in non-PR file, skip
                 unrelated_tsc_errors.append(err)
             else:
+                # New error in non-PR file, might be caused by PR changes
                 remaining_errors.append(f"- tsc: {err}")
         if unrelated_tsc_errors:
             logger.info(
-                "tsc: %d pre-existing errors skipped", len(unrelated_tsc_errors)
+                "tsc: %d pre-existing errors skipped (not in PR files)",
+                len(unrelated_tsc_errors),
             )
             create_tsc_issue(base_args=base_args, unrelated_errors=unrelated_tsc_errors)
 

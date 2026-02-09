@@ -58,7 +58,9 @@ def test_search_clone_dir_not_found():
 def test_search_excludes_node_modules():
     with tempfile.TemporaryDirectory() as tmpdir:
         os.makedirs(os.path.join(tmpdir, "node_modules", "pkg"), exist_ok=True)
-        with open(os.path.join(tmpdir, "node_modules", "pkg", "index.js"), "w", encoding=UTF8) as f:
+        with open(
+            os.path.join(tmpdir, "node_modules", "pkg", "index.js"), "w", encoding=UTF8
+        ) as f:
             f.write("const myUniqueVar = 1;\n")
         with open(os.path.join(tmpdir, "app.js"), "w", encoding=UTF8) as f:
             f.write("const myUniqueVar = 2;\n")
