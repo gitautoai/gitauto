@@ -20,9 +20,13 @@ def copy_repo_from_efs_to_tmp(efs_dir: str, clone_dir: str):
 
     # dirs_exist_ok=True: if clone_dir exists (e.g., read_file_content cached package.json),
     # copytree overwrites existing files with EFS versions, leaves other files untouched
+    # symlinks=True: copy symlinks as symlinks instead of following them.
+    # Repos may have dangling symlinks (e.g., web/api-doc) that cause ENOENT
+    # when copytree tries to read the symlink target with the default symlinks=False.
     shutil.copytree(
         efs_dir,
         clone_dir,
+        symlinks=True,
         ignore=IGNORE_EFS_FILES,
         dirs_exist_ok=True,
     )

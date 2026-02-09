@@ -31,6 +31,7 @@ def test_copy_repo_copies_with_ignore_patterns():
         mock_copytree.assert_called_once_with(
             "/mnt/efs/repo",
             "/tmp/repo",
+            symlinks=True,
             ignore=IGNORE_EFS_FILES,
             dirs_exist_ok=True,
         )
