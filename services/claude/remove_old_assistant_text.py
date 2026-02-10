@@ -49,20 +49,23 @@ def remove_old_assistant_text(
 
         # Keep only tool_use blocks, remove text blocks
         new_content = []
-        had_text = False
+        stripped_texts = []
         for item in content:
             if isinstance(item, dict):
                 if item.get("type") == "tool_use":
                     new_content.append(item)
                 elif item.get("type") == "text":
-                    had_text = True
-                    # Skip text blocks - they're the waste
+                    text = item.get("text", "")
+                    preview = text[:200] + "..." if len(text) > 200 else text
+                    stripped_texts.append(preview)
             else:
                 new_content.append(item)
 
-        if had_text and new_content:
+        if stripped_texts and new_content:
             result[i]["content"] = new_content
             stripped_count += 1
+            for preview in stripped_texts:
+                logger.info("Stripped assistant text (msg %d): %s", i, preview)
 
     if stripped_count > 0:
         logger.info(
