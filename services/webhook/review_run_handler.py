@@ -10,7 +10,8 @@ from anthropic.types import MessageParam
 
 # Local imports
 from config import GITHUB_APP_USER_NAME
-from constants.agent import MAX_ITERATIONS
+from constants.agent import MAX_ITERATIONS, MAX_PLANNING_ITERATIONS
+from constants.claude import CLAUDE_OPUS_4_6
 from payloads.github.pull_request_review_comment.types import (
     PullRequestReviewCommentPayload,
 )
@@ -24,27 +25,25 @@ from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
-from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.files.get_remote_file_content import get_remote_file_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
-from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import ReviewBaseArgs
+from services.claude.tools.planning import TOOLS_FOR_PLANNING
 from services.claude.tools.tools import TOOLS_FOR_PRS
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
 from services.webhook.utils.create_system_message import create_system_message
+from services.webhook.utils.should_bail import should_bail
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.progress_bar.progress_bar import create_progress_bar
-from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
-from utils.time.get_timeout_message import get_timeout_message
 
 
 async def handle_review_run(
@@ -296,44 +295,46 @@ async def handle_review_run(
 
     system_message = create_system_message(trigger=trigger, repo_settings=repo_settings)
 
-    for _iteration in range(MAX_ITERATIONS):
-        # Timeout check: Stop if we're approaching Lambda limit
-        is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
-            current_time
+    # Planning phase: Opus diagnoses the problem
+    for _iteration in range(MAX_PLANNING_ITERATIONS):
+        if should_bail(
+            current_time=current_time,
+            phase="planning",
+            base_args=base_args,
+            slack_thread_ts=None,
+        ):
+            break
+
+        result = await chat_with_agent(
+            messages=messages,
+            system_message=system_message,
+            base_args=base_args,
+            p=p,
+            log_messages=log_messages,
+            usage_id=usage_id,
+            tools=TOOLS_FOR_PLANNING,
+            model_id=CLAUDE_OPUS_4_6,
         )
-        if is_timeout_approaching:
-            timeout_msg = get_timeout_message(elapsed_time, "Review run processing")
-            if comment_url:
-                update_comment(body=timeout_msg, base_args=base_args)
+        messages = result.messages
+        p = result.p
+        total_token_input += result.token_input
+        total_token_output += result.token_output
+
+        if result.is_planned:
             break
 
-        # Safety check: Stop if PR is closed or branch is deleted
-        if not is_pull_request_open(
-            owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+    # Execution phase: Sonnet writes code
+    for _iteration in range(MAX_ITERATIONS):
+        if should_bail(
+            current_time=current_time,
+            phase="execution",
+            base_args=base_args,
+            slack_thread_ts=None,
         ):
-            body = f"Process stopped: Pull request #{pull_number} was closed during execution."
-            logger.info(body)
-            if comment_url:
-                update_comment(body=body, base_args=base_args)
-            break
-
-        if not check_branch_exists(
-            owner=owner_name, repo=repo_name, branch_name=head_branch, token=token
-        ):
-            body = f"Process stopped: Branch '{head_branch}' has been deleted"
-            logger.info(body)
-            if comment_url:
-                update_comment(body=body, base_args=base_args)
             break
 
         # Call the agent to explore the codebase and commit changes
-        (
-            messages,
-            token_input,
-            token_output,
-            is_completed,
-            p,
-        ) = await chat_with_agent(
+        result = await chat_with_agent(
             messages=messages,
             system_message=system_message,
             base_args=base_args,
@@ -341,9 +342,13 @@ async def handle_review_run(
             log_messages=log_messages,
             usage_id=usage_id,
             tools=TOOLS_FOR_PRS,
+            model_id=None,
         )
-        total_token_input += token_input
-        total_token_output += token_output
+        messages = result.messages
+        is_completed = result.is_completed
+        p = result.p
+        total_token_input += result.token_input
+        total_token_output += result.token_output
 
         if is_completed:
             logger.info(

@@ -184,10 +184,14 @@ aws logs filter-log-events \
 
 #### Searching CloudWatch Logs
 
-Use `scripts/aws/filter_log_events_across_streams.py`. Example:
+Use `scripts/aws/filter_log_events_across_streams.py`. The most common usage is filtering by PR number:
 
 ```bash
-python3 scripts/aws/filter_log_events_across_streams.py --hours 24 --owner Foxquilt --repo foxcom-forms --trigger schedule
+# Filter by PR number (most common)
+python3 scripts/aws/filter_log_events_across_streams.py --owner Foxquilt --repo foxcom-forms --pr 1089
+
+# Filter by time range
+python3 scripts/aws/filter_log_events_across_streams.py --hours 24 --owner Foxquilt --repo foxcom-forms
 ```
 
 #### SSH to NAT Instance (EFS Mounted at /mnt/efs)

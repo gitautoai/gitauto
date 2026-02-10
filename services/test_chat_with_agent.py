@@ -31,6 +31,7 @@ async def test_chat_with_agent_passes_usage_id_to_claude(
         base_args=base_args,
         tools=[],
         usage_id=123,
+        model_id=None,
     )
 
     mock_chat_with_claude.assert_called_once()
@@ -62,10 +63,11 @@ async def test_chat_with_agent_returns_token_counts(
         base_args=base_args,
         tools=[],
         usage_id=789,
+        model_id=None,
     )
 
-    assert result[1] == 25  # token_input
-    assert result[2] == 15  # token_output
+    assert result.token_input == 25
+    assert result.token_output == 15
 
 
 @pytest.mark.asyncio
@@ -106,6 +108,7 @@ async def test_get_remote_file_content_start_line_end_line_logging(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            model_id=None,
         )
 
     # Check that update_comment was called with the correct message
@@ -165,6 +168,7 @@ async def test_delete_file_logging(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            model_id=None,
         )
 
     # Check that update_comment was called with the correct message
@@ -227,6 +231,7 @@ async def test_move_file_logging(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            model_id=None,
         )
 
     # Check that update_comment was called with the correct message
@@ -287,6 +292,7 @@ async def test_replace_remote_file_content_handles_new_content_arg_name(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            model_id=None,
         )
 
         mock_function.assert_called_once()
@@ -338,6 +344,7 @@ async def test_unavailable_tool_sends_slack_notification(
                 system_message="test system message",
                 base_args=base_args,
                 tools=[],
+                model_id=None,
             )
 
         assert mock_slack_notify.call_count == 1
@@ -396,6 +403,7 @@ async def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
             base_args=base_args,
             tools=[],
             restrict_edit_to_target_test_file_only=True,
+            model_id=None,
         )
 
         mock_is_target_test_file.assert_called_once_with("test_wrong.py", base_args)
@@ -445,9 +453,10 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
         system_message="test system message",
         base_args=base_args,
         tools=[],
+        model_id=None,
     )
 
-    is_completed = result[3]
+    is_completed = result.is_completed
     assert is_completed is True
     mock_get_pr_files.assert_called_once_with(
         owner="test-owner", repo="test-repo", pull_number=123, token="test-token"
@@ -498,11 +507,12 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
         system_message="test system message",
         base_args=base_args,
         tools=[],
+        model_id=None,
     )
 
-    is_completed = result[3]
+    is_completed = result.is_completed
     assert is_completed is False
-    messages = result[0]
+    messages = result.messages
     last_content = cast(list, messages[-1]["content"])
     last_message = last_content[0]["content"]
     assert "Error: Cannot complete task" in last_message
@@ -546,9 +556,10 @@ async def test_regular_tool_returns_is_completed_false(
                 system_message="test system message",
                 base_args=base_args,
                 tools=[],
+                model_id=None,
             )
 
-    is_completed = result[3]
+    is_completed = result.is_completed
     assert is_completed is False
 
 
@@ -575,9 +586,10 @@ async def test_no_tool_call_returns_is_completed_false(
         system_message="test system message",
         base_args=base_args,
         tools=[],
+        model_id=None,
     )
 
-    is_completed = result[3]
+    is_completed = result.is_completed
     assert is_completed is False
 
 
@@ -628,9 +640,10 @@ async def test_file_write_result_success_includes_formatted_content(
             base_args=base_args,
             tools=[],
             allow_edit_any_file=True,
+            model_id=None,
         )
 
-    messages = result[0]
+    messages = result.messages
     tool_result_content_list = cast(list, messages[-1]["content"])
     tool_result_content = tool_result_content_list[0]["content"]
 
@@ -687,9 +700,10 @@ async def test_file_write_result_failure_returns_message_only(
             base_args=base_args,
             tools=[],
             allow_edit_any_file=True,
+            model_id=None,
         )
 
-    messages = result[0]
+    messages = result.messages
     tool_result_content_list = cast(list, messages[-1]["content"])
     tool_result_content = tool_result_content_list[0]["content"]
 
@@ -745,9 +759,10 @@ async def test_file_move_result_returns_message(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            model_id=None,
         )
 
-    messages = result[0]
+    messages = result.messages
     tool_result_content_list = cast(list, messages[-1]["content"])
     tool_result_content = tool_result_content_list[0]["content"]
 
@@ -797,6 +812,7 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            model_id=None,
         )
 
     mock_replace.assert_called_once()
@@ -852,6 +868,7 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            model_id=None,
         )
 
     mock_replace.assert_called_once()

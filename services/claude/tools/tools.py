@@ -248,7 +248,6 @@ TOOLS_FOR_PRS: list[ToolUnionParam] = _TOOLS_BASE + [
     SEARCH_LOCAL_FILE_CONTENT,
 ]
 
-
 FILE_EDIT_TOOLS = [
     "apply_diff_to_file",
     "replace_remote_file_content",
