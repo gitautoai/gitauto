@@ -1,10 +1,13 @@
 """Integration tests for review_run_handler.py token accumulation"""
 
+# pyright: reportUnusedVariable=false
+
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
+from services.chat_with_agent import AgentResult
 from services.webhook.review_run_handler import handle_review_run
 
 
@@ -61,9 +64,7 @@ def mock_review_comment_payload():
 @patch("services.webhook.review_run_handler.get_remote_file_content")
 @patch("services.webhook.review_run_handler.get_pull_request_files")
 @patch("services.webhook.review_run_handler.update_comment")
-@patch("services.webhook.review_run_handler.is_pull_request_open")
-@patch("services.webhook.review_run_handler.check_branch_exists")
-@patch("services.webhook.review_run_handler.is_lambda_timeout_approaching")
+@patch("services.webhook.review_run_handler.should_bail", return_value=False)
 @patch("services.webhook.review_run_handler.chat_with_agent")
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.update_usage")
@@ -83,9 +84,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     mock_update_usage,
     mock_create_empty_commit,
     mock_chat_with_agent,
-    mock_timeout_check,
-    mock_check_branch_exists,
-    mock_is_pr_open,
+    _mock_should_bail,
     mock_update_comment,
     mock_get_pull_files,
     mock_get_file_content,
@@ -117,53 +116,59 @@ async def test_review_run_handler_accumulates_tokens_correctly(
         {"filename": "src/main.py", "status": "modified"},
         {"filename": "src/utils.py", "status": "added"},
     ]
-    mock_is_pr_open.return_value = True
-    mock_check_branch_exists.return_value = True
-    mock_timeout_check.return_value = (False, 0)
     mock_update_comment.return_value = None
     mock_create_empty_commit.return_value = None
 
-    # Mock chat_with_agent to return 5-tuple: (messages, token_input, token_output, is_completed, progress)
-    # is_completed=True breaks the loop
+    # Planning phase: Opus produces plan, then execution phase: Sonnet completes
     mock_chat_with_agent.side_effect = [
-        # First call - 120 input, 80 output tokens
-        (
-            [
+        # Planning phase
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=20,
+            is_planned=True,
+        ),
+        # Execution phase - 120 input, 80 output tokens
+        AgentResult(
+            messages=[
                 {"role": "user", "content": "review"},
                 {"role": "assistant", "content": "analysis"},
             ],
-            120,  # token_input
-            80,  # token_output
-            True,  # is_completed=True (breaks loop)
-            40,  # progress
+            token_input=120,
+            token_output=80,
+            is_completed=True,
+            p=40,
+            is_planned=False,
         ),
     ]
 
     # Execute the function
     await handle_review_run(mock_review_comment_payload)
 
-    # Verify chat_with_agent was called once (loop breaks on is_completed=True)
-    assert mock_chat_with_agent.call_count == 1
+    # Verify chat_with_agent was called twice (planning + execution)
+    assert mock_chat_with_agent.call_count == 2
 
-    # Verify call includes usage_id for API request tracking
-    first_call_kwargs = mock_chat_with_agent.call_args_list[0].kwargs
-    assert first_call_kwargs["usage_id"] == 777
-    assert "system_message" in first_call_kwargs
-    assert isinstance(first_call_kwargs["system_message"], str)
+    # Verify execution call includes usage_id for API request tracking
+    execution_call_kwargs = mock_chat_with_agent.call_args_list[1].kwargs
+    assert execution_call_kwargs["usage_id"] == 777
+    assert "system_message" in execution_call_kwargs
+    assert isinstance(execution_call_kwargs["system_message"], str)
 
     # Verify baseline_tsc_errors is set on base_args
-    base_args = first_call_kwargs["base_args"]
+    base_args = execution_call_kwargs["base_args"]
     assert "baseline_tsc_errors" in base_args
     assert isinstance(base_args["baseline_tsc_errors"], set)
 
-    # CRITICAL: Verify update_usage was called with tokens
+    # CRITICAL: Verify update_usage was called with accumulated tokens
     mock_update_usage.assert_called_once()
     usage_call_kwargs = mock_update_usage.call_args.kwargs
 
-    # This is the actual meaningful test - verifies token accumulation works
+    # Verifies token accumulation across both phases (planning + execution)
     assert usage_call_kwargs["usage_id"] == 777
-    assert usage_call_kwargs["token_input"] == 120
-    assert usage_call_kwargs["token_output"] == 80
+    assert usage_call_kwargs["token_input"] == 130  # 10 + 120
+    assert usage_call_kwargs["token_output"] == 85  # 5 + 80
     assert usage_call_kwargs["is_completed"] is True
 
     # Verify other expected parameters
@@ -183,9 +188,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
 @patch("services.webhook.review_run_handler.get_remote_file_content")
 @patch("services.webhook.review_run_handler.get_pull_request_files")
 @patch("services.webhook.review_run_handler.update_comment")
-@patch("services.webhook.review_run_handler.is_pull_request_open")
-@patch("services.webhook.review_run_handler.check_branch_exists")
-@patch("services.webhook.review_run_handler.is_lambda_timeout_approaching")
+@patch("services.webhook.review_run_handler.should_bail", return_value=False)
 @patch("services.webhook.review_run_handler.chat_with_agent")
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.update_usage")
@@ -206,9 +209,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
     _mock_update_usage,
     _mock_create_empty_commit,
     mock_chat_with_agent,
-    mock_timeout_check,
-    mock_check_branch_exists,
-    mock_is_pr_open,
+    _mock_should_bail,
     mock_update_comment,
     mock_get_pull_files,
     mock_get_file_content,
@@ -237,9 +238,6 @@ async def test_review_run_handler_max_iterations_forces_verification(
     mock_get_pull_files.return_value = [
         {"filename": "src/main.py", "status": "modified"},
     ]
-    mock_is_pr_open.return_value = True
-    mock_check_branch_exists.return_value = True
-    mock_timeout_check.return_value = (False, 0)
     mock_update_comment.return_value = None
     mock_verify_task_is_complete.return_value = VerifyTaskIsCompleteResult(
         success=True,
@@ -247,11 +245,35 @@ async def test_review_run_handler_max_iterations_forces_verification(
     )
 
     mock_chat_with_agent.side_effect = [
-        ([{"role": "user", "content": "review"}], 120, 80, False, 40),
-        ([{"role": "user", "content": "review"}], 100, 60, False, 60),
+        # Planning phase
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=20,
+            is_planned=True,
+        ),
+        # Execution phase - MAX_ITERATIONS=2, both return is_completed=False
+        AgentResult(
+            messages=[{"role": "user", "content": "review"}],
+            token_input=120,
+            token_output=80,
+            is_completed=False,
+            p=40,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[{"role": "user", "content": "review"}],
+            token_input=100,
+            token_output=60,
+            is_completed=False,
+            p=60,
+            is_planned=False,
+        ),
     ]
 
     await handle_review_run(mock_review_comment_payload)
 
-    assert mock_chat_with_agent.call_count == 2
+    assert mock_chat_with_agent.call_count == 3  # 1 planning + 2 execution
     mock_verify_task_is_complete.assert_called_once()
