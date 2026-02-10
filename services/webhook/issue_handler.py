@@ -22,7 +22,6 @@ from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
-from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.branches.create_remote_branch import create_remote_branch
 from services.github.comments.create_comment import create_comment
 from services.github.comments.delete_comments_by_identifiers import (
@@ -68,6 +67,7 @@ from services.webhook.utils.create_system_message import create_system_message
 from services.claude.evaluate_condition import EvaluationResult
 from services.claude.is_code_untestable import is_code_untestable
 from services.supabase.coverages.get_coverages import get_coverages
+from services.webhook.utils.should_bail import should_bail
 from utils.files.get_impl_file_from_issue_title import get_impl_file_from_issue_title
 from utils.files.guess_test_file_path import guess_test_file_path
 from utils.files.is_config_file import is_config_file
@@ -83,8 +83,6 @@ from utils.text.text_copy import (
     git_command,
     pull_request_completed,
 )
-from utils.time.get_timeout_message import get_timeout_message
-from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 from utils.urls.extract_urls import extract_image_urls
 
 
@@ -543,37 +541,16 @@ async def create_pr_from_issue(
     system_message = create_system_message(trigger=trigger, repo_settings=repo_settings)
 
     for _iteration in range(MAX_ITERATIONS):
-        # Timeout check: Stop if we're approaching Lambda limit
-        is_timeout_approaching, elapsed_time = is_lambda_timeout_approaching(
-            current_time
-        )
-        if is_timeout_approaching:
-            timeout_msg = get_timeout_message(elapsed_time, "Issue processing")
-            add_log_message(timeout_msg, log_messages)
-            update_comment(
-                body=create_progress_bar(p=p, msg="\n".join(log_messages)),
-                base_args=base_args,
-            )
-            break
-
-        # Safety check: Stop if branch is deleted
-        if not check_branch_exists(
-            owner=owner_name, repo=repo_name, branch_name=new_branch_name, token=token
+        if should_bail(
+            current_time=current_time,
+            phase="issue processing",
+            base_args=base_args,
+            slack_thread_ts=None,
         ):
-            body = f"Process stopped: Branch '{new_branch_name}' has been deleted"
-            logger.info(body)
-            if comment_url:
-                update_comment(body=body, base_args=base_args)
             break
 
         # Call the agent to explore the codebase and commit changes
-        (
-            messages,
-            token_input,
-            token_output,
-            is_completed,
-            p,
-        ) = await chat_with_agent(
+        result = await chat_with_agent(
             messages=messages,
             system_message=system_message,
             base_args=base_args,
@@ -584,9 +561,13 @@ async def create_pr_from_issue(
             allow_edit_any_file=allow_edit_any_file,
             restrict_edit_to_target_test_file_only=restrict_edit_to_target_test_file_only,
             allowed_to_edit_files=allowed_to_edit_files,
+            model_id=None,
         )
-        total_token_input += token_input
-        total_token_output += token_output
+        messages = result.messages
+        is_completed = result.is_completed
+        p = result.p
+        total_token_input += result.token_input
+        total_token_output += result.token_output
 
         if is_completed:
             logger.info(

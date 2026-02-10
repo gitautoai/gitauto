@@ -1,5 +1,6 @@
 """Unit tests for check_suite_handler.py"""
 
+# pyright: reportUnusedVariable=false
 # pylint: disable=too-many-lines
 
 # Test to verify imports work correctly
@@ -12,6 +13,7 @@ import pytest
 
 from config import GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
+from services.chat_with_agent import AgentResult
 from services.webhook.check_suite_handler import handle_check_suite
 
 
@@ -228,8 +230,7 @@ async def test_handle_check_suite_skips_when_comment_exists(
 @patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.check_older_active_test_failure_request")
-@patch("services.webhook.check_suite_handler.is_pull_request_open")
-@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.should_bail")
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
@@ -243,8 +244,7 @@ async def test_handle_check_suite_race_condition_prevention(
     _mock_start_async,
     mock_update_usage,
     mock_update_comment,
-    mock_check_branch_exists,
-    mock_is_pull_request_open,
+    mock_should_bail,
     mock_check_older_active,
     mock_update_retry_pairs,
     mock_get_retry_pairs,
@@ -295,9 +295,8 @@ async def test_handle_check_suite_race_condition_prevention(
     mock_get_retry_pairs.return_value = []
     mock_update_retry_pairs.return_value = None
 
-    # Setup safety checks to pass
-    mock_is_pull_request_open.return_value = True
-    mock_check_branch_exists.return_value = True
+    # Skip planning phase, proceed in execution phase (where race check happens)
+    mock_should_bail.side_effect = [True, False]
 
     # Setup race condition detection - older active request found
     mock_check_older_active.return_value = {
@@ -347,12 +346,10 @@ async def test_handle_check_suite_race_condition_prevention(
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.is_pull_request_open")
-@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.chat_with_agent")
 @patch("services.webhook.check_suite_handler.create_empty_commit")
 @patch("services.webhook.check_suite_handler.update_usage")
-@patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
@@ -362,12 +359,10 @@ async def test_handle_check_suite_full_workflow(
     _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
-    mock_timeout_check,
     _mock_update_usage,
     _mock_create_empty_commit,
     mock_chat_agent,
-    mock_check_branch_exists,
-    mock_is_pr_open,
+    _mock_should_bail,
     _mock_update_retry_pairs,
     mock_get_retry_pairs,
     _mock_update_comment,
@@ -418,25 +413,15 @@ async def test_handle_check_suite_full_workflow(
     ]
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
-    mock_is_pr_open.return_value = True
-    mock_check_branch_exists.return_value = True
-    mock_timeout_check.return_value = (False, 0)  # No timeout
 
+    # Planning phase (1 call) + Execution phase (2 calls)
     mock_chat_agent.side_effect = [
-        (
-            [],  # messages
-            50,  # token_input
-            25,  # token_output
-            False,  # is_completed=False (continue loop)
-            50,  # progress
-        ),
-        (
-            [],  # messages
-            30,  # token_input
-            20,  # token_output
-            True,  # is_completed=True (break loop)
-            75,  # progress
-        ),
+        # Planning phase - Opus produces plan
+        AgentResult(messages=[], token_input=10, token_output=5, is_completed=False, p=20, is_planned=True),
+        # Execution phase - first iteration
+        AgentResult(messages=[], token_input=50, token_output=25, is_completed=False, p=50, is_planned=False),
+        # Execution phase - second iteration completes
+        AgentResult(messages=[], token_input=30, token_output=20, is_completed=True, p=75, is_planned=False),
     ]
 
     # Execute
@@ -451,21 +436,22 @@ async def test_handle_check_suite_full_workflow(
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
     mock_get_retry_pairs.assert_called_once()
-    assert mock_chat_agent.call_count == 2
+    assert mock_chat_agent.call_count == 3  # 1 planning + 2 execution
 
-    # Verify chat_with_agent calls have system_message
-    first_call = mock_chat_agent.call_args_list[0]
-    assert "system_message" in first_call.kwargs
-    assert isinstance(first_call.kwargs["system_message"], str)
+    # Verify planning phase call has system_message and model_id
+    planning_call = mock_chat_agent.call_args_list[0]
+    assert "system_message" in planning_call.kwargs
+    assert isinstance(planning_call.kwargs["system_message"], str)
 
     # Verify baseline_tsc_errors is set on base_args
-    base_args = first_call.kwargs["base_args"]
+    base_args = planning_call.kwargs["base_args"]
     assert "baseline_tsc_errors" in base_args
     assert isinstance(base_args["baseline_tsc_errors"], set)
 
-    second_call = mock_chat_agent.call_args_list[1]
-    assert "system_message" in second_call.kwargs
-    assert isinstance(second_call.kwargs["system_message"], str)
+    # Verify execution phase call has system_message
+    execution_call = mock_chat_agent.call_args_list[1]
+    assert "system_message" in execution_call.kwargs
+    assert isinstance(execution_call.kwargs["system_message"], str)
 
 
 @pytest.mark.asyncio
@@ -771,7 +757,9 @@ async def test_handle_check_suite_with_existing_retry_pair(
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.is_pull_request_open")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
@@ -781,7 +769,9 @@ async def test_handle_check_suite_with_closed_pr(
     _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
-    mock_is_pr_open,
+    _mock_update_usage,
+    _mock_create_empty_commit,
+    mock_should_bail,
     _mock_update_retry_pairs,
     mock_get_retry_pairs,
     mock_update_comment,
@@ -832,7 +822,6 @@ async def test_handle_check_suite_with_closed_pr(
     ]
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
-    mock_is_pr_open.return_value = False
 
     # Execute
     await handle_check_suite(payload)
@@ -845,9 +834,9 @@ async def test_handle_check_suite_with_closed_pr(
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
-    mock_is_pr_open.assert_called_once()
+    mock_should_bail.assert_called()
 
-    # Verify closed PR message in comment
+    # Verify comment was updated (post-loop update)
     mock_update_comment.assert_called()
 
 
@@ -866,8 +855,9 @@ async def test_handle_check_suite_with_closed_pr(
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.is_pull_request_open")
-@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
@@ -877,8 +867,9 @@ async def test_handle_check_suite_with_deleted_branch(
     _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
-    mock_branch_exists,
-    mock_is_pr_open,
+    _mock_update_usage,
+    _mock_create_empty_commit,
+    mock_should_bail,
     _mock_update_retry_pairs,
     mock_get_retry_pairs,
     mock_update_comment,
@@ -929,8 +920,6 @@ async def test_handle_check_suite_with_deleted_branch(
     ]
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
-    mock_is_pr_open.return_value = True
-    mock_branch_exists.return_value = False
 
     # Execute
     await handle_check_suite(payload)
@@ -943,9 +932,9 @@ async def test_handle_check_suite_with_deleted_branch(
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
-    mock_branch_exists.assert_called_once()
+    mock_should_bail.assert_called()
 
-    # Verify deleted branch message in comment
+    # Verify comment was updated (post-loop update)
     mock_update_comment.assert_called()
 
 
@@ -964,12 +953,10 @@ async def test_handle_check_suite_with_deleted_branch(
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.is_pull_request_open")
-@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.chat_with_agent")
 @patch("services.webhook.check_suite_handler.create_empty_commit")
 @patch("services.webhook.check_suite_handler.update_usage")
-@patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
@@ -979,12 +966,10 @@ async def test_check_run_handler_token_accumulation(
     _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
-    mock_timeout_check,
     mock_update_usage,
     _mock_create_empty_commit,
     mock_chat_agent,
-    mock_check_branch_exists,
-    mock_is_pr_open,
+    _mock_should_bail,
     _mock_update_retry_pairs,
     mock_get_retry_pairs,
     _mock_update_comment,
@@ -1035,42 +1020,39 @@ async def test_check_run_handler_token_accumulation(
     ]
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
-    mock_is_pr_open.return_value = True
-    mock_check_branch_exists.return_value = True
-    mock_timeout_check.return_value = (False, 0)
 
-    # Mock chat_with_agent to return token counts
-    # First call: is_completed=False (continue), Second call: is_completed=True (break)
+    # Planning phase (1 call) + Execution phase (2 calls)
     mock_chat_agent.side_effect = [
-        (
-            [{"role": "user", "content": "test"}],
-            80,  # token_input
-            45,  # token_output
-            False,  # is_completed=False (continue loop)
-            90,  # progress
+        # Planning phase - Opus produces plan
+        AgentResult(
+            messages=[{"role": "user", "content": "test"}],
+            token_input=20, token_output=10, is_completed=False, p=15, is_planned=True,
         ),
-        (
-            [{"role": "user", "content": "test"}],
-            80,  # token_input
-            45,  # token_output
-            True,  # is_completed=True (break loop)
-            95,  # progress
+        # Execution phase - first iteration
+        AgentResult(
+            messages=[{"role": "user", "content": "test"}],
+            token_input=80, token_output=45, is_completed=False, p=90, is_planned=False,
+        ),
+        # Execution phase - second iteration completes
+        AgentResult(
+            messages=[{"role": "user", "content": "test"}],
+            token_input=80, token_output=45, is_completed=True, p=95, is_planned=False,
         ),
     ]
 
     # Execute
     await handle_check_suite(payload)
 
-    # Verify chat_with_agent was called twice
-    assert mock_chat_agent.call_count == 2
+    # Verify chat_with_agent was called three times (1 planning + 2 execution)
+    assert mock_chat_agent.call_count == 3
 
     # Verify update_usage was called with accumulated tokens
     mock_update_usage.assert_called_once()
     call_kwargs = mock_update_usage.call_args.kwargs
 
     assert call_kwargs["usage_id"] == 888
-    assert call_kwargs["token_input"] == 160  # Two calls: 80 + 80
-    assert call_kwargs["token_output"] == 90  # Two calls: 45 + 45
+    assert call_kwargs["token_input"] == 180  # Three calls: 20 + 80 + 80
+    assert call_kwargs["token_output"] == 100  # Three calls: 10 + 45 + 45
 
 
 @pytest.mark.asyncio
@@ -1090,8 +1072,7 @@ async def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_suite_handler.clean_logs")
 @patch("services.webhook.check_suite_handler.check_older_active_test_failure_request")
 @patch("services.webhook.check_suite_handler.update_usage")
-@patch("services.webhook.check_suite_handler.is_pull_request_open")
-@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.should_bail")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
@@ -1101,8 +1082,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
     _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
-    mock_branch_exists,
-    mock_is_pr_open,
+    mock_should_bail,
     mock_update_usage,
     mock_check_older_active,
     mock_clean_logs,
@@ -1157,8 +1137,8 @@ async def test_handle_check_suite_skips_duplicate_older_request(
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
     mock_clean_logs.return_value = "Cleaned test failure log"
-    mock_is_pr_open.return_value = True
-    mock_branch_exists.return_value = True
+    # Skip planning phase, proceed in execution phase (where race check happens)
+    mock_should_bail.side_effect = [True, False]
     mock_check_older_active.return_value = {
         "id": 888,
         "created_at": "2025-09-23T10:00:00Z",
@@ -1207,12 +1187,10 @@ async def test_handle_check_suite_skips_duplicate_older_request(
 @patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
 @pytest.mark.asyncio
-@patch("services.webhook.check_suite_handler.is_pull_request_open")
-@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.chat_with_agent")
 @patch("services.webhook.check_suite_handler.create_empty_commit")
 @patch("services.webhook.check_suite_handler.update_usage")
-@patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.check_suite_handler.get_codecov_token")
 @patch("services.webhook.check_suite_handler.get_codecov_commit_coverage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
@@ -1226,12 +1204,10 @@ async def test_handle_check_suite_codecov_failure(
     _mock_start_async,
     mock_get_codecov_coverage,
     mock_get_codecov_token,
-    mock_timeout_check,
     _mock_update_usage,
     _mock_create_empty_commit,
     mock_chat_agent,
-    mock_check_branch_exists,
-    mock_is_pr_open,
+    _mock_should_bail,
     _mock_update_retry_pairs,
     mock_get_retry_pairs,
     _mock_update_comment,
@@ -1284,9 +1260,6 @@ async def test_handle_check_suite_codecov_failure(
         }
     ]
     mock_get_retry_pairs.return_value = []
-    mock_is_pr_open.return_value = True
-    mock_check_branch_exists.return_value = True
-    mock_timeout_check.return_value = (False, 0)
     mock_get_codecov_token.return_value = "codecov_token_123"
     mock_get_codecov_coverage.return_value = [
         {
@@ -1296,15 +1269,11 @@ async def test_handle_check_suite_codecov_failure(
             "partially_covered_lines": [25],
         }
     ]
+    # Planning phase (1 call) + Execution phase (2 calls)
     mock_chat_agent.side_effect = [
-        (
-            [],
-            50,
-            25,
-            False,
-            50,
-        ),  # messages, token_input, token_output, is_completed, progress
-        ([], 30, 20, True, 75),
+        AgentResult(messages=[], token_input=10, token_output=5, is_completed=False, p=20, is_planned=True),
+        AgentResult(messages=[], token_input=50, token_output=25, is_completed=False, p=50, is_planned=False),
+        AgentResult(messages=[], token_input=30, token_output=20, is_completed=True, p=75, is_planned=False),
     ]
 
     await handle_check_suite(payload)
@@ -1317,7 +1286,7 @@ async def test_handle_check_suite_codecov_failure(
         codecov_token="codecov_token_123",
         service="github",
     )
-    assert mock_chat_agent.call_count == 2
+    assert mock_chat_agent.call_count == 3  # 1 planning + 2 execution
 
 
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
@@ -1334,12 +1303,10 @@ async def test_handle_check_suite_codecov_failure(
 @patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
 @pytest.mark.asyncio
-@patch("services.webhook.check_suite_handler.is_pull_request_open")
-@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.chat_with_agent")
 @patch("services.webhook.check_suite_handler.create_empty_commit")
 @patch("services.webhook.check_suite_handler.update_usage")
-@patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.check_suite_handler.get_codecov_token")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
@@ -1351,12 +1318,10 @@ async def test_handle_check_suite_codecov_no_token(
     _mock_prepare_repo,
     _mock_start_async,
     mock_get_codecov_token,
-    mock_timeout_check,
     _mock_update_usage,
     _mock_create_empty_commit,
     mock_chat_agent,
-    mock_check_branch_exists,
-    mock_is_pr_open,
+    _mock_should_bail,
     _mock_update_retry_pairs,
     mock_get_retry_pairs,
     _mock_update_comment,
@@ -1409,25 +1374,18 @@ async def test_handle_check_suite_codecov_no_token(
         }
     ]
     mock_get_retry_pairs.return_value = []
-    mock_is_pr_open.return_value = True
-    mock_check_branch_exists.return_value = True
-    mock_timeout_check.return_value = (False, 0)
     mock_get_codecov_token.return_value = None
+    # Planning phase (1 call) + Execution phase (2 calls)
     mock_chat_agent.side_effect = [
-        (
-            [],
-            50,
-            25,
-            False,
-            50,
-        ),  # messages, token_input, token_output, is_completed, progress
-        ([], 30, 20, True, 75),
+        AgentResult(messages=[], token_input=10, token_output=5, is_completed=False, p=20, is_planned=True),
+        AgentResult(messages=[], token_input=50, token_output=25, is_completed=False, p=50, is_planned=False),
+        AgentResult(messages=[], token_input=30, token_output=20, is_completed=True, p=75, is_planned=False),
     ]
 
     await handle_check_suite(payload)
 
     mock_get_codecov_token.assert_called_once_with(11111)
-    assert mock_chat_agent.call_count == 2
+    assert mock_chat_agent.call_count == 3  # 1 planning + 2 execution
 
 
 @pytest.mark.asyncio
@@ -1446,12 +1404,10 @@ async def test_handle_check_suite_codecov_no_token(
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
 @patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.is_pull_request_open")
-@patch("services.webhook.check_suite_handler.check_branch_exists")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.chat_with_agent")
 @patch("services.webhook.check_suite_handler.create_empty_commit")
 @patch("services.webhook.check_suite_handler.update_usage")
-@patch("services.webhook.check_suite_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
@@ -1462,12 +1418,10 @@ async def test_handle_check_suite_max_iterations_forces_verification(
     _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
-    mock_timeout_check,
     _mock_update_usage,
     _mock_create_empty_commit,
     mock_chat_agent,
-    mock_check_branch_exists,
-    mock_is_pr_open,
+    _mock_should_bail,
     _mock_update_retry_pairs,
     mock_get_retry_pairs,
     _mock_update_comment,
@@ -1518,20 +1472,19 @@ async def test_handle_check_suite_max_iterations_forces_verification(
     ]
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
-    mock_is_pr_open.return_value = True
-    mock_check_branch_exists.return_value = True
-    mock_timeout_check.return_value = (False, 0)
     mock_verify_task_is_complete.return_value = VerifyTaskIsCompleteResult(
         success=True,
         message="Task completed.",
     )
 
+    # Planning phase (1 call) + Execution phase (2 calls, both is_completed=False)
     mock_chat_agent.side_effect = [
-        ([], 50, 25, False, 50),
-        ([], 30, 20, False, 75),
+        AgentResult(messages=[], token_input=10, token_output=5, is_completed=False, p=20, is_planned=True),
+        AgentResult(messages=[], token_input=50, token_output=25, is_completed=False, p=50, is_planned=False),
+        AgentResult(messages=[], token_input=30, token_output=20, is_completed=False, p=75, is_planned=False),
     ]
 
     await handle_check_suite(payload)
 
-    assert mock_chat_agent.call_count == 2
+    assert mock_chat_agent.call_count == 3  # 1 planning + 2 execution
     mock_verify_task_is_complete.assert_called_once()

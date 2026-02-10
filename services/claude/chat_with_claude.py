@@ -7,7 +7,7 @@ from anthropic._exceptions import OverloadedError
 from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 
 # Local imports
-from constants.claude import CLAUDE_MAX_TOKENS, CLAUDE_MODEL_ID_45
+from constants.claude import CLAUDE_MAX_TOKENS, CLAUDE_MODEL_ID_45, CLAUDE_OPUS_4_6
 from services.claude.client import claude
 from services.claude.strip_strict_from_tools import strip_strict_from_tools
 from services.claude.exceptions import (
@@ -43,8 +43,8 @@ def chat_with_claude(
         messages=messages, client=claude, model=model_id, max_input=max_input
     )
 
-    # Strip "strict" from tools for models that don't support it (only claude-sonnet-4-5 does)
-    if model_id != CLAUDE_MODEL_ID_45:
+    # Strip "strict" from tools for models that don't support it
+    if model_id not in (CLAUDE_MODEL_ID_45, CLAUDE_OPUS_4_6):
         tools = strip_strict_from_tools(tools)
 
     # https://docs.anthropic.com/en/api/messages

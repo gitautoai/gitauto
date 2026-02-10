@@ -8,8 +8,9 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from config import PRODUCT_ID
-from services.webhook.issue_handler import create_pr_from_issue
+from services.chat_with_agent import AgentResult
 from services.github.types.github_types import GitHubLabeledPayload
+from services.webhook.issue_handler import create_pr_from_issue
 
 
 @pytest.mark.asyncio
@@ -261,7 +262,7 @@ async def test_stripe_customer_id_update(
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.get_base64")
 @patch("services.webhook.issue_handler.describe_image")
@@ -303,7 +304,7 @@ async def test_image_urls_processing(
     mock_describe_image,
     mock_get_base64,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
@@ -340,10 +341,16 @@ async def test_image_urls_processing(
     mock_get_base64.return_value = "base64encodedimage"
     mock_describe_image.return_value = "Description of the image"
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
-    mock_chat_with_agent.return_value = ([], 10, 5, True, 0)
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        p=0,
+        is_planned=False,
+    )
     mock_get_pr_files.return_value = []
 
     await create_pr_from_issue(
@@ -364,7 +371,7 @@ async def test_image_urls_processing(
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.get_base64")
 @patch("services.webhook.issue_handler.extract_image_urls")
@@ -404,7 +411,7 @@ async def test_image_unsupported_format_skipped(
     mock_extract_image_urls,
     mock_get_base64,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
@@ -438,10 +445,16 @@ async def test_image_unsupported_format_skipped(
         {"url": "http://example.com/image.svg", "alt": "svg image"}
     ]
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
-    mock_chat_with_agent.return_value = ([], 10, 5, True, 0)
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        p=0,
+        is_planned=False,
+    )
     mock_get_pr_files.return_value = []
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
@@ -457,7 +470,7 @@ async def test_image_unsupported_format_skipped(
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.get_base64")
 @patch("services.webhook.issue_handler.describe_image")
@@ -499,7 +512,7 @@ async def test_image_base64_fetch_failed(
     mock_describe_image,
     mock_get_base64,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
@@ -534,10 +547,16 @@ async def test_image_base64_fetch_failed(
     ]
     mock_get_base64.return_value = None
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
-    mock_chat_with_agent.return_value = ([], 10, 5, True, 0)
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        p=0,
+        is_planned=False,
+    )
     mock_get_pr_files.return_value = []
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
@@ -547,15 +566,13 @@ async def test_image_base64_fetch_failed(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.get_timeout_message")
-@patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.get_pull_request_files")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=True)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
@@ -595,15 +612,13 @@ async def test_timeout_approaching_breaks_loop(
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
     mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
-    mock_is_timeout,
-    mock_get_timeout_msg,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -628,29 +643,24 @@ async def test_timeout_approaching_breaks_loop(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_get_pr_files.return_value = []
-    mock_is_timeout.return_value = (True, 850.0)
-    mock_get_timeout_msg.return_value = "Timeout approaching after 850s"
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
-    mock_is_timeout.assert_called_once()
-    mock_get_timeout_msg.assert_called_once_with(850.0, "Issue processing")
+    mock_should_bail.assert_called_once()
     mock_chat_with_agent.assert_not_called()
 
 
 @pytest.mark.asyncio
 @patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=True)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
@@ -690,13 +700,12 @@ async def test_branch_deleted_breaks_loop(
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
     mock_create_pr,
     mock_chat_with_agent,
-    mock_is_timeout,
     mock_get_pr_files,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
@@ -722,16 +731,13 @@ async def test_branch_deleted_breaks_loop(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = False
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_get_pr_files.return_value = []
-    mock_is_timeout.return_value = (False, 10.0)
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
 
-    mock_check_branch.assert_called()
-    mock_update_comment.assert_called()
+    mock_should_bail.assert_called()
     mock_chat_with_agent.assert_not_called()
 
 
@@ -739,13 +745,12 @@ async def test_branch_deleted_breaks_loop(
 @patch("services.webhook.issue_handler.MAX_ITERATIONS", 10)
 @patch("services.webhook.issue_handler.verify_task_is_complete")
 @patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
@@ -785,13 +790,12 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
     mock_create_pr,
     mock_chat_with_agent,
-    mock_is_timeout,
     mock_get_pr_files,
     mock_verify_task_is_complete,
 ):
@@ -818,22 +822,90 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_get_pr_files.return_value = []
-    mock_is_timeout.return_value = (False, 10.0)
     mock_chat_with_agent.side_effect = [
-        ([], 10, 5, False, 10),
-        ([], 10, 5, False, 20),
-        ([], 10, 5, False, 30),
-        ([], 10, 5, False, 40),
-        ([], 10, 5, False, 50),
-        ([], 10, 5, False, 60),
-        ([], 10, 5, False, 70),
-        ([], 10, 5, False, 80),
-        ([], 10, 5, False, 90),
-        ([], 10, 5, False, 95),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=10,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=20,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=30,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=40,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=50,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=60,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=70,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=80,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=90,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=95,
+            is_planned=False,
+        ),
     ]
     mock_verify_task_is_complete.return_value = {
         "success": True,
@@ -850,13 +922,12 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
 @patch("services.webhook.issue_handler.MAX_ITERATIONS", 9)
 @patch("services.webhook.issue_handler.verify_task_is_complete")
 @patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
@@ -896,13 +967,12 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
     mock_create_pr,
     mock_chat_with_agent,
-    mock_is_timeout,
     mock_get_pr_files,
     mock_verify_task_is_complete,
 ):
@@ -929,21 +999,82 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_get_pr_files.return_value = []
-    mock_is_timeout.return_value = (False, 10.0)
     mock_chat_with_agent.side_effect = [
-        ([], 10, 5, False, 10),
-        ([], 10, 5, False, 20),
-        ([], 10, 5, False, 30),
-        ([], 10, 5, False, 40),
-        ([], 10, 5, False, 50),
-        ([], 10, 5, False, 60),
-        ([], 10, 5, False, 70),
-        ([], 10, 5, False, 80),
-        ([], 10, 5, False, 90),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=10,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=20,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=30,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=40,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=50,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=60,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=70,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=80,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=90,
+            is_planned=False,
+        ),
     ]
     mock_verify_task_is_complete.return_value = {
         "success": True,
@@ -958,13 +1089,12 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
 
 @pytest.mark.asyncio
 @patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
@@ -1004,13 +1134,12 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
     mock_create_pr,
     mock_chat_with_agent,
-    mock_is_timeout,
     mock_get_pr_files,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
@@ -1036,15 +1165,34 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_get_pr_files.return_value = []
-    mock_is_timeout.return_value = (False, 10.0)
     mock_chat_with_agent.side_effect = [
-        ([], 10, 5, False, 10),
-        ([], 10, 5, False, 20),
-        ([], 10, 5, True, 100),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=10,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=20,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=True,
+            p=100,
+            is_planned=False,
+        ),
     ]
 
     await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
@@ -1055,13 +1203,12 @@ async def test_retry_counter_reset_on_successful_loop(
 @pytest.mark.asyncio
 @patch("services.webhook.issue_handler.is_test_file")
 @patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
@@ -1101,13 +1248,12 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
     mock_create_pr,
     mock_chat_with_agent,
-    mock_is_timeout,
     mock_get_pr_files,
     mock_is_test_file,
 ):
@@ -1134,11 +1280,16 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
-    mock_is_timeout.return_value = (False, 10.0)
-    mock_chat_with_agent.return_value = ([], 10, 5, True, 50)
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        p=50,
+        is_planned=False,
+    )
     mock_get_pr_files.return_value = [{"filename": "src/main.py"}]
     mock_is_test_file.return_value = False
 
@@ -1153,13 +1304,12 @@ async def test_non_test_file_skipped_in_header_merge(
 @patch("services.webhook.issue_handler.get_raw_content")
 @patch("services.webhook.issue_handler.is_test_file")
 @patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
@@ -1199,13 +1349,12 @@ async def test_test_file_header_merge(
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
     mock_create_pr,
     mock_chat_with_agent,
-    mock_is_timeout,
     mock_get_pr_files,
     mock_is_test_file,
     mock_get_raw_content,
@@ -1235,11 +1384,16 @@ async def test_test_file_header_merge(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
-    mock_is_timeout.return_value = (False, 10.0)
-    mock_chat_with_agent.return_value = ([], 10, 5, True, 50)
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        p=50,
+        is_planned=False,
+    )
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
     mock_get_raw_content.return_value = "def test_something(): pass"
@@ -1259,13 +1413,12 @@ async def test_test_file_header_merge(
 @patch("services.webhook.issue_handler.get_raw_content")
 @patch("services.webhook.issue_handler.is_test_file")
 @patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
@@ -1305,13 +1458,12 @@ async def test_test_file_header_merge_no_content(
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
     mock_create_pr,
     mock_chat_with_agent,
-    mock_is_timeout,
     mock_get_pr_files,
     mock_is_test_file,
     mock_get_raw_content,
@@ -1341,11 +1493,16 @@ async def test_test_file_header_merge_no_content(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
-    mock_is_timeout.return_value = (False, 10.0)
-    mock_chat_with_agent.return_value = ([], 10, 5, True, 50)
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        p=50,
+        is_planned=False,
+    )
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
     mock_get_raw_content.return_value = None
@@ -1364,13 +1521,12 @@ async def test_test_file_header_merge_no_content(
 @patch("services.webhook.issue_handler.get_raw_content")
 @patch("services.webhook.issue_handler.is_test_file")
 @patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
@@ -1410,13 +1566,12 @@ async def test_test_file_header_merge_no_change(
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
     mock_create_pr,
     mock_chat_with_agent,
-    mock_is_timeout,
     mock_get_pr_files,
     mock_is_test_file,
     mock_get_raw_content,
@@ -1446,11 +1601,16 @@ async def test_test_file_header_merge_no_change(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
-    mock_is_timeout.return_value = (False, 10.0)
-    mock_chat_with_agent.return_value = ([], 10, 5, True, 50)
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        p=50,
+        is_planned=False,
+    )
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
     mock_get_raw_content.return_value = "import pytest\n\ndef test_something(): pass"
@@ -1471,13 +1631,12 @@ async def test_test_file_header_merge_no_change(
 @patch("services.webhook.issue_handler.get_owner")
 @patch("services.webhook.issue_handler.insert_credit")
 @patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.is_lambda_timeout_approaching")
 @patch("services.webhook.issue_handler.chat_with_agent")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_remote_branch")
 @patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.get_remote_file_content_by_url")
 @patch("services.webhook.issue_handler.extract_image_urls")
 @patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
@@ -1517,13 +1676,12 @@ async def test_credits_depleted_email_sent(
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
-    mock_check_branch,
+    mock_should_bail,
     mock_get_latest_sha,
     mock_create_remote_branch,
     mock_create_empty_commit,
     mock_create_pr,
     mock_chat_with_agent,
-    mock_is_timeout,
     mock_get_pr_files,
     mock_insert_credit,
     mock_get_owner,
@@ -1554,11 +1712,16 @@ async def test_credits_depleted_email_sent(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_check_branch.return_value = True
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
-    mock_is_timeout.return_value = (False, 10.0)
-    mock_chat_with_agent.return_value = ([], 10, 5, True, 50)
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        p=50,
+        is_planned=False,
+    )
     mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
     mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 0}
     mock_get_user.return_value = {"id": 888, "email": "user@example.com"}
@@ -1577,7 +1740,7 @@ async def test_credits_depleted_email_sent(
 
 @pytest.mark.asyncio
 @patch("services.webhook.issue_handler.insert_credit")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_remote_branch")
@@ -1623,7 +1786,7 @@ async def test_issue_handler_token_accumulation(
     mock_create_remote_branch,
     mock_create_pull_request,
     mock_create_empty_commit,
-    mock_check_branch_exists,
+    mock_should_bail,
     mock_insert_credit,
 ):
     """Test that issue handler accumulates tokens correctly and calls update_usage"""
@@ -1674,7 +1837,6 @@ async def test_issue_handler_token_accumulation(
         123,
     )
     mock_create_empty_commit.return_value = None
-    mock_check_branch_exists.return_value = True
     mock_insert_credit.return_value = None
 
     # Mock availability check to allow proceeding
@@ -1694,25 +1856,27 @@ async def test_issue_handler_token_accumulation(
 
     # Mock chat_with_agent - first call makes progress, second signals completion
     mock_chat_with_agent.side_effect = [
-        (
-            [
+        AgentResult(
+            messages=[
                 {"role": "user", "content": "test"},
                 {"role": "assistant", "content": "AI response"},
             ],
-            75,  # input tokens
-            35,  # output tokens
-            False,  # is_completed=False (not done yet)
-            90,
+            token_input=75,
+            token_output=35,
+            is_completed=False,
+            p=90,
+            is_planned=False,
         ),
-        (
-            [
+        AgentResult(
+            messages=[
                 {"role": "user", "content": "test"},
                 {"role": "assistant", "content": "AI response"},
             ],
-            75,  # input tokens
-            35,  # output tokens
-            True,  # is_completed=True (task done)
-            95,
+            token_input=75,
+            token_output=35,
+            is_completed=True,
+            p=95,
+            is_planned=False,
         ),
     ]
     mock_get_pull_request_files.return_value = [
@@ -1761,7 +1925,7 @@ async def test_issue_handler_token_accumulation(
 
 @pytest.mark.asyncio
 @patch("services.webhook.issue_handler.insert_credit")
-@patch("services.webhook.issue_handler.check_branch_exists")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
 @patch("services.webhook.issue_handler.create_empty_commit")
 @patch("services.webhook.issue_handler.create_pull_request")
 @patch("services.webhook.issue_handler.create_remote_branch")
@@ -1809,7 +1973,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_create_remote_branch,
     mock_create_pull_request,
     mock_create_empty_commit,
-    mock_check_branch_exists,
+    mock_should_bail,
     mock_insert_credit,
 ):
     mock_deconstruct_github_payload.return_value = (
@@ -1862,7 +2026,14 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_create_comment.return_value = "https://api.github.com/comment/1"
     mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 100}
     mock_create_user_request.return_value = 999
-    mock_chat_with_agent.return_value = ([], 10, 5, True, 0)
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        p=0,
+        is_planned=False,
+    )
     mock_get_repository_features.return_value = {
         "restrict_edit_to_target_test_file_only": False,
         "allow_edit_any_file": True,
@@ -1882,7 +2053,6 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
         123,
     )
     mock_create_empty_commit.return_value = None
-    mock_check_branch_exists.return_value = True
     mock_insert_credit.return_value = None
 
     payload = cast(

@@ -1,4 +1,5 @@
 # Standard imports
+from dataclasses import dataclass
 import inspect
 
 # Third party imports
@@ -26,6 +27,16 @@ from utils.number.is_valid_line_number import is_valid_line_number
 from utils.progress_bar.progress_bar import create_progress_bar
 
 
+@dataclass
+class AgentResult:
+    messages: list[MessageParam]
+    token_input: int
+    token_output: int
+    is_completed: bool
+    p: int
+    is_planned: bool
+
+
 @handle_exceptions(raise_on_error=True)
 async def chat_with_agent(
     *,
@@ -39,12 +50,13 @@ async def chat_with_agent(
     allow_edit_any_file: bool = False,
     restrict_edit_to_target_test_file_only: bool = True,
     allowed_to_edit_files: list[str] | None = None,
+    model_id: str | None,
 ):
     if log_messages is None:
         log_messages = []
 
     while True:
-        current_model = get_model()
+        current_model = model_id or get_model()
         logger.info("Using model: %s", current_model)
 
         try:
@@ -73,13 +85,36 @@ async def chat_with_agent(
     if not tool_name or not tool_use_id:
         logger.info("No tools were called. Response: %s", response_message)
         messages.append(response_message)
-        is_completed = False
-        return (
-            messages,
-            token_input,
-            token_output,
-            is_completed,
-            p,
+        return AgentResult(
+            messages=messages,
+            token_input=token_input,
+            token_output=token_output,
+            is_completed=False,
+            p=p,
+            is_planned=False,
+        )
+
+    # Handle submit_plan: Opus signals it's done planning
+    if tool_name == "submit_plan":
+        messages.append(response_message)
+        tool_result_block: ToolResultBlockParam = {
+            "type": "tool_result",
+            "tool_use_id": tool_use_id,
+            "content": "Plan submitted. Handing off to execution agent.",
+        }
+        tool_result_msg: MessageParam = {
+            "role": "user",
+            "content": [tool_result_block],
+        }
+        messages.append(tool_result_msg)
+        logger.info("Planning phase complete via submit_plan")
+        return AgentResult(
+            messages=messages,
+            token_input=token_input,
+            token_output=token_output,
+            is_completed=False,
+            p=p + 5,
+            is_planned=True,
         )
 
     # Function name and argument validation
@@ -196,6 +231,7 @@ async def chat_with_agent(
                     allow_edit_any_file=allow_edit_any_file,
                     restrict_edit_to_target_test_file_only=restrict_edit_to_target_test_file_only,
                     allowed_to_edit_files=allowed_to_edit_files,
+                    model_id=model_id,
                 )
 
         if isinstance(tool_args, dict):
@@ -234,12 +270,13 @@ async def chat_with_agent(
                 )
             else:
                 logger.warning(tool_message)
-            return (
-                messages,
-                token_input,
-                token_output,
-                is_success,
-                p + 5,
+            return AgentResult(
+                messages=messages,
+                token_input=token_input,
+                token_output=token_output,
+                is_completed=is_success,
+                p=p + 5,
+                is_planned=False,
             )
     else:
         tool_result = f"Error: The function '{tool_name}' does not exist in the available tools. Please use one of the available tools."
@@ -406,11 +443,11 @@ async def chat_with_agent(
         )
 
     # Regular tool execution - not completed until verify_task_is_complete succeeds
-    is_completed = False
-    return (
-        messages,
-        token_input,
-        token_output,
-        is_completed,
-        p + 5,
+    return AgentResult(
+        messages=messages,
+        token_input=token_input,
+        token_output=token_output,
+        is_completed=False,
+        p=p + 5,
+        is_planned=False,
     )
