@@ -321,7 +321,7 @@ Resources:
   # Timing breakdown (Foxquilt/foxcom-forms with yarn, 2026-01-31, tarball approach):
   #   QUEUED: 1s
   #   PROVISIONING: 30s (spin up container)
-  #   DOWNLOAD_SOURCE: 36s (mount EFS, install Node.js 20)
+  #   DOWNLOAD_SOURCE: 36s (mount EFS, install Node.js 24)
   #   BUILD: 175s
   #     - tar EFS to local SSD: 1s
   #     - yarn install: 103s
@@ -399,7 +399,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL # 3GB RAM, 2 vCPU, ~$0.005/min
-        Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0 # Has Node.js 20
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0 # Has Node.js 24
         PrivilegedMode: true # Required for EFS mount
         EnvironmentVariables:
           - Name: EFS_DIR
@@ -413,7 +413,7 @@ Resources:
           phases:
             install:
               runtime-versions:
-                nodejs: 20
+                nodejs: 24
             build:
               commands:
                 - echo "Installing packages in $EFS_DIR using $PKG_MANAGER"
