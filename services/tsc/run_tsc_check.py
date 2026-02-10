@@ -30,8 +30,13 @@ async def run_tsc_check(*, base_args: BaseArgs, file_paths: list[str]):
         logger.warning("tsc: No clone_dir provided, skipping")
         return TscResult(success=True, errors=[], error_files=set())
 
-    # Check for tsconfig - prefer relaxed test configs over strict base config
-    test_configs = ["tsconfig.test.json", "tsconfig.spec.json", "tsconfig.jest.json"]
+    # Check for tsconfig - prefer configs that include test files over strict base config
+    test_configs = [
+        "tsconfig.test.json",
+        "tsconfig.spec.json",
+        "tsconfig.jest.json",
+        "tsconfig.eslint.json",
+    ]
     found_test_configs = [
         c for c in test_configs if os.path.exists(os.path.join(clone_dir, c))
     ]

@@ -355,3 +355,50 @@ def test_parse_lcov_gitauto_real_exact_counts():
         assert (
             file_found is not None
         ), f"{file_path} should be included as a legitimate non-test file"
+
+
+def test_parse_lcov_ts_foxden_tools():
+    """Test parsing foxden-tools TypeScript LCOV file.
+
+    This repo uses V8 coverage provider and has FN:(empty-report) format.
+    The schedule handler was creating issues for files with 100% coverage
+    because the coverage report was not being parsed/ingested.
+    """
+    with open("payloads/lcov/lcov-ts-foxden-tools.info", "r", encoding=UTF8) as f:
+        lcov_content = f.read()
+
+    result = parse_lcov_coverage(lcov_content, set())
+
+    assert len(result) == 101
+
+    repo_level = [r for r in result if r["level"] == "repository"]
+    assert len(repo_level) == 1
+
+    file_level = [r for r in result if r["level"] == "file"]
+    assert len(file_level) == 81
+
+    directory_level = [r for r in result if r["level"] == "directory"]
+    assert len(directory_level) == 19
+
+    repo_coverage = repo_level[0]
+    assert repo_coverage["full_path"] == "All"
+    assert repo_coverage["statement_coverage"] == 14.56
+    assert repo_coverage["function_coverage"] == 22.62
+    assert repo_coverage["branch_coverage"] == 58.76
+    assert repo_coverage["line_coverage"] == 14.56
+    assert repo_coverage["lines_covered"] == 1272
+    assert repo_coverage["lines_total"] == 8738
+    assert repo_coverage["functions_covered"] == 38
+    assert repo_coverage["functions_total"] == 168
+    assert repo_coverage["branches_covered"] == 161
+    assert repo_coverage["branches_total"] == 274
+
+    # Verify common.ts has 100% coverage (was incorrectly reported as 0%)
+    common_file = next(
+        (f for f in file_level if f["full_path"] == "src/utils/typeGuard/common.ts"),
+        None,
+    )
+    assert common_file is not None, "common.ts should be in parsed results"
+    assert common_file["statement_coverage"] == 100.0
+    assert common_file["function_coverage"] == 100.0
+    assert common_file["branch_coverage"] == 100.0
