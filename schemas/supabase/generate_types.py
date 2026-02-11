@@ -30,7 +30,7 @@ result = subprocess.run(
         "-t",
         "-c",
         """
-        SELECT table_name, column_name, data_type, is_nullable
+        SELECT table_name, column_name, data_type, is_nullable, udt_name
         FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name NOT LIKE 'pg_%'
         ORDER BY table_name, ordinal_position;
@@ -50,8 +50,8 @@ tables = defaultdict(list)
 for line in result.stdout.split("\n"):
     if line.strip():
         parts = [p.strip() for p in line.split("|")]
-        if len(parts) == 4:
-            table_name, column_name, data_type, is_nullable = parts
+        if len(parts) == 5:
+            table_name, column_name, data_type, is_nullable, udt_name = parts
 
             type_mapping = {
                 "integer": "int",
@@ -70,7 +70,23 @@ for line in result.stdout.split("\n"):
                 "numeric": "float",
             }
 
-            PYTHON_TYPE = type_mapping.get(data_type, "Any")
+            # PostgreSQL array udt_name starts with _ (e.g. _text, _int4, _bool)
+            array_element_mapping = {
+                "_text": "str",
+                "_varchar": "str",
+                "_int4": "int",
+                "_int8": "int",
+                "_bool": "bool",
+                "_float4": "float",
+                "_float8": "float",
+                "_jsonb": "dict[str, Any]",
+            }
+
+            if data_type == "ARRAY":
+                element_type = array_element_mapping.get(udt_name, "Any")
+                PYTHON_TYPE = f"list[{element_type}]"
+            else:
+                PYTHON_TYPE = type_mapping.get(data_type, "Any")
             if is_nullable == "YES":
                 PYTHON_TYPE = f"{PYTHON_TYPE} | None"
 
