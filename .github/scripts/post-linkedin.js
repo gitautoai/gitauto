@@ -1,3 +1,4 @@
+const extractSocialPosts = require("./extract-social-posts");
 const { RestliClient } = require("linkedin-api-client");
 
 const gitautoUrn = "urn:li:organization:100932100"; // Go to company profile page
@@ -12,16 +13,10 @@ async function postLinkedIn({ context }) {
 
   const description = context.payload.pull_request.body || "";
   const url = "https://gitauto.ai?utm_source=linkedin&utm_medium=referral"
+  const { gitauto: gitautoText, wes: wesText } = extractSocialPosts(description);
 
-  // Extract social media post from PR body - skip posting if not present
-  const socialMediaMatch = description.match(/## Social Media Post\s*\n([\s\S]*?)(?=\n##|\n$|$)/i);
-  if (!socialMediaMatch) {
+  if (!gitautoText && !wesText) {
     console.log("No Social Media Post section found in PR body, skipping LinkedIn post");
-    return;
-  }
-  const title = socialMediaMatch[1].trim();
-  if (!title) {
-    console.log("Social Media Post section is empty, skipping LinkedIn post");
     return;
   }
 
@@ -30,12 +25,12 @@ async function postLinkedIn({ context }) {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   // Helper function to create a post
-  const createPost = async (authorUrn) => {
+  const createPost = async (authorUrn, text) => {
     return restliClient.create({
       resourcePath: "/posts",
       entity: {
         author: authorUrn,
-        commentary: title,
+        commentary: text,
         visibility: "PUBLIC",
         distribution: {
           feedDistribution: "MAIN_FEED",
@@ -47,7 +42,7 @@ async function postLinkedIn({ context }) {
         content: {
           article: {
             source: url,
-            title: title,
+            title: text,
             description: description || `Check out our latest release!`,
           },
         },
@@ -70,23 +65,32 @@ async function postLinkedIn({ context }) {
   };
 
   // Post from both accounts
-  const companyPost = await createPost(gitautoUrn);
-  const companyPostUrn = companyPost.headers["x-restli-id"];
-  const wesPost = await createPost(wesUrn);
-  const wesPostUrn = wesPost.headers["x-restli-id"];
+  const companyPost = gitautoText ? await createPost(gitautoUrn, gitautoText) : null;
+  const companyPostUrn = companyPost?.headers["x-restli-id"];
+  const wesPost = wesText ? await createPost(wesUrn, wesText) : null;
+  const wesPostUrn = wesPost?.headers["x-restli-id"];
+
+  if (!companyPostUrn && !wesPostUrn) {
+    console.log("Both posts are empty, skipping");
+    return;
+  }
 
   // Wait and like each other's posts
-  await sleep(getRandomDelay());
-  await likePost(gitautoUrn, wesPostUrn); // Company likes Wes's post
-  await likePost(wesUrn, companyPostUrn); // Wes likes Company's post
+  if (companyPostUrn && wesPostUrn) {
+    await sleep(getRandomDelay());
+    await likePost(gitautoUrn, wesPostUrn); // Company likes Wes's post
+    await likePost(wesUrn, companyPostUrn); // Wes likes Company's post
+  }
 
   // Send the post links to Slack webhook
+  const links = [
+    companyPostUrn ? `https://www.linkedin.com/feed/update/urn:li:activity:${companyPostUrn}` : null,
+    wesPostUrn ? `https://www.linkedin.com/feed/update/urn:li:activity:${wesPostUrn}` : null,
+  ].filter(Boolean).join(" and ");
   await fetch(process.env.SLACK_WEBHOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      msg: `Posted to LinkedIn! https://www.linkedin.com/feed/update/urn:li:activity:${companyPostUrn} and https://www.linkedin.com/feed/update/urn:li:activity:${wesPostUrn}`,
-    }),
+    body: JSON.stringify({ msg: `Posted to LinkedIn! ${links}` }),
   });
 }
 

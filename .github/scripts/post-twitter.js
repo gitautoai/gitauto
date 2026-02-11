@@ -1,3 +1,4 @@
+const extractSocialPosts = require("./extract-social-posts");
 const { TwitterApi } = require("twitter-api-v2");
 
 /**
@@ -21,21 +22,12 @@ async function postTwitter({ context }) {
   });
 
   const description = context.payload.pull_request.body || "";
+  const { gitauto: gitautoTweet, wes: wesTweet } = extractSocialPosts(description);
 
-  // Extract social media post from PR body - skip posting if not present
-  const socialMediaMatch = description.match(/## Social Media Post\s*\n([\s\S]*?)(?=\n##|\n$|$)/i);
-  if (!socialMediaMatch) {
+  if (!gitautoTweet && !wesTweet) {
     console.log("No Social Media Post section found in PR body, skipping Twitter post");
     return;
   }
-  const title = socialMediaMatch[1].trim();
-  if (!title) {
-    console.log("Social Media Post section is empty, skipping Twitter post");
-    return;
-  }
-
-  // Non-paid account, we can only post 280 characters. Paid account can post 250,000 characters.
-  const tweet = title;
 
   // Senders have to be in the community
   // https://x.com/hnishio0105/communities
@@ -61,8 +53,13 @@ async function postTwitter({ context }) {
     }
   };
 
-  const companyTweet = await postTweet(clientCompany, tweet);
-  const wesTweet = await postTweet(clientWes, tweet);
+  const companyTweetResult = gitautoTweet ? await postTweet(clientCompany, gitautoTweet) : null;
+  const wesTweetResult = wesTweet ? await postTweet(clientWes, wesTweet) : null;
+
+  if (!companyTweetResult && !wesTweetResult) {
+    console.log("Both posts are empty, skipping");
+    return;
+  }
 
   // https://docs.x.com/x-api/posts/creation-of-a-post
   // const communityTweets = await Promise.all(
@@ -92,19 +89,22 @@ async function postTwitter({ context }) {
 
   // Like each other's tweets
   // https://github.com/PLhery/node-twitter-api-v2/blob/master/doc/v2.md#like-a-tweet
-  const userCompany = await clientCompany.v2.me();
-  await clientCompany.v2.like(userCompany.data.id, wesTweet.data.id);
-  const userWes = await clientWes.v2.me();
-  await clientWes.v2.like(userWes.data.id, companyTweet.data.id);
-  // await Promise.all(communityTweets.map((tweet) => clientWes.v2.like(tweet.data.id)));
+  if (companyTweetResult && wesTweetResult) {
+    const userCompany = await clientCompany.v2.me();
+    await clientCompany.v2.like(userCompany.data.id, wesTweetResult.data.id);
+    const userWes = await clientWes.v2.me();
+    await clientWes.v2.like(userWes.data.id, companyTweetResult.data.id);
+  }
 
   // Send to Slack webhook
+  const links = [
+    companyTweetResult ? `https://x.com/gitautoai/status/${companyTweetResult.data.id}` : null,
+    wesTweetResult ? `https://x.com/hiroshinishio/status/${wesTweetResult.data.id}` : null,
+  ].filter(Boolean).join(" and ");
   await fetch(process.env.SLACK_WEBHOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      msg: `Posted to X! https://x.com/gitautoai/status/${companyTweet.data.id} and https://x.com/hiroshinishio/status/${wesTweet.data.id}`,
-    }),
+    body: JSON.stringify({ msg: `Posted to X! ${links}` }),
   });
 
 }
