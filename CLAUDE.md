@@ -539,13 +539,15 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
 
     ```bash
     gh pr create --title "PR title" --body "$(cat <<'EOF'
+    ...
     ## Social Media Post
-    Marketing-focused message about GitAuto benefits for customers
+    ...
     EOF
     )" --assignee @me
     ```
 
     - PR title should be technical and descriptive
+    - **Social Media Post section must always be the last section in the PR body**
     - **Social Media Post section**: Will be used for X/LinkedIn/HN posts. Only include when there are explicit customer benefits. Skip for internal-only changes (refactoring, logging fixes, test improvements, infrastructure updates) that don't affect customers.
     - When included, Social Media Post must:
       - Be concise and fit in a tweet (under 280 characters is ideal)
@@ -557,15 +559,9 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
       - **NEVER frame things negatively**: "unused", "nobody used", "removing unused" - this is embarrassing
       - **Be straightforward and honest** like a dev talking to other devs
       - **Users don't know GitAuto internals** - They don't know we clone repos, install dependencies, set up working environments, etc. When relevant, educate them on what GitAuto does
-      - **Frame bug fixes as features** - Don't say "fixed X" or "fixed error". Instead describe the improvement positively
+      - **Tell the story when there's a real failure** - When you find a real flaw or failure, be transparent. Tell the story: what happened, what went wrong (e.g. Claude misunderstood X, our pipeline missed Y), what the impact was, and how we improved. Developers respect honesty and the story resonates more than hiding it. Frame it as "we found a flaw → it caused X → we improved" not "we fixed a bug".
       - **Sound like a human wrote it** - AI-generated posts are obvious and get ignored. Write like a real dev sharing something they built. Be casual, imperfect, opinionated. No polished marketing tone.
       - **Vary the opening every time** - NEVER use patterns like "GitAuto now...", "We just...", or any formula that gets stale. Start with the substance — what changed, why it matters, or a hook.
-      - Good example: "We're dropping Jira integration to focus on GitHub. Less code to maintain, fewer edge cases to handle, and we can ship GitHub features faster."
-      - Bad example: "GitAuto now supports private npm packages" (repetitive "GitAuto now" opener)
-      - Bad example: "Private npm packages in your repo? GitAuto handles..." (clickbait question opener)
-      - Bad example: "GitAuto is sunsetting Jira integration to deliver the best possible GitHub experience" (too corporate)
-      - Bad example: "Removed unused Jira code paths" (sounds like failure)
-      - Bad example: "Fixed a race condition that caused GitAuto to occasionally fail" (exposes internals, sounds like bug)
 
 19. If fixing a Sentry issue, list similar issues and resolve them:
     - Use `python3 scripts/sentry/get_issue.py AGENT-XXX` to check related issues

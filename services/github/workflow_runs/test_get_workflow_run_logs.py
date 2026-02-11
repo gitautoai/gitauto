@@ -1,4 +1,5 @@
 import io
+import os
 import zipfile
 from unittest.mock import patch, MagicMock
 
@@ -6,6 +7,10 @@ import pytest
 import requests
 
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
+
+PAYLOADS_DIR = os.path.join(
+    os.path.dirname(__file__), "..", "..", "..", "payloads", "github", "workflow_runs"
+)
 
 
 @pytest.fixture
@@ -242,14 +247,22 @@ def test_get_workflow_run_logs_failed_step_none(
     assert result is None
 
 
-def test_get_workflow_run_logs_failed_step_file_not_in_zip(
+def test_get_workflow_run_logs_failed_step_file_not_in_zip_falls_back_to_combined_log(
     mock_successful_response, mock_headers, test_owner, test_repo, test_token
 ):
-    """Test handling when failed step log file is not found in zip."""
+    """Test fallback to combined job log when per-step log file is not in zip.
+
+    The mock zip contains "0_build.txt" (combined job log). When the per-step file
+    "build/7_Nonexistent step.txt" is not found, the function falls back to
+    "0_build.txt" by extracting the job name "build" from the step path.
+    """
     # Arrange
     run_id = 12345
     failed_step_fname = (
         "build/7_Nonexistent step.txt"  # This file doesn't exist in the zip
+    )
+    expected_content = (
+        "```GitHub Check Run Log: 0_build.txt\nBuild started\nBuild completed\n```"
     )
 
     # Act
@@ -272,6 +285,88 @@ def test_get_workflow_run_logs_failed_step_file_not_in_zip(
     mock_get_failed_step.assert_called_once_with(
         owner=test_owner, repo=test_repo, run_id=run_id, token=test_token
     )
+    assert result == expected_content
+
+
+def test_get_workflow_run_logs_combined_log_fallback_like_spiderplus(
+    mock_headers, test_owner, test_repo, test_token
+):
+    """Test combined job log fallback using real SPIDERPLUS-web GitHub Actions zip.
+
+    SPIDERPLUS-web php-unit workflow only produces a combined job log
+    "0_php-unit.txt" and "php-unit/system.txt" without individual step log
+    files like "php-unit/3_execute_phpunit (PR).txt".
+    Fixture: payloads/github/workflow_runs/combined_job_log.zip
+    """
+    # Arrange
+    run_id = 12345
+    failed_step_fname = "php-unit/3_execute_phpunit (PR).txt"
+
+    fixture_path = os.path.join(PAYLOADS_DIR, "combined_job_log.zip")
+    with open(fixture_path, "rb") as f:
+        zip_content = f.read()
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.content = zip_content
+
+    # Act
+    with patch(
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
+    ) as mock_get, patch(
+        "services.github.workflow_runs.get_workflow_run_logs.create_headers"
+    ) as mock_create_headers, patch(
+        "services.github.workflow_runs.get_workflow_run_logs.get_failed_step_log_file_name"
+    ) as mock_get_failed_step:
+        mock_create_headers.return_value = mock_headers
+        mock_get.return_value = mock_response
+        mock_get_failed_step.return_value = failed_step_fname
+
+        result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
+
+    # Assert
+    assert isinstance(result, str)
+    assert result.startswith("```GitHub Check Run Log: 0_php-unit.txt\n")
+    assert result.endswith("\n```")
+    assert "PHPUnit" in result
+    assert "ERRORS!" in result
+
+
+def test_get_workflow_run_logs_no_matching_log_file(
+    mock_headers, test_owner, test_repo, test_token
+):
+    """Test returns None when neither per-step nor combined job log exists."""
+    # Arrange
+    run_id = 12345
+    failed_step_fname = "unknown-job/3_some step.txt"
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(
+            "0_different-job.txt",
+            "2024-10-18T23:27:40.6602932Z Some log",
+        )
+    zip_buffer.seek(0)
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.content = zip_buffer.getvalue()
+
+    # Act
+    with patch(
+        "services.github.workflow_runs.get_workflow_run_logs.requests.get"
+    ) as mock_get, patch(
+        "services.github.workflow_runs.get_workflow_run_logs.create_headers"
+    ) as mock_create_headers, patch(
+        "services.github.workflow_runs.get_workflow_run_logs.get_failed_step_log_file_name"
+    ) as mock_get_failed_step:
+        mock_create_headers.return_value = mock_headers
+        mock_get.return_value = mock_response
+        mock_get_failed_step.return_value = failed_step_fname
+
+        result = get_workflow_run_logs(test_owner, test_repo, run_id, test_token)
+
+    # Assert
     assert result is None
 
 
