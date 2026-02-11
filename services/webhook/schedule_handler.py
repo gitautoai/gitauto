@@ -41,6 +41,7 @@ from services.stripe.check_availability import check_availability
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
 from utils.files.is_config_file import is_config_file
+from utils.files.is_dependency_file import is_dependency_file
 from utils.files.is_migration_file import is_migration_file
 from utils.files.is_test_file import is_test_file
 from utils.files.is_type_file import is_type_file
@@ -209,6 +210,19 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             logger.info("Skipping %s: not a code file", item_path)
             exclude_from_testing(
                 owner_id, repo_id, item_path, target_branch, "not code file", user_name
+            )
+            continue
+
+        # Skip third-party dependency files (e.g. vendor/, node_modules/)
+        if is_dependency_file(item_path):
+            logger.info("Skipping %s: third-party dependency", item_path)
+            exclude_from_testing(
+                owner_id,
+                repo_id,
+                item_path,
+                target_branch,
+                "dependency file",
+                user_name,
             )
             continue
 

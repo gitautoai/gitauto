@@ -1,4 +1,7 @@
+from utils.files.is_dependency_file import DEPENDENCY_DIRS
+
 GREP_EXCLUDE_DIRS = [
+    # IDE / framework caches
     "--exclude-dir=.angular",
     "--exclude-dir=.cache",
     "--exclude-dir=.git",
@@ -14,15 +17,14 @@ GREP_EXCLUDE_DIRS = [
     "--exclude-dir=.turbo",
     "--exclude-dir=.yarn",
     "--exclude-dir=__pycache__",
+    # Build outputs
     "--exclude-dir=bin",
-    "--exclude-dir=bower_components",
     "--exclude-dir=build",
     "--exclude-dir=coverage",
     "--exclude-dir=dist",
-    "--exclude-dir=node_modules",
     "--exclude-dir=obj",
     "--exclude-dir=out",
     "--exclude-dir=target",
-    "--exclude-dir=vendor",
-    "--exclude-dir=venv",
+    # Third-party dependencies
+    *[f"--exclude-dir={d}" for d in DEPENDENCY_DIRS],
 ]

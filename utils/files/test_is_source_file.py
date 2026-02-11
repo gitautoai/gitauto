@@ -40,6 +40,14 @@ def test_type_files_excluded():
     assert is_source_file("enums/status.py") is False
 
 
+def test_dependency_files_excluded():
+    assert is_source_file("vendor/phpoffice/phpspreadsheet/src/File.php") is False
+    assert is_source_file("node_modules/lodash/index.js") is False
+    assert is_source_file("php/lib/vendor/phpoffice/BaseParserClass.php") is False
+    assert is_source_file("venv/lib/python3.13/site-packages/requests/api.py") is False
+    assert is_source_file("Pods/AFNetworking/AFNetworking.m") is False
+
+
 def test_non_code_files_excluded():
     assert is_source_file("README.md") is False
     assert is_source_file("package.json") is False
