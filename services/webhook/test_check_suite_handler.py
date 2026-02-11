@@ -417,11 +417,32 @@ async def test_handle_check_suite_full_workflow(
     # Planning phase (1 call) + Execution phase (2 calls)
     mock_chat_agent.side_effect = [
         # Planning phase - Opus produces plan
-        AgentResult(messages=[], token_input=10, token_output=5, is_completed=False, p=20, is_planned=True),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=20,
+            is_planned=True,
+        ),
         # Execution phase - first iteration
-        AgentResult(messages=[], token_input=50, token_output=25, is_completed=False, p=50, is_planned=False),
+        AgentResult(
+            messages=[],
+            token_input=50,
+            token_output=25,
+            is_completed=False,
+            p=50,
+            is_planned=False,
+        ),
         # Execution phase - second iteration completes
-        AgentResult(messages=[], token_input=30, token_output=20, is_completed=True, p=75, is_planned=False),
+        AgentResult(
+            messages=[],
+            token_input=30,
+            token_output=20,
+            is_completed=True,
+            p=75,
+            is_planned=False,
+        ),
     ]
 
     # Execute
@@ -1026,17 +1047,29 @@ async def test_check_run_handler_token_accumulation(
         # Planning phase - Opus produces plan
         AgentResult(
             messages=[{"role": "user", "content": "test"}],
-            token_input=20, token_output=10, is_completed=False, p=15, is_planned=True,
+            token_input=20,
+            token_output=10,
+            is_completed=False,
+            p=15,
+            is_planned=True,
         ),
         # Execution phase - first iteration
         AgentResult(
             messages=[{"role": "user", "content": "test"}],
-            token_input=80, token_output=45, is_completed=False, p=90, is_planned=False,
+            token_input=80,
+            token_output=45,
+            is_completed=False,
+            p=90,
+            is_planned=False,
         ),
         # Execution phase - second iteration completes
         AgentResult(
             messages=[{"role": "user", "content": "test"}],
-            token_input=80, token_output=45, is_completed=True, p=95, is_planned=False,
+            token_input=80,
+            token_output=45,
+            is_completed=True,
+            p=95,
+            is_planned=False,
         ),
     ]
 
@@ -1271,9 +1304,30 @@ async def test_handle_check_suite_codecov_failure(
     ]
     # Planning phase (1 call) + Execution phase (2 calls)
     mock_chat_agent.side_effect = [
-        AgentResult(messages=[], token_input=10, token_output=5, is_completed=False, p=20, is_planned=True),
-        AgentResult(messages=[], token_input=50, token_output=25, is_completed=False, p=50, is_planned=False),
-        AgentResult(messages=[], token_input=30, token_output=20, is_completed=True, p=75, is_planned=False),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=20,
+            is_planned=True,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=50,
+            token_output=25,
+            is_completed=False,
+            p=50,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=30,
+            token_output=20,
+            is_completed=True,
+            p=75,
+            is_planned=False,
+        ),
     ]
 
     await handle_check_suite(payload)
@@ -1377,9 +1431,30 @@ async def test_handle_check_suite_codecov_no_token(
     mock_get_codecov_token.return_value = None
     # Planning phase (1 call) + Execution phase (2 calls)
     mock_chat_agent.side_effect = [
-        AgentResult(messages=[], token_input=10, token_output=5, is_completed=False, p=20, is_planned=True),
-        AgentResult(messages=[], token_input=50, token_output=25, is_completed=False, p=50, is_planned=False),
-        AgentResult(messages=[], token_input=30, token_output=20, is_completed=True, p=75, is_planned=False),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=20,
+            is_planned=True,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=50,
+            token_output=25,
+            is_completed=False,
+            p=50,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=30,
+            token_output=20,
+            is_completed=True,
+            p=75,
+            is_planned=False,
+        ),
     ]
 
     await handle_check_suite(payload)
@@ -1479,9 +1554,30 @@ async def test_handle_check_suite_max_iterations_forces_verification(
 
     # Planning phase (1 call) + Execution phase (2 calls, both is_completed=False)
     mock_chat_agent.side_effect = [
-        AgentResult(messages=[], token_input=10, token_output=5, is_completed=False, p=20, is_planned=True),
-        AgentResult(messages=[], token_input=50, token_output=25, is_completed=False, p=50, is_planned=False),
-        AgentResult(messages=[], token_input=30, token_output=20, is_completed=False, p=75, is_planned=False),
+        AgentResult(
+            messages=[],
+            token_input=10,
+            token_output=5,
+            is_completed=False,
+            p=20,
+            is_planned=True,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=50,
+            token_output=25,
+            is_completed=False,
+            p=50,
+            is_planned=False,
+        ),
+        AgentResult(
+            messages=[],
+            token_input=30,
+            token_output=20,
+            is_completed=False,
+            p=75,
+            is_planned=False,
+        ),
     ]
 
     await handle_check_suite(payload)

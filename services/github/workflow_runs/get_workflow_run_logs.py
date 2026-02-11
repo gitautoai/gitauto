@@ -33,27 +33,37 @@ def get_workflow_run_logs(owner: str, repo: str, run_id: int, token: str):
 
     # Read the content of the zip file
     with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
-        for log_fname in zf.namelist():
-            # ex: 0_build.txt
-            # ex: build/system.txt
-            # ex: build/1_Set up job.txt
-            # ex: build/2_Run actions_checkout@v4.txt
-            # ex: build/3_Set up Python 3.12.txt
-            # ex: build/4_Install pytest.txt
-            # ex: build/5_Set PYTHONPATH.txt
-            # ex: build/6_Run pytest.txt
-            if log_fname != failed_step_fname:
-                continue
+        all_files = zf.namelist()
 
-            # Remove the first 28 characters from the log content
+        # ex: 0_build.txt (combined job log)
+        # ex: build/system.txt
+        # ex: build/1_Set up job.txt
+        # ex: build/2_Run actions_checkout@v4.txt
+        # ex: build/6_Run pytest.txt (per-step log)
+
+        # Try exact match for the failed step log first
+        if failed_step_fname and failed_step_fname in all_files:
+            target_fname = failed_step_fname
+        else:
+            # Fallback: some workflows only have combined job logs (e.g. "0_php-unit.txt")
+            # without per-step files. Find the combined log by matching "0_{job_name}.txt".
+            job_name = failed_step_fname.split("/")[0] if failed_step_fname else None
+            combined_log = f"0_{job_name}.txt" if job_name else None
+            if combined_log and combined_log in all_files:
+                target_fname = combined_log
+            else:
+                target_fname = None
+
+        if target_fname:
+            # Remove the first 29 characters from the log content
             # E.g. "2024-10-18T23:27:40.6602932Z "
-            with zf.open(name=log_fname) as lf:
+            with zf.open(name=target_fname) as lf:
                 content = lf.read().decode(encoding=UTF8)
                 content = "\n".join(
                     line[29:] if len(line) > 29 else line
                     for line in content.splitlines()
                 )
-                content = f"```GitHub Check Run Log: {log_fname}\n{content}\n```"
+                content = f"```GitHub Check Run Log: {target_fname}\n{content}\n```"
                 return content
 
     return None
