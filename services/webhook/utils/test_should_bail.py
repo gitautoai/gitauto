@@ -10,6 +10,7 @@ BASE_ARGS = cast(
         "owner": "test-owner",
         "repo": "test-repo",
         "issue_number": 42,
+        "pull_number": 43,
         "new_branch": "feature-branch",
         "token": "test-token",
     },
@@ -120,3 +121,32 @@ def test_calls_slack_when_thread_ts_provided(_mock_timeout, _mock_update, mock_s
 def test_skips_slack_when_thread_ts_is_none(_mock_timeout, _mock_update, mock_slack):
     should_bail(**BAIL_KWARGS)
     mock_slack.assert_not_called()
+
+
+@patch("services.webhook.utils.should_bail.check_branch_exists", return_value=True)
+@patch("services.webhook.utils.should_bail.is_pull_request_open")
+@patch(
+    "services.webhook.utils.should_bail.is_lambda_timeout_approaching",
+    return_value=(False, 60.0),
+)
+def test_skips_pr_check_when_pull_number_not_set(
+    _mock_timeout, mock_pr_open, _mock_branch
+):
+    args_without_pull_number = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "issue_number": 42,
+            "new_branch": "feature-branch",
+            "token": "test-token",
+        },
+    )
+    result = should_bail(
+        current_time=1000.0,
+        phase="execution",
+        base_args=args_without_pull_number,
+        slack_thread_ts=None,
+    )
+    assert result is False
+    mock_pr_open.assert_not_called()

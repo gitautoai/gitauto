@@ -21,7 +21,7 @@ def should_bail(
     """Check if the loop should stop. Handles logging, comment updates, and slack."""
     owner = base_args["owner"]
     repo = base_args["repo"]
-    pull_number = base_args["issue_number"]
+    pull_number = base_args.get("pull_number")
     branch = base_args["new_branch"]
     token = base_args["token"]
 
@@ -32,7 +32,7 @@ def should_bail(
         msg = get_timeout_message(elapsed_time, phase)
         logger.error(msg)
 
-    elif not is_pull_request_open(
+    elif pull_number and not is_pull_request_open(
         owner=owner, repo=repo, pull_number=pull_number, token=token
     ):
         msg = f"Process stopped: Pull request #{pull_number} was closed during {phase}."
