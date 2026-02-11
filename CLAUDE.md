@@ -540,20 +540,22 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
     ```bash
     gh pr create --title "PR title" --body "$(cat <<'EOF'
     ...
-    ## Social Media Post
+    ## Social Media Post (GitAuto)
+    ...
+    ## Social Media Post (Wes)
     ...
     EOF
     )" --assignee @me
     ```
 
     - PR title should be technical and descriptive
-    - **Social Media Post section must always be the last section in the PR body**
-    - **Social Media Post section**: Will be used for X/LinkedIn/HN posts. Only include when there are explicit customer benefits. Skip for internal-only changes (refactoring, logging fixes, test improvements, infrastructure updates) that don't affect customers.
-    - When included, Social Media Post must:
+    - **Social Media Post sections must always be the last sections in the PR body**
+    - **Social Media Post sections**: Only include when there are explicit customer benefits or useful dev insights. Skip for internal-only changes (refactoring, logging fixes, test improvements, infrastructure updates) that don't affect customers or teach anything.
+    - Always write TWO posts:
+      - **GitAuto post**: Product voice. Can mention GitAuto. Explains what changed and why it matters for users.
+      - **Wes post**: Personal voice. Written as Wes (the founder) sharing what he debugged/built. Don't emphasize "GitAuto" — no "GitAuto now does X" pattern. More like telling a friend what you worked on today.
+    - Shared guidelines for both posts:
       - Be concise and fit in a tweet (under 280 characters is ideal)
-      - Mention "GitAuto" by name
-      - Explain WHAT changed in practical terms
-      - Highlight WHY it matters - benefits for existing or potential GitAuto customers
       - **Write for developers, not marketers** - our customers are devs who hate corporate speak
       - **NEVER use typical marketing keywords**: "all-in", "doubling down", "sunsetting", "deeper features", "polished product", "game-changer", "seamless"
       - **NEVER frame things negatively**: "unused", "nobody used", "removing unused" - this is embarrassing

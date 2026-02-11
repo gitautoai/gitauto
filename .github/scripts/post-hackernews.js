@@ -1,3 +1,4 @@
+const extractSocialPosts = require("./extract-social-posts");
 const { chromium } = require("playwright");
 
 /**
@@ -27,12 +28,9 @@ async function postHackerNews({ context }) {
 
     // Extract social media post from PR body if present
     const description = context.payload.pull_request.body || "";
-    let socialPost = null;
-    const socialMediaMatch = description.match(/## Social Media Post\s*\n([\s\S]*?)(?=\n##|\n$|$)/i);
-    if (socialMediaMatch) 
-      socialPost = socialMediaMatch[1].trim();
-    
-    // Use social media post if available, otherwise PR title
+    const { gitauto: socialPost } = extractSocialPosts(description);
+
+    // Use GitAuto post if available, otherwise PR title
     const title = (socialPost || context.payload.pull_request.title).substring(0, 80);
     const url = "https://gitauto.ai?utm_source=hackernews&utm_medium=referral"
     await page.fill('input[name="title"]', title);
