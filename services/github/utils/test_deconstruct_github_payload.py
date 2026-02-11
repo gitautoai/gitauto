@@ -19,6 +19,7 @@ def create_mock_payload(
     default_branch="main",
     issue_number=123,
     issue_title="Test Issue",
+    assignees=None,
 ) -> GitHubLabeledPayload:
     return cast(
         GitHubLabeledPayload,
@@ -29,6 +30,7 @@ def create_mock_payload(
                 "body": issue_body,
                 "number": issue_number,
                 "title": issue_title,
+                "assignees": assignees or [],
             },
             "repository": {
                 "id": 456,
@@ -620,3 +622,42 @@ def test_deconstruct_github_payload_target_branch_used(
 
     # Verify target branch is used
     assert base_args["base_branch"] == "develop"
+
+
+@patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
+@patch("services.github.utils.deconstruct_github_payload.get_repository")
+@patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
+@patch("services.github.utils.deconstruct_github_payload.extract_urls")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_parent_issue")
+@patch("services.github.utils.deconstruct_github_payload.generate_branch_name")
+def test_deconstruct_github_payload_schedule_trigger_uses_assignees_as_reviewers(
+    mock_generate_branch_name,
+    mock_get_parent_issue,
+    mock_get_user_public_email,
+    mock_extract_urls,
+    mock_check_branch_exists,
+    mock_get_repository,
+    mock_get_installation_access_token,
+):
+    """Test that schedule-triggered issues use assignees as reviewers when sender/issuer are bots."""
+    # Setup mocks
+    mock_get_installation_access_token.return_value = "test_token"
+    mock_get_repository.return_value = {"target_branch": None}
+    mock_check_branch_exists.return_value = False
+    mock_extract_urls.return_value = ([], [])
+    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_parent_issue.return_value = None
+    mock_generate_branch_name.return_value = "gitauto/issue-123-20241225-143000-ABCD"
+
+    # Schedule trigger: both sender and issuer are bots, but issue has a human assignee
+    payload = create_mock_payload(
+        issuer_name="gitauto-ai[bot]",
+        sender_name="gitauto-ai[bot]",
+        assignees=[{"login": "takamori-san"}],
+    )
+
+    base_args, _ = deconstruct_github_payload(payload)
+
+    # Verify the human assignee becomes a reviewer even though sender/issuer are bots
+    assert base_args["reviewers"] == ["takamori-san"]

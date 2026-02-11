@@ -25,6 +25,8 @@ def deconstruct_github_payload(
     issue_title = issue["title"]
     issue_body = issue["body"] or ""
     issuer_name = issue["user"]["login"]
+    assignees = issue.get("assignees", [])
+    assignee_names = [a["login"] for a in assignees]
 
     # Extract repository related variables
     repo = payload["repository"]
@@ -64,8 +66,14 @@ def deconstruct_github_payload(
     sender_id = payload["sender"]["id"]
     sender_name = payload["sender"]["login"]
     is_automation = sender_id == GITHUB_APP_USER_ID
+
+    # Build reviewers from sender, issuer, and issue assignees (for schedule triggers where both sender and issuer are bots, assignees provide the human reviewer)
     reviewers = list(
-        set(name for name in (sender_name, issuer_name) if "[bot]" not in name)
+        set(
+            name
+            for name in (*assignee_names, sender_name, issuer_name)
+            if "[bot]" not in name
+        )
     )
 
     # Extract other information
