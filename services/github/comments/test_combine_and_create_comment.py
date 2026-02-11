@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 from faker import Faker
 
+from config import CREDIT_USAGE_USD
 from services.github.comments.combine_and_create_comment import (
     combine_and_create_comment,
 )
@@ -108,14 +109,17 @@ def test_combine_and_create_comment_credit_user(
     mock_product_id,
     mock_availability_status,
 ):
+    balance = CREDIT_USAGE_USD * 10
     mock_availability_status.update(
         {
             "billing_type": "credit",
-            "credit_balance_usd": 50,
+            "credit_balance_usd": balance,
             "requests_left": None,
         }
     )
-    mock_request_issue_comment.return_value = "\n\n@test-sender, You have $50 credits."
+    mock_request_issue_comment.return_value = (
+        f"\n\n@test-sender, You have ${balance} credits."
+    )
 
     owner_id = fake.random_int(min=1000, max=99999)
     owner_name = fake.user_name()
@@ -142,7 +146,7 @@ def test_combine_and_create_comment_credit_user(
         sender_name=sender_name,
         end_date=datetime(2024, 12, 31, 23, 59, 59),
         is_credit_user=True,
-        credit_balance_usd=50,
+        credit_balance_usd=balance,
     )
 
 

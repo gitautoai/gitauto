@@ -432,6 +432,7 @@ class Repositories(TypedDict):
     trigger_on_pr_change: bool
     schedule_execution_count: int
     schedule_interval_minutes: int
+    test_dir_prefixes: Any | None
 
 
 class RepositoriesInsert(TypedDict):
@@ -466,6 +467,7 @@ class RepositoriesInsert(TypedDict):
     trigger_on_pr_change: bool
     schedule_execution_count: int
     schedule_interval_minutes: int
+    test_dir_prefixes: NotRequired[Any | None]
 
 
 class RepositoryFeatures(TypedDict):
