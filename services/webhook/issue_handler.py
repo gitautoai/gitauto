@@ -332,7 +332,10 @@ async def create_pr_from_issue(
 
     # Extract target implementation file and find test file candidates
     impl_file_path = get_impl_file_from_issue_title(issue_title)
-    test_file_path_candidates = guess_test_file_path(impl_file_path)
+    test_dir_prefixes = repo_settings["test_dir_prefixes"] if repo_settings else []
+    test_file_path_candidates = guess_test_file_path(
+        impl_file_path, test_dir_prefixes=test_dir_prefixes
+    )
 
     # Skip fetching impl_file if already in reference_contents (avoids duplicate)
     impl_file_content = ""
@@ -434,6 +437,8 @@ async def create_pr_from_issue(
         user_input_obj["target_dir"] = target_dir
     if target_dir_files:
         user_input_obj["target_dir_files"] = target_dir_files
+    if test_dir_prefixes:
+        user_input_obj["test_dir_prefixes"] = test_dir_prefixes
     user_input = dumps(user_input_obj)
 
     # Create messages - each file content as separate message for easy deduplication

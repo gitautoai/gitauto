@@ -409,9 +409,9 @@ class Repositories(TypedDict):
     use_screenshots: bool | None
     production_url: str | None
     local_port: int | None
-    startup_commands: Any | None
-    web_urls: Any | None
-    file_paths: Any | None
+    startup_commands: list[str] | None
+    web_urls: list[str] | None
+    file_paths: list[str] | None
     repo_rules: str | None
     file_count: int
     blank_lines: int
@@ -432,7 +432,7 @@ class Repositories(TypedDict):
     trigger_on_pr_change: bool
     schedule_execution_count: int
     schedule_interval_minutes: int
-    test_dir_prefixes: Any | None
+    test_dir_prefixes: list[str]
 
 
 class RepositoriesInsert(TypedDict):
@@ -444,9 +444,9 @@ class RepositoriesInsert(TypedDict):
     use_screenshots: NotRequired[bool | None]
     production_url: NotRequired[str | None]
     local_port: NotRequired[int | None]
-    startup_commands: NotRequired[Any | None]
-    web_urls: NotRequired[Any | None]
-    file_paths: NotRequired[Any | None]
+    startup_commands: NotRequired[list[str] | None]
+    web_urls: NotRequired[list[str] | None]
+    file_paths: NotRequired[list[str] | None]
     repo_rules: NotRequired[str | None]
     file_count: int
     blank_lines: int
@@ -467,7 +467,7 @@ class RepositoriesInsert(TypedDict):
     trigger_on_pr_change: bool
     schedule_execution_count: int
     schedule_interval_minutes: int
-    test_dir_prefixes: NotRequired[Any | None]
+    test_dir_prefixes: list[str]
 
 
 class RepositoryFeatures(TypedDict):
@@ -548,7 +548,7 @@ class Usage(TypedDict):
     source: str
     pr_number: int | None
     is_test_passed: bool
-    retry_workflow_id_hash_pairs: Any | None
+    retry_workflow_id_hash_pairs: list[str] | None
     is_merged: bool
     trigger: str
     original_error_log: str | None
@@ -575,7 +575,7 @@ class UsageInsert(TypedDict):
     source: str
     pr_number: NotRequired[int | None]
     is_test_passed: bool
-    retry_workflow_id_hash_pairs: NotRequired[Any | None]
+    retry_workflow_id_hash_pairs: NotRequired[list[str] | None]
     is_merged: bool
     trigger: str
     original_error_log: NotRequired[str | None]
