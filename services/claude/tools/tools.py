@@ -22,6 +22,7 @@ from services.github.search.search_local_file_contents import (
 from services.github.search.search_remote_file_contents import (
     search_remote_file_contents,
 )
+from services.github.trees.create_directory import CREATE_DIRECTORY, create_directory
 from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.claude.tools.properties import FILE_PATH
 from utils.prompts.diff import DIFF_DESCRIPTION
@@ -228,6 +229,7 @@ CREATE_COMMENT: ToolUnionParam = {
 _TOOLS_BASE: list[ToolUnionParam] = [
     APPLY_DIFF_TO_FILE,
     CREATE_COMMENT,
+    CREATE_DIRECTORY,
     DELETE_FILE,
     GET_FILE_TREE_LIST,
     MOVE_FILE,
@@ -260,6 +262,7 @@ tools_to_call: dict[str, Any] = {
     # GitHub
     "apply_diff_to_file": apply_diff_to_file,
     "create_comment": create_comment,
+    "create_directory": create_directory,
     "delete_file": delete_file,
     "get_file_tree_list": get_file_tree_list,
     "get_remote_file_content": get_remote_file_content,
