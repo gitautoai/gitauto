@@ -74,7 +74,7 @@ EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
 ENV = get_env_var(name="ENV")
 EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
-CREDIT_USAGE_USD = 5
+CREDIT_USAGE_USD = 7
 CREDIT_AMOUNTS_USD = {
     "usage": -CREDIT_USAGE_USD,
     "grant": CREDIT_USAGE_USD * 3,
