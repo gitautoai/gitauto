@@ -88,7 +88,7 @@ def test_delete_coverages_by_paths_batches_large_lists():
         mock_table.in_.return_value = mock_table
         mock_table.execute.return_value = MagicMock(data=[{"full_path": "file.py"}])
 
-        file_paths = [f"path/to/file{i}.py" for i in range(SUPABASE_BATCH_SIZE + 500)]
+        file_paths = [f"path/to/file{i}.py" for i in range(SUPABASE_BATCH_SIZE + 50)]
 
         delete_coverages_by_paths(
             owner_id=123,
@@ -100,7 +100,7 @@ def test_delete_coverages_by_paths_batches_large_lists():
         first_batch = mock_table.in_.call_args_list[0][0][1]
         second_batch = mock_table.in_.call_args_list[1][0][1]
         assert len(first_batch) == SUPABASE_BATCH_SIZE
-        assert len(second_batch) == 500
+        assert len(second_batch) == 50
 
 
 class TestDeleteCoveragesByPathsIntegration:
@@ -125,7 +125,7 @@ class TestDeleteCoveragesByPathsIntegration:
     def test_delete_with_more_than_batch_size(self):
         file_paths_large = [
             f"src/components/feature{i}/index.tsx"
-            for i in range(SUPABASE_BATCH_SIZE + 500)
+            for i in range(SUPABASE_BATCH_SIZE + 50)
         ]
         result = delete_coverages_by_paths(
             owner_id=999999, repo_id=999999, file_paths=file_paths_large
