@@ -11,8 +11,7 @@ from anthropic.types import MessageParam
 
 # Local imports
 from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
-from constants.agent import MAX_ITERATIONS, MAX_PLANNING_ITERATIONS
-from constants.claude import CLAUDE_OPUS_4_6
+from constants.agent import MAX_ITERATIONS
 from constants.general import MAX_GITAUTO_COMMITS_PER_PR
 from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE
 from services.agents.verify_task_is_ready import verify_task_is_ready
@@ -47,7 +46,6 @@ from services.github.token.get_installation_token import get_installation_access
 from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
-from services.claude.tools.planning import TOOLS_FOR_PLANNING
 from services.claude.tools.tools import TOOLS_FOR_PRS
 from services.slack.slack_notify import slack_notify
 from services.supabase.check_suites.insert_check_suite import insert_check_suite
@@ -577,35 +575,6 @@ async def handle_check_suite(
 
     system_message = create_system_message(trigger=trigger, repo_settings=repo_settings)
 
-    # Planning phase: Opus diagnoses the problem
-    for _iteration in range(MAX_PLANNING_ITERATIONS):
-        if should_bail(
-            current_time=current_time,
-            phase="planning",
-            base_args=base_args,
-            slack_thread_ts=thread_ts,
-        ):
-            break
-
-        result = await chat_with_agent(
-            messages=messages,
-            system_message=system_message,
-            base_args=base_args,
-            p=p,
-            log_messages=log_messages,
-            usage_id=usage_id,
-            tools=TOOLS_FOR_PLANNING,
-            model_id=CLAUDE_OPUS_4_6,
-        )
-        messages = result.messages
-        p = result.p
-        total_token_input += result.token_input
-        total_token_output += result.token_output
-
-        if result.is_planned:
-            break
-
-    # Execution phase: Sonnet writes code
     for _iteration in range(MAX_ITERATIONS):
         if should_bail(
             current_time=current_time,

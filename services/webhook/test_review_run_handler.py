@@ -119,18 +119,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     mock_update_comment.return_value = None
     mock_create_empty_commit.return_value = None
 
-    # Planning phase: Opus produces plan, then execution phase: Sonnet completes
     mock_chat_with_agent.side_effect = [
-        # Planning phase
-        AgentResult(
-            messages=[],
-            token_input=10,
-            token_output=5,
-            is_completed=False,
-            p=20,
-            is_planned=True,
-        ),
-        # Execution phase - 120 input, 80 output tokens
         AgentResult(
             messages=[
                 {"role": "user", "content": "review"},
@@ -147,11 +136,10 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     # Execute the function
     await handle_review_run(mock_review_comment_payload)
 
-    # Verify chat_with_agent was called twice (planning + execution)
-    assert mock_chat_with_agent.call_count == 2
+    assert mock_chat_with_agent.call_count == 1
 
     # Verify execution call includes usage_id for API request tracking
-    execution_call_kwargs = mock_chat_with_agent.call_args_list[1].kwargs
+    execution_call_kwargs = mock_chat_with_agent.call_args_list[0].kwargs
     assert execution_call_kwargs["usage_id"] == 777
     assert "system_message" in execution_call_kwargs
     assert isinstance(execution_call_kwargs["system_message"], str)
@@ -165,10 +153,9 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     mock_update_usage.assert_called_once()
     usage_call_kwargs = mock_update_usage.call_args.kwargs
 
-    # Verifies token accumulation across both phases (planning + execution)
     assert usage_call_kwargs["usage_id"] == 777
-    assert usage_call_kwargs["token_input"] == 130  # 10 + 120
-    assert usage_call_kwargs["token_output"] == 85  # 5 + 80
+    assert usage_call_kwargs["token_input"] == 120
+    assert usage_call_kwargs["token_output"] == 80
     assert usage_call_kwargs["is_completed"] is True
 
     # Verify other expected parameters
@@ -245,16 +232,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
     )
 
     mock_chat_with_agent.side_effect = [
-        # Planning phase
-        AgentResult(
-            messages=[],
-            token_input=10,
-            token_output=5,
-            is_completed=False,
-            p=20,
-            is_planned=True,
-        ),
-        # Execution phase - MAX_ITERATIONS=2, both return is_completed=False
+        # MAX_ITERATIONS=2, both return is_completed=False
         AgentResult(
             messages=[{"role": "user", "content": "review"}],
             token_input=120,
@@ -275,5 +253,5 @@ async def test_review_run_handler_max_iterations_forces_verification(
 
     await handle_review_run(mock_review_comment_payload)
 
-    assert mock_chat_with_agent.call_count == 3  # 1 planning + 2 execution
+    assert mock_chat_with_agent.call_count == 2
     mock_verify_task_is_complete.assert_called_once()

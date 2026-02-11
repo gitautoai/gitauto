@@ -233,6 +233,8 @@ async def test_handle_check_suite_skips_when_comment_exists(
 @patch("services.webhook.check_suite_handler.should_bail")
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.verify_task_is_complete")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
@@ -242,6 +244,8 @@ async def test_handle_check_suite_race_condition_prevention(
     _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
+    _mock_verify_task,
+    _mock_create_empty_commit,
     mock_update_usage,
     mock_update_comment,
     mock_should_bail,
@@ -295,8 +299,8 @@ async def test_handle_check_suite_race_condition_prevention(
     mock_get_retry_pairs.return_value = []
     mock_update_retry_pairs.return_value = None
 
-    # Skip planning phase, proceed in execution phase (where race check happens)
-    mock_should_bail.side_effect = [True, False]
+    # Let execution loop proceed to race condition check
+    mock_should_bail.return_value = False
 
     # Setup race condition detection - older active request found
     mock_check_older_active.return_value = {
@@ -414,18 +418,7 @@ async def test_handle_check_suite_full_workflow(
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
 
-    # Planning phase (1 call) + Execution phase (2 calls)
     mock_chat_agent.side_effect = [
-        # Planning phase - Opus produces plan
-        AgentResult(
-            messages=[],
-            token_input=10,
-            token_output=5,
-            is_completed=False,
-            p=20,
-            is_planned=True,
-        ),
-        # Execution phase - first iteration
         AgentResult(
             messages=[],
             token_input=50,
@@ -434,7 +427,6 @@ async def test_handle_check_suite_full_workflow(
             p=50,
             is_planned=False,
         ),
-        # Execution phase - second iteration completes
         AgentResult(
             messages=[],
             token_input=30,
@@ -457,22 +449,15 @@ async def test_handle_check_suite_full_workflow(
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
     mock_get_retry_pairs.assert_called_once()
-    assert mock_chat_agent.call_count == 3  # 1 planning + 2 execution
+    assert mock_chat_agent.call_count == 2
 
-    # Verify planning phase call has system_message and model_id
-    planning_call = mock_chat_agent.call_args_list[0]
-    assert "system_message" in planning_call.kwargs
-    assert isinstance(planning_call.kwargs["system_message"], str)
-
-    # Verify baseline_tsc_errors is set on base_args
-    base_args = planning_call.kwargs["base_args"]
-    assert "baseline_tsc_errors" in base_args
-    assert isinstance(base_args["baseline_tsc_errors"], set)
-
-    # Verify execution phase call has system_message
-    execution_call = mock_chat_agent.call_args_list[1]
+    # Verify execution call has system_message and baseline_tsc_errors
+    execution_call = mock_chat_agent.call_args_list[0]
     assert "system_message" in execution_call.kwargs
     assert isinstance(execution_call.kwargs["system_message"], str)
+    base_args = execution_call.kwargs["base_args"]
+    assert "baseline_tsc_errors" in base_args
+    assert isinstance(base_args["baseline_tsc_errors"], set)
 
 
 @pytest.mark.asyncio
@@ -1042,18 +1027,7 @@ async def test_check_run_handler_token_accumulation(
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
 
-    # Planning phase (1 call) + Execution phase (2 calls)
     mock_chat_agent.side_effect = [
-        # Planning phase - Opus produces plan
-        AgentResult(
-            messages=[{"role": "user", "content": "test"}],
-            token_input=20,
-            token_output=10,
-            is_completed=False,
-            p=15,
-            is_planned=True,
-        ),
-        # Execution phase - first iteration
         AgentResult(
             messages=[{"role": "user", "content": "test"}],
             token_input=80,
@@ -1062,7 +1036,6 @@ async def test_check_run_handler_token_accumulation(
             p=90,
             is_planned=False,
         ),
-        # Execution phase - second iteration completes
         AgentResult(
             messages=[{"role": "user", "content": "test"}],
             token_input=80,
@@ -1076,16 +1049,15 @@ async def test_check_run_handler_token_accumulation(
     # Execute
     await handle_check_suite(payload)
 
-    # Verify chat_with_agent was called three times (1 planning + 2 execution)
-    assert mock_chat_agent.call_count == 3
+    assert mock_chat_agent.call_count == 2
 
     # Verify update_usage was called with accumulated tokens
     mock_update_usage.assert_called_once()
     call_kwargs = mock_update_usage.call_args.kwargs
 
     assert call_kwargs["usage_id"] == 888
-    assert call_kwargs["token_input"] == 180  # Three calls: 20 + 80 + 80
-    assert call_kwargs["token_output"] == 100  # Three calls: 10 + 45 + 45
+    assert call_kwargs["token_input"] == 160  # Two calls: 80 + 80
+    assert call_kwargs["token_output"] == 90  # Two calls: 45 + 45
 
 
 @pytest.mark.asyncio
@@ -1105,7 +1077,9 @@ async def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_suite_handler.clean_logs")
 @patch("services.webhook.check_suite_handler.check_older_active_test_failure_request")
 @patch("services.webhook.check_suite_handler.update_usage")
-@patch("services.webhook.check_suite_handler.should_bail")
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.verify_task_is_complete")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
@@ -1115,7 +1089,9 @@ async def test_handle_check_suite_skips_duplicate_older_request(
     _mock_git_clone,
     _mock_prepare_repo,
     _mock_start_async,
-    mock_should_bail,
+    _mock_should_bail,
+    _mock_verify_task,
+    _mock_create_empty_commit,
     mock_update_usage,
     mock_check_older_active,
     mock_clean_logs,
@@ -1170,8 +1146,6 @@ async def test_handle_check_suite_skips_duplicate_older_request(
     mock_get_logs.return_value = "Test failure log content"
     mock_get_retry_pairs.return_value = []
     mock_clean_logs.return_value = "Cleaned test failure log"
-    # Skip planning phase, proceed in execution phase (where race check happens)
-    mock_should_bail.side_effect = [True, False]
     mock_check_older_active.return_value = {
         "id": 888,
         "created_at": "2025-09-23T10:00:00Z",
@@ -1302,16 +1276,7 @@ async def test_handle_check_suite_codecov_failure(
             "partially_covered_lines": [25],
         }
     ]
-    # Planning phase (1 call) + Execution phase (2 calls)
     mock_chat_agent.side_effect = [
-        AgentResult(
-            messages=[],
-            token_input=10,
-            token_output=5,
-            is_completed=False,
-            p=20,
-            is_planned=True,
-        ),
         AgentResult(
             messages=[],
             token_input=50,
@@ -1340,7 +1305,7 @@ async def test_handle_check_suite_codecov_failure(
         codecov_token="codecov_token_123",
         service="github",
     )
-    assert mock_chat_agent.call_count == 3  # 1 planning + 2 execution
+    assert mock_chat_agent.call_count == 2
 
 
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
@@ -1429,16 +1394,7 @@ async def test_handle_check_suite_codecov_no_token(
     ]
     mock_get_retry_pairs.return_value = []
     mock_get_codecov_token.return_value = None
-    # Planning phase (1 call) + Execution phase (2 calls)
     mock_chat_agent.side_effect = [
-        AgentResult(
-            messages=[],
-            token_input=10,
-            token_output=5,
-            is_completed=False,
-            p=20,
-            is_planned=True,
-        ),
         AgentResult(
             messages=[],
             token_input=50,
@@ -1460,7 +1416,7 @@ async def test_handle_check_suite_codecov_no_token(
     await handle_check_suite(payload)
 
     mock_get_codecov_token.assert_called_once_with(11111)
-    assert mock_chat_agent.call_count == 3  # 1 planning + 2 execution
+    assert mock_chat_agent.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -1552,16 +1508,7 @@ async def test_handle_check_suite_max_iterations_forces_verification(
         message="Task completed.",
     )
 
-    # Planning phase (1 call) + Execution phase (2 calls, both is_completed=False)
     mock_chat_agent.side_effect = [
-        AgentResult(
-            messages=[],
-            token_input=10,
-            token_output=5,
-            is_completed=False,
-            p=20,
-            is_planned=True,
-        ),
         AgentResult(
             messages=[],
             token_input=50,
@@ -1582,5 +1529,5 @@ async def test_handle_check_suite_max_iterations_forces_verification(
 
     await handle_check_suite(payload)
 
-    assert mock_chat_agent.call_count == 3  # 1 planning + 2 execution
+    assert mock_chat_agent.call_count == 2
     mock_verify_task_is_complete.assert_called_once()
