@@ -10,8 +10,7 @@ from anthropic.types import MessageParam
 
 # Local imports
 from config import GITHUB_APP_USER_NAME
-from constants.agent import MAX_ITERATIONS, MAX_PLANNING_ITERATIONS
-from constants.claude import CLAUDE_OPUS_4_6
+from constants.agent import MAX_ITERATIONS
 from payloads.github.pull_request_review_comment.types import (
     PullRequestReviewCommentPayload,
 )
@@ -34,7 +33,6 @@ from services.github.pulls.get_review_thread_comments import get_review_thread_c
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree_list import get_file_tree_list
 from services.github.types.github_types import ReviewBaseArgs
-from services.claude.tools.planning import TOOLS_FOR_PLANNING
 from services.claude.tools.tools import TOOLS_FOR_PRS
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
@@ -295,35 +293,6 @@ async def handle_review_run(
 
     system_message = create_system_message(trigger=trigger, repo_settings=repo_settings)
 
-    # Planning phase: Opus diagnoses the problem
-    for _iteration in range(MAX_PLANNING_ITERATIONS):
-        if should_bail(
-            current_time=current_time,
-            phase="planning",
-            base_args=base_args,
-            slack_thread_ts=None,
-        ):
-            break
-
-        result = await chat_with_agent(
-            messages=messages,
-            system_message=system_message,
-            base_args=base_args,
-            p=p,
-            log_messages=log_messages,
-            usage_id=usage_id,
-            tools=TOOLS_FOR_PLANNING,
-            model_id=CLAUDE_OPUS_4_6,
-        )
-        messages = result.messages
-        p = result.p
-        total_token_input += result.token_input
-        total_token_output += result.token_output
-
-        if result.is_planned:
-            break
-
-    # Execution phase: Sonnet writes code
     for _iteration in range(MAX_ITERATIONS):
         if should_bail(
             current_time=current_time,

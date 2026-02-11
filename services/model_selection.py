@@ -5,10 +5,12 @@ from constants.claude import (
     CLAUDE_MODEL_ID_37,
     CLAUDE_MODEL_ID_40,
     CLAUDE_MODEL_ID_45,
+    CLAUDE_OPUS_4_6,
 )
 from utils.logging.logging_config import logger
 
 MODEL_CHAIN = [
+    CLAUDE_OPUS_4_6,
     CLAUDE_MODEL_ID_45,
     CLAUDE_MODEL_ID_40,
     CLAUDE_MODEL_ID_37,
