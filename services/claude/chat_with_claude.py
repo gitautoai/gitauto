@@ -14,7 +14,6 @@ from services.claude.exceptions import (
     ClaudeAuthenticationError,
     ClaudeOverloadedError,
 )
-from services.claude.remove_old_assistant_text import remove_old_assistant_text
 from services.claude.remove_outdated_apply_diff_to_file_attempts_and_results import (
     remove_outdated_apply_diff_to_file_attempts_and_results,
 )
@@ -34,7 +33,6 @@ def chat_with_claude(
     # https://docs.anthropic.com/en/api/client-sdks
     # Apply message optimization functions to save tokens
     messages = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
-    messages = remove_old_assistant_text(messages)
 
     # Check token count and delete messages if necessary
     buffer = 4096
