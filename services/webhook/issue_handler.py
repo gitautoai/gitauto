@@ -516,13 +516,12 @@ async def create_pr_from_issue(
     )
 
     # Notify agent of auto-fixes and remaining errors (in timeline order)
-    allowed_to_edit_files = list(validation_result.files_with_errors)
+    allowed_to_edit_files = set(validation_result.files_with_errors)
 
     # If uncovered code is untestable, allow editing impl file and notify agent
     if untestable_code_info and untestable_code_info.result:
         untestable_reason = untestable_code_info.reason
-        if impl_file_path not in allowed_to_edit_files:
-            allowed_to_edit_files.append(impl_file_path)
+        allowed_to_edit_files.add(impl_file_path)
         untestable_msg = f"Untestable code in `{impl_file_path}`: {untestable_reason}"
         messages.append({"role": "user", "content": untestable_msg})
         logger.info("Added untestable code message for %s", impl_file_path)

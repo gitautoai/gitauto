@@ -25,6 +25,7 @@ class VerifyTaskIsCompleteResult:
     success: bool
     message: str
     fixes_applied: list[str] = field(default_factory=list)
+    error_files: set[str] = field(default_factory=set)
 
 
 @handle_exceptions(
@@ -83,6 +84,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
 
     formatting_applied: list[str] = []
     remaining_errors: list[str] = []
+    error_files: set[str] = set()
     for file_path in js_ts_files:
         content = get_raw_content(
             owner=owner, repo=repo, file_path=file_path, ref=new_branch, token=token
@@ -106,6 +108,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
             formatting_applied.append(f"- {file_path}: Prettier")
         if prettier_result.error:
             remaining_errors.append(f"- {file_path}: Prettier: {prettier_result.error}")
+            error_files.add(file_path)
 
         eslint_result = await run_eslint_fix(
             base_args=base_args,
@@ -125,6 +128,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
         ]
         if eslint_all:
             remaining_errors.append(f"- {file_path}: ESLint: {'; '.join(eslint_all)}")
+            error_files.add(file_path)
 
     if formatting_applied:
         logger.info("Applied formatting to files:\n%s", "\n".join(formatting_applied))
@@ -141,6 +145,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
             if err_file in pr_file_set:
                 # Always report errors in PR files (agent must fix these)
                 remaining_errors.append(f"- tsc: {err}")
+                error_files.add(err_file)
             elif err in baseline:
                 # Pre-existing error in non-PR file, skip
                 unrelated_tsc_errors.append(err)
@@ -159,6 +164,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
     if jest_result.errors:
         for err in jest_result.errors:
             remaining_errors.append(f"- {jest_result.runner_name}: {err}")
+        error_files.update(jest_result.error_files)
 
     if remaining_errors:
         error_msg = "\n".join(remaining_errors)
@@ -167,6 +173,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
             success=False,
             message=f"Task NOT complete. Fix these errors:\n{error_msg}",
             fixes_applied=formatting_applied,
+            error_files=error_files,
         )
 
     return VerifyTaskIsCompleteResult(

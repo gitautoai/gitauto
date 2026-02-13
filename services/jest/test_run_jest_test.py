@@ -348,3 +348,61 @@ async def test_run_jest_test_uses_test_unit_script(
     cmd = mock_subprocess.call_args[0][0]
     assert "run" in cmd
     assert "test:unit" in cmd
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_exit_code_1_all_pass_treated_as_success(
+    mock_exists, mock_subprocess
+):
+    """When jest exits with code 1 but stdout shows all tests PASS (no FAIL),
+    treat as success. Without this, the agent loops for 900s trying to fix it,
+    and CI failure re-triggers GitAuto - burning more Lambda time and cost."""
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(
+        returncode=1,
+        stdout="PASS src/index.test.ts\n  Test suite\n    ✓ test 1\n    ✓ test 2\n\nTest Suites: 1 passed, 1 total",
+        stderr="",
+    )
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    assert result.success is True
+    assert result.errors == []
+    assert result.error_files == set()
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_exit_code_1_with_fail_treated_as_failure(
+    mock_exists, mock_subprocess
+):
+    """When jest exits with code 1 and stdout contains FAIL, treat as real failure."""
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(
+        returncode=1,
+        stdout="FAIL src/index.test.ts\n  ● Test suite failed to run\n\nTest Suites: 1 failed, 1 total",
+        stderr="",
+    )
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    assert result.success is False
+    assert len(result.errors) > 0
+    assert "src/index.test.ts" in result.error_files

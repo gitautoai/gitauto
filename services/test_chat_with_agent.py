@@ -31,6 +31,7 @@ async def test_chat_with_agent_passes_usage_id_to_claude(
         base_args=base_args,
         tools=[],
         usage_id=123,
+        allowed_to_edit_files=set(),
         model_id=None,
     )
 
@@ -63,6 +64,7 @@ async def test_chat_with_agent_returns_token_counts(
         base_args=base_args,
         tools=[],
         usage_id=789,
+        allowed_to_edit_files=set(),
         model_id=None,
     )
 
@@ -108,6 +110,7 @@ async def test_get_remote_file_content_start_line_end_line_logging(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -168,6 +171,7 @@ async def test_delete_file_logging(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -231,6 +235,7 @@ async def test_move_file_logging(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -292,6 +297,7 @@ async def test_replace_remote_file_content_handles_new_content_arg_name(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -344,6 +350,7 @@ async def test_unavailable_tool_sends_slack_notification(
                 system_message="test system message",
                 base_args=base_args,
                 tools=[],
+                allowed_to_edit_files=set(),
                 model_id=None,
             )
 
@@ -403,6 +410,7 @@ async def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
             base_args=base_args,
             tools=[],
             restrict_edit_to_target_test_file_only=True,
+            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -453,6 +461,7 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
         system_message="test system message",
         base_args=base_args,
         tools=[],
+        allowed_to_edit_files=set(),
         model_id=None,
     )
 
@@ -507,6 +516,7 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
         system_message="test system message",
         base_args=base_args,
         tools=[],
+        allowed_to_edit_files=set(),
         model_id=None,
     )
 
@@ -556,6 +566,7 @@ async def test_regular_tool_returns_is_completed_false(
                 system_message="test system message",
                 base_args=base_args,
                 tools=[],
+                allowed_to_edit_files=set(),
                 model_id=None,
             )
 
@@ -586,6 +597,7 @@ async def test_no_tool_call_returns_is_completed_false(
         system_message="test system message",
         base_args=base_args,
         tools=[],
+        allowed_to_edit_files=set(),
         model_id=None,
     )
 
@@ -640,6 +652,7 @@ async def test_file_write_result_success_includes_formatted_content(
             base_args=base_args,
             tools=[],
             allow_edit_any_file=True,
+            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -700,6 +713,7 @@ async def test_file_write_result_failure_returns_message_only(
             base_args=base_args,
             tools=[],
             allow_edit_any_file=True,
+            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -759,6 +773,7 @@ async def test_file_move_result_returns_message(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -812,6 +827,7 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -868,6 +884,7 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
             system_message="test system message",
             base_args=base_args,
             tools=[],
+            allowed_to_edit_files=set(),
             model_id=None,
         )
 

@@ -555,6 +555,7 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
       - **GitAuto post**: Product voice. Can mention GitAuto. Explains what changed and why it matters for users.
       - **Wes post**: Personal voice. Written as Wes (the founder) sharing what he debugged/built. Don't emphasize "GitAuto" — no "GitAuto now does X" pattern. More like telling a friend what you worked on today.
     - Shared guidelines for both posts:
+      - **NEVER use em dashes (—)** in social media posts. Use regular dashes (-) or rewrite the sentence instead.
       - Be concise and fit in a tweet (under 280 characters is ideal)
       - **Write for developers, not marketers** - our customers are devs who hate corporate speak
       - **NEVER use typical marketing keywords**: "all-in", "doubling down", "sunsetting", "deeper features", "polished product", "game-changer", "seamless"

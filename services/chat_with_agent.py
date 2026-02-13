@@ -49,7 +49,7 @@ async def chat_with_agent(
     usage_id: int | None = None,
     allow_edit_any_file: bool = False,
     restrict_edit_to_target_test_file_only: bool = True,
-    allowed_to_edit_files: list[str] | None = None,
+    allowed_to_edit_files: set[str],
     model_id: str | None,
 ):
     if log_messages is None:
@@ -178,7 +178,7 @@ async def chat_with_agent(
 
             validation_error = None
             is_in_allowed_to_edit_files = any(
-                file_path.endswith(f) for f in (allowed_to_edit_files or [])
+                file_path.endswith(f) for f in allowed_to_edit_files
             )
             is_target = is_target_test_file(file_path, base_args)
             if (
@@ -270,6 +270,12 @@ async def chat_with_agent(
                 )
             else:
                 logger.warning(tool_message)
+                # Add files with errors to allowed_to_edit_files so the agent can fix them in the next iteration (e.g., ESLint errors in impl files that were formatted by Prettier).
+                if tool_result.error_files:
+                    new_files = tool_result.error_files - allowed_to_edit_files
+                    for f in new_files:
+                        logger.info("Added %s to allowed_to_edit_files", f)
+                    allowed_to_edit_files.update(new_files)
             return AgentResult(
                 messages=messages,
                 token_input=token_input,

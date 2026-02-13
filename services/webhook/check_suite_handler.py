@@ -612,6 +612,7 @@ async def handle_check_suite(
             log_messages=log_messages,
             usage_id=usage_id,
             tools=TOOLS_FOR_PRS,
+            allowed_to_edit_files=set(),
             model_id=None,
         )
         messages = result.messages
