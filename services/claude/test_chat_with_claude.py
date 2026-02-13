@@ -25,11 +25,13 @@ def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
         messages=messages, system_content=system_content, tools=tools, usage_id=123
     )
 
-    assert result[0]["role"] == "assistant"
-    content = cast(list, result[0]["content"])
+    assistant_message, tool_calls, token_input, token_output = result
+    assert assistant_message["role"] == "assistant"
+    content = cast(list, assistant_message["content"])
     assert content[0]["text"] == "Hello! How can I help you?"
-    assert result[4] == 20  # input tokens
-    assert result[5] == 15  # output tokens
+    assert not tool_calls
+    assert token_input == 20
+    assert token_output == 15
 
     mock_insert_llm_request.assert_called_once()
     call_args = mock_insert_llm_request.call_args[1]
@@ -75,9 +77,11 @@ def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
         messages=messages, system_content=system_content, tools=tools, usage_id=None
     )
 
-    assert result[1] == "tool_123"  # tool_use_id
-    assert result[2] == "test_function"  # tool_name
-    assert result[3] == {"param": "value"}  # tool_args
+    _, tool_calls, _, _ = result
+    assert len(tool_calls) == 1
+    assert tool_calls[0].id == "tool_123"
+    assert tool_calls[0].name == "test_function"
+    assert tool_calls[0].args == {"param": "value"}
 
     mock_insert_llm_request.assert_not_called()
 
@@ -99,7 +103,8 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
         usage_id=None,
     )
 
-    assert result[5] == 0  # output tokens should be 0 when no usage info
+    _, _, _, token_output = result
+    assert token_output == 0  # output tokens should be 0 when no usage info
     mock_insert_llm_request.assert_not_called()
 
 
