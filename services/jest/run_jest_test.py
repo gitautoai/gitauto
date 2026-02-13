@@ -87,8 +87,17 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
             env=env,
         )
         if result.returncode != 0:
-            error_files.add(test_file)
             output = result.stdout + result.stderr
+            # Jest/yarn may exit with code 1 due to environment issues (teardown failures, MongoDB Memory Server cleanup, etc.) even when all tests pass. Without this check, the agent loops for 900s trying to fix it, and if CI also fails, GitAuto gets re-triggered - burning more Lambda time and cost.
+            if "PASS " in result.stdout and "FAIL " not in result.stdout:
+                logger.warning(
+                    "%s: %s exit code %d but all tests PASSED, treating as success",
+                    runner_name,
+                    test_file,
+                    result.returncode,
+                )
+                continue
+            error_files.add(test_file)
             all_errors.append(output.strip())
             logger.warning("%s: %s failed:\n%s", runner_name, test_file, output.strip())
 

@@ -494,3 +494,32 @@ async def test_run_eslint_fix_adds_parser_options_when_config_lacks_project(base
                         cmd = mock_run.call_args[0][0]
                         assert "--parser-options" in cmd
                         assert "project:tsconfig.json" in cmd
+
+
+@pytest.mark.asyncio
+async def test_run_eslint_fix_includes_no_warn_ignored(base_args):
+    """Verify --no-warn-ignored is in the ESLint command to suppress
+    'File ignored because of a matching ignore pattern' warnings."""
+    eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
+
+    with patch(
+        "services.eslint.run_eslint_fix.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch("services.eslint.run_eslint_fix.os.makedirs"):
+            with patch("builtins.open", mock_open(read_data="formatted")):
+                with patch("services.eslint.run_eslint_fix.subprocess.run") as mock_run:
+                    mock_run.return_value = MagicMock(
+                        returncode=0, stdout=eslint_output, stderr=""
+                    )
+
+                    coro = run_eslint_fix(
+                        base_args=base_args,
+                        file_path="test.ts",
+                        file_content="const x = 1;",
+                    )
+                    assert coro is not None
+                    await coro
+
+                    cmd = mock_run.call_args[0][0]
+                    assert "--no-warn-ignored" in cmd

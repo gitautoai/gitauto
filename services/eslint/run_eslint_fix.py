@@ -124,7 +124,9 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
     )
 
     # Build ESLint command
-    cmd = ["npx", "--yes", "eslint", "--fix", "--format", "json"]
+    # --no-warn-ignored: Suppress "File ignored because of a matching ignore pattern" warnings.
+    # Without this, ignored files produce a JSON message with no ruleId that gets misclassified as a lint error, causing the agent to loop trying to fix it.
+    cmd = ["npx", "--yes", "eslint", "--fix", "--format", "json", "--no-warn-ignored"]
     if can_use_typed_linting:
         cmd.extend(
             [

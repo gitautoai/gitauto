@@ -105,6 +105,7 @@ async def test_verify_partial_fix_with_remaining_errors(
     assert result.success is False
     assert "NOT complete" in result.message
     assert "unused" in result.message
+    assert "src/index.ts" in result.error_files
 
 
 @pytest.mark.asyncio
@@ -499,6 +500,51 @@ async def test_verify_fails_when_jest_tests_fail(
     assert result.success is False
     assert "NOT complete" in result.message
     assert "jest:" in result.message
+    assert "src/index.test.js" in result.error_files
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_eslint_fix")
+@patch("services.agents.verify_task_is_complete.run_prettier_fix")
+@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_verify_error_files_collected_from_eslint_and_jest(
+    mock_get_files,
+    mock_get_raw,
+    mock_prettier,
+    mock_eslint,
+    mock_tsc,
+    mock_jest,
+    base_args,
+):
+    """Verify error_files collects files from both ESLint and jest failures."""
+    mock_get_files.return_value = [
+        {"filename": "src/index.ts", "status": "modified"},
+        {"filename": "src/index.test.js", "status": "modified"},
+    ]
+    mock_get_raw.return_value = "const x = 1;"
+    mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=False,
+        content="const x = 1;",
+        lint_errors="Line 1: 'x' is defined but never used (no-unused-vars)",
+        coverage_errors=None,
+    )
+    mock_tsc.return_value = TscResult(success=True, errors=[], error_files=set())
+    mock_jest.return_value = JestResult(
+        success=False,
+        errors=["FAIL src/index.test.js"],
+        error_files={"src/index.test.js"},
+        runner_name="jest",
+    )
+
+    result = await verify_task_is_complete(base_args)
+
+    assert result.success is False
+    assert "src/index.ts" in result.error_files
+    assert "src/index.test.js" in result.error_files
 
 
 @pytest.mark.asyncio
