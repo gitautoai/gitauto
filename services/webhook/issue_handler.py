@@ -431,6 +431,11 @@ async def create_pr_from_issue(
         user_input_obj["parent_issue_body"] = parent_issue_body
     if test_files:
         user_input_obj["test_files"] = test_files
+    else:
+        user_input_obj["test_files_not_found"] = (
+            f"No test file found at expected paths: {test_file_path_candidates}. "
+            "A test file may exist elsewhere in the repo. Search for it before creating a new one."
+        )
     if root_files:
         user_input_obj["root_files"] = root_files
     if target_dir:

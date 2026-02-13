@@ -16,6 +16,10 @@ def guess_test_file_path(impl_file: str, test_dir_prefixes: list[str]):
         candidates = [p / parent / n for p in prefixes for n in names] + [
             parent / f"test_{stem}{suffix}",  # services/github/test_client.py
             parent / f"{stem}_test{suffix}",  # services/github/client_test.py
+            # test/services/github/test_client.py
+            Path("test") / parent / f"test_{stem}{suffix}",
+            # test/services/github/client_test.py
+            Path("test") / parent / f"{stem}_test{suffix}",
             # tests/services/github/test_client.py
             Path("tests") / parent / f"test_{stem}{suffix}",
             # tests/services/github/client_test.py
@@ -37,6 +41,14 @@ def guess_test_file_path(impl_file: str, test_dir_prefixes: list[str]):
             parent / "__tests__" / f"{stem}.test{suffix}",
             # src/components/__tests__/Button.spec.tsx
             parent / "__tests__" / f"{stem}.spec{suffix}",
+            # test/src/components/Button.test.tsx
+            Path("test") / parent / f"{stem}.test{suffix}",
+            # test/src/components/Button.spec.tsx
+            Path("test") / parent / f"{stem}.spec{suffix}",
+            # test/components/Button.test.tsx
+            Path("test") / parent_without_src / f"{stem}.test{suffix}",
+            # test/components/Button.spec.tsx
+            Path("test") / parent_without_src / f"{stem}.spec{suffix}",
             # tests/src/components/Button.test.tsx
             Path("tests") / parent / f"{stem}.test{suffix}",
             # tests/src/components/Button.spec.tsx

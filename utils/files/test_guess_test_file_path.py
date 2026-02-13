@@ -6,6 +6,8 @@ def test_python_file():
     assert candidates is not None
     assert "services/github/test_client.py" in candidates
     assert "services/github/client_test.py" in candidates
+    assert "test/services/github/test_client.py" in candidates
+    assert "test/services/github/client_test.py" in candidates
     assert "tests/services/github/test_client.py" in candidates
     assert "tests/services/github/client_test.py" in candidates
 
@@ -17,6 +19,10 @@ def test_typescript_file():
     assert "src/components/Button.spec.tsx" in candidates
     assert "__tests__/src/components/Button.test.tsx" in candidates
     assert "src/components/__tests__/Button.test.tsx" in candidates
+    assert "test/src/components/Button.test.tsx" in candidates
+    assert "test/src/components/Button.spec.tsx" in candidates
+    assert "test/components/Button.test.tsx" in candidates
+    assert "test/components/Button.spec.tsx" in candidates
 
 
 def test_javascript_file():
