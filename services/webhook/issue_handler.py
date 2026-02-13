@@ -69,10 +69,12 @@ from services.claude.is_code_untestable import is_code_untestable
 from services.supabase.coverages.get_coverages import get_coverages
 from services.webhook.utils.should_bail import should_bail
 from utils.files.get_impl_file_from_issue_title import get_impl_file_from_issue_title
-from utils.files.guess_test_file_path import guess_test_file_path
+from utils.files.find_test_files import find_test_files
 from utils.files.is_config_file import is_config_file
+from utils.files.read_local_file import read_local_file
 from utils.files.is_test_file import is_test_file
 from utils.files.merge_test_file_headers import merge_test_file_headers
+from utils.formatting.format_with_line_numbers import format_content_with_line_numbers
 from utils.images.get_base64 import get_base64
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
@@ -330,12 +332,9 @@ async def create_pr_from_issue(
 
     today = datetime.now().strftime("%Y-%m-%d")
 
-    # Extract target implementation file and find test file candidates
+    # Extract target implementation file
     impl_file_path = get_impl_file_from_issue_title(issue_title)
     test_dir_prefixes = repo_settings["test_dir_prefixes"] if repo_settings else []
-    test_file_path_candidates = guess_test_file_path(
-        impl_file_path, test_dir_prefixes=test_dir_prefixes
-    )
 
     # Skip fetching impl_file if already in reference_contents (avoids duplicate)
     impl_file_content = ""
@@ -354,28 +353,6 @@ async def create_pr_from_issue(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)),
         base_args=base_args,
     )
-
-    logger.info(
-        "Test file candidates for %s: %s", impl_file_path, test_file_path_candidates
-    )
-    for candidate in test_file_path_candidates or []:
-        content = get_raw_content(
-            owner=owner_name,
-            repo=repo_name,
-            file_path=candidate,
-            ref=base_branch,
-            token=token,
-        )
-        if not content:
-            continue
-        test_files[candidate] = content
-        p += 5
-        add_log_message(f"Found existing test file: `{candidate}`", log_messages)
-        update_comment(
-            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
-            base_args=base_args,
-        )
-    logger.info("Test files found: %s", list(test_files.keys()))
 
     # Check if uncovered code is untestable (for schedule-triggered coverage issues)
     untestable_code_info: EvaluationResult | None = None
@@ -429,13 +406,6 @@ async def create_pr_from_issue(
         user_input_obj["parent_issue_title"] = parent_issue_title
     if parent_issue_body:
         user_input_obj["parent_issue_body"] = parent_issue_body
-    if test_files:
-        user_input_obj["test_files"] = test_files
-    else:
-        user_input_obj["test_files_not_found"] = (
-            f"No test file found at expected paths: {test_file_path_candidates}. "
-            "A test file may exist elsewhere in the repo. Search for it before creating a new one."
-        )
     if root_files:
         user_input_obj["root_files"] = root_files
     if target_dir:
@@ -444,14 +414,6 @@ async def create_pr_from_issue(
         user_input_obj["target_dir_files"] = target_dir_files
     if test_dir_prefixes:
         user_input_obj["test_dir_prefixes"] = test_dir_prefixes
-    user_input = dumps(user_input_obj)
-
-    # Create messages - each file content as separate message for easy deduplication
-    messages: list[MessageParam] = [{"role": "user", "content": user_input}]
-    if impl_file_content:
-        messages.append({"role": "user", "content": impl_file_content})
-    for c in reference_contents:
-        messages.append({"role": "user", "content": c})
 
     # Create a remote branch
     latest_commit_sha = get_latest_remote_commit_sha(
@@ -494,6 +456,44 @@ async def create_pr_from_issue(
         token=token,
         clone_dir=clone_dir,
     )
+
+    # Search for test files in the local clone (/tmp, fast)
+    test_file_paths = find_test_files(
+        search_dir=clone_dir, impl_file_path=impl_file_path
+    )
+    for test_path in test_file_paths:
+        content = read_local_file(test_path, base_dir=clone_dir)
+        if not content:
+            continue
+
+        test_files[test_path] = format_content_with_line_numbers(
+            file_path=test_path, content=content
+        )
+        p += 5
+        add_log_message(f"Found existing test file: `{test_path}`", log_messages)
+        update_comment(
+            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
+
+    logger.info("Test files found: %s", list(test_files.keys()))
+
+    # Build test_files into user_input
+    if test_files:
+        user_input_obj["test_files"] = test_files
+    else:
+        user_input_obj["test_files_not_found"] = (
+            f"No test file found by searching the repo for '{Path(impl_file_path).stem}'. "
+            "A test file may exist elsewhere in the repo. Search for it before creating a new one."
+        )
+
+    # Create messages for the agent
+    user_input = dumps(user_input_obj)
+    messages: list[MessageParam] = [{"role": "user", "content": user_input}]
+    if impl_file_content:
+        messages.append({"role": "user", "content": impl_file_content})
+    for c in reference_contents:
+        messages.append({"role": "user", "content": c})
 
     # Validate files for syntax issues before editing
     files_to_validate = list(

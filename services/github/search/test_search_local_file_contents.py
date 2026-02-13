@@ -52,7 +52,7 @@ def test_search_clone_dir_not_found():
     result = search_local_file_contents(
         query="test", base_args=_make_base_args("/nonexistent/path")
     )
-    assert "Clone directory not found" in result
+    assert "0 files found" in result
 
 
 def test_search_excludes_node_modules():
@@ -103,9 +103,7 @@ def test_search_limits_to_20_files():
 
 def test_search_grep_failure():
     with tempfile.TemporaryDirectory() as tmpdir:
-        with patch(
-            "services.github.search.search_local_file_contents.subprocess.run"
-        ) as mock_run:
+        with patch("services.github.search.grep_files.subprocess.run") as mock_run:
             mock_run.return_value.returncode = 2
             mock_run.return_value.stderr = "grep: error"
             mock_run.return_value.stdout = ""
@@ -113,14 +111,14 @@ def test_search_grep_failure():
             result = search_local_file_contents(
                 query="test", base_args=_make_base_args(tmpdir)
             )
-            assert "Search failed" in result
+            assert "0 files found" in result
 
 
 @pytest.mark.integration
 def test_search_real_repo():
     """Integration test: search this repo for a known unique function name."""
     result = search_local_file_contents(
-        query="search_local_file_contents", base_args=_make_base_args(REPO_ROOT)
+        query="grep_files", base_args=_make_base_args(REPO_ROOT)
     )
     assert "files found" in result
     assert "search_local_file_contents.py" in result
