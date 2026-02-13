@@ -1,4 +1,5 @@
 # Standard imports
+from dataclasses import dataclass
 import time
 
 # Third party imports
@@ -20,6 +21,13 @@ from services.claude.remove_outdated_apply_diff_to_file_attempts_and_results imp
 from services.claude.trim_messages import trim_messages_to_token_limit
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 from utils.error.handle_exceptions import handle_exceptions
+
+
+@dataclass
+class ToolCall:
+    id: str
+    name: str
+    args: dict | None
 
 
 @handle_exceptions(raise_on_error=True)
@@ -64,12 +72,7 @@ def chat_with_claude(
         raise ClaudeAuthenticationError("Claude API authentication failed (401)") from e
 
     # Process the response
-    tool_use_id = None
-    tool_name = None
-    tool_args = None
     content_text = ""
-
-    # Check for tool calls in the response
     tool_use_blocks: list[ToolUseBlock] = []
 
     for content_block in response.content:
@@ -78,26 +81,25 @@ def chat_with_claude(
         elif content_block.type == "tool_use":
             tool_use_blocks.append(content_block)
 
-    # Build content list first, then create message
+    # Build content list with ALL content blocks
     content_list = []
 
-    if content_text:  # Only add text block if there's content
+    if content_text:
         content_list.append({"type": "text", "text": content_text})
 
-    if tool_use_blocks:
-        # Process the first tool call
-        tool_use = tool_use_blocks[0]
-        tool_use_id = tool_use.id  # e.g. "toolu_01M3mtjuKhyQptQh5ASmQCFY"
-        tool_name = tool_use.name  # e.g. "apply_diff_to_file"
-        tool_args = tool_use.input
-
+    # Include ALL tool_use blocks in the assistant message
+    tool_calls: list[ToolCall] = []
+    for tool_use in tool_use_blocks:
         content_list.append(
             {
                 "type": "tool_use",
-                "id": tool_use_id,
-                "name": tool_name,
-                "input": tool_args,
+                "id": tool_use.id,  # e.g. "toolu_01M3mtjuKhyQptQh5ASmQCFY"
+                "name": tool_use.name,  # e.g. "apply_diff_to_file"
+                "input": tool_use.input,
             }
+        )
+        tool_calls.append(
+            ToolCall(id=tool_use.id, name=tool_use.name, args=tool_use.input)
         )
 
     # Return Claude's native format
@@ -130,9 +132,7 @@ def chat_with_claude(
 
     return (
         assistant_message,
-        tool_use_id,
-        tool_name,
-        tool_args,
+        tool_calls,
         token_input,
         token_output,
     )

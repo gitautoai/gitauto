@@ -1,8 +1,10 @@
+# pylint: disable=too-many-lines
 # pyright: reportUnusedVariable=false
 from typing import cast
 from unittest.mock import Mock, patch
 import pytest
 from services.chat_with_agent import chat_with_agent
+from services.claude.chat_with_claude import ToolCall
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
 from services.github.types.github_types import BaseArgs
 
@@ -16,11 +18,9 @@ async def test_chat_with_agent_passes_usage_id_to_claude(
     mock_get_model.return_value = "claude-sonnet-4-0"
     mock_chat_with_claude.return_value = (
         {"role": "assistant", "content": "response"},
-        None,  # tool_use_id
-        None,  # tool_name
-        None,  # tool_args
-        15,  # token_input
-        10,  # token_output
+        [],
+        15,
+        10,
     )
 
     base_args = Mock()
@@ -49,11 +49,9 @@ async def test_chat_with_agent_returns_token_counts(
     mock_get_model.return_value = "claude-sonnet-4-0"
     mock_chat_with_claude.return_value = (
         {"role": "assistant", "content": "response"},
-        None,
-        None,
-        None,
-        25,  # token_input
-        15,  # token_output
+        [],
+        25,
+        15,
     )
 
     base_args = Mock()
@@ -93,9 +91,13 @@ async def test_get_remote_file_content_start_line_end_line_logging(
                 }
             ],
         },
-        "test_id",
-        "get_remote_file_content",
-        {"file_path": "test.py", "start_line": 10, "end_line": 20},
+        [
+            ToolCall(
+                id="test_id",
+                name="get_remote_file_content",
+                args={"file_path": "test.py", "start_line": 10, "end_line": 20},
+            )
+        ],
         15,
         10,
     )
@@ -114,11 +116,9 @@ async def test_get_remote_file_content_start_line_end_line_logging(
             model_id=None,
         )
 
-    # Check that update_comment was called with the correct message
     call_args = mock_update_comment.call_args_list
     assert len(call_args) > 0
 
-    # Find the call with our expected message
     found_message = False
     for call in call_args:
         body_arg = call.kwargs.get("body", "")
@@ -152,9 +152,11 @@ async def test_delete_file_logging(
                 }
             ],
         },
-        "test_id",
-        "delete_file",
-        {"file_path": "test_file.py"},
+        [
+            ToolCall(
+                id="test_id", name="delete_file", args={"file_path": "test_file.py"}
+            )
+        ],
         15,
         10,
     )
@@ -175,11 +177,9 @@ async def test_delete_file_logging(
             model_id=None,
         )
 
-    # Check that update_comment was called with the correct message
     call_args = mock_update_comment.call_args_list
     assert len(call_args) > 0
 
-    # Find the call with our expected message
     found_message = False
     for call in call_args:
         body_arg = call.kwargs.get("body", "")
@@ -216,9 +216,13 @@ async def test_move_file_logging(
                 }
             ],
         },
-        "test_id",
-        "move_file",
-        {"old_file_path": "old_file.py", "new_file_path": "new_file.py"},
+        [
+            ToolCall(
+                id="test_id",
+                name="move_file",
+                args={"old_file_path": "old_file.py", "new_file_path": "new_file.py"},
+            )
+        ],
         15,
         10,
     )
@@ -239,11 +243,9 @@ async def test_move_file_logging(
             model_id=None,
         )
 
-    # Check that update_comment was called with the correct message
     call_args = mock_update_comment.call_args_list
     assert len(call_args) > 0
 
-    # Find the call with our expected message
     found_message = False
     for call in call_args:
         body_arg = call.kwargs.get("body", "")
@@ -278,9 +280,13 @@ async def test_replace_remote_file_content_handles_new_content_arg_name(
                 }
             ],
         },
-        "test_id",
-        "replace_remote_file_content",
-        {"file_path": "test.py", "new_content": "updated content"},
+        [
+            ToolCall(
+                id="test_id",
+                name="replace_remote_file_content",
+                args={"file_path": "test.py", "new_content": "updated content"},
+            )
+        ],
         15,
         10,
     )
@@ -328,9 +334,7 @@ async def test_unavailable_tool_sends_slack_notification(
                 }
             ],
         },
-        "test_id",
-        "bash",
-        {"command": "ls -la"},
+        [ToolCall(id="test_id", name="bash", args={"command": "ls -la"})],
         15,
         10,
     )
@@ -365,46 +369,45 @@ async def test_unavailable_tool_sends_slack_notification(
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
 @patch("services.chat_with_agent.is_target_test_file")
+@patch("services.chat_with_agent.update_comment")
 async def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
-    mock_is_target_test_file, mock_chat_with_claude, mock_get_model
+    _mock_update_comment,
+    mock_is_target_test_file,
+    mock_chat_with_claude,
+    mock_get_model,
 ):
     mock_get_model.return_value = "claude-sonnet-4-0"
     mock_is_target_test_file.return_value = False
-    mock_chat_with_claude.side_effect = [
-        (
-            {
-                "role": "assistant",
-                "content": [
-                    {
-                        "type": "tool_use",
-                        "id": "test_id",
-                        "name": "apply_diff_to_file",
-                        "input": {"file_path": "test_wrong.py", "diff": "some diff"},
-                    }
-                ],
-            },
-            "test_id",
-            "apply_diff_to_file",
-            {"file_path": "test_wrong.py", "diff": "some diff"},
-            15,
-            10,
-        ),
-        (
-            {"role": "assistant", "content": "response"},
-            None,
-            None,
-            None,
-            15,
-            10,
-        ),
-    ]
+    # With parallel tool calls, validation errors are returned inline (no recursion)
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "apply_diff_to_file",
+                    "input": {"file_path": "test_wrong.py", "diff": "some diff"},
+                }
+            ],
+        },
+        [
+            ToolCall(
+                id="test_id",
+                name="apply_diff_to_file",
+                args={"file_path": "test_wrong.py", "diff": "some diff"},
+            )
+        ],
+        15,
+        10,
+    )
 
     base_args = Mock()
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
 
-        await chat_with_agent(
+        result = await chat_with_agent(
             messages=[{"role": "user", "content": "test"}],
             system_message="test system message",
             base_args=base_args,
@@ -415,6 +418,10 @@ async def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
         )
 
         mock_is_target_test_file.assert_called_once_with("test_wrong.py", base_args)
+        # Validation error returned as tool_result, not recursed
+        messages = result.messages
+        last_content = cast(list, messages[-1]["content"])
+        assert "Error: Cannot modify" in last_content[0]["content"]
 
 
 @pytest.mark.asyncio
@@ -439,9 +446,7 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
                 }
             ],
         },
-        "test_id",
-        "verify_task_is_complete",
-        {},
+        [ToolCall(id="test_id", name="verify_task_is_complete", args={})],
         15,
         10,
     )
@@ -494,9 +499,7 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
                 }
             ],
         },
-        "test_id",
-        "verify_task_is_complete",
-        {},
+        [ToolCall(id="test_id", name="verify_task_is_complete", args={})],
         15,
         10,
     )
@@ -547,9 +550,13 @@ async def test_regular_tool_returns_is_completed_false(
                 }
             ],
         },
-        "test_id",
-        "get_remote_file_content",
-        {"file_path": "test.py"},
+        [
+            ToolCall(
+                id="test_id",
+                name="get_remote_file_content",
+                args={"file_path": "test.py"},
+            )
+        ],
         15,
         10,
     )
@@ -583,9 +590,7 @@ async def test_no_tool_call_returns_is_completed_false(
     mock_get_model.return_value = "claude-sonnet-4-0"
     mock_chat_with_claude.return_value = (
         {"role": "assistant", "content": "I'm thinking about it..."},
-        None,
-        None,
-        None,
+        [],
         15,
         10,
     )
@@ -626,9 +631,13 @@ async def test_file_write_result_success_includes_formatted_content(
                 }
             ],
         },
-        "test_id",
-        "apply_diff_to_file",
-        {"file_path": "test.py", "diff": "some diff"},
+        [
+            ToolCall(
+                id="test_id",
+                name="apply_diff_to_file",
+                args={"file_path": "test.py", "diff": "some diff"},
+            )
+        ],
         15,
         10,
     )
@@ -687,9 +696,13 @@ async def test_file_write_result_failure_returns_message_only(
                 }
             ],
         },
-        "test_id",
-        "apply_diff_to_file",
-        {"file_path": "test.py", "diff": "bad diff"},
+        [
+            ToolCall(
+                id="test_id",
+                name="apply_diff_to_file",
+                args={"file_path": "test.py", "diff": "bad diff"},
+            )
+        ],
         15,
         10,
     )
@@ -748,9 +761,13 @@ async def test_file_move_result_returns_message(
                 }
             ],
         },
-        "test_id",
-        "move_file",
-        {"old_file_path": "old.py", "new_file_path": "new.py"},
+        [
+            ToolCall(
+                id="test_id",
+                name="move_file",
+                args={"old_file_path": "old.py", "new_file_path": "new.py"},
+            )
+        ],
         15,
         10,
     )
@@ -806,9 +823,13 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
                 }
             ],
         },
-        "test_id",
-        "get_remote_file_content",
-        {"file_path": "src/main.py"},
+        [
+            ToolCall(
+                id="test_id",
+                name="get_remote_file_content",
+                args={"file_path": "src/main.py"},
+            )
+        ],
         15,
         10,
     )
@@ -816,7 +837,6 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
     base_args = Mock()
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
-        # Full file read returns content without line range in identifier
         mock_tools.__getitem__.return_value = Mock(
             return_value="```src/main.py\n1:print('hello')\n```"
         )
@@ -863,9 +883,13 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
                 }
             ],
         },
-        "test_id",
-        "get_remote_file_content",
-        {"file_path": "src/main.py", "start_line": 10, "end_line": 20},
+        [
+            ToolCall(
+                id="test_id",
+                name="get_remote_file_content",
+                args={"file_path": "src/main.py", "start_line": 10, "end_line": 20},
+            )
+        ],
         15,
         10,
     )
@@ -873,7 +897,6 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
     base_args = Mock()
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
-        # Partial read returns content with line range in identifier
         mock_tools.__getitem__.return_value = Mock(
             return_value="```src/main.py#L10-L20\n10:code here\n```"
         )
@@ -892,3 +915,88 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
     call_args = mock_replace.call_args
     assert call_args[0][1] == "src/main.py#L10-L20"
     assert call_args[1]["is_full_file_read"] is False
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.update_comment")
+async def test_multiple_parallel_tool_calls(
+    _mock_update_comment, mock_chat_with_claude, mock_get_model
+):
+    """Test that multiple tool_use blocks are all executed and results returned in one message."""
+    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "tool_1",
+                    "name": "get_remote_file_content",
+                    "input": {"file_path": "a.py"},
+                },
+                {
+                    "type": "tool_use",
+                    "id": "tool_2",
+                    "name": "get_remote_file_content",
+                    "input": {"file_path": "b.py"},
+                },
+                {
+                    "type": "tool_use",
+                    "id": "tool_3",
+                    "name": "get_remote_file_content",
+                    "input": {"file_path": "c.py"},
+                },
+            ],
+        },
+        [
+            ToolCall(
+                id="tool_1", name="get_remote_file_content", args={"file_path": "a.py"}
+            ),
+            ToolCall(
+                id="tool_2", name="get_remote_file_content", args={"file_path": "b.py"}
+            ),
+            ToolCall(
+                id="tool_3", name="get_remote_file_content", args={"file_path": "c.py"}
+            ),
+        ],
+        15,
+        10,
+    )
+
+    base_args = Mock()
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        call_count = 0
+
+        def mock_tool_fn(**kwargs):
+            nonlocal call_count
+            call_count += 1
+            return f"content of {kwargs['file_path']}"
+
+        mock_tools.__getitem__.return_value = mock_tool_fn
+        mock_tools.__contains__.return_value = True
+
+        result = await chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            system_message="test system message",
+            base_args=base_args,
+            tools=[],
+            allowed_to_edit_files=set(),
+            model_id=None,
+        )
+
+    # All 3 tools were executed
+    assert call_count == 3
+
+    # Last message contains 3 tool_result blocks
+    messages = result.messages
+    last_content = cast(list, messages[-1]["content"])
+    assert len(last_content) == 3
+    assert last_content[0]["tool_use_id"] == "tool_1"
+    assert last_content[1]["tool_use_id"] == "tool_2"
+    assert last_content[2]["tool_use_id"] == "tool_3"
+
+    # Progress reflects all 3 tool calls
+    assert result.p == 15  # 5 * 3
