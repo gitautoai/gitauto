@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from services.claude.evaluate_condition import EvaluationResult, evaluate_condition
+from utils.prompts.should_test_file import SHOULD_TEST_FILE_PROMPT
 
 
 @pytest.fixture
@@ -96,6 +97,32 @@ def test_integration_returns_false_for_non_testable_code():
     eval_result = evaluate_condition(
         content="from .models import User, Order, Product",
         system_prompt="Decide if this code needs unit tests.",
+    )
+    assert eval_result.result is False
+    assert isinstance(eval_result.reason, str)
+    assert len(eval_result.reason) > 0
+
+
+@pytest.mark.skip(reason="Integration test - calls real API")
+def test_integration_returns_false_for_untestable_php_script():
+    php_script = """<?php
+
+require_once('import_export.inc');
+
+header('Content-type: application/json');
+
+session_start();
+if (!isset($_SESSION['login_id']) || $_SESSION['login_id'] == '') {
+    print '{"status": "error", "msg":"セッションが切れています。再度ログインの上、操作してください。"}' . "\\n";
+    exit;
+}
+
+$class = new ImportExport();
+$class->export();
+"""
+    eval_result = evaluate_condition(
+        content=f"File path: web/maintenance/get_json_pile_detail_csv.php\n\nContent:\n{php_script}",
+        system_prompt=SHOULD_TEST_FILE_PROMPT,
     )
     assert eval_result.result is False
     assert isinstance(eval_result.reason, str)
