@@ -17,6 +17,7 @@ from services.tsc.create_tsc_issue import create_tsc_issue
 from services.tsc.run_tsc_check import run_tsc_check
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.filter_js_ts_files import filter_js_ts_files
+from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
 
 
@@ -159,12 +160,26 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
             )
             create_tsc_issue(base_args=base_args, unrelated_errors=unrelated_tsc_errors)
 
-    # Run jest/vitest tests on test files
+    # Run jest/vitest tests on test files (with -u to auto-update stale snapshots)
     jest_result = await run_jest_test(base_args=base_args, file_paths=non_removed_files)
     if jest_result.errors:
         for err in jest_result.errors:
             remaining_errors.append(f"- {jest_result.runner_name}: {err}")
         error_files.update(jest_result.error_files)
+
+    # Commit any snapshot files updated by jest -u
+    clone_dir = base_args.get("clone_dir", "")
+    for snap_path in jest_result.updated_snapshots:
+        snap_content = read_local_file(file_path=snap_path, base_dir=clone_dir)
+        if not snap_content:
+            continue
+        replace_remote_file_content(
+            file_content=snap_content,
+            file_path=snap_path,
+            base_args=base_args,
+            commit_message=f"Update snapshot {snap_path}",
+        )
+        formatting_applied.append(f"- {snap_path}: Snapshot updated")
 
     if remaining_errors:
         error_msg = "\n".join(remaining_errors)

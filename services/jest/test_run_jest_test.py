@@ -108,6 +108,56 @@ async def test_run_jest_test_with_failures(mock_exists, mock_subprocess):
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_detects_updated_snapshots(mock_exists, mock_subprocess):
+    mock_exists.return_value = True
+    jest_result = MagicMock(returncode=0, stdout="", stderr="")
+    git_diff_result = MagicMock(
+        returncode=0,
+        stdout="src/__snapshots__/Button.test.tsx.snap\ntest/__snapshots__/utils.test.ts.snap\n",
+    )
+    mock_subprocess.side_effect = [jest_result, git_diff_result]
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    assert result.success is True
+    assert result.updated_snapshots == {
+        "src/__snapshots__/Button.test.tsx.snap",
+        "test/__snapshots__/utils.test.ts.snap",
+    }
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_no_snapshots_updated(mock_exists, mock_subprocess):
+    mock_exists.return_value = True
+    jest_result = MagicMock(returncode=0, stdout="", stderr="")
+    git_diff_result = MagicMock(returncode=0, stdout="src/index.ts\n")
+    mock_subprocess.side_effect = [jest_result, git_diff_result]
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    assert result.success is True
+    assert result.updated_snapshots == set()
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_uses_vitest_when_no_jest(mock_exists, mock_subprocess):
     def exists_side_effect(path):
         # Jest doesn't exist, but vitest does
@@ -129,8 +179,8 @@ async def test_run_jest_test_uses_vitest_when_no_jest(mock_exists, mock_subproce
     result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
     assert result.success is True
 
-    # Verify vitest was called
-    cmd = mock_subprocess.call_args[0][0]
+    # Verify vitest was called (first call is the test, last call is git diff)
+    cmd = mock_subprocess.call_args_list[0][0][0]
     assert "vitest" in cmd[0]
 
 
@@ -155,8 +205,8 @@ async def test_run_jest_test_spec_files(mock_exists, mock_subprocess):
     )
     assert result.success is True
 
-    # Each file is run individually — verify subprocess was called twice
-    assert mock_subprocess.call_count == 2
+    # Each file is run individually (2 test runs + 1 git diff)
+    assert mock_subprocess.call_count == 3
 
 
 @pytest.mark.asyncio
@@ -229,8 +279,8 @@ async def test_run_jest_test_sets_mongoms_download_dir(mock_exists, mock_subproc
     )
     await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
 
-    # Verify subprocess was called with MONGOMS_DOWNLOAD_DIR in env
-    call_kwargs = mock_subprocess.call_args.kwargs
+    # Verify jest was called with MONGOMS_DOWNLOAD_DIR in env (first call is jest, last is git diff)
+    call_kwargs = mock_subprocess.call_args_list[0].kwargs
     env = call_kwargs["env"]
     assert "MONGOMS_DOWNLOAD_DIR" in env
     assert "test-owner" in env["MONGOMS_DOWNLOAD_DIR"]
@@ -345,7 +395,8 @@ async def test_run_jest_test_uses_test_unit_script(
     )
     assert result.success is True
 
-    cmd = mock_subprocess.call_args[0][0]
+    # First call is the test run, last call is git diff
+    cmd = mock_subprocess.call_args_list[0][0][0]
     assert "run" in cmd
     assert "test:unit" in cmd
 
