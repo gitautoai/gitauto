@@ -10,9 +10,10 @@ from services.jest.run_jest_test import run_jest_test
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_success(mock_exists, mock_subprocess):
+async def test_run_jest_test_success(mock_exists, mock_subprocess, _mock_distro):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
@@ -81,9 +82,10 @@ async def test_run_jest_test_no_runner(mock_exists):
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_with_failures(mock_exists, mock_subprocess):
+async def test_run_jest_test_with_failures(mock_exists, mock_subprocess, _mock_distro):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
@@ -106,9 +108,12 @@ async def test_run_jest_test_with_failures(mock_exists, mock_subprocess):
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_detects_updated_snapshots(mock_exists, mock_subprocess):
+async def test_run_jest_test_detects_updated_snapshots(
+    mock_exists, mock_subprocess, _mock_distro
+):
     mock_exists.return_value = True
     jest_result = MagicMock(returncode=0, stdout="", stderr="")
     git_diff_result = MagicMock(
@@ -134,9 +139,12 @@ async def test_run_jest_test_detects_updated_snapshots(mock_exists, mock_subproc
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_no_snapshots_updated(mock_exists, mock_subprocess):
+async def test_run_jest_test_no_snapshots_updated(
+    mock_exists, mock_subprocess, _mock_distro
+):
     mock_exists.return_value = True
     jest_result = MagicMock(returncode=0, stdout="", stderr="")
     git_diff_result = MagicMock(returncode=0, stdout="src/index.ts\n")
@@ -156,9 +164,12 @@ async def test_run_jest_test_no_snapshots_updated(mock_exists, mock_subprocess):
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_uses_vitest_when_no_jest(mock_exists, mock_subprocess):
+async def test_run_jest_test_uses_vitest_when_no_jest(
+    mock_exists, mock_subprocess, _mock_distro
+):
     def exists_side_effect(path):
         # Jest doesn't exist, but vitest does
         if "jest" in path:
@@ -185,9 +196,10 @@ async def test_run_jest_test_uses_vitest_when_no_jest(mock_exists, mock_subproce
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_spec_files(mock_exists, mock_subprocess):
+async def test_run_jest_test_spec_files(mock_exists, mock_subprocess, _mock_distro):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
@@ -210,9 +222,12 @@ async def test_run_jest_test_spec_files(mock_exists, mock_subprocess):
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_multiple_failures(mock_exists, mock_subprocess):
+async def test_run_jest_test_multiple_failures(
+    mock_exists, mock_subprocess, _mock_distro
+):
     mock_exists.return_value = True
     # Both files fail
     mock_subprocess.return_value = MagicMock(
@@ -238,9 +253,12 @@ async def test_run_jest_test_multiple_failures(mock_exists, mock_subprocess):
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_type_error_in_output(mock_exists, mock_subprocess):
+async def test_run_jest_test_type_error_in_output(
+    mock_exists, mock_subprocess, _mock_distro
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
@@ -262,9 +280,12 @@ async def test_run_jest_test_type_error_in_output(mock_exists, mock_subprocess):
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_sets_mongoms_download_dir(mock_exists, mock_subprocess):
+async def test_run_jest_test_sets_mongoms_download_dir(
+    mock_exists, mock_subprocess, _mock_distro
+):
     """Verify MONGOMS_DOWNLOAD_DIR is set so MongoMemoryServer can cache mongod on EFS."""
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
@@ -330,11 +351,12 @@ Ran all test suites matching /tests\\/js\\/unit\\/annotation\\/print_dialog.kyud
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.get_test_script_name", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_captures_full_esm_error(
-    mock_exists, mock_subprocess, _mock_get_test_script_name
+    mock_exists, mock_subprocess, _mock_get_test_script_name, _mock_distro
 ):
     """Verify the full error output is kept, including the file path and stack trace."""
     mock_exists.return_value = True
@@ -365,6 +387,7 @@ async def test_run_jest_test_captures_full_esm_error(
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch(
     "services.jest.run_jest_test.detect_package_manager", return_value=("npm", "", "")
 )
@@ -372,7 +395,11 @@ async def test_run_jest_test_captures_full_esm_error(
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_uses_test_unit_script(
-    mock_exists, mock_subprocess, _mock_get_test_script_name, _mock_detect_pm
+    mock_exists,
+    mock_subprocess,
+    _mock_get_test_script_name,
+    _mock_detect_pm,
+    _mock_distro,
 ):
     """Verify that when get_test_script_name returns 'test:unit', the command uses
     'npm run test:unit --' instead of 'npm test --'."""
@@ -402,10 +429,11 @@ async def test_run_jest_test_uses_test_unit_script(
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_exit_code_1_all_pass_treated_as_success(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, _mock_distro
 ):
     """When jest exits with code 1 but stdout shows all tests PASS (no FAIL),
     treat as success. Without this, the agent loops for 900s trying to fix it,
@@ -432,10 +460,11 @@ async def test_run_jest_test_exit_code_1_all_pass_treated_as_success(
 
 
 @pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_exit_code_1_with_fail_treated_as_failure(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, _mock_distro
 ):
     """When jest exits with code 1 and stdout contains FAIL, treat as real failure."""
     mock_exists.return_value = True
