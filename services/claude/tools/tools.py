@@ -6,6 +6,7 @@ from anthropic.types import ToolUnionParam
 
 # Local imports
 from services.agents.verify_task_is_complete import verify_task_is_complete
+from services.env.set_env import SET_ENV, set_env
 from services.github.comments.create_comment import create_comment
 from services.github.commits.apply_diff_to_file import apply_diff_to_file
 from services.github.commits.replace_remote_file import (
@@ -234,6 +235,7 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     GET_FILE_TREE_LIST,
     MOVE_FILE,
     REPLACE_REMOTE_FILE_CONTENT,
+    SET_ENV,
     VERIFY_TASK_IS_COMPLETE,
 ]
 
@@ -271,5 +273,6 @@ tools_to_call: dict[str, Any] = {
     # "search_google": google_search,
     "search_local_file_contents": search_local_file_contents,
     "search_remote_file_contents": search_remote_file_contents,
+    "set_env": set_env,
     "verify_task_is_complete": verify_task_is_complete,
 }
