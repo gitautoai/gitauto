@@ -102,7 +102,8 @@ async def chat_with_agent(
     num_tool_calls = len(tool_calls)
     logger.info("Processing %d tool call(s)", num_tool_calls)
 
-    for i, tc in enumerate(tool_calls, start=1):  # pylint: disable=too-many-nested-blocks
+    # pylint: disable-next=too-many-nested-blocks
+    for i, tc in enumerate(tool_calls, start=1):
         tool_use_id = tc.id
         tool_name = tc.name
         tool_args = tc.args

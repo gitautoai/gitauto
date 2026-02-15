@@ -532,7 +532,8 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
 16. Push to remote: `git push`
 17. If the PR includes a Social Media Post section, check recent posts to avoid repeating patterns:
     ```bash
-    gh pr list --state merged --limit 10 --json body --jq '.[].body' | grep -A1 "## Social Media Post" | grep -v "^--$" | grep -v "## Social Media Post"
+    scripts/git/recent_social_posts.sh gitauto  # GitAuto posts only
+    scripts/git/recent_social_posts.sh wes      # Wes posts only
     ```
     Read the output and ensure your new post uses a different sentence structure and opener.
 18. Create pull request: `gh pr create --title "PR title" --body "PR description" --assignee @me`. Example:

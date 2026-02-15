@@ -6,6 +6,7 @@ from constants.aws import EFS_TIMEOUT_SECONDS
 from constants.files import JS_TEST_FILE_EXTENSIONS
 from services.efs.get_efs_dir import get_efs_dir
 from services.github.types.github_types import BaseArgs
+from services.jest.get_mongoms_distro import get_mongoms_distro
 from services.node.detect_package_manager import detect_package_manager
 from services.node.get_test_script_name import get_test_script_name
 from utils.error.handle_exceptions import handle_exceptions
@@ -67,8 +68,12 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
 
     # MongoMemoryServer needs a writable cache dir for the mongod binary.
     # Lambda's home dir (/home/sbx_user1051) doesn't exist, so point it to the EFS repo dir.
+    # We don't copy this to /tmp unlike node_modules because it's a single ~100MB file (fine to read over NFS), not 150k+ small files.
     efs_dir = get_efs_dir(owner, repo)
     env["MONGOMS_DOWNLOAD_DIR"] = os.path.join(efs_dir, ".cache", "mongodb-binaries")
+    mongoms_distro = get_mongoms_distro(clone_dir)
+    if mongoms_distro:
+        env["MONGOMS_DISTRO"] = mongoms_distro
 
     # Run each test file individually so we know exactly which files fail
     all_errors: list[str] = []
