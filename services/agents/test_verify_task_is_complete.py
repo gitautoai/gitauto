@@ -41,7 +41,11 @@ def mock_jest_test():
         "services.agents.verify_task_is_complete.run_jest_test",
         new_callable=AsyncMock,
         return_value=JestResult(
-            success=True, errors=[], error_files=set(), runner_name=""
+            success=True,
+            errors=[],
+            error_files=set(),
+            runner_name="",
+            updated_snapshots=set(),
         ),
     ):
         yield
@@ -493,6 +497,7 @@ async def test_verify_fails_when_jest_tests_fail(
         errors=["FAIL src/index.test.js", "Expected true to be false"],
         error_files={"src/index.test.js"},
         runner_name="jest",
+        updated_snapshots=set(),
     )
 
     result = await verify_task_is_complete(base_args)
@@ -538,6 +543,7 @@ async def test_verify_error_files_collected_from_eslint_and_jest(
         errors=["FAIL src/index.test.js"],
         error_files={"src/index.test.js"},
         runner_name="jest",
+        updated_snapshots=set(),
     )
 
     result = await verify_task_is_complete(base_args)
@@ -573,7 +579,11 @@ async def test_baseline_tsc_errors_filtered(
         error_files={"src/passport-oidc.ts", "src/index.ts"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(
@@ -619,7 +629,11 @@ async def test_all_tsc_errors_pre_existing_passes(
         error_files={"src/old.ts"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(
@@ -669,7 +683,11 @@ async def test_baseline_tsc_errors_in_pr_files_still_reported(
         error_files={"src/models/InProgressPolicy.test.ts"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(
@@ -689,6 +707,62 @@ async def test_baseline_tsc_errors_in_pr_files_still_reported(
     assert result.success is False
     assert "TS2339" in result.message
     mock_create_tsc_issue.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch(
+    "services.agents.verify_task_is_complete.read_local_file",
+    return_value="// snapshot content",
+)
+@patch("services.agents.verify_task_is_complete.replace_remote_file_content")
+@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_verify_commits_updated_snapshots(
+    mock_get_files,
+    mock_get_raw,
+    mock_tsc,
+    mock_jest,
+    mock_upload,
+    _mock_read_local,
+):
+    mock_get_files.return_value = [
+        {"filename": "src/index.test.js", "status": "modified"},
+    ]
+    mock_get_raw.return_value = "const x = 1;"
+    mock_tsc.return_value = TscResult(success=True, errors=[], error_files=set())
+    mock_jest.return_value = JestResult(
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="jest",
+        updated_snapshots={"src/__snapshots__/index.test.js.snap"},
+    )
+
+    args = cast(
+        BaseArgs,
+        {
+            "owner": "test-owner",
+            "repo": "test-repo",
+            "pull_number": 123,
+            "token": "test-token",
+            "new_branch": "test-branch",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    result = await verify_task_is_complete(args)
+
+    assert result.success is True
+    mock_upload.assert_called_once()
+    call_kwargs = mock_upload.call_args.kwargs
+    assert call_kwargs["file_path"] == "src/__snapshots__/index.test.js.snap"
+    assert call_kwargs["file_content"] == "// snapshot content"
+    assert "snapshot" in call_kwargs["commit_message"]
+    assert (
+        "- src/__snapshots__/index.test.js.snap: Snapshot updated"
+        in result.fixes_applied
+    )
 
 
 # ============================================================
@@ -728,7 +802,11 @@ async def test_issue_handler_error_in_pr_file_reported(
         error_files={"src/utils.ts"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(
@@ -773,7 +851,11 @@ async def test_issue_handler_preexisting_non_pr_file_error_skipped(
         error_files={"src/legacy.ts"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(
@@ -819,7 +901,11 @@ async def test_issue_handler_new_non_pr_file_error_reported(
         error_files={"src/consumer.ts"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(
@@ -871,7 +957,11 @@ async def test_check_suite_error_in_pr_file_in_baseline_reported(
         error_files={"src/models/Policy.test.ts"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(
@@ -917,7 +1007,11 @@ async def test_check_suite_preexisting_non_pr_file_error_skipped(
         error_files={"src/passport-oidc.ts"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(
@@ -963,7 +1057,11 @@ async def test_check_suite_new_non_pr_file_error_reported(
         error_files={"src/auth.ts"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(
@@ -1014,7 +1112,11 @@ async def test_review_run_error_in_pr_file_in_baseline_reported(
         error_files={"src/components/Form.tsx"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(
@@ -1058,7 +1160,11 @@ async def test_review_run_preexisting_non_pr_file_error_skipped(
         error_files={"src/legacy-auth.ts"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(
@@ -1103,7 +1209,11 @@ async def test_review_run_new_non_pr_file_error_reported(
         error_files={"src/validators.ts"},
     )
     mock_jest.return_value = JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
+        success=True,
+        errors=[],
+        error_files=set(),
+        runner_name="",
+        updated_snapshots=set(),
     )
 
     args = cast(

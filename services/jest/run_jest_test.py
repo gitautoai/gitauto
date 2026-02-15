@@ -1,6 +1,6 @@
 import os
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from constants.aws import EFS_TIMEOUT_SECONDS
 from constants.files import JS_TEST_FILE_EXTENSIONS
@@ -14,28 +14,27 @@ from utils.logging.logging_config import logger
 
 @dataclass
 class JestResult:
-    success: bool
-    errors: list[str]
-    error_files: set[str]
-    runner_name: str
+    success: bool = True
+    errors: list[str] = field(default_factory=list)
+    error_files: set[str] = field(default_factory=set)
+    runner_name: str = ""
+    updated_snapshots: set[str] = field(default_factory=set)
 
 
 @handle_exceptions(
-    default_return_value=JestResult(
-        success=True, errors=[], error_files=set(), runner_name=""
-    ),
+    default_return_value=JestResult(),
     raise_on_error=False,
 )
 async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
     test_files = [f for f in file_paths if f.endswith(JS_TEST_FILE_EXTENSIONS)]
     if not test_files:
         logger.info("test: No test files to run")
-        return JestResult(success=True, errors=[], error_files=set(), runner_name="")
+        return JestResult()
 
     clone_dir = base_args.get("clone_dir", "")
     if not clone_dir:
         logger.warning("test: No clone_dir provided, skipping")
-        return JestResult(success=True, errors=[], error_files=set(), runner_name="")
+        return JestResult()
 
     # Determine runner name for logging (jest vs vitest)
     jest_bin = os.path.join(clone_dir, "node_modules", ".bin", "jest")
@@ -46,7 +45,7 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
         runner_name = "jest"
     else:
         logger.info("test: No test runner (jest/vitest) installed locally, skipping")
-        return JestResult(success=True, errors=[], error_files=set(), runner_name="")
+        return JestResult()
 
     # Build base command
     owner = base_args["owner"]
@@ -75,7 +74,8 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
     all_errors: list[str] = []
     error_files: set[str] = set()
     for test_file in test_files:
-        cmd = base_cmd + [test_file]
+        # -u (--updateSnapshot) auto-updates stale .snap files instead of failing
+        cmd = base_cmd + [test_file, "-u"]
         logger.info("%s: Running %s...", runner_name, test_file)
         result = subprocess.run(
             cmd,
@@ -101,10 +101,35 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
             all_errors.append(output.strip())
             logger.warning("%s: %s failed:\n%s", runner_name, test_file, output.strip())
 
+    # Detect snapshot files updated by -u flag
+    updated_snapshots: set[str] = set()
+    diff_result = subprocess.run(
+        ["git", "diff", "--name-only"],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=clone_dir,
+    )
+    if diff_result.returncode == 0:
+        for line in diff_result.stdout.strip().splitlines():
+            if line.endswith(".snap"):
+                updated_snapshots.add(line)
+    if updated_snapshots:
+        logger.info(
+            "%s: Updated %d snapshot(s): %s",
+            runner_name,
+            len(updated_snapshots),
+            updated_snapshots,
+        )
+
     if not error_files:
         logger.info("%s: All tests passed", runner_name)
         return JestResult(
-            success=True, errors=[], error_files=set(), runner_name=runner_name
+            success=True,
+            errors=[],
+            error_files=set(),
+            runner_name=runner_name,
+            updated_snapshots=updated_snapshots,
         )
 
     return JestResult(
@@ -112,4 +137,5 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
         errors=all_errors,
         error_files=error_files,
         runner_name=runner_name,
+        updated_snapshots=updated_snapshots,
     )
