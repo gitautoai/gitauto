@@ -9,6 +9,7 @@ __pycache__
 !/scripts/git/
 /scripts/git/*
 !/scripts/git/list_changed_files.sh
+!/scripts/git/recent_social_posts.sh
 !/scripts/lint/
 !/scripts/sentry/
 coverage.*

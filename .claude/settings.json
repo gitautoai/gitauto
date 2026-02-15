@@ -28,7 +28,7 @@
       "Bash(gh pr create:*)",
       "Bash(gh pr edit:*)",
       "Bash(gh pr list:*)",
-      "Bash(gh pr list --state merged --limit 10 --json body --jq '.[].body' | grep -A1 \"## Social Media Post\" | grep -v \"^--$\" | grep -v \"## Social Media Post\")",
+      "Bash(scripts/git/recent_social_posts.sh:*)",
       "Bash(grep -r :*)",
       "Bash(grep :*)",
       "Bash(ls:*)",
