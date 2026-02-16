@@ -45,8 +45,25 @@
     <rule>Do not test constant content (values, text, or any content within constants) unless explicitly requested - tests should not fail when constant values are updated</rule>
   </anti_patterns>
 
+  <dead_code_handling>
+    <description>When a linter or type checker identifies code as unreachable or unnecessary (e.g., @typescript-eslint/no-unnecessary-condition), fix the root cause by removing the dead code rather than suppressing the warning with coverage exclusion comments.</description>
+    <rule>If a conditional is flagged as always-true or always-false, simplify the code by removing the unnecessary branch</rule>
+    <rule>Only use coverage exclusion comments (istanbul ignore, pragma: no cover) as a LAST RESORT when the code is genuinely reachable at runtime but untestable due to framework limitations</rule>
+    <examples>
+      <wrong><![CDATA[
+// WRONG: Suppressing dead code warning with istanbul ignore
+{/* istanbul ignore next */ paymentMethod !== undefined ? (<Component />) : null}
+// paymentMethod always has a default value, so this ternary is always true
+      ]]></wrong>
+      <right><![CDATA[
+// RIGHT: Remove the dead branch entirely
+<Component />
+      ]]></right>
+    </examples>
+  </dead_code_handling>
+
   <untestable_code_patterns>
-    <description>Some code is reachable at runtime but untestable due to framework limitations. Do NOT modify customer implementation - use coverage exclusion comments instead.</description>
+    <description>Some code is reachable at runtime but untestable due to framework limitations. Use coverage exclusion comments ONLY for these cases.</description>
 
     <pattern name="async_error_in_event_handlers">
       <problem>Errors thrown in async event handlers become unhandled rejections that cannot be caught in tests</problem>

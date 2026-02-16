@@ -570,3 +570,32 @@ def test_create_empty_commit_return_value_from_update_reference(
 
     result = create_empty_commit(sample_base_args)
     assert result is False
+
+
+def test_create_empty_commit_with_parent_sha(
+    mock_get_reference,
+    mock_get_commit,
+    mock_create_commit,
+    mock_update_reference,
+    sample_base_args,
+):
+    """Test that providing parent_sha skips get_reference call."""
+    # pylint: disable=redefined-outer-name
+    mock_get_commit.return_value = "tree_sha_456"
+    mock_create_commit.return_value = "new_commit_sha_789"
+    mock_update_reference.return_value = True
+
+    result = create_empty_commit(sample_base_args, parent_sha="known_sha_abc")
+
+    assert result is True
+    mock_get_reference.assert_not_called()
+    mock_get_commit.assert_called_once_with(sample_base_args, "known_sha_abc")
+    mock_create_commit.assert_called_once_with(
+        sample_base_args,
+        "Empty commit to trigger final tests",
+        "tree_sha_456",
+        "known_sha_abc",
+    )
+    mock_update_reference.assert_called_once_with(
+        sample_base_args, "new_commit_sha_789"
+    )

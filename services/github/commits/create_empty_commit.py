@@ -9,10 +9,12 @@ from utils.error.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def create_empty_commit(
-    base_args: BaseArgs, message: str = "Empty commit to trigger final tests"
+    base_args: BaseArgs,
+    message: str = "Empty commit to trigger final tests",
+    parent_sha: str = "",
 ):
-    # Get current branch reference
-    current_sha = get_reference(base_args)
+    # Use provided parent_sha if available, otherwise fetch from API
+    current_sha = parent_sha or get_reference(base_args)
     if not current_sha:
         return False
 

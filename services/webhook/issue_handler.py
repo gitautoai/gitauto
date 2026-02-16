@@ -593,6 +593,7 @@ async def create_pr_from_issue(
         await verify_task_is_complete(base_args=base_args)
 
     # Add headers to test files before triggering CI
+    last_commit_sha = ""
     changed_files = get_pull_request_files(
         owner=owner_name, repo=repo_name, pull_number=pr_number, token=token
     )
@@ -616,11 +617,13 @@ async def create_pr_from_issue(
         if not updated_content or updated_content == file_content:
             continue
 
-        replace_remote_file_content(
+        result = replace_remote_file_content(
             file_content=updated_content,
             file_path=file_path,
             base_args=base_args,
         )
+        if result.commit_sha:
+            last_commit_sha = result.commit_sha
 
     # Trigger final test workflows with an empty commit
     comment_body = "Triggering workflows..."
@@ -629,7 +632,7 @@ async def create_pr_from_issue(
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
-    create_empty_commit(base_args=base_args)
+    create_empty_commit(base_args=base_args, parent_sha=last_commit_sha)
 
     # Update the issue comment
     body_after_pr = pull_request_completed(
