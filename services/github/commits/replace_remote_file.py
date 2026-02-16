@@ -1,6 +1,7 @@
 # Standard imports
 import base64
 import os
+from typing import cast
 
 # Third party imports
 from anthropic.types import ToolUnionParam
@@ -61,7 +62,7 @@ def replace_remote_file_content(
     new_branch = base_args["new_branch"]
     skip_ci = base_args.get("skip_ci", False)
 
-    # Prepare the request
+    # https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={new_branch}"
     headers = create_headers(token=token)
 
@@ -118,6 +119,7 @@ def replace_remote_file_content(
     # Replace the content of the remote file
     put_response = requests.put(url=url, json=data, headers=headers, timeout=TIMEOUT)
     put_response.raise_for_status()
+    commit_sha = cast(str, put_response.json()["commit"]["sha"])
 
     # Also create or overwrite local file for verification (tsc, jest, eslint, etc.)
     clone_dir = base_args["clone_dir"]
@@ -132,4 +134,5 @@ def replace_remote_file_content(
         message=f"Replaced {file_path}.",
         file_path=file_path,
         content=file_content,
+        commit_sha=commit_sha,
     )
