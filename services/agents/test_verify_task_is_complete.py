@@ -51,6 +51,26 @@ def mock_jest_test():
         yield
 
 
+@pytest.fixture(autouse=True)
+def mock_get_eslint_config():
+    """Auto-mock get_eslint_config for all tests."""
+    with patch(
+        "services.agents.verify_task_is_complete.get_eslint_config",
+        return_value=None,
+    ):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def mock_ensure_eslint_relaxed():
+    """Auto-mock ensure_eslint_relaxed_for_tests for all tests."""
+    with patch(
+        "services.agents.verify_task_is_complete.ensure_eslint_relaxed_for_tests",
+        return_value=None,
+    ):
+        yield
+
+
 @pytest.fixture
 def base_args():
     return cast(
@@ -182,7 +202,7 @@ async def test_verify_task_is_complete_api_error_returns_default(
 @patch("services.agents.verify_task_is_complete.run_eslint_fix")
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
-@patch("services.agents.verify_task_is_complete.ensure_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
 @patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.replace_remote_file_content")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
@@ -286,7 +306,7 @@ async def test_verify_ignores_removed_test_files(
 @patch("services.agents.verify_task_is_complete.run_eslint_fix")
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
-@patch("services.agents.verify_task_is_complete.ensure_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
 @patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
@@ -326,7 +346,7 @@ async def test_verify_checks_both_ts_test_files(
 @patch("services.agents.verify_task_is_complete.run_eslint_fix")
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
-@patch("services.agents.verify_task_is_complete.ensure_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
 @patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
@@ -383,7 +403,7 @@ async def test_verify_ignores_all_non_js_test_files(
 @patch("services.agents.verify_task_is_complete.run_eslint_fix")
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
-@patch("services.agents.verify_task_is_complete.ensure_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
 @patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.replace_remote_file_content")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
@@ -435,7 +455,7 @@ async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
 @patch("services.agents.verify_task_is_complete.run_eslint_fix")
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
-@patch("services.agents.verify_task_is_complete.ensure_tsconfig_for_tests")
+@patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
 @patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.replace_remote_file_content")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
@@ -1232,3 +1252,120 @@ async def test_review_run_new_non_pr_file_error_reported(
     assert result.success is False
     assert "TS2345" in result.message
     mock_create_tsc_issue.assert_not_called()
+
+
+# ============================================================
+# ensure_eslint_relaxed_for_tests integration tests
+# ============================================================
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.ensure_eslint_relaxed_for_tests")
+@patch("services.agents.verify_task_is_complete.get_eslint_config")
+@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_ensure_eslint_relaxed_called_for_js_test_files(
+    mock_get_files, mock_get_raw, mock_get_eslint, mock_ensure_eslint, base_args
+):
+    mock_get_files.return_value = [
+        {"filename": "src/index.test.js", "status": "modified"},
+    ]
+    mock_get_raw.return_value = "const x = 1;"
+    mock_get_eslint.return_value = {"filename": ".eslintrc.json", "content": "{}"}
+
+    await verify_task_is_complete(base_args)
+
+    mock_get_eslint.assert_called_once()
+    mock_ensure_eslint.assert_called_once_with(
+        eslint_config={"filename": ".eslintrc.json", "content": "{}"},
+        base_args=base_args,
+    )
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.ensure_eslint_relaxed_for_tests")
+@patch("services.agents.verify_task_is_complete.get_eslint_config")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_ensure_eslint_relaxed_not_called_for_non_test_files(
+    mock_get_files, mock_get_eslint, mock_ensure_eslint, base_args
+):
+    mock_get_files.return_value = [
+        {"filename": "src/index.ts", "status": "modified"},
+    ]
+
+    await verify_task_is_complete(base_args)
+
+    mock_get_eslint.assert_not_called()
+    mock_ensure_eslint.assert_not_called()
+
+
+# ============================================================
+# Dead code handling: no-unnecessary-condition as blocking error
+# ============================================================
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.run_eslint_fix")
+@patch("services.agents.verify_task_is_complete.run_prettier_fix")
+@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_coverage_error_no_unnecessary_condition_blocks_completion(
+    mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
+):
+    """Verify that no-unnecessary-condition coverage errors block task completion.
+
+    Dead code detected by @typescript-eslint/no-unnecessary-condition must be
+    reported as a blocking error so the agent removes it rather than adding
+    istanbul ignore comments.
+    """
+    mock_get_files.return_value = [
+        {"filename": "src/PaymentForm.tsx", "status": "modified"},
+    ]
+    mock_get_raw.return_value = (
+        "const x = paymentMethod !== undefined ? <Component /> : null;"
+    )
+    mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=False,
+        content="const x = paymentMethod !== undefined ? <Component /> : null;",
+        lint_errors=None,
+        coverage_errors="Line 1: Unnecessary conditional, expected expression to always be truthy (@typescript-eslint/no-unnecessary-condition)",
+    )
+
+    result = await verify_task_is_complete(base_args)
+
+    assert result.success is False
+    assert "NOT complete" in result.message
+    assert "no-unnecessary-condition" in result.message
+    assert "src/PaymentForm.tsx" in result.error_files
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.run_eslint_fix")
+@patch("services.agents.verify_task_is_complete.run_prettier_fix")
+@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_lint_only_errors_still_block_completion(
+    mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
+):
+    """Verify that lint-only errors (e.g., no-explicit-any) also block completion.
+
+    verify_task_is_complete reports both lint_errors and coverage_errors.
+    """
+    mock_get_files.return_value = [
+        {"filename": "src/utils.ts", "status": "modified"},
+    ]
+    mock_get_raw.return_value = "const x: any = 1;"
+    mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=False,
+        content="const x: any = 1;",
+        lint_errors="Line 1: Unexpected any (@typescript-eslint/no-explicit-any)",
+        coverage_errors=None,
+    )
+
+    result = await verify_task_is_complete(base_args)
+
+    assert result.success is False
+    assert "no-explicit-any" in result.message
+    assert "src/utils.ts" in result.error_files

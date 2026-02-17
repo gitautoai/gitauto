@@ -501,6 +501,29 @@ class RepositoryFeaturesInsert(TypedDict):
     restrict_edit_to_target_test_file_only: bool
 
 
+class SchedulePauses(TypedDict):
+    id: str
+    owner_id: int
+    repo_id: int
+    pause_start: Any
+    pause_end: Any
+    reason: str | None
+    created_by: str
+    created_at: datetime.datetime
+    updated_by: str
+    updated_at: datetime.datetime
+
+
+class SchedulePausesInsert(TypedDict):
+    owner_id: int
+    repo_id: int
+    pause_start: Any
+    pause_end: Any
+    reason: NotRequired[str | None]
+    created_by: str
+    updated_by: str
+
+
 class TotalRepoCoverage(TypedDict):
     owner_id: int | None
     coverage_date: Any | None
