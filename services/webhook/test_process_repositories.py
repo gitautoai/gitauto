@@ -125,9 +125,9 @@ def mock_create_remote_branch():
 
 
 @pytest.fixture
-def mock_ensure_tsconfig_for_tests():
+def mock_ensure_tsconfig_relaxed_for_tests():
     with patch(
-        "services.webhook.process_repositories.ensure_tsconfig_for_tests"
+        "services.webhook.process_repositories.ensure_tsconfig_relaxed_for_tests"
     ) as mock:
         mock.return_value = (None, None)
         yield mock
@@ -201,7 +201,7 @@ async def test_process_repositories_efs_exists_fetches(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
-    mock_ensure_tsconfig_for_tests,
+    mock_ensure_tsconfig_relaxed_for_tests,
     mock_get_file_tree,
     mock_delete_remote_branch,
 ):
@@ -244,7 +244,7 @@ async def test_process_repositories_efs_not_exists_clones(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
-    mock_ensure_tsconfig_for_tests,
+    mock_ensure_tsconfig_relaxed_for_tests,
     mock_get_file_tree,
     mock_delete_remote_branch,
 ):
@@ -313,7 +313,7 @@ async def test_process_repositories_stats_saved_correctly(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
-    mock_ensure_tsconfig_for_tests,
+    mock_ensure_tsconfig_relaxed_for_tests,
     mock_get_file_tree,
     mock_delete_remote_branch,
 ):
@@ -376,7 +376,7 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
-    mock_ensure_tsconfig_for_tests,
+    mock_ensure_tsconfig_relaxed_for_tests,
     mock_get_file_tree,
     mock_delete_remote_branch,
 ):
@@ -439,13 +439,13 @@ async def test_process_repositories_non_typescript_deletes_branch_no_pr(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
-    mock_ensure_tsconfig_for_tests,
+    mock_ensure_tsconfig_relaxed_for_tests,
     mock_delete_remote_branch,
     mock_create_pull_request,
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
-    mock_ensure_tsconfig_for_tests.return_value = (None, None)
+    mock_ensure_tsconfig_relaxed_for_tests.return_value = (None, None)
     single_repo = cast(
         list[RepositoryAddedOrRemoved],
         [
@@ -491,14 +491,17 @@ async def test_process_repositories_typescript_creates_pr(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
-    mock_ensure_tsconfig_for_tests,
+    mock_ensure_tsconfig_relaxed_for_tests,
     mock_get_file_tree,
     mock_delete_remote_branch,
     mock_create_pull_request,
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
-    mock_ensure_tsconfig_for_tests.return_value = ("tsconfig.test.json", "added")
+    mock_ensure_tsconfig_relaxed_for_tests.return_value = (
+        "tsconfig.test.json",
+        "added",
+    )
     single_repo = cast(
         list[RepositoryAddedOrRemoved],
         [

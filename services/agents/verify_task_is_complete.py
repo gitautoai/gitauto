@@ -1,8 +1,12 @@
 from dataclasses import dataclass, field
 
 from constants.files import JS_TEST_FILE_EXTENSIONS, TS_TEST_FILE_EXTENSIONS
+from services.eslint.ensure_eslint_relaxed_for_tests import (
+    ensure_eslint_relaxed_for_tests,
+)
 from services.eslint.run_eslint_fix import run_eslint_fix
 from services.github.commits.replace_remote_file import replace_remote_file_content
+from services.github.files.get_eslint_config import get_eslint_config
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.trees.get_file_tree import get_file_tree
@@ -11,7 +15,9 @@ from services.jest.run_jest_test import run_jest_test
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
     ensure_jest_uses_tsconfig_for_tests,
 )
-from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
+from services.node.ensure_tsconfig_relaxed_for_tests import (
+    ensure_tsconfig_relaxed_for_tests,
+)
 from services.prettier.run_prettier_fix import run_prettier_fix
 from services.tsc.create_tsc_issue import create_tsc_issue
 from services.tsc.run_tsc_check import run_tsc_check
@@ -69,7 +75,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
         )
         root_files = [item["path"] for item in tree_items if item["type"] == "blob"]
 
-        tsconfig_path, _ = ensure_tsconfig_for_tests(
+        tsconfig_path, _ = ensure_tsconfig_relaxed_for_tests(
             root_files=root_files,
             base_args=base_args,
         )
@@ -78,6 +84,13 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
                 root_files=root_files,
                 base_args=base_args,
                 tsconfig_path=tsconfig_path,
+            )
+
+    if js_test_files:
+        eslint_config = get_eslint_config(base_args)
+        if eslint_config:
+            ensure_eslint_relaxed_for_tests(
+                eslint_config=eslint_config, base_args=base_args
             )
 
     non_removed_files = [f["filename"] for f in pr_files if f["status"] != "removed"]

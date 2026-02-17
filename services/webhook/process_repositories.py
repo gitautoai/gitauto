@@ -29,7 +29,9 @@ from services.github.types.repository import RepositoryAddedOrRemoved
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
     ensure_jest_uses_tsconfig_for_tests,
 )
-from services.node.ensure_tsconfig_for_tests import ensure_tsconfig_for_tests
+from services.node.ensure_tsconfig_relaxed_for_tests import (
+    ensure_tsconfig_relaxed_for_tests,
+)
 from services.supabase.repositories.upsert_repository import upsert_repository
 from services.website.sync_files_from_github_to_coverage import (
     sync_files_from_github_to_coverage,
@@ -153,7 +155,7 @@ async def process_repositories(
         )
         root_files = [item["path"] for item in tree_items if item["type"] == "blob"]
 
-        tsconfig_path, tsconfig_status = ensure_tsconfig_for_tests(
+        tsconfig_path, tsconfig_status = ensure_tsconfig_relaxed_for_tests(
             root_files=root_files,
             base_args=base_args,
         )

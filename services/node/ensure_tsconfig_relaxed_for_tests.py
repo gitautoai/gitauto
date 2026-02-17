@@ -16,7 +16,7 @@ REQUIRED_OPTIONS = {"noUnusedLocals": False, "noUnusedParameters": False}
 
 
 @handle_exceptions(default_return_value=(None, None), raise_on_error=False)
-def ensure_tsconfig_for_tests(root_files: list[str], base_args: BaseArgs):
+def ensure_tsconfig_relaxed_for_tests(root_files: list[str], base_args: BaseArgs):
     """
     Ensure a tsconfig variant exists with relaxed settings for test files.
     Checks all tsconfig.*.json files first. Only creates tsconfig.test.json if none have correct settings.

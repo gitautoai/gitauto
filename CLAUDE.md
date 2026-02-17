@@ -524,6 +524,7 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
     - **CRITICAL**: NEVER include Claude Code credits or co-author lines in commit messages
     - NO "🤖 Generated with [Claude Code]" footer
     - NO "Co-Authored-By: Claude <noreply@anthropic.com>" lines
+    - NO `[skip ci]` in commit messages as it skips CI
     - Keep commit messages professional and focused on the actual changes
 15. **CRITICAL**: Check for existing open PR before pushing: `gh pr list --head $(git branch --show-current) --state open`
     - If an open PR exists, **STOP and ask the user** how to proceed
@@ -550,6 +551,7 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
     ```
 
     - PR title should be technical and descriptive
+    - **Do NOT include a `## Test plan` section** - it's unnecessary noise
     - **Social Media Post sections must always be the last sections in the PR body**
     - **Social Media Post sections**: Only include when there are explicit customer benefits or useful dev insights. Skip for internal-only changes (refactoring, logging fixes, test improvements, infrastructure updates) that don't affect customers or teach anything.
     - Always write TWO posts:
@@ -566,6 +568,7 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
       - **Tell the story when there's a real failure** - When you find a real flaw or failure, be transparent. Tell the story: what happened, what went wrong (e.g. Claude misunderstood X, our pipeline missed Y), what the impact was, and how we improved. Developers respect honesty and the story resonates more than hiding it. Frame it as "we found a flaw → it caused X → we improved" not "we fixed a bug".
       - **Sound like a human wrote it** - AI-generated posts are obvious and get ignored. Write like a real dev sharing something they built. Be casual, imperfect, opinionated. No polished marketing tone.
       - **Vary the opening every time** - NEVER use patterns like "GitAuto now...", "We just...", or any formula that gets stale. Start with the substance — what changed, why it matters, or a hook.
+      - **Wes post: don't repeat openers** - Before writing, run `scripts/git/recent_social_posts.sh wes` and make sure your opening sentence doesn't use the same structure as any recent post.
 
 19. If fixing a Sentry issue, list similar issues and resolve them:
     - Use `python3 scripts/sentry/get_issue.py AGENT-XXX` to check related issues
