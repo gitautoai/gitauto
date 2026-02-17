@@ -3,6 +3,7 @@ import requests
 
 # Local imports
 from config import GITHUB_API_URL, PER_PAGE, TIMEOUT
+from services.github.types.pull_request_commit import PullRequestCommit
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -11,7 +12,7 @@ from utils.error.handle_exceptions import handle_exceptions
 def get_pull_request_commits(owner: str, repo: str, pull_number: int, token: str):
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pull_number}/commits"
     headers = create_headers(token=token)
-    commits = []
+    commits: list[PullRequestCommit] = []
     page = 1
 
     while True:
