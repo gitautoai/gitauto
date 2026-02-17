@@ -4,3 +4,4 @@ from utils.env import get_env_var
 IS_PRD = get_env_var("ENV") == "prod"
 
 MAX_GITAUTO_COMMITS_PER_PR = 50
+MAX_INFRA_RETRIES = 3

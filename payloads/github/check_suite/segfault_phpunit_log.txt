@@ -1,0 +1,75 @@
+```GitHub Check Run Log: php-unit/3_execute_phpunit (PR).txt
+ ##[group]Run echo "Run PHPUNit on PR: gitauto/issue-13614-20260216-000345-4bPI -> release/20260311"
+echo "Run PHPUNit on PR: gitauto/issue-13614-20260216-000345-4bPI -> release/20260311"
+${GITHUB_WORKSPACE}/bin/github_actions/execute_phpunit.sh release/20260311 gitauto/issue-13614-20260216-000345-4bPI pull_request
+shell: /bin/bash -e {0}
+##[endgroup]
+Run PHPUNit on PR: gitauto/issue-13614-20260216-000345-4bPI -> release/20260311
+Already up to date.
+gitauto/issue-13614-20260216-000345-4bPI
+20260311
+pull_request
+From github.com:regolith-inc/SPIDERPLUS-web
+   f0e17038cf..e18ac13cc9  gitauto/issue-13614-20260216-000345-4bPI -> origin/gitauto/issue-13614-20260216-000345-4bPI
+Auto packing the repository in background for optimum performance.
+See "git help gc" for manual housekeeping.
+Previous HEAD position was 35c558f8c5 Empty commit to trigger final tests
+HEAD is now at e18ac13cc9 Empty commit to trigger tests
+Auto packing the repository in background for optimum performance.
+See "git help gc" for manual housekeeping.
+You are not currently on a branch.
+Please specify which branch you want to merge with.
+See git-pull(1) for details.
+
+    git pull <remote> <branch>
+
+Installing dependencies from lock file (including require-dev)
+Verifying lock file contents can be installed on current platform.
+Package operations: 26 installs, 0 updates, 0 removals
+  - Installing bamarni/composer-bin-plugin (v1.5.0): Extracting archive
+  - Installing kylekatarnls/update-helper (1.2.1): Extracting archive
+  - Installing psr/http-message (1.0.1): Extracting archive
+  - Installing symfony/polyfill-mbstring (v1.19.0): Extracting archive
+  - Installing mtdowling/jmespath.php (2.6.1): Extracting archive
+  - Installing ralouphie/getallheaders (3.0.3): Extracting archive
+  - Installing guzzlehttp/psr7 (1.9.1): Extracting archive
+  - Installing guzzlehttp/promises (1.5.3): Extracting archive
+  - Installing symfony/polyfill-php72 (v1.19.0): Extracting archive
+  - Installing paragonie/random_compat (v2.0.18): Extracting archive
+  - Installing symfony/polyfill-php70 (v1.19.0): Extracting archive
+  - Installing symfony/polyfill-intl-normalizer (v1.19.0): Extracting archive
+  - Installing symfony/polyfill-intl-idn (v1.19.0): Extracting archive
+  - Installing guzzlehttp/guzzle (6.5.8): Extracting archive
+  - Installing aws/aws-crt-php (v1.2.7): Extracting archive
+  - Installing aws/aws-sdk-php (3.278.0): Extracting archive
+  - Installing firebase/php-jwt (v6.0.0): Extracting archive
+  - Installing justinrainbow/json-schema (v5.2.13): Extracting archive
+  - Installing psr/log (1.1.4): Extracting archive
+  - Installing monolog/monolog (1.27.0): Extracting archive
+  - Installing symfony/translation (v3.4.47): Extracting archive
+  - Installing nesbot/carbon (1.39.1): Extracting archive
+  - Installing paragonie/constant_time_encoding (v1.1.0): Extracting archive
+  - Installing phpseclib/phpseclib (3.0.46): Extracting archive
+  - Installing setasign/fpdi (v2.2.0): Extracting archive
+  - Installing tecnickcom/tcpdf (6.3.2): Extracting archive
+Generating autoload files
+Carbon 1 is deprecated, see how to migrate to Carbon 2.
+https://carbon.nesbot.com/docs/#api-carbon-2
+    You can run './vendor/bin/upgrade-carbon' to get help in updating carbon and other frameworks and libraries that depend on it.
+13 packages you are using are looking for funding.
+Use the `composer fund` command to find out more!
+Installing dependencies from lock file (including require-dev)
+Verifying lock file contents can be installed on current platform.
+Nothing to install, update or remove
+Generating autoload files
+39 packages you are using are looking for funding.
+Use the `composer fund` command to find out more!
+PHPUnit 9.6.27 by Sebastian Bergmann and contributors.
+
+Warning:       XDEBUG_MODE=coverage (environment variable) or xdebug.mode=coverage (PHP configuration setting) has to be set
+
+.............................................................   61 / 5131 (  1%)
+/home/kf/actions-runner/_work/SPIDERPLUS-web/SPIDERPLUS-web/bin/github_actions/execute_phpunit.sh: line 70: 27274 Segmentation fault      XDEBUG_MODE=off ./vendor/bin/phpunit 2>&1
+.....
+##[error]Process completed with exit code 139.
+```

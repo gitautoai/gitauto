@@ -12,7 +12,7 @@ from anthropic.types import MessageParam
 # Local imports
 from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
 from constants.agent import MAX_ITERATIONS
-from constants.general import MAX_GITAUTO_COMMITS_PER_PR
+from constants.general import MAX_GITAUTO_COMMITS_PER_PR, MAX_INFRA_RETRIES
 from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.agents.verify_task_is_complete import verify_task_is_complete
@@ -66,6 +66,7 @@ from services.webhook.utils.should_bail import should_bail
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.logs.clean_logs import clean_logs
+from utils.logs.detect_infra_failure import detect_infra_failure
 from utils.progress_bar.progress_bar import create_progress_bar
 
 
@@ -280,12 +281,12 @@ async def handle_check_suite(
     pr_commits = get_pull_request_commits(
         owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
     )
-    gitauto_commit_count = 0
-    for commit in pr_commits:
-        commit_author = commit.get("commit", {}).get("author", {})
-        commit_name = commit_author.get("name", "")
-        if GITHUB_APP_USER_NAME in commit_name:
-            gitauto_commit_count += 1
+    gitauto_commit_count = sum(
+        1
+        for c in pr_commits
+        if c["commit"]["author"]
+        and GITHUB_APP_USER_NAME in c["commit"]["author"]["name"]
+    )
 
     if gitauto_commit_count >= MAX_GITAUTO_COMMITS_PER_PR:
         comment_msg = f"I've made {gitauto_commit_count} commits trying to fix this, but the tests keep failing with slightly different errors. I'm going to stop here to avoid an infinite loop. Could you take a look?"
@@ -470,6 +471,54 @@ async def handle_check_suite(
         msg = "Skipped - error log not found"
         logger.error(msg)
         slack_notify(f"{msg} for `{owner_name}/{repo_name}`", thread_ts)
+        return
+
+    # Detect infrastructure failures (segfaults, OOM, etc.) - skip LLM and retry CI
+    infra_failure = detect_infra_failure(error_log)
+    if infra_failure:
+        # Count previous infra retries from commit messages (pr_commits already fetched above)
+        infra_retry_msg = "Infrastructure failure retry"
+        infra_retry_count = sum(
+            1 for c in pr_commits if infra_retry_msg in c["commit"]["message"]
+        )
+
+        if infra_retry_count >= MAX_INFRA_RETRIES:
+            msg = f"Infrastructure failure (`{infra_failure}`) persists after {infra_retry_count} retries. Skipping."
+            add_log_message(msg, log_messages)
+            update_comment(body="\n".join(log_messages), base_args=base_args)
+            if usage_id:
+                update_usage(
+                    usage_id=usage_id,
+                    token_input=0,
+                    token_output=0,
+                    total_seconds=int(time.time() - current_time),
+                    is_completed=True,
+                    pr_number=pull_number,
+                    original_error_log=error_log,
+                    minimized_error_log=clean_logs(error_log),
+                )
+            logger.info(msg)
+            slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
+            return
+
+        # Re-trigger CI with empty commit instead of calling LLM
+        msg = f"Detected `{infra_failure}` (not a code issue). Re-triggering CI (retry {infra_retry_count + 1}/{MAX_INFRA_RETRIES})..."
+        add_log_message(msg, log_messages)
+        update_comment(body="\n".join(log_messages), base_args=base_args)
+        create_empty_commit(base_args=base_args, message=infra_retry_msg)
+        if usage_id:
+            update_usage(
+                usage_id=usage_id,
+                token_input=0,
+                token_output=0,
+                total_seconds=int(time.time() - current_time),
+                is_completed=True,
+                pr_number=pull_number,
+                original_error_log=error_log,
+                minimized_error_log=clean_logs(error_log),
+            )
+        logger.info(msg)
+        slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
     # Create a pair of workflow ID and error log hash
