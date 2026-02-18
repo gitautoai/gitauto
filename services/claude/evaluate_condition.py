@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 
-from constants.claude import CLAUDE_MAX_TOKENS, CLAUDE_MODEL_ID_45
+from constants.claude import CLAUDE_MAX_TOKENS, ClaudeModelId
 from services.claude.client import claude
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -45,7 +45,7 @@ def evaluate_condition(
         return EvaluationResult(False, "empty input")
 
     response = claude.beta.messages.create(
-        model=CLAUDE_MODEL_ID_45,
+        model=ClaudeModelId.OPUS_4_6,
         max_tokens=CLAUDE_MAX_TOKENS,
         temperature=0,
         system=system_prompt,

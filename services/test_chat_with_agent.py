@@ -3,6 +3,7 @@
 from typing import cast
 from unittest.mock import Mock, patch
 import pytest
+from constants.claude import ClaudeModelId
 from services.chat_with_agent import chat_with_agent
 from services.claude.chat_with_claude import ToolCall
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
@@ -15,7 +16,7 @@ from services.github.types.github_types import BaseArgs
 async def test_chat_with_agent_passes_usage_id_to_claude(
     mock_chat_with_claude, mock_get_model
 ):
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {"role": "assistant", "content": "response"},
         [],
@@ -46,7 +47,7 @@ async def test_chat_with_agent_passes_usage_id_to_claude(
 async def test_chat_with_agent_returns_token_counts(
     mock_chat_with_claude, mock_get_model
 ):
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {"role": "assistant", "content": "response"},
         [],
@@ -78,7 +79,7 @@ async def test_get_remote_file_content_start_line_end_line_logging(
     mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that start_line and end_line parameters are properly logged in chat_with_agent."""
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -139,7 +140,7 @@ async def test_delete_file_logging(
     mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that delete_file function calls are properly logged in chat_with_agent."""
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -200,7 +201,7 @@ async def test_move_file_logging(
     mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that move_file function calls are properly logged in chat_with_agent."""
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -264,7 +265,7 @@ async def test_move_file_logging(
 async def test_replace_remote_file_content_handles_new_content_arg_name(
     mock_chat_with_claude, mock_get_model
 ):
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -321,7 +322,7 @@ async def test_replace_remote_file_content_handles_new_content_arg_name(
 async def test_unavailable_tool_sends_slack_notification(
     mock_slack_notify, mock_chat_with_claude, mock_get_model
 ):
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -376,7 +377,7 @@ async def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
     mock_chat_with_claude,
     mock_get_model,
 ):
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_is_target_test_file.return_value = False
     # With parallel tool calls, validation errors are returned inline (no recursion)
     mock_chat_with_claude.return_value = (
@@ -432,7 +433,7 @@ async def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
 async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true(
     _mock_update_comment, mock_get_pr_files, mock_chat_with_claude, mock_get_model
 ):
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
     mock_chat_with_claude.return_value = (
         {
@@ -485,7 +486,7 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
 async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_false(
     mock_get_pr_files, _mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_get_pr_files.return_value = []
     mock_chat_with_claude.return_value = (
         {
@@ -537,7 +538,7 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
 async def test_regular_tool_returns_is_completed_false(
     mock_chat_with_claude, mock_get_model
 ):
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -587,7 +588,7 @@ async def test_regular_tool_returns_is_completed_false(
 async def test_no_tool_call_returns_is_completed_false(
     mock_chat_with_claude, mock_get_model
 ):
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {"role": "assistant", "content": "I'm thinking about it..."},
         [],
@@ -618,7 +619,7 @@ async def test_file_write_result_success_includes_formatted_content(
     _mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that FileWriteResult with success=True includes formatted content with line numbers."""
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -683,7 +684,7 @@ async def test_file_write_result_failure_returns_message_only(
     _mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that FileWriteResult with success=False returns only the message."""
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -745,7 +746,7 @@ async def test_file_move_result_returns_message(
     _mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that FileMoveResult returns the message."""
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -810,7 +811,7 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
     mock_replace, _mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that reading a full file calls replace_old_file_content with is_full_file_read=True."""
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -866,7 +867,7 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
     mock_replace, _mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that reading a partial file calls replace_old_file_content with is_full_file_read=False."""
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -925,7 +926,7 @@ async def test_multiple_parallel_tool_calls(
     _mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that multiple tool_use blocks are all executed and results returned in one message."""
-    mock_get_model.return_value = "claude-sonnet-4-0"
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",

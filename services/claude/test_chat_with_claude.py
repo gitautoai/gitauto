@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 from anthropic.types import MessageParam, ToolUnionParam
 
+from constants.claude import ClaudeModelId
 from services.claude.chat_with_claude import chat_with_claude
 
 
@@ -22,7 +23,11 @@ def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
     tools: list[ToolUnionParam] = []
 
     result = chat_with_claude(
-        messages=messages, system_content=system_content, tools=tools, usage_id=123
+        messages=messages,
+        system_content=system_content,
+        tools=tools,
+        model_id=ClaudeModelId.SONNET_4_6,
+        usage_id=123,
     )
 
     assistant_message, tool_calls, token_input, token_output = result
@@ -74,7 +79,11 @@ def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
     )
 
     result = chat_with_claude(
-        messages=messages, system_content=system_content, tools=tools, usage_id=None
+        messages=messages,
+        system_content=system_content,
+        tools=tools,
+        model_id=ClaudeModelId.SONNET_4_6,
+        usage_id=None,
     )
 
     _, tool_calls, _, _ = result
@@ -100,6 +109,7 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
         messages=cast(list[MessageParam], [{"role": "user", "content": "test"}]),
         system_content="assistant",
         tools=[],
+        model_id=ClaudeModelId.SONNET_4_6,
         usage_id=None,
     )
 
@@ -133,6 +143,7 @@ def test_chat_with_claude_calls_optimization_functions(
         messages=cast(list[MessageParam], original_messages),
         system_content="You are helpful",
         tools=[],
+        model_id=ClaudeModelId.SONNET_4_6,
     )
 
     mock_remove_outdated_apply_diff_to_file_attempts_and_results.assert_called_once()
