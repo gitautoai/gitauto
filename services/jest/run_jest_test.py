@@ -75,12 +75,23 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
     if mongoms_distro:
         env["MONGOMS_DISTRO"] = mongoms_distro
 
+    # Kill any lingering mongod processes from previous verify_task_is_complete calls.
+    # MongoMemoryServer uses a fixed port (e.g. 34213) hardcoded in customer tests.
+    # If a previous jest run's globalTeardown didn't fully clean up, the stale mongod causes "namespace already exists, but with different options" errors.
+    subprocess.run(
+        ["pkill", "-f", "mongod"],
+        capture_output=True,
+        text=True,
+        check=False,  # if no mongod processes exist, pkill exits non-zero, silently ignored.
+    )
+
     # Run each test file individually so we know exactly which files fail
     all_errors: list[str] = []
     error_files: set[str] = set()
     for test_file in test_files:
         # -u (--updateSnapshot) auto-updates stale .snap files instead of failing
-        cmd = base_cmd + [test_file, "-u"]
+        # --forceExit: Force jest to exit after tests complete, preventing hangs from uncleaned resources (e.g. MongoDB connections) that survive globalTeardown.
+        cmd = base_cmd + [test_file, "-u", "--forceExit"]
         logger.info("%s: Running %s...", runner_name, test_file)
         result = subprocess.run(
             cmd,
