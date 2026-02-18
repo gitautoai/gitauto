@@ -52,6 +52,25 @@ def test_schedule_handler_trigger_disabled(
     assert "trigger_on_schedule is not enabled" in result["message"]
 
 
+@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.get_repository")
+def test_schedule_handler_paused(
+    mock_get_repository, mock_get_token, mock_is_paused, mock_event
+):
+    mock_get_token.return_value = "test-token"
+    mock_get_repository.return_value = {
+        "id": 456,
+        "name": "test-repo",
+        "trigger_on_schedule": True,
+    }
+    mock_is_paused.return_value = True
+    result = schedule_handler(mock_event)
+    assert result["status"] == "skipped"
+    assert "schedule is currently paused" in result["message"]
+
+
+@patch("services.webhook.schedule_handler.is_schedule_paused")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -59,9 +78,11 @@ def test_schedule_handler_access_denied(
     mock_check_availability,
     mock_get_repository,
     mock_get_token,
+    mock_is_paused,
     mock_event,
 ):
     mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = False
     mock_get_repository.return_value = {
         "id": 456,
         "name": "test-repo",
@@ -122,6 +143,7 @@ def test_get_all_coverages_contract():
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.should_skip_test")
 @patch("services.webhook.schedule_handler.evaluate_condition")
+@patch("services.webhook.schedule_handler.is_schedule_paused")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -139,12 +161,14 @@ def test_schedule_handler_skips_export_only_files(
     mock_check_availability,
     mock_get_repository,
     mock_get_token,
+    mock_is_paused,
     mock_evaluate_condition,
     mock_should_skip_test,
     mock_get_open_pull_requests,
     mock_event,
 ):
     mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = False
     mock_get_repository.return_value = {"trigger_on_schedule": True}
     mock_check_availability.return_value = {
         "can_proceed": True,
@@ -205,6 +229,7 @@ def test_schedule_handler_skips_export_only_files(
 
 
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
+@patch("services.webhook.schedule_handler.is_schedule_paused")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -224,10 +249,12 @@ def test_schedule_handler_skips_empty_files(
     mock_check_availability,
     mock_get_repository,
     mock_get_token,
+    mock_is_paused,
     mock_get_open_pull_requests,
     mock_event,
 ):
     mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = False
     mock_get_repository.return_value = {"trigger_on_schedule": True}
     mock_check_availability.return_value = {
         "can_proceed": True,
@@ -288,6 +315,7 @@ def test_schedule_handler_skips_empty_files(
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.create_issue")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.is_schedule_paused")
 @patch("services.webhook.schedule_handler.is_migration_file")
 @patch("services.webhook.schedule_handler.is_type_file")
 @patch("services.webhook.schedule_handler.is_test_file")
@@ -297,6 +325,7 @@ def test_schedule_handler_410_issues_disabled(
     mock_is_test_file,
     mock_is_type_file,
     mock_is_migration_file,
+    mock_is_paused,
     mock_get_token,
     mock_create_issue,
     mock_get_repository,
@@ -318,6 +347,7 @@ def test_schedule_handler_410_issues_disabled(
     mock_event,
 ):
     mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = False
     mock_get_repository.return_value = {"trigger_on_schedule": True}
     mock_check_availability.return_value = {
         "can_proceed": True,
@@ -387,6 +417,7 @@ def test_schedule_handler_410_issues_disabled(
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.evaluate_condition")
 @patch("services.webhook.schedule_handler.should_skip_test")
+@patch("services.webhook.schedule_handler.is_schedule_paused")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -404,12 +435,14 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
     mock_check_availability,
     mock_get_repository,
     mock_get_token,
+    mock_is_paused,
     mock_should_skip_test,
     mock_evaluate_condition,
     mock_get_open_pull_requests,
     mock_event,
 ):
     mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = False
     mock_get_repository.return_value = {"trigger_on_schedule": True}
     mock_check_availability.return_value = {
         "can_proceed": True,

@@ -505,8 +505,8 @@ class SchedulePauses(TypedDict):
     id: str
     owner_id: int
     repo_id: int
-    pause_start: Any
-    pause_end: Any
+    pause_start: datetime.datetime
+    pause_end: datetime.datetime
     reason: str | None
     created_by: str
     created_at: datetime.datetime
@@ -517,8 +517,8 @@ class SchedulePauses(TypedDict):
 class SchedulePausesInsert(TypedDict):
     owner_id: int
     repo_id: int
-    pause_start: Any
-    pause_end: Any
+    pause_start: datetime.datetime
+    pause_end: datetime.datetime
     reason: NotRequired[str | None]
     created_by: str
     updated_by: str
