@@ -53,10 +53,10 @@ def test_count_unique_requests_with_valid_data():
         mock_table.select.assert_called_once_with(
             "owner_type, owner_name, repo_name, pr_number"
         )
-        mock_table.gt.assert_called_once_with("created_at", start_date)
+        mock_table.gt.assert_not_called()
         mock_table.eq.assert_any_call("installation_id", 123)
         mock_table.in_.assert_called_once_with(
-            "trigger", ["issue_comment", "issue_label", "pull_request"]
+            "trigger", ["issue_comment", "issue_label", "manual", "pull_request"]
         )
         mock_table.execute.assert_called_once()
 
@@ -480,7 +480,7 @@ def test_count_unique_requests_with_different_start_dates():
             result = count_unique_requests(123, start_date)
             expected = {"Organization/test_org/test_repo#1"}
             assert result == expected
-            mock_table.gt.assert_called_with("created_at", start_date)
+            mock_table.gt.assert_not_called()
 
 
 def test_count_unique_requests_with_single_record():
@@ -573,7 +573,7 @@ def test_count_unique_requests_query_parameters():
 
         mock_supabase.table.assert_called_once_with("usage")
         mock_table.select.assert_called_once()
-        mock_table.gt.assert_called_once_with("created_at", start_date)
+        mock_table.gt.assert_not_called()
         mock_table.eq.assert_any_call("installation_id", 123)
 
 
