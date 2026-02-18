@@ -10,6 +10,9 @@ from utils.memory.is_lambda_oom_approaching import (
     is_lambda_oom_approaching,
 )
 
+# 90% of 2048 = 1843.2 MB
+THRESHOLD_MB = LAMBDA_MEMORY_MB * 90 / 100
+
 
 def _mock_rusage(ru_maxrss: int):
     rusage = MagicMock()
@@ -32,7 +35,7 @@ class TestIsLambdaOomApproaching:
     @patch("utils.memory.is_lambda_oom_approaching._IS_MACOS", False)
     @patch("utils.memory.is_lambda_oom_approaching.resource")
     def test_above_threshold_linux(self, mock_resource):
-        # 1900 MB in KB (above 1792 MB threshold)
+        # 1900 MB in KB (above 1843.2 MB threshold)
         mock_resource.getrusage.return_value = _mock_rusage(1900 * 1024)
         mock_resource.RUSAGE_SELF = 0
         is_approaching, used_mb = is_lambda_oom_approaching()
@@ -62,32 +65,22 @@ class TestIsLambdaOomApproaching:
     @patch("utils.memory.is_lambda_oom_approaching._IS_MACOS", False)
     @patch("utils.memory.is_lambda_oom_approaching.resource")
     def test_exact_threshold_not_approaching(self, mock_resource):
-        # Exactly at threshold (1792 MB) - not greater, so False
-        mock_resource.getrusage.return_value = _mock_rusage(1792 * 1024)
+        # Exactly at threshold (1843.2 MB) - use 1843 MB, not greater, so False
+        mock_resource.getrusage.return_value = _mock_rusage(1843 * 1024)
         mock_resource.RUSAGE_SELF = 0
         is_approaching, used_mb = is_lambda_oom_approaching()
         assert is_approaching is False
-        assert used_mb == 1792.0
+        assert used_mb == 1843.0
 
     @patch("utils.memory.is_lambda_oom_approaching._IS_MACOS", False)
     @patch("utils.memory.is_lambda_oom_approaching.resource")
     def test_just_above_threshold(self, mock_resource):
-        # 1793 MB - just above 1792 threshold
-        mock_resource.getrusage.return_value = _mock_rusage(1793 * 1024)
+        # 1844 MB - just above 1843.2 threshold
+        mock_resource.getrusage.return_value = _mock_rusage(1844 * 1024)
         mock_resource.RUSAGE_SELF = 0
         is_approaching, used_mb = is_lambda_oom_approaching()
         assert is_approaching is True
-        assert used_mb == 1793.0
-
-    @patch("utils.memory.is_lambda_oom_approaching._IS_MACOS", False)
-    @patch("utils.memory.is_lambda_oom_approaching.resource")
-    def test_custom_buffer(self, mock_resource):
-        # 1900 MB with 100 MB buffer (threshold = 1948 MB)
-        mock_resource.getrusage.return_value = _mock_rusage(1900 * 1024)
-        mock_resource.RUSAGE_SELF = 0
-        is_approaching, used_mb = is_lambda_oom_approaching(buffer_mb=100)
-        assert is_approaching is False
-        assert used_mb == 1900.0
+        assert used_mb == 1844.0
 
     @pytest.mark.parametrize(
         "used_kb, expected_approaching",
@@ -95,8 +88,8 @@ class TestIsLambdaOomApproaching:
             (0, False),
             (512 * 1024, False),
             (1024 * 1024, False),
-            (1792 * 1024, False),
-            (1793 * 1024, True),
+            (1843 * 1024, False),
+            (1844 * 1024, True),
             (2048 * 1024, True),
         ],
         ids=["zero", "512mb", "1024mb", "at_threshold", "above_threshold", "at_limit"],
