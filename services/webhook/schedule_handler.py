@@ -34,6 +34,7 @@ from services.supabase.coverages.insert_coverages import insert_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.repositories.update_repository import update_repository
+from services.supabase.schedule_pauses.is_schedule_paused import is_schedule_paused
 from services.supabase.users.get_user import get_user
 from services.stripe.check_availability import check_availability
 
@@ -77,6 +78,12 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_schedule"):
         msg = f"Skipping repo_id: {repo_id} - trigger_on_schedule is not enabled"
+        logger.info(msg)
+        return {"status": "skipped", "message": msg}
+
+    # Check if schedule is paused for this repo
+    if is_schedule_paused(owner_id=owner_id, repo_id=repo_id):
+        msg = f"Skipping repo_id: {repo_id} - schedule is currently paused"
         logger.info(msg)
         return {"status": "skipped", "message": msg}
 
