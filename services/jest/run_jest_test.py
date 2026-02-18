@@ -11,6 +11,7 @@ from services.node.detect_package_manager import detect_package_manager
 from services.node.get_test_script_name import get_test_script_name
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
+from utils.process.kill_processes_by_name import kill_processes_by_name
 
 
 @dataclass
@@ -78,12 +79,7 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
     # Kill any lingering mongod processes from previous verify_task_is_complete calls.
     # MongoMemoryServer uses a fixed port (e.g. 34213) hardcoded in customer tests.
     # If a previous jest run's globalTeardown didn't fully clean up, the stale mongod causes "namespace already exists, but with different options" errors.
-    subprocess.run(
-        ["pkill", "-f", "mongod"],
-        capture_output=True,
-        text=True,
-        check=False,  # if no mongod processes exist, pkill exits non-zero, silently ignored.
-    )
+    kill_processes_by_name("mongod")
 
     # Run each test file individually so we know exactly which files fail
     all_errors: list[str] = []
