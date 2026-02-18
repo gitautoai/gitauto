@@ -2,6 +2,7 @@
 # pyright: reportUnusedVariable=false
 
 import inspect
+import json
 from typing import cast
 from unittest.mock import AsyncMock, patch
 
@@ -2085,3 +2086,319 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     base_args = call_kwargs["base_args"]
     assert "baseline_tsc_errors" in base_args
     assert isinstance(base_args["baseline_tsc_errors"], set)
+
+
+@pytest.mark.asyncio
+@patch("services.webhook.issue_handler.insert_credit")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
+@patch("services.webhook.issue_handler.create_empty_commit")
+@patch("services.webhook.issue_handler.create_pull_request")
+@patch("services.webhook.issue_handler.create_remote_branch")
+@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
+@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
+@patch("services.webhook.issue_handler.get_comments")
+@patch("services.webhook.issue_handler.add_reaction_to_issue")
+@patch("services.webhook.issue_handler.slack_notify")
+@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
+@patch("services.webhook.issue_handler.create_progress_bar")
+@patch("services.webhook.issue_handler.update_usage")
+@patch("services.webhook.issue_handler.update_comment")
+@patch("services.webhook.issue_handler.get_repository_features")
+@patch("services.webhook.issue_handler.chat_with_agent")
+@patch("services.webhook.issue_handler.create_user_request")
+@patch("services.webhook.issue_handler.read_local_file")
+@patch("services.webhook.issue_handler.find_test_files")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.get_owner")
+@patch("services.webhook.issue_handler.create_comment")
+@patch("services.webhook.issue_handler.check_availability")
+@patch("services.webhook.issue_handler.render_text")
+@patch("services.webhook.issue_handler.deconstruct_github_payload")
+async def test_few_test_files_include_contents_in_prompt(
+    mock_deconstruct_github_payload,
+    mock_render_text,
+    mock_check_availability,
+    mock_create_comment,
+    mock_get_owner,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
+    mock_prepare_repo,
+    mock_find_test_files,
+    mock_read_local_file,
+    mock_create_user_request,
+    mock_chat_with_agent,
+    mock_get_repository_features,
+    mock_update_comment,
+    mock_update_usage,
+    mock_create_progress_bar,
+    mock_delete_comments_by_identifiers,
+    mock_slack_notify,
+    mock_add_reaction_to_issue,
+    mock_get_comments,
+    mock_get_remote_file_content_by_url,
+    mock_get_latest_remote_commit_sha,
+    mock_create_remote_branch,
+    mock_create_pull_request,
+    mock_create_empty_commit,
+    mock_should_bail,
+    mock_insert_credit,
+):
+    mock_deconstruct_github_payload.return_value = (
+        {
+            "installation_id": 123,
+            "owner_id": 456,
+            "owner_type": "User",
+            "repo_id": 789,
+            "issue_body": "Test issue body",
+            "owner": "test_owner",
+            "repo": "test_repo",
+            "issue_number": 100,
+            "issue_title": "Schedule: Add unit tests to src/logger.ts",
+            "sender_name": "test_sender",
+            "repo_full_name": "test_owner/test_repo",
+            "issuer_name": "test_issuer",
+            "sender_id": 888,
+            "token": "github_token_123",
+            "new_branch": "gitauto/issue-100",
+            "sender_email": "test@example.com",
+            "github_urls": {},
+            "is_automation": False,
+            "clone_url": "https://github.com/test_owner/test_repo.git",
+            "base_branch": "main",
+        },
+        None,
+    )
+    mock_render_text.return_value = "Rendered issue body"
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "credit",
+        "requests_left": None,
+        "credit_balance_usd": 50,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Proceeding",
+    }
+    mock_create_comment.return_value = "https://api.github.com/comment/1"
+    mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 100}
+    mock_create_user_request.return_value = 999
+
+    # Return 3 test files (<=5 threshold)
+    mock_find_test_files.return_value = [
+        "tests/test_logger.ts",
+        "tests/logger.spec.ts",
+        "tests/logger.test.ts",
+    ]
+    mock_read_local_file.return_value = "const x = 1;"
+
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        p=0,
+        is_planned=False,
+    )
+    mock_get_repository_features.return_value = {
+        "restrict_edit_to_target_test_file_only": False,
+        "allow_edit_any_file": True,
+    }
+    mock_update_comment.return_value = None
+    mock_update_usage.return_value = None
+    mock_create_progress_bar.return_value = "Progress: 0%"
+    mock_delete_comments_by_identifiers.return_value = None
+    mock_slack_notify.return_value = "thread_1"
+    mock_add_reaction_to_issue.return_value = None
+    mock_get_comments.return_value = []
+    mock_get_remote_file_content_by_url.return_value = ("", "")
+    mock_get_latest_remote_commit_sha.return_value = "abc123"
+    mock_create_remote_branch.return_value = None
+    mock_create_pull_request.return_value = (
+        "https://github.com/test/repo/pull/123",
+        123,
+    )
+    mock_create_empty_commit.return_value = None
+    mock_insert_credit.return_value = None
+
+    payload = cast(
+        GitHubLabeledPayload,
+        {
+            "action": "labeled",
+            "label": {"name": "gitauto"},
+            "issue": {
+                "number": 100,
+                "title": "Schedule: Add unit tests to src/logger.ts",
+                "body": "Test body",
+            },
+            "repository": {"name": "test_repo", "full_name": "test_owner/test_repo"},
+            "sender": {"login": "test_sender"},
+        },
+    )
+
+    await create_pr_from_issue(payload=payload, trigger="issue_comment")
+
+    # Verify test_files contents are included in the prompt (not just paths)
+    call_kwargs = mock_chat_with_agent.call_args.kwargs
+    messages = call_kwargs["messages"]
+    user_input = json.loads(messages[0]["content"])
+    assert "test_files" in user_input
+    assert "test_file_paths" not in user_input
+    assert len(user_input["test_files"]) == 3
+
+
+@pytest.mark.asyncio
+@patch("services.webhook.issue_handler.insert_credit")
+@patch("services.webhook.issue_handler.should_bail", return_value=False)
+@patch("services.webhook.issue_handler.create_empty_commit")
+@patch("services.webhook.issue_handler.create_pull_request")
+@patch("services.webhook.issue_handler.create_remote_branch")
+@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
+@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
+@patch("services.webhook.issue_handler.get_comments")
+@patch("services.webhook.issue_handler.add_reaction_to_issue")
+@patch("services.webhook.issue_handler.slack_notify")
+@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
+@patch("services.webhook.issue_handler.create_progress_bar")
+@patch("services.webhook.issue_handler.update_usage")
+@patch("services.webhook.issue_handler.update_comment")
+@patch("services.webhook.issue_handler.get_repository_features")
+@patch("services.webhook.issue_handler.chat_with_agent")
+@patch("services.webhook.issue_handler.create_user_request")
+@patch("services.webhook.issue_handler.read_local_file")
+@patch("services.webhook.issue_handler.find_test_files")
+@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.issue_handler.get_owner")
+@patch("services.webhook.issue_handler.create_comment")
+@patch("services.webhook.issue_handler.check_availability")
+@patch("services.webhook.issue_handler.render_text")
+@patch("services.webhook.issue_handler.deconstruct_github_payload")
+async def test_many_test_files_include_paths_only_in_prompt(
+    mock_deconstruct_github_payload,
+    mock_render_text,
+    mock_check_availability,
+    mock_create_comment,
+    mock_get_owner,
+    mock_ensure_node_packages,
+    mock_git_clone_to_efs,
+    mock_prepare_repo,
+    mock_find_test_files,
+    mock_read_local_file,
+    mock_create_user_request,
+    mock_chat_with_agent,
+    mock_get_repository_features,
+    mock_update_comment,
+    mock_update_usage,
+    mock_create_progress_bar,
+    mock_delete_comments_by_identifiers,
+    mock_slack_notify,
+    mock_add_reaction_to_issue,
+    mock_get_comments,
+    mock_get_remote_file_content_by_url,
+    mock_get_latest_remote_commit_sha,
+    mock_create_remote_branch,
+    mock_create_pull_request,
+    mock_create_empty_commit,
+    mock_should_bail,
+    mock_insert_credit,
+):
+    mock_deconstruct_github_payload.return_value = (
+        {
+            "installation_id": 123,
+            "owner_id": 456,
+            "owner_type": "User",
+            "repo_id": 789,
+            "issue_body": "Test issue body",
+            "owner": "test_owner",
+            "repo": "test_repo",
+            "issue_number": 100,
+            "issue_title": "Schedule: Add unit tests to src/logger.ts",
+            "sender_name": "test_sender",
+            "repo_full_name": "test_owner/test_repo",
+            "issuer_name": "test_issuer",
+            "sender_id": 888,
+            "token": "github_token_123",
+            "new_branch": "gitauto/issue-100",
+            "sender_email": "test@example.com",
+            "github_urls": {},
+            "is_automation": False,
+            "clone_url": "https://github.com/test_owner/test_repo.git",
+            "base_branch": "main",
+        },
+        None,
+    )
+    mock_render_text.return_value = "Rendered issue body"
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "credit",
+        "requests_left": None,
+        "credit_balance_usd": 50,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Proceeding",
+    }
+    mock_create_comment.return_value = "https://api.github.com/comment/1"
+    mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 100}
+    mock_create_user_request.return_value = 999
+
+    # Return 7 test files (>5 threshold)
+    mock_find_test_files.return_value = [f"tests/test_logger_{i}.ts" for i in range(7)]
+    mock_read_local_file.return_value = "const x = 1;"
+
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        p=0,
+        is_planned=False,
+    )
+    mock_get_repository_features.return_value = {
+        "restrict_edit_to_target_test_file_only": False,
+        "allow_edit_any_file": True,
+    }
+    mock_update_comment.return_value = None
+    mock_update_usage.return_value = None
+    mock_create_progress_bar.return_value = "Progress: 0%"
+    mock_delete_comments_by_identifiers.return_value = None
+    mock_slack_notify.return_value = "thread_1"
+    mock_add_reaction_to_issue.return_value = None
+    mock_get_comments.return_value = []
+    mock_get_remote_file_content_by_url.return_value = ("", "")
+    mock_get_latest_remote_commit_sha.return_value = "abc123"
+    mock_create_remote_branch.return_value = None
+    mock_create_pull_request.return_value = (
+        "https://github.com/test/repo/pull/123",
+        123,
+    )
+    mock_create_empty_commit.return_value = None
+    mock_insert_credit.return_value = None
+
+    payload = cast(
+        GitHubLabeledPayload,
+        {
+            "action": "labeled",
+            "label": {"name": "gitauto"},
+            "issue": {
+                "number": 100,
+                "title": "Schedule: Add unit tests to src/logger.ts",
+                "body": "Test body",
+            },
+            "repository": {"name": "test_repo", "full_name": "test_owner/test_repo"},
+            "sender": {"login": "test_sender"},
+        },
+    )
+
+    await create_pr_from_issue(payload=payload, trigger="issue_comment")
+
+    # Verify only paths are included (not contents) when >5 test files
+    call_kwargs = mock_chat_with_agent.call_args.kwargs
+    messages = call_kwargs["messages"]
+    user_input = json.loads(messages[0]["content"])
+    assert "test_file_paths" in user_input
+    assert "test_files" not in user_input
+    assert len(user_input["test_file_paths"]) == 7
+    # Verify read_local_file was NOT called (no contents loaded)
+    mock_read_local_file.assert_not_called()
