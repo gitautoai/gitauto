@@ -266,6 +266,10 @@ async def create_pr_from_issue(
         lambda_info=lambda_info,
     )
 
+    # Insert credit usage immediately (charge regardless of completion)
+    if billing_type == "credit":
+        insert_credit(owner_id=owner_id, transaction_type="usage", usage_id=usage_id)
+
     add_reaction_to_issue(
         issue_number=issue_number, content="eyes", base_args=base_args
     )
@@ -658,11 +662,8 @@ async def create_pr_from_issue(
             total_seconds=int(end_time - current_time),
         )
 
-    # Insert credit usage if user is using credits (not paid subscription)
-    if is_completed and billing_type == "credit":
-        insert_credit(owner_id=owner_id, transaction_type="usage", usage_id=usage_id)
-
-        # Check if user just ran out of credits and send casual notification
+    # Check if user just ran out of credits and send casual notification
+    if billing_type == "credit":
         owner = get_owner(owner_id=owner_id)
         if owner and owner["credit_balance_usd"] <= 0 and sender_id:
             user = get_user(user_id=sender_id)
