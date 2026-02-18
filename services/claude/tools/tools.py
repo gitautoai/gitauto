@@ -71,7 +71,7 @@ APPLY_DIFF_TO_FILE: ToolUnionParam = {
 # NOTE: No strict=True here because line_number, keyword, start_line, end_line are optional
 GET_REMOTE_FILE_CONTENT: ToolUnionParam = {
     "name": "get_remote_file_content",
-    "description": "Fetches the content of a file from GitHub remote repository given a file_path when you need to read or modify the file content.",
+    "description": "Fetches the content of a file from GitHub remote repository given a file_path when you need to read or modify the file content. IMPORTANT: Always read the FULL file by default - do NOT use start_line/end_line/line_number/keyword to truncate the read. Only use start_line/end_line for files over 2000 lines. Truncating reads causes you to miss critical context like required fields, data structures, and execution order.",
     "input_schema": {
         "type": "object",
         "properties": {

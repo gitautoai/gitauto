@@ -73,6 +73,22 @@ class TestGetRemoteFileContent:
         return mock_response
 
     @pytest.fixture
+    def mock_large_file_response(self):
+        """Mock response for a file with 2001 lines (above the 2000-line truncation threshold)."""
+        large_content = "\n".join([f"line {i}" for i in range(1, 2002)])
+        encoded_content = base64.b64encode(large_content.encode("utf-8")).decode(
+            "utf-8"
+        )
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "content": encoded_content,
+            "encoding": "base64",
+        }
+        return mock_response
+
+    @pytest.fixture
     def mock_404_response(self):
         """Mock 404 response."""
         mock_response = MagicMock()
@@ -189,30 +205,19 @@ class TestGetRemoteFileContent:
     # Test line number parameter
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
-    def test_line_number_parameter(self, mock_create_headers, mock_get, base_args):
-        """Test file retrieval with specific line number."""
-        # Create a large file content for testing line number functionality
-        large_content = "\n".join([f"line {i}" for i in range(1, 201)])  # 200 lines
-        encoded_content = base64.b64encode(large_content.encode("utf-8")).decode(
-            "utf-8"
-        )
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "content": encoded_content,
-            "encoding": "base64",
-        }
-
+    def test_line_number_parameter(
+        self, mock_create_headers, mock_get, base_args, mock_large_file_response
+    ):
+        """Test file retrieval with specific line number on large file (>= 2000 lines)."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-        mock_get.return_value = mock_response
+        mock_get.return_value = mock_large_file_response
 
-        result = get_remote_file_content("large_file.py", base_args, line_number=100)
+        result = get_remote_file_content("large_file.py", base_args, line_number=1000)
 
         assert (
-            "```large_file.py#L51-L151" in result
-        )  # Should show lines around line 100
-        assert "100:line 100" in result
+            "```large_file.py#L951-L1051" in result
+        )  # Should show lines around line 1000
+        assert "1000:line 1000" in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
@@ -221,22 +226,16 @@ class TestGetRemoteFileContent:
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_keyword_search(self, mock_create_headers, mock_get, base_args):
-        """Test file retrieval with keyword search."""
-        test_content = "\n".join(
-            [
-                "def function1():",
-                "    pass",
-                "",
-                "def target_function():",
-                "    print('This is the target')",
-                "",
-                "def another_function():",
-                "    pass",
-                "",
-                "def target_helper():",
-                "    return 'target found'",
-            ]
-        )
+        """Test file retrieval with keyword search on large file (>= 2000 lines)."""
+        lines = []
+        for i in range(1, 2002):
+            if i == 500:
+                lines.append("def target_function():")
+            elif i == 1500:
+                lines.append("def target_helper():")
+            else:
+                lines.append(f"line {i}")
+        test_content = "\n".join(lines)
         encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
 
         mock_response = MagicMock()
@@ -253,6 +252,8 @@ class TestGetRemoteFileContent:
 
         assert "target_function" in result
         assert "target_helper" in result
+        # Should contain segment separators since keywords are far apart
+        assert "..." in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
@@ -261,17 +262,17 @@ class TestGetRemoteFileContent:
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_keyword_not_found(
-        self, mock_create_headers, mock_get, base_args, mock_file_response
+        self, mock_create_headers, mock_get, base_args, mock_large_file_response
     ):
-        """Test keyword search when keyword is not found."""
+        """Test keyword search when keyword is not found on large file (>= 2000 lines)."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-        mock_get.return_value = mock_file_response
+        mock_get.return_value = mock_large_file_response
 
         result = get_remote_file_content(
-            "src/test.py", base_args, keyword="nonexistent"
+            "large_file.py", base_args, keyword="nonexistent"
         )
 
-        assert "Keyword 'nonexistent' not found in the file 'src/test.py'." in result
+        assert "Keyword 'nonexistent' not found in the file 'large_file.py'." in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
@@ -694,13 +695,13 @@ class TestGetRemoteFileContent:
     def test_multiple_keyword_occurrences_with_segments(
         self, mock_create_headers, mock_get, base_args
     ):
-        """Test keyword search with multiple occurrences creating segments."""
+        """Test keyword search with multiple occurrences creating segments on large file."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
 
-        # Create content with multiple occurrences of keyword far apart
+        # Create content with multiple occurrences of keyword far apart (>= 2000 lines)
         lines = []
-        for i in range(1, 201):  # 200 lines
-            if i in (50, 150):
+        for i in range(1, 2002):
+            if i in (500, 1500):
                 lines.append(f"line {i} with target keyword")
             else:
                 lines.append(f"line {i}")
@@ -719,8 +720,8 @@ class TestGetRemoteFileContent:
         result = get_remote_file_content("test.py", base_args, keyword="target")
 
         # Keyword search returns segments directly without prefix
-        assert "50:line 50 with target keyword" in result
-        assert "150:line 150 with target keyword" in result
+        assert " 500:line 500 with target keyword" in result
+        assert "1500:line 1500 with target keyword" in result
         # Should contain segment separators
         assert "..." in result
 
@@ -844,32 +845,19 @@ class TestGetRemoteFileContent:
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_line_number_at_end_of_large_file(
-        self, mock_create_headers, mock_get, base_args
+        self, mock_create_headers, mock_get, base_args, mock_large_file_response
     ):
-        """Test line number parameter at end of large file."""
+        """Test line number parameter at end of large file (>= 2000 lines)."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_get.return_value = mock_large_file_response
 
-        # Create large file content
-        large_content = "\n".join([f"line {i}" for i in range(1, 201)])  # 200 lines
-        encoded_content = base64.b64encode(large_content.encode("utf-8")).decode(
-            "utf-8"
-        )
+        result = get_remote_file_content("large_file.py", base_args, line_number=2001)
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "content": encoded_content,
-            "encoding": "base64",
-        }
-        mock_get.return_value = mock_response
-
-        result = get_remote_file_content("large_file.py", base_args, line_number=200)
-
-        # Should show lines around line 200 (150-200)
+        # Should show lines around line 2001 (1951-2001)
         assert "```large_file.py" in result
-        assert "```large_file.py#L151-L201" in result
-        assert "200:line 200" in result
-        assert "151:line 151" in result
+        assert "```large_file.py#L1952-L2002" in result
+        assert "2001:line 2001" in result
+        assert "1952:line 1952" in result
 
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_get.assert_called_once()
@@ -877,30 +865,23 @@ class TestGetRemoteFileContent:
     # Tests for start_line and end_line parameters
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
-    def test_start_line_end_line_range(self, mock_create_headers, mock_get, base_args):
-        """Test retrieving specific line range with start_line and end_line."""
+    def test_start_line_end_line_range(
+        self, mock_create_headers, mock_get, base_args, mock_large_file_response
+    ):
+        """Test retrieving specific line range with start_line and end_line on large file."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_get.return_value = mock_large_file_response
 
-        # Create test content with 10 lines
-        test_content = "\n".join([f"line {i}" for i in range(1, 11)])
-        encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
+        result = get_remote_file_content(
+            "large_file.py", base_args, start_line=1003, end_line=1007
+        )
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "content": encoded_content,
-            "encoding": "base64",
-        }
-        mock_get.return_value = mock_response
-
-        result = get_remote_file_content("test.py", base_args, start_line=3, end_line=7)
-
-        assert "```test.py" in result
-        assert "```test.py#L3-L7" in result
-        assert "3:line 3" in result
-        assert "7:line 7" in result
-        assert "2:line 2" not in result  # Should not include line before range
-        assert "8:line 8" not in result  # Should not include line after range
+        assert "```large_file.py" in result
+        assert "```large_file.py#L1003-L1007" in result
+        assert "1003:line 1003" in result
+        assert "1007:line 1007" in result
+        assert "1002:line 1002" not in result  # Should not include line before range
+        assert "1008:line 1008" not in result  # Should not include line after range
 
     def test_start_line_end_line_validation_errors(self, base_args):
         """Test validation errors for start_line and end_line parameters."""
@@ -946,114 +927,112 @@ class TestGetRemoteFileContent:
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_start_line_end_line_boundary_conditions(
-        self, mock_create_headers, mock_get, base_args
+        self, mock_create_headers, mock_get, base_args, mock_large_file_response
     ):
-        """Test boundary conditions for start_line and end_line."""
+        """Test boundary conditions for start_line and end_line on large file."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
-
-        # Create test content with 5 lines
-        test_content = "\n".join([f"line {i}" for i in range(1, 6)])
-        encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "content": encoded_content,
-            "encoding": "base64",
-        }
-        mock_get.return_value = mock_response
+        mock_get.return_value = mock_large_file_response
 
         # Test range starting before file start (should clamp to 1)
-        result = get_remote_file_content("test.py", base_args, start_line=0, end_line=3)
+        result = get_remote_file_content(
+            "large_file.py", base_args, start_line=0, end_line=3
+        )
         assert "1:line 1" in result
         assert "3:line 3" in result
 
         # Test range extending beyond file end (should clamp to last line)
         result = get_remote_file_content(
-            "test.py", base_args, start_line=3, end_line=10
+            "large_file.py", base_args, start_line=1999, end_line=3000
         )
-        assert "3:line 3" in result
-        assert "5:line 5" in result
+        assert "1999:line 1999" in result
+        assert "2001:line 2001" in result
 
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_start_line_end_line_same_line(
-        self, mock_create_headers, mock_get, base_args
+        self, mock_create_headers, mock_get, base_args, mock_large_file_response
     ):
-        """Test when start_line equals end_line (single line)."""
+        """Test when start_line equals end_line (single line) on large file."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_get.return_value = mock_large_file_response
 
-        test_content = "\n".join([f"line {i}" for i in range(1, 6)])
-        encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
+        result = get_remote_file_content(
+            "large_file.py", base_args, start_line=1000, end_line=1000
+        )
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "content": encoded_content,
-            "encoding": "base64",
-        }
-        mock_get.return_value = mock_response
-
-        result = get_remote_file_content("test.py", base_args, start_line=3, end_line=3)
-
-        assert "```test.py" in result
-        assert "```test.py#L3-L3" in result
-        assert "3:line 3" in result
-        assert "2:line 2" not in result
-        assert "4:line 4" not in result
+        assert "```large_file.py" in result
+        assert "```large_file.py#L1000-L1000" in result
+        assert "1000:line 1000" in result
+        assert " 999:line 999" not in result
+        assert "1001:line 1001" not in result
 
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_start_line_only_defaults_to_end(
-        self, mock_create_headers, mock_get, base_args
+        self, mock_create_headers, mock_get, base_args, mock_large_file_response
     ):
-        """Test that start_line without end_line goes to end of file."""
+        """Test that start_line without end_line goes to end of file on large file."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_get.return_value = mock_large_file_response
 
-        # Create test content with 5 lines
-        test_content = "\n".join([f"line {i}" for i in range(1, 6)])
-        encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
+        result = get_remote_file_content("large_file.py", base_args, start_line=1999)
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "content": encoded_content,
-            "encoding": "base64",
-        }
-        mock_get.return_value = mock_response
-
-        result = get_remote_file_content("test.py", base_args, start_line=3)
-
-        assert "```test.py" in result
-        assert "```test.py#L3-L5" in result  # Should go from line 3 to end (line 5)
-        assert "3:line 3" in result
-        assert "5:line 5" in result
-        assert "2:line 2" not in result  # Should not include lines before start
+        assert "```large_file.py" in result
+        # Should go from line 1999 to end (line 2001)
+        assert "```large_file.py#L1999-L2001" in result
+        assert "1999:line 1999" in result
+        assert "2001:line 2001" in result
+        assert "1998:line 1998" not in result  # Should not include lines before start
 
     @patch("services.github.files.get_remote_file_content.requests.get")
     @patch("services.github.files.get_remote_file_content.create_headers")
     def test_end_line_only_defaults_to_start(
-        self, mock_create_headers, mock_get, base_args
+        self, mock_create_headers, mock_get, base_args, mock_large_file_response
     ):
-        """Test that end_line without start_line starts from beginning of file."""
+        """Test that end_line without start_line starts from beginning on large file."""
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_get.return_value = mock_large_file_response
 
-        # Create test content with 5 lines
-        test_content = "\n".join([f"line {i}" for i in range(1, 6)])
-        encoded_content = base64.b64encode(test_content.encode("utf-8")).decode("utf-8")
+        result = get_remote_file_content("large_file.py", base_args, end_line=3)
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "content": encoded_content,
-            "encoding": "base64",
-        }
-        mock_get.return_value = mock_response
-
-        result = get_remote_file_content("test.py", base_args, end_line=3)
-
-        assert "```test.py" in result
-        assert "```test.py#L1-L3" in result  # Should go from start (line 1) to line 3
+        assert "```large_file.py" in result
+        # Should go from start (line 1) to line 3
+        assert "```large_file.py#L1-L3" in result
         assert "1:line 1" in result
         assert "3:line 3" in result
         assert "4:line 4" not in result  # Should not include lines after end
+
+    # Tests for truncation parameters ignored on small files (< 2000 lines)
+    @patch("services.github.files.get_remote_file_content.requests.get")
+    @patch("services.github.files.get_remote_file_content.create_headers")
+    def test_truncation_params_ignored_for_small_files(
+        self, mock_create_headers, mock_get, base_args, mock_file_response
+    ):
+        """Test that start_line/end_line/line_number/keyword are ignored for files < 2000 lines."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_get.return_value = mock_file_response
+
+        # Passing start_line/end_line should be ignored - full file returned
+        result = get_remote_file_content(
+            "src/test.py", base_args, start_line=1, end_line=1
+        )
+        assert "1:def hello():" in result
+        assert "2:    print('Hello, World!')" in result  # Full file, not truncated
+
+    @patch("services.github.files.get_remote_file_content.requests.get")
+    @patch("services.github.files.get_remote_file_content.create_headers")
+    def test_keyword_ignored_for_small_files(
+        self, mock_create_headers, mock_get, base_args, mock_file_response
+    ):
+        """Test that keyword param is ignored for files < 2000 lines, returning full file."""
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+        mock_get.return_value = mock_file_response
+
+        # Keyword "nonexistent" would normally return "not found", but since file < 2000
+        # lines, keyword is ignored and full file is returned
+        result = get_remote_file_content(
+            "src/test.py", base_args, keyword="nonexistent"
+        )
+        assert "```src/test.py" in result
+        assert "1:def hello():" in result
+        assert "2:    print('Hello, World!')" in result
