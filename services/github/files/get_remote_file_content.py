@@ -109,6 +109,14 @@ def get_remote_file_content(
     decoded_content: str = base64.b64decode(s=encoded_content).decode(encoding=UTF8)
     lb: str = detect_line_break(text=decoded_content)
     lines = decoded_content.split(lb)
+
+    # Ignore truncation parameters for files under 2000 lines to prevent missing context
+    if len(lines) < 2000:
+        line_number = None
+        keyword = None
+        start_line = None
+        end_line = None
+
     width = len(str(len(lines)))
     numbered_lines = [f"{i + 1:>{width}}:{line}" for i, line in enumerate(lines)]
     file_path_with_lines = file_path
