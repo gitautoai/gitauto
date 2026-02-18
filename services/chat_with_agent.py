@@ -6,6 +6,7 @@ import inspect
 from anthropic.types import MessageParam, ToolResultBlockParam, ToolUnionParam
 
 # Local imports
+from constants.claude import ClaudeModelId
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.claude.chat_with_claude import chat_with_claude
 from services.claude.replace_old_file_content import replace_old_file_content
@@ -50,7 +51,7 @@ async def chat_with_agent(
     allow_edit_any_file: bool = False,
     restrict_edit_to_target_test_file_only: bool = True,
     allowed_to_edit_files: set[str],
-    model_id: str | None,
+    model_id: ClaudeModelId | None,
 ):
     if log_messages is None:
         log_messages = []

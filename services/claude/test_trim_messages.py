@@ -7,6 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 # Local imports
+from constants.claude import ClaudeModelId
 from services.claude.trim_messages import trim_messages_to_token_limit
 
 
@@ -66,7 +67,7 @@ def test_empty_messages(mock_client):
     """Test early return for empty message list."""
     messages = []
     trimmed, token_count = trim_messages_to_token_limit(
-        messages, mock_client, max_input=1000
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
     )
     assert len(trimmed) == 0
     assert token_count == 0
@@ -77,7 +78,9 @@ def test_empty_messages(mock_client):
 def test_no_trimming_needed(mock_client):
     """Test when messages are already under token limit."""
     messages = [make_message("user"), make_message("assistant")]
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=5000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=5000
+    )
     assert trimmed == messages
     assert len(trimmed) == 2
 
@@ -89,7 +92,9 @@ def test_trimming_at_boundary(mock_client):
         make_message("user"),
         make_message("assistant"),
     ]
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=3000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=3000
+    )
     assert trimmed == messages
 
 
@@ -105,7 +110,9 @@ def test_trimming_removes_non_system(mock_client):
     # Force trimming by returning high token count initially
     mock_client.messages.count_tokens.return_value = Mock(input_tokens=10000)
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
     assert make_message("system") in trimmed
 
 
@@ -116,14 +123,18 @@ def test_trimming_keeps_system(mock_client):
         make_message("user"),
         make_message("assistant"),
     ]
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=100)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=100
+    )
     assert make_message("system") in trimmed
 
 
 def test_trimming_stops_at_one_message(mock_client):
     """Test that trimming stops when only one message remains."""
     messages = [make_message("user")]
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=100)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=100
+    )
     assert trimmed == [make_message("user")]
 
 
@@ -144,7 +155,9 @@ def test_preserves_first_user_message(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
 
     # Should keep first user message and remove assistant message
     assert len(trimmed) == 2
@@ -169,7 +182,9 @@ def test_tool_use_and_result_paired_trimming(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_for_pairs
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=2000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=2000
+    )
 
     # Should remove the tool_use and tool_result pair together
     assert len(trimmed) == 2
@@ -193,7 +208,9 @@ def test_tool_use_without_matching_result(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
 
     # Should remove the assistant message without tool_result pairing
     assert len(trimmed) == 2
@@ -217,7 +234,9 @@ def test_tool_use_with_non_matching_result(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
 
     # Should remove assistant message since tool_result doesn't match
     assert len(trimmed) == 2
@@ -241,7 +260,9 @@ def test_assistant_message_with_non_list_content(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
 
     # Should remove assistant message normally
     assert len(trimmed) == 2
@@ -271,7 +292,9 @@ def test_content_with_non_dict_blocks(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
 
     # Should handle non-dict blocks gracefully
     assert len(trimmed) == 2
@@ -305,7 +328,9 @@ def test_tool_use_block_without_id(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
 
     # Should handle missing id gracefully
     assert len(trimmed) == 2
@@ -338,7 +363,9 @@ def test_tool_result_without_tool_use_id(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
 
     # Should not match tool_use with tool_result missing tool_use_id
     assert len(trimmed) == 2
@@ -352,7 +379,9 @@ def test_message_object_conversion(mock_client):
         MessageObject("assistant", "response"),
     ]
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=5000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=5000
+    )
 
     # Should work with message objects
     assert len(trimmed) == 2
@@ -363,7 +392,7 @@ def test_message_object_conversion(mock_client):
 def test_custom_model_parameter(mock_client):
     """Test using a custom model parameter."""
     messages = [make_message("user"), make_message("assistant")]
-    custom_model = "claude-sonnet-4-5"
+    custom_model = ClaudeModelId.SONNET_4_5
 
     def count_tokens_custom(messages, model):
         assert model == custom_model
@@ -396,7 +425,7 @@ def test_messages_list_is_copied(mock_client):
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
     trimmed, _ = trim_messages_to_token_limit(
-        messages_copy, mock_client, max_input=1000
+        messages_copy, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
     )
 
     # Original list should be unchanged
@@ -427,7 +456,9 @@ def test_complex_tool_chain_trimming(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=3000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=3000
+    )
 
     # Should remove both tool pairs, keep only user messages
     assert len(trimmed) == 2
@@ -445,7 +476,9 @@ def test_system_message_preserved_user_removed(mock_client):
     # Force high token count to trigger trimming
     mock_client.messages.count_tokens.return_value = Mock(input_tokens=10000)
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
 
     # Should keep only the system message, remove the user message at index 1
     assert trimmed == [make_message("system", "system prompt")]
@@ -468,7 +501,9 @@ def test_edge_case_missing_role_attribute(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
 
     # Should handle missing role gracefully (defaults to empty string)
     assert len(trimmed) == 2
@@ -491,7 +526,9 @@ def test_tool_use_at_end_of_messages(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
 
     # Should remove the tool_use message since no tool_result follows
     assert len(trimmed) == 1
@@ -531,7 +568,9 @@ def test_multiple_tool_use_blocks_in_single_message(mock_client):
 
     mock_client.messages.count_tokens.side_effect = count_tokens_progressive
 
-    trimmed, _ = trim_messages_to_token_limit(messages, mock_client, max_input=1000)
+    trimmed, _ = trim_messages_to_token_limit(
+        messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=1000
+    )
 
     # Should find the first tool_use and match it with tool_result
     assert len(trimmed) == 1
