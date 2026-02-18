@@ -1,4 +1,4 @@
-def detect_line_break(text: str) -> str:
+def detect_line_break(text: str):
     """Detect the first line break in the text. It ignores the rest of the line breaks."""
 
     # CRLF (Windows)

@@ -15,6 +15,7 @@ from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
+from utils.new_lines.detect_new_line import detect_line_break
 from utils.text.ensure_final_newline import ensure_final_newline
 from utils.text.sort_imports import sort_imports
 from utils.text.strip_trailing_spaces import strip_trailing_spaces
@@ -102,8 +103,14 @@ def replace_remote_file_content(
                 content="",
             )
 
-        # Skip if content is identical (avoids empty commits and misleading logs)
+        # Claude's JSON output always uses LF. Convert file_content to match the original line endings BEFORE comparison so both the skip check and the upload use the correct line endings.
         existing_content = base64.b64decode(file_info.get("content", "")).decode(UTF8)
+        original_line_break = detect_line_break(text=existing_content)
+        if original_line_break != "\n":
+            file_content = file_content.replace("\n", original_line_break)
+            content = base64.b64encode(file_content.encode(UTF8)).decode(UTF8)
+            data["content"] = content
+
         if existing_content == file_content:
             logger.info("No changes to %s, skipping", file_path)
             return FileWriteResult(

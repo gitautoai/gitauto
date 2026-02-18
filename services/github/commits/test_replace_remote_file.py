@@ -689,6 +689,98 @@ def test_replace_remote_file_content_function_definition():
                 assert "description" in file_content_param
 
 
+def test_skip_when_content_identical_except_line_endings(
+    mock_create_headers,
+    sample_base_args,
+):
+    """Test that CRLF vs LF differences don't cause unnecessary full-file rewrites."""
+    with patch(
+        "services.github.commits.replace_remote_file.requests.get"
+    ) as mock_get, patch(
+        "services.github.commits.replace_remote_file.requests.put"
+    ) as mock_put:
+        # Existing file on GitHub has CRLF line endings
+        existing_content_crlf = "line1\r\nline2\r\nline3\r\n"
+        mock_get_response = MagicMock()
+        mock_get_response.status_code = 200
+        mock_get_response.raise_for_status.return_value = None
+        mock_get_response.json.return_value = {
+            "type": "file",
+            "sha": "existing-sha",
+            "content": base64.b64encode(existing_content_crlf.encode("utf-8")).decode(
+                "utf-8"
+            ),
+        }
+        mock_get.return_value = mock_get_response
+
+        # Claude sends same content with LF line endings
+        file_content_lf = "line1\nline2\nline3\n"
+
+        result = replace_remote_file_content(
+            file_content=file_content_lf,
+            file_path="test.ts",
+            base_args=sample_base_args,
+        )
+
+        # Should skip upload since content is identical after normalization
+        assert isinstance(result, FileWriteResult)
+        assert result.success is True
+        assert "No changes" in result.message
+        mock_put.assert_not_called()
+
+
+def test_preserve_crlf_when_content_actually_changes(
+    mock_create_headers,
+    sample_base_args,
+    tmp_path,
+):
+    """Test that original CRLF line endings are preserved when actual content changes."""
+    sample_base_args["clone_dir"] = str(tmp_path)
+    with patch(
+        "services.github.commits.replace_remote_file.requests.get"
+    ) as mock_get, patch(
+        "services.github.commits.replace_remote_file.requests.put"
+    ) as mock_put:
+        # Existing file on GitHub has CRLF line endings
+        existing_content_crlf = "line1\r\nline2\r\nline3\r\n"
+        mock_get_response = MagicMock()
+        mock_get_response.status_code = 200
+        mock_get_response.raise_for_status.return_value = None
+        mock_get_response.json.return_value = {
+            "type": "file",
+            "sha": "existing-sha",
+            "content": base64.b64encode(existing_content_crlf.encode("utf-8")).decode(
+                "utf-8"
+            ),
+        }
+        mock_get.return_value = mock_get_response
+
+        # Mock PUT response
+        mock_put_response = MagicMock()
+        mock_put_response.raise_for_status.return_value = None
+        mock_put_response.json.return_value = {"commit": {"sha": "new-sha"}}
+        mock_put.return_value = mock_put_response
+
+        # Claude sends DIFFERENT content with LF (actual change)
+        file_content_lf = "line1\nline2_modified\nline3\n"
+
+        result = replace_remote_file_content(
+            file_content=file_content_lf,
+            file_path="test.ts",
+            base_args=sample_base_args,
+        )
+
+        assert isinstance(result, FileWriteResult)
+        assert result.success is True
+        assert "Replaced" in result.message
+        mock_put.assert_called_once()
+
+        # Verify uploaded content preserves CRLF from original
+        uploaded_content_b64 = mock_put.call_args.kwargs["json"]["content"]
+        uploaded_content = base64.b64decode(uploaded_content_b64).decode("utf-8")
+        assert uploaded_content == "line1\r\nline2_modified\r\nline3\r\n"
+
+
 def test_replace_file_with_extra_kwargs(
     mock_requests_get_existing_file,
     mock_requests_put_success,
