@@ -82,3 +82,20 @@ class TestIsSchedulePaused:
         result = is_schedule_paused(owner_id=123, repo_id=456)
 
         assert result is False
+
+
+class TestIsSchedulePausedIntegration:
+    """Integration tests against the dev Supabase database."""
+
+    def test_returns_true_for_active_pause(self):
+        """owner_id=159883862, repo_id=764482881 has an active pause ending 2026-02-27."""
+        result = is_schedule_paused(owner_id=159883862, repo_id=764482881)
+        assert result is True
+
+    def test_returns_false_for_nonexistent_owner(self):
+        result = is_schedule_paused(owner_id=999999999, repo_id=999999999)
+        assert result is False
+
+    def test_returns_false_for_unpaused_repo(self):
+        result = is_schedule_paused(owner_id=159883862, repo_id=999999999)
+        assert result is False
