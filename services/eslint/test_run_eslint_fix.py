@@ -217,7 +217,9 @@ async def test_run_eslint_fix_with_json_decode_error(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_fatal_error_returns_none(base_args):
+async def test_run_eslint_fix_fatal_error_is_non_blocking(base_args):
+    """Fatal ESLint errors (exit code >= 2) are infrastructure issues, not code issues.
+    They should not block task completion by returning lint_errors."""
     with patch(
         "services.eslint.run_eslint_fix.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
@@ -238,6 +240,8 @@ async def test_run_eslint_fix_fatal_error_returns_none(base_args):
                     result = await coro
 
     assert result.content is None
+    assert result.lint_errors is None
+    assert result.success is True
 
 
 @pytest.mark.asyncio
@@ -497,29 +501,69 @@ async def test_run_eslint_fix_adds_parser_options_when_config_lacks_project(base
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_includes_no_warn_ignored(base_args):
-    """Verify --no-warn-ignored is in the ESLint command to suppress
-    'File ignored because of a matching ignore pattern' warnings."""
+async def test_run_eslint_fix_includes_no_warn_ignored_for_v9(base_args):
+    """--no-warn-ignored is added when package.json has eslint v9+."""
+    eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
+
+    with patch(
+        "services.eslint.run_eslint_fix.get_eslint_config",
+        return_value={"filename": "eslint.config.js", "content": "export default {};"},
+    ):
+        with patch(
+            "services.eslint.run_eslint_fix.get_dependency_major_version",
+            return_value=9,
+        ):
+            with patch("services.eslint.run_eslint_fix.os.makedirs"):
+                with patch("builtins.open", mock_open(read_data="formatted")):
+                    with patch(
+                        "services.eslint.run_eslint_fix.subprocess.run"
+                    ) as mock_run:
+                        mock_run.return_value = MagicMock(
+                            returncode=0, stdout=eslint_output, stderr=""
+                        )
+
+                        coro = run_eslint_fix(
+                            base_args=base_args,
+                            file_path="test.ts",
+                            file_content="const x = 1;",
+                        )
+                        assert coro is not None
+                        await coro
+
+                        cmd = mock_run.call_args[0][0]
+                        assert "--no-warn-ignored" in cmd
+
+
+@pytest.mark.asyncio
+async def test_run_eslint_fix_excludes_no_warn_ignored_for_v8(base_args):
+    """--no-warn-ignored is NOT added when package.json has eslint v8.
+    This flag causes fatal error (exit code 2) on v8."""
     eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
 
     with patch(
         "services.eslint.run_eslint_fix.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
     ):
-        with patch("services.eslint.run_eslint_fix.os.makedirs"):
-            with patch("builtins.open", mock_open(read_data="formatted")):
-                with patch("services.eslint.run_eslint_fix.subprocess.run") as mock_run:
-                    mock_run.return_value = MagicMock(
-                        returncode=0, stdout=eslint_output, stderr=""
-                    )
+        with patch(
+            "services.eslint.run_eslint_fix.get_dependency_major_version",
+            return_value=8,
+        ):
+            with patch("services.eslint.run_eslint_fix.os.makedirs"):
+                with patch("builtins.open", mock_open(read_data="formatted")):
+                    with patch(
+                        "services.eslint.run_eslint_fix.subprocess.run"
+                    ) as mock_run:
+                        mock_run.return_value = MagicMock(
+                            returncode=0, stdout=eslint_output, stderr=""
+                        )
 
-                    coro = run_eslint_fix(
-                        base_args=base_args,
-                        file_path="test.ts",
-                        file_content="const x = 1;",
-                    )
-                    assert coro is not None
-                    await coro
+                        coro = run_eslint_fix(
+                            base_args=base_args,
+                            file_path="test.ts",
+                            file_content="const x = 1;",
+                        )
+                        assert coro is not None
+                        await coro
 
-                    cmd = mock_run.call_args[0][0]
-                    assert "--no-warn-ignored" in cmd
+                        cmd = mock_run.call_args[0][0]
+                        assert "--no-warn-ignored" not in cmd

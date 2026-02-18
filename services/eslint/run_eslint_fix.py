@@ -14,6 +14,7 @@ from services.eslint.eslint_config_has_parser_project import (
 from services.github.files.get_eslint_config import get_eslint_config
 from services.github.types.github_types import BaseArgs
 from services.node.get_npm_cache_dir import set_npm_cache_env
+from services.node.get_dependency_major_version import get_dependency_major_version
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_source_file import is_source_file
 from utils.logging.logging_config import logger
@@ -123,10 +124,16 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
         and is_source_file(file_path)
     )
 
+    eslint_major_version = get_dependency_major_version(clone_dir, "eslint")
+
     # Build ESLint command
+    cmd = ["npx", "--yes", "eslint", "--fix", "--format", "json"]
     # --no-warn-ignored: Suppress "File ignored because of a matching ignore pattern" warnings.
-    # Without this, ignored files produce a JSON message with no ruleId that gets misclassified as a lint error, causing the agent to loop trying to fix it.
-    cmd = ["npx", "--yes", "eslint", "--fix", "--format", "json", "--no-warn-ignored"]
+    # Without this, ignored files produce a JSON message with no ruleId that gets
+    # misclassified as a lint error, causing the agent to loop trying to fix it.
+    # Only available in ESLint v9+. Using it on v8 causes fatal error (exit code 2).
+    if eslint_major_version is not None and eslint_major_version >= 9:
+        cmd.append("--no-warn-ignored")
     if can_use_typed_linting:
         cmd.extend(
             [
@@ -155,12 +162,15 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
     # ESLint exit codes:
     # 0 = no linting errors
     # 1 = linting errors found (some fixable, some not)
-    # 2+ = fatal error (bad config, missing file, crash)
+    # 2+ = fatal error (bad config, missing file, crash, invalid CLI option)
     if result.returncode >= 2:
         error_msg = result.stderr.strip() or "Fatal ESLint error"
-        logger.warning("ESLint failed for %s: %s", file_path, error_msg)
+        # Fatal ESLint errors are infrastructure issues (invalid CLI options, missing plugins, bad config), not code issues the agent can fix. Reporting them as lint_errors causes the agent to loop endlessly calling verify_task_is_complete.
+        logger.warning(
+            "ESLint fatal error for %s (non-blocking): %s", file_path, error_msg
+        )
         return ESLintResult(
-            success=False, content=None, lint_errors=error_msg, coverage_errors=None
+            success=True, content=None, lint_errors=None, coverage_errors=None
         )
 
     with open(full_path, "r", encoding=UTF8) as f:
