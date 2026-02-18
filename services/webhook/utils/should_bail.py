@@ -6,6 +6,8 @@ from services.github.types.github_types import BaseArgs
 from services.slack.slack_notify import slack_notify
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
+from utils.memory.get_oom_message import get_oom_message
+from utils.memory.is_lambda_oom_approaching import is_lambda_oom_approaching
 from utils.time.get_timeout_message import get_timeout_message
 from utils.time.is_lambda_timeout_approaching import is_lambda_timeout_approaching
 
@@ -32,17 +34,24 @@ def should_bail(
         msg = get_timeout_message(elapsed_time, phase)
         logger.error(msg)
 
-    elif pull_number and not is_pull_request_open(
-        owner=owner, repo=repo, pull_number=pull_number, token=token
-    ):
-        msg = f"Process stopped: Pull request #{pull_number} was closed during {phase}."
-        logger.warning(msg)
+    else:
+        is_oom_approaching, used_mb = is_lambda_oom_approaching()
+        if is_oom_approaching:
+            msg = get_oom_message(used_mb, phase)
+            logger.error(msg)
 
-    elif not check_branch_exists(
-        owner=owner, repo=repo, branch_name=branch, token=token
-    ):
-        msg = f"Process stopped: Branch '{branch}' was deleted during {phase}."
-        logger.warning(msg)
+    if not msg:
+        if pull_number and not is_pull_request_open(
+            owner=owner, repo=repo, pull_number=pull_number, token=token
+        ):
+            msg = f"Process stopped: Pull request #{pull_number} was closed during {phase}."
+            logger.warning(msg)
+
+        elif not check_branch_exists(
+            owner=owner, repo=repo, branch_name=branch, token=token
+        ):
+            msg = f"Process stopped: Branch '{branch}' was deleted during {phase}."
+            logger.warning(msg)
 
     if msg:
         update_comment(body=msg, base_args=base_args)
