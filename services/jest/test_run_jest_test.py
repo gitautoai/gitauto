@@ -115,12 +115,13 @@ async def test_run_jest_test_detects_updated_snapshots(
     mock_exists, mock_subprocess, _mock_distro
 ):
     mock_exists.return_value = True
+    pkill_result = MagicMock(returncode=0, stdout="", stderr="")
     jest_result = MagicMock(returncode=0, stdout="", stderr="")
     git_diff_result = MagicMock(
         returncode=0,
         stdout="src/__snapshots__/Button.test.tsx.snap\ntest/__snapshots__/utils.test.ts.snap\n",
     )
-    mock_subprocess.side_effect = [jest_result, git_diff_result]
+    mock_subprocess.side_effect = [pkill_result, jest_result, git_diff_result]
 
     base_args = cast(
         BaseArgs,
@@ -146,9 +147,10 @@ async def test_run_jest_test_no_snapshots_updated(
     mock_exists, mock_subprocess, _mock_distro
 ):
     mock_exists.return_value = True
+    pkill_result = MagicMock(returncode=0, stdout="", stderr="")
     jest_result = MagicMock(returncode=0, stdout="", stderr="")
     git_diff_result = MagicMock(returncode=0, stdout="src/index.ts\n")
-    mock_subprocess.side_effect = [jest_result, git_diff_result]
+    mock_subprocess.side_effect = [pkill_result, jest_result, git_diff_result]
 
     base_args = cast(
         BaseArgs,
@@ -190,8 +192,8 @@ async def test_run_jest_test_uses_vitest_when_no_jest(
     result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
     assert result.success is True
 
-    # Verify vitest was called (first call is the test, last call is git diff)
-    cmd = mock_subprocess.call_args_list[0][0][0]
+    # Verify vitest was called (first call is pkill, second is the test, last is git diff)
+    cmd = mock_subprocess.call_args_list[1][0][0]
     assert "vitest" in cmd[0]
 
 
@@ -217,8 +219,8 @@ async def test_run_jest_test_spec_files(mock_exists, mock_subprocess, _mock_dist
     )
     assert result.success is True
 
-    # Each file is run individually (2 test runs + 1 git diff)
-    assert mock_subprocess.call_count == 3
+    # 1 pkill + 2 test runs + 1 git diff = 4
+    assert mock_subprocess.call_count == 4
 
 
 @pytest.mark.asyncio
@@ -300,8 +302,8 @@ async def test_run_jest_test_sets_mongoms_download_dir(
     )
     await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
 
-    # Verify jest was called with MONGOMS_DOWNLOAD_DIR in env (first call is jest, last is git diff)
-    call_kwargs = mock_subprocess.call_args_list[0].kwargs
+    # Verify jest was called with MONGOMS_DOWNLOAD_DIR in env (first call is pkill, second is jest)
+    call_kwargs = mock_subprocess.call_args_list[1].kwargs
     env = call_kwargs["env"]
     assert "MONGOMS_DOWNLOAD_DIR" in env
     assert "test-owner" in env["MONGOMS_DOWNLOAD_DIR"]
@@ -422,8 +424,8 @@ async def test_run_jest_test_uses_test_unit_script(
     )
     assert result.success is True
 
-    # First call is the test run, last call is git diff
-    cmd = mock_subprocess.call_args_list[0][0][0]
+    # First call is pkill, second is the test run, last is git diff
+    cmd = mock_subprocess.call_args_list[1][0][0]
     assert "run" in cmd
     assert "test:unit" in cmd
 
@@ -486,3 +488,58 @@ async def test_run_jest_test_exit_code_1_with_fail_treated_as_failure(
     assert result.success is False
     assert len(result.errors) > 0
     assert "src/index.test.ts" in result.error_files
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_kills_mongod_before_tests(
+    mock_exists, mock_subprocess, _mock_distro
+):
+    """Verify pkill -f mongod is called before running tests to clean up stale
+    MongoMemoryServer processes from previous verify_task_is_complete calls."""
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+
+    # First call should be pkill, second is jest, third is git diff
+    calls = mock_subprocess.call_args_list
+    pkill_call = calls[0]
+    assert pkill_call[0][0] == ["pkill", "-f", "mongod"]
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_includes_force_exit(
+    mock_exists, mock_subprocess, _mock_distro
+):
+    """Verify --forceExit is in the jest command to prevent hangs from
+    uncleaned resources like MongoDB connections."""
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+
+    # Second call is the jest run (after pkill)
+    jest_cmd = mock_subprocess.call_args_list[1][0][0]
+    assert "--forceExit" in jest_cmd
