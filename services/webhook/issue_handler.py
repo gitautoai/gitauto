@@ -465,26 +465,39 @@ async def create_pr_from_issue(
     test_file_paths = find_test_files(
         search_dir=clone_dir, impl_file_path=impl_file_path
     )
-    for test_path in test_file_paths:
-        content = read_local_file(test_path, base_dir=clone_dir)
-        if not content:
-            continue
+    max_test_files_in_prompt = 5
+    include_contents = len(test_file_paths) <= max_test_files_in_prompt
+    if include_contents:
+        for test_path in test_file_paths:
+            content = read_local_file(test_path, base_dir=clone_dir)
+            if not content:
+                continue
 
-        test_files[test_path] = format_content_with_line_numbers(
-            file_path=test_path, content=content
+            test_files[test_path] = format_content_with_line_numbers(
+                file_path=test_path, content=content
+            )
+            p += 5
+            add_log_message(f"Found existing test file: `{test_path}`", log_messages)
+            update_comment(
+                body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+                base_args=base_args,
+            )
+    else:
+        logger.info(
+            "Too many test files (%d > %d) to include contents in prompt, passing paths only, let agent choose to read",
+            len(test_file_paths),
+            max_test_files_in_prompt,
         )
-        p += 5
-        add_log_message(f"Found existing test file: `{test_path}`", log_messages)
-        update_comment(
-            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
-            base_args=base_args,
-        )
+        for test_path in test_file_paths:
+            add_log_message(f"Found existing test file: `{test_path}`", log_messages)
 
-    logger.info("Test files found: %s", list(test_files.keys()))
+    logger.info("Test files found: %s", test_file_paths)
 
     # Build test_files into user_input
-    if test_files:
+    if include_contents and test_files:
         user_input_obj["test_files"] = test_files
+    elif test_file_paths:
+        user_input_obj["test_file_paths"] = test_file_paths
     else:
         user_input_obj["test_files_not_found"] = (
             f"No test file found by searching the repo for '{Path(impl_file_path).stem}'. "
