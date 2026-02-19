@@ -176,6 +176,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         )
         if stmt == 100.0 and func == 100.0 and branch == 100.0:
             logger.info("Skipping %s: all 3 metrics at 100%%", item["full_path"])
+        elif item.get("is_excluded_from_testing"):
+            continue
         else:
             logger.info("Adding to candidates: %s", item["full_path"])
             files_needing_tests.append(item)
