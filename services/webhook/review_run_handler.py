@@ -31,7 +31,7 @@ from services.github.files.get_remote_file_content import get_remote_file_conten
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree_list import get_file_tree_list
+from services.github.trees.get_local_file_tree import get_local_file_tree
 from services.github.types.github_types import ReviewBaseArgs
 from services.claude.tools.tools import TOOLS_FOR_PRS
 from services.supabase.create_user_request import create_user_request
@@ -252,14 +252,14 @@ async def handle_review_run(
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
 
-    root_files = get_file_tree_list(base_args=base_args, dir_path="")
+    root_files = get_local_file_tree(base_args=base_args, dir_path="")
     target_dir: str | None = None
     target_dir_files: list[str] = []
     if review_path:
         parent = str(Path(review_path).parent)
         if parent != ".":
             target_dir = parent
-            target_dir_files = get_file_tree_list(base_args=base_args, dir_path=parent)
+            target_dir_files = get_local_file_tree(base_args=base_args, dir_path=parent)
 
     input_message = {
         "step_1_review_comment": review_comment,

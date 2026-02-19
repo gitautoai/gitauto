@@ -24,7 +24,10 @@ from services.github.search.search_remote_file_contents import (
     search_remote_file_contents,
 )
 from services.github.trees.create_directory import CREATE_DIRECTORY, create_directory
-from services.github.trees.get_file_tree_list import get_file_tree_list
+from services.github.trees.get_local_file_tree import (
+    GET_LOCAL_FILE_TREE,
+    get_local_file_tree,
+)
 from services.claude.tools.properties import FILE_PATH
 from utils.prompts.diff import DIFF_DESCRIPTION
 
@@ -140,23 +143,6 @@ SEARCH_REMOTE_FILE_CONTENT: ToolUnionParam = {
 }
 
 # See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
-# NOTE: No strict=True here because dir_path is optional (not in required list)
-GET_FILE_TREE_LIST: ToolUnionParam = {
-    "name": "get_file_tree_list",
-    "description": "Lists files and directories at a specific directory path in the repository. Works like 'ls' command - shows contents of the specified directory, or root if no dir_path specified.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "dir_path": {
-                "type": "string",
-                "description": "Directory path to list contents of. Use empty string or omit for root directory. Examples: 'src', 'src/utils', 'tests/unit'.",
-            }
-        },
-        "additionalProperties": False,
-    },
-}
-
-# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
 MOVE_FILE: ToolUnionParam = {
     "name": "move_file",
     "description": "Moves a file to a new location in the GitHub repository. This is useful for resolving naming conflicts, improving code organization, or fixing pytest import collisions caused by duplicate filenames.",
@@ -232,7 +218,7 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     CREATE_COMMENT,
     CREATE_DIRECTORY,
     DELETE_FILE,
-    GET_FILE_TREE_LIST,
+    GET_LOCAL_FILE_TREE,
     MOVE_FILE,
     REPLACE_REMOTE_FILE_CONTENT,
     SET_ENV,
@@ -266,7 +252,7 @@ tools_to_call: dict[str, Any] = {
     "create_comment": create_comment,
     "create_directory": create_directory,
     "delete_file": delete_file,
-    "get_file_tree_list": get_file_tree_list,
+    "get_local_file_tree": get_local_file_tree,
     "get_remote_file_content": get_remote_file_content,
     "move_file": move_file,
     "replace_remote_file_content": replace_remote_file_content,
