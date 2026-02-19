@@ -1,5 +1,6 @@
 # Standard imports
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import cast
 
 from config import PRODUCT_ID
@@ -322,9 +323,11 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     target_path = target_item["full_path"]
 
-    # Create issue title and body
-    statement_coverage = target_item["statement_coverage"]
-    has_existing_tests = statement_coverage is not None and statement_coverage > 0
+    # Check if a test file exists for this source file by matching filenames
+    target_stem = Path(target_path).stem.lower()
+    has_existing_tests = any(
+        is_test_file(fp) and target_stem in fp.lower() for fp, _ in all_files_with_sizes
+    )
     title = get_issue_title(target_path, has_existing_tests=has_existing_tests)
     body = get_issue_body(
         owner=owner_name,

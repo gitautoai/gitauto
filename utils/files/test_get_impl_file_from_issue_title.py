@@ -8,8 +8,8 @@ def test_add_unit_tests_prefix():
     assert get_impl_file_from_issue_title(title) == "services/github/client.py"
 
 
-def test_uncovered_code_prefix():
-    title = "Schedule: Add tests for uncovered code in utils/helpers.py"
+def test_achieve_coverage_prefix():
+    title = "Schedule: Achieve 100% test coverage for utils/helpers.py"
     assert get_impl_file_from_issue_title(title) == "utils/helpers.py"
 
 
