@@ -3,7 +3,7 @@
 from unittest.mock import patch, MagicMock
 import pytest
 
-from services.github.files.delete_file_by_sha import delete_file_by_sha
+from services.github.files.delete_remote_file import delete_remote_file
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def base_args(tmp_path):
 @pytest.fixture
 def mock_requests():
     """Fixture for mocking requests."""
-    with patch("services.github.files.delete_file_by_sha.requests") as mock:
+    with patch("services.github.files.delete_remote_file.requests") as mock:
         mock.delete.return_value = MagicMock(status_code=200)
         yield mock
 
@@ -29,32 +29,21 @@ def mock_requests():
 @pytest.fixture
 def mock_create_headers():
     """Fixture for mocking create_headers."""
-    with patch("services.github.files.delete_file_by_sha.create_headers") as mock:
+    with patch("services.github.files.delete_remote_file.create_headers") as mock:
         mock.return_value = {"Authorization": "token test-token"}
         yield mock
 
 
-def test_delete_file_successful(
-    base_args, mock_requests, mock_create_headers, tmp_path
-):
+def test_delete_file_successful(base_args, mock_requests, mock_create_headers):
     """Test successful file deletion."""
     file_path = "test/file.txt"
     sha = "abc123"
 
-    # Create local file to verify deletion
-    local_dir = tmp_path / "test"
-    local_dir.mkdir(parents=True, exist_ok=True)
-    local_file = local_dir / "file.txt"
-    local_file.write_text("test content")
-
-    result = delete_file_by_sha(file_path=file_path, sha=sha, base_args=base_args)
+    result = delete_remote_file(file_path=file_path, sha=sha, base_args=base_args)
 
     assert result == f"File {file_path} successfully deleted"
     mock_requests.delete.assert_called_once()
     mock_create_headers.assert_called_once_with(token=base_args["token"])
-
-    # Verify local file was deleted
-    assert not local_file.exists()
 
 
 def test_delete_file_with_custom_message(base_args, mock_requests, mock_create_headers):
@@ -63,7 +52,7 @@ def test_delete_file_with_custom_message(base_args, mock_requests, mock_create_h
     sha = "abc123"
     custom_message = "Custom deletion message"
 
-    delete_file_by_sha(
+    delete_remote_file(
         file_path=file_path, sha=sha, base_args=base_args, commit_message=custom_message
     )
 
@@ -77,7 +66,7 @@ def test_delete_file_with_skip_ci(base_args, mock_requests, mock_create_headers)
     sha = "abc123"
     base_args["skip_ci"] = True
 
-    delete_file_by_sha(file_path=file_path, sha=sha, base_args=base_args)
+    delete_remote_file(file_path=file_path, sha=sha, base_args=base_args)
 
     called_args = mock_requests.delete.call_args[1]
     assert called_args["json"]["message"] == f"Delete {file_path} [skip ci]"
@@ -87,7 +76,7 @@ def test_delete_file_request_error(base_args, mock_requests, mock_create_headers
     """Test file deletion with request error."""
     mock_requests.delete.side_effect = Exception("Network error")
 
-    result = delete_file_by_sha(
+    result = delete_remote_file(
         file_path="test/file.txt", sha="abc123", base_args=base_args
     )
 
@@ -100,7 +89,7 @@ def test_delete_file_http_error(base_args, mock_requests, mock_create_headers):
     mock_response.raise_for_status.side_effect = Exception("HTTP error")
     mock_requests.delete.return_value = mock_response
 
-    result = delete_file_by_sha(
+    result = delete_remote_file(
         file_path="test/file.txt", sha="abc123", base_args=base_args
     )
 

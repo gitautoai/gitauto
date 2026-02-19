@@ -10,6 +10,7 @@ import requests
 from services.claude.tools.file_modify_result import FileWriteResult
 from services.github.commits.apply_diff_to_file import apply_diff_to_file
 from services.github.types.github_types import BaseArgs
+from utils.files.apply_patch import PatchResult
 
 
 @pytest.fixture
@@ -85,7 +86,9 @@ def mock_requests_put_success():
 def mock_apply_patch_success():
     """Fixture to mock successful apply_patch."""
     with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
-        mock_patch.return_value = ("print('hello modified world')\n", "")
+        mock_patch.return_value = PatchResult(
+            content="print('hello modified world')\n", error=""
+        )
         yield mock_patch
 
 
@@ -128,11 +131,6 @@ def test_successful_file_update(
     assert result.file_path == "test.py"
     assert "Applied diff to test.py" in result.message
     assert result.content == "print('hello modified world')\n"
-
-    # Verify local file was created
-    local_path = tmp_path / "test.py"
-    assert local_path.exists()
-    assert local_path.read_text() == "print('hello modified world')\n"
 
     # Verify GET request was made
     mock_requests_get_existing_file.assert_called_once()
@@ -210,31 +208,36 @@ def test_new_file_creation(
     assert put_call_args.kwargs["json"]["branch"] == "test_branch"
 
 
-def test_deletion_diff_rejected(mock_requests_get_existing_file):
-    """Test that deletion diffs are rejected with proper error message."""
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test_owner",
-            "repo": "test_repo",
-            "token": "test_token",
-            "new_branch": "test_branch",
-        },
-    )
+def test_deletion_diff_deletes_file(
+    sample_base_args,
+    mock_requests_get_existing_file,
+    mock_create_headers,
+):
+    """Test that deletion diffs delete the file via GitHub API."""
+    with patch(
+        "services.github.commits.apply_diff_to_file.apply_patch"
+    ) as mock_apply, patch(
+        "services.github.commits.apply_diff_to_file.delete_remote_file"
+    ) as mock_delete:
+        mock_apply.return_value = PatchResult(content="", error="")
 
-    deletion_diff = """--- utils/files/test_file.py
+        deletion_diff = """--- utils/files/test_file.py
 +++ /dev/null
 @@ -1 +0,0 @@
 -# Temporary file to check existing content"""
 
-    result = apply_diff_to_file(
-        diff=deletion_diff, file_path="utils/files/test_file.py", base_args=base_args
-    )
+        result = apply_diff_to_file(
+            diff=deletion_diff,
+            file_path="utils/files/test_file.py",
+            base_args=sample_base_args,
+        )
 
-    assert isinstance(result, FileWriteResult)
-    assert result.success is False
-    assert "Cannot delete files" in result.message
-    assert "delete_file" in result.message
+        assert isinstance(result, FileWriteResult)
+        assert result.success is True
+        assert "Deleted" in result.message
+        mock_delete.assert_called_once_with(
+            "utils/files/test_file.py", "test_sha_123", sample_base_args
+        )
 
 
 def test_missing_new_branch_error():
@@ -356,47 +359,17 @@ def test_incorrect_diff_format(
 ):
     """Test handling of incorrect diff format."""
     with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
-        # apply_patch returns empty string for incorrect diff
-        mock_patch.return_value = ("", "")
-
-        diff = "invalid diff format"
+        mock_patch.return_value = PatchResult(content="", error="Failed to apply diff.")
 
         result = apply_diff_to_file(
-            diff=diff, file_path="test.py", base_args=sample_base_args
+            diff="invalid diff format",
+            file_path="test.py",
+            base_args=sample_base_args,
         )
 
         assert isinstance(result, FileWriteResult)
         assert result.success is False
-        assert "Invalid diff format" in result.message
-        assert "diff=" in result.message
-
-
-def test_partially_applied_diff(
-    sample_base_args,
-    mock_requests_get_existing_file,
-    mock_create_headers,
-):
-    """Test handling of partially applied diff with rejections."""
-    with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
-        # apply_patch returns modified text but also rejection text
-        mock_patch.return_value = ("partially modified content", "rejected changes")
-
-        diff = """--- test.py
-+++ test.py
-@@ -1,1 +1,1 @@
--print('hello world')
-+print('hello modified world')"""
-
-        result = apply_diff_to_file(
-            diff=diff, file_path="test.py", base_args=sample_base_args
-        )
-
-        assert isinstance(result, FileWriteResult)
-        assert result.success is False
-        assert "partially applied" in result.message
-        assert "rejected" in result.message
-        assert "diff=" in result.message
-        assert "rej_text=" in result.message
+        assert "Failed to apply diff" in result.message
 
 
 def test_http_error_on_get_request(sample_base_args, mock_create_headers):
@@ -470,7 +443,9 @@ def test_base64_decoding_with_special_characters(
         with patch(
             "services.github.commits.apply_diff_to_file.apply_patch"
         ) as mock_patch:
-            mock_patch.return_value = ("print('héllo modified wörld 🌍')\n", "")
+            mock_patch.return_value = PatchResult(
+                content="print('héllo modified wörld 🌍')\n", error=""
+            )
 
             diff = """--- test.py
 +++ test.py
@@ -615,7 +590,7 @@ def test_base64_encoding_in_put_request(
             "services.github.commits.apply_diff_to_file.apply_patch"
         ) as mock_patch:
             modified_content = "print('modified content with special chars: éñ 🚀')\n"
-            mock_patch.return_value = (modified_content, "")
+            mock_patch.return_value = PatchResult(content=modified_content, error="")
 
             result = apply_diff_to_file(
                 diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
@@ -665,7 +640,7 @@ def test_kwargs_parameter_ignored(tmp_path):
             with patch(
                 "services.github.commits.apply_diff_to_file.apply_patch"
             ) as mock_patch:
-                mock_patch.return_value = ("new content", "")
+                mock_patch.return_value = PatchResult(content="new content", error="")
 
                 # Call with additional kwargs that should be ignored
                 result = apply_diff_to_file(

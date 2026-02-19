@@ -1,6 +1,5 @@
 # Standard imports
 import base64
-import os
 
 # Third party imports
 import requests
@@ -8,6 +7,7 @@ import requests
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.claude.tools.file_modify_result import FileWriteResult
+from services.github.files.delete_remote_file import delete_remote_file
 from services.github.types.contents import Contents
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
@@ -73,46 +73,45 @@ def apply_diff_to_file(
         original_text = base64.b64decode(s=s1).decode(encoding=UTF8, errors="replace")
         sha: str = file_info.get("sha", "")
 
-    # Check for deletion diff (safety check)
-    if "+++ /dev/null" in diff:
+    # Apply the diff locally
+    clone_dir = base_args["clone_dir"]
+    result = apply_patch(
+        original_text=original_text,
+        diff_text=diff,
+        clone_dir=clone_dir,
+        file_path=file_path,
+    )
+
+    if result.error:
         return FileWriteResult(
             success=False,
-            message=f"Cannot delete files with apply_diff_to_file. Use delete_file for '{file_path}'.",
+            message=result.error,
             file_path=file_path,
             content=original_text,
         )
 
-    # Create a new commit
-    modified_text, rej_text = apply_patch(original_text=original_text, diff_text=diff)
-
-    if modified_text == "":
+    # Handle file deletion
+    if result.content == "" and "+++ /dev/null" in diff:
+        delete_remote_file(file_path, sha, base_args)
         return FileWriteResult(
-            success=False,
-            message=f"Invalid diff format. No changes made to '{file_path}'. Review and retry.\n\n{diff=}",
+            success=True,
+            message=f"Deleted {file_path}.",
             file_path=file_path,
-            content=original_text,
-        )
-
-    if modified_text != "" and rej_text != "":
-        return FileWriteResult(
-            success=False,
-            message=f"Diff partially applied to '{file_path}'. Some changes rejected. Review and retry.\n\n{diff=}\n\n{rej_text=}",
-            file_path=file_path,
-            content=modified_text,
+            content="",
         )
 
     # Skip if content is identical (avoids empty commits and misleading logs)
-    if modified_text == original_text:
+    if result.content == original_text:
         logger.info("No changes to %s, skipping", file_path)
         return FileWriteResult(
             success=True,
             message=f"No changes to {file_path}.",
             file_path=file_path,
-            content=modified_text,
+            content=result.content,
         )
 
     # Normal file update
-    s2 = modified_text.encode(encoding=UTF8)
+    s2 = result.content.encode(encoding=UTF8)
     data = {
         "message": message,
         "content": base64.b64encode(s=s2).decode(encoding=UTF8),
@@ -130,17 +129,9 @@ def apply_diff_to_file(
     )
     put_response.raise_for_status()
 
-    # Also create or overwrite local file for verification (tsc, jest, eslint, etc.)
-    clone_dir = base_args["clone_dir"]
-    local_path = os.path.join(clone_dir, file_path)
-    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-    with open(local_path, "w", encoding=UTF8) as f:
-        f.write(modified_text)
-    logger.info("Wrote to local (changed): %s", local_path)
-
     return FileWriteResult(
         success=True,
         message=f"Applied diff to {file_path}.",
         file_path=file_path,
-        content=modified_text,
+        content=result.content,
     )
