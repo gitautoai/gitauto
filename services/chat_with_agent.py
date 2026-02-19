@@ -278,7 +278,7 @@ async def chat_with_agent(
 
         # --- Build log message ---
         if (
-            tool_name == "get_remote_file_content"
+            tool_name == "get_local_file_content"
             and isinstance(tool_args, dict)
             and isinstance((file_path := tool_args.get("file_path")), str)
             and file_path
@@ -308,7 +308,7 @@ async def chat_with_agent(
             else:
                 msg = f"Read `{file_path}`."
 
-        elif tool_name in ("search_local_file_contents", "search_remote_file_contents"):
+        elif tool_name == "search_local_file_contents":
             file_list = []
             if isinstance(tool_result, str):
                 result_lines = tool_result.split("\n")

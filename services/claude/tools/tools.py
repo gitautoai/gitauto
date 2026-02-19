@@ -14,14 +14,15 @@ from services.github.commits.replace_remote_file import (
     replace_remote_file_content,
 )
 from services.github.files.delete_file import delete_file
-from services.github.files.get_remote_file_content import get_remote_file_content
+from services.github.files.get_local_file_content import (
+    GET_LOCAL_FILE_CONTENT,
+    GET_LOCAL_FILE_CONTENT_FULL_ONLY,
+    get_local_file_content,
+)
 from services.github.files.move_file import move_file
 from services.github.search.search_local_file_contents import (
     SEARCH_LOCAL_FILE_CONTENT,
     search_local_file_contents,
-)
-from services.github.search.search_remote_file_contents import (
-    search_remote_file_contents,
 )
 from services.github.trees.create_directory import CREATE_DIRECTORY, create_directory
 from services.github.trees.get_local_file_tree import (
@@ -40,22 +41,6 @@ DIFF: dict[str, str] = {
     "type": "string",
     "description": DIFF_DESCRIPTION,
 }
-KEYWORD: dict[str, str] = {
-    "type": "string",
-    "description": "The keyword to search for in a file. For example, 'variable_name'. Exact matches only.",
-}
-LINE_NUMBER: dict[str, str] = {
-    "type": "integer",
-    "description": "If you already know the line number of interest when opening a file, use this. The 5 lines before and after this line number will be retrieved. For example, use it when checking the surrounding lines of a specific line number if the diff is incorrect. Cannot be used with start_line/end_line.",
-}
-START_LINE: dict[str, str] = {
-    "type": "integer",
-    "description": "Starting line number for a specific range of lines to retrieve from the file. If end_line is not provided, will retrieve from start_line to end of file.",
-}
-END_LINE: dict[str, str] = {
-    "type": "integer",
-    "description": "Ending line number for a specific range of lines to retrieve from the file. If start_line is not provided, will retrieve from beginning of file to end_line.",
-}
 
 # See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
 APPLY_DIFF_TO_FILE: ToolUnionParam = {
@@ -65,78 +50,6 @@ APPLY_DIFF_TO_FILE: ToolUnionParam = {
         "type": "object",
         "properties": {"file_path": FILE_PATH, "diff": DIFF},
         "required": ["file_path", "diff"],
-        "additionalProperties": False,
-    },
-    "strict": True,
-}
-
-# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
-# NOTE: No strict=True here because line_number, keyword, start_line, end_line are optional
-GET_REMOTE_FILE_CONTENT: ToolUnionParam = {
-    "name": "get_remote_file_content",
-    "description": "Fetches the content of a file from GitHub remote repository given a file_path when you need to read or modify the file content. IMPORTANT: Always read the FULL file by default - do NOT use start_line/end_line/line_number/keyword to truncate the read. Only use start_line/end_line for files over 2000 lines. Truncating reads causes you to miss critical context like required fields, data structures, and execution order.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "file_path": FILE_PATH,
-            "line_number": LINE_NUMBER,
-            "keyword": KEYWORD,
-            "start_line": START_LINE,
-            "end_line": END_LINE,
-        },
-        "required": ["file_path"],
-        "additionalProperties": False,
-    },
-}
-
-# Full file read only (for PR handlers that need full context)
-GET_REMOTE_FILE_CONTENT_FULL_ONLY: ToolUnionParam = {
-    **GET_REMOTE_FILE_CONTENT,
-    "input_schema": {
-        "type": "object",
-        "properties": {"file_path": FILE_PATH},
-        "required": ["file_path"],
-        "additionalProperties": False,
-    },
-    "strict": True,
-}
-
-QUERY: dict[str, str] = {
-    "type": "string",
-    "description": """
-    The keywords to search for in the remote repository. For example, 'SEARCH_KEYWORD_1 SEARCH_KEYWORD_N QUALIFIER_1 QUALIFIER_N'. But realistically, you should search for a specific variable name, function name, or other unique identifier not multiple keywords because seaarching for more than one keyword may not be effective.
-
-    ## Good Query Examples
-
-    - Search for a specific variable name: 'variable_name'
-    - Search for a specific function name: 'function_name'
-    - Search for a specific class name: 'class_name'
-    - Search for a specific keyword: 'keyword'
-
-    ## Bad Query Examples
-
-    - Search for multiple variables at once: 'variable_name_1 variable_name_2'
-    - Search for multiple functions at once: 'function_name_1 function_name_2'
-    - Search for an entire line of code: 'from module import function_name'
-
-    ## Important Note
-
-    You can narrow down search results by excluding one or more subsets. To exclude all results that are matched by a qualifier, prefix the search qualifier with a hyphen (-). However, be careful when searching for command options like '--xxxxxx' because this results in `ERROR_TYPE_QUERY_PARSING_FATAL unable to parse query!`
-
-    When searching for command-line options:
-    - Search for 'config' instead of '--config'
-    - Search for 'verbose' instead of '--verbose'
-    """,
-}
-
-# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
-SEARCH_REMOTE_FILE_CONTENT: ToolUnionParam = {
-    "name": "search_remote_file_contents",
-    "description": "Search for keywords in the repository's DEFAULT branch via GitHub API. WARNING: This only searches the default branch, NOT the current PR branch. Prefer search_local_file_contents when available, as it searches the actual PR branch. Use this only as a fallback. Rate limited to 10 requests per minute.",
-    "input_schema": {
-        "type": "object",
-        "properties": {"query": QUERY},
-        "required": ["query"],
         "additionalProperties": False,
     },
     "strict": True,
@@ -226,15 +139,13 @@ _TOOLS_BASE: list[ToolUnionParam] = [
 ]
 
 TOOLS_FOR_ISSUES: list[ToolUnionParam] = _TOOLS_BASE + [
-    GET_REMOTE_FILE_CONTENT,
+    GET_LOCAL_FILE_CONTENT,
     SEARCH_LOCAL_FILE_CONTENT,
-    SEARCH_REMOTE_FILE_CONTENT,
 ]
 
 # PR handlers need full file reads (no partial read options)
-# search_remote_file_contents only searches default branch, not PR branch
 TOOLS_FOR_PRS: list[ToolUnionParam] = _TOOLS_BASE + [
-    GET_REMOTE_FILE_CONTENT_FULL_ONLY,
+    GET_LOCAL_FILE_CONTENT_FULL_ONLY,
     SEARCH_LOCAL_FILE_CONTENT,
 ]
 
@@ -252,13 +163,11 @@ tools_to_call: dict[str, Any] = {
     "create_comment": create_comment,
     "create_directory": create_directory,
     "delete_file": delete_file,
+    "get_local_file_content": get_local_file_content,
     "get_local_file_tree": get_local_file_tree,
-    "get_remote_file_content": get_remote_file_content,
     "move_file": move_file,
     "replace_remote_file_content": replace_remote_file_content,
-    # "search_google": google_search,
     "search_local_file_contents": search_local_file_contents,
-    "search_remote_file_contents": search_remote_file_contents,
     "set_env": set_env,
     "verify_task_is_complete": verify_task_is_complete,
 }

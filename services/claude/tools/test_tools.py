@@ -92,7 +92,7 @@ def test_function_schema_discovery():
     expected_tools = [
         "GET_LOCAL_FILE_TREE",
         "APPLY_DIFF_TO_FILE",
-        "GET_REMOTE_FILE_CONTENT",
+        "GET_LOCAL_FILE_CONTENT",
     ]
     for expected in expected_tools:
         assert (

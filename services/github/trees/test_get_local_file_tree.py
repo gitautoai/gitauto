@@ -57,7 +57,9 @@ def test_lists_root_directory():
 def test_lists_subdirectory():
     with tempfile.TemporaryDirectory() as tmp:
         os.makedirs(os.path.join(tmp, "node_modules", "@aws-sdk", "client-scheduler"))
-        Path(tmp, "node_modules", "@aws-sdk", "client-scheduler", "package.json").touch()
+        Path(
+            tmp, "node_modules", "@aws-sdk", "client-scheduler", "package.json"
+        ).touch()
 
         result = get_local_file_tree(
             base_args=_make_base_args(tmp),

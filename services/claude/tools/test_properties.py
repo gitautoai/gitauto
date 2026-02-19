@@ -68,8 +68,8 @@ def test_file_path_in_function_definition():
     """Test that FILE_PATH can be used in an OpenAI function definition."""
     # Create a function definition that uses FILE_PATH
     function_def = {
-        "name": "get_remote_file_content",
-        "description": "Get content of a remote file",
+        "name": "get_local_file_content",
+        "description": "Get content of a local file",
         "parameters": {
             "type": "object",
             "properties": {"file_path": FILE_PATH},

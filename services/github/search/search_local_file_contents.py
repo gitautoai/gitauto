@@ -7,7 +7,7 @@ from utils.logging.logging_config import logger
 
 SEARCH_LOCAL_FILE_CONTENT: ToolUnionParam = {
     "name": "search_local_file_contents",
-    "description": "Search for keywords in the local clone of the repository (PR branch). PREFERRED over search_remote_file_contents because this searches the actual PR branch, not just the default branch, and has no rate limiting. Use this to find files containing specific variable names, function names, class names, or other identifiers. Especially if you change variable definitions, as they are likely used elsewhere. To reduce bugs, search multiple times from as many angles as possible.",
+    "description": "Search for keywords in the local clone of the repository (PR branch). Use this to find files containing specific variable names, function names, class names, or other identifiers. Especially if you change variable definitions, as they are likely used elsewhere. To reduce bugs, search multiple times from as many angles as possible.",
     "input_schema": {
         "type": "object",
         "properties": {

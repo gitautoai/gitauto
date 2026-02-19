@@ -59,7 +59,7 @@ def test_replace_old_file_content_ignores_assistant_messages():
                 {
                     "type": "tool_use",
                     "id": "tool_1",
-                    "name": "get_remote_file_content",
+                    "name": "get_local_file_content",
                     "input": {"file_path": "src/main.py"},
                 }
             ],
