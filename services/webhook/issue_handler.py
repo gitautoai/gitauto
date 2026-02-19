@@ -69,6 +69,7 @@ from services.claude.is_code_untestable import is_code_untestable
 from services.supabase.coverages.get_coverages import get_coverages
 from services.webhook.utils.should_bail import should_bail
 from utils.files.get_impl_file_from_issue_title import get_impl_file_from_issue_title
+from utils.issue_templates.schedule import SCHEDULE_PREFIX_INCREASE
 from utils.files.find_test_files import find_test_files
 from utils.files.is_config_file import is_config_file
 from utils.files.read_local_file import read_local_file
@@ -338,7 +339,8 @@ async def create_pr_from_issue(
 
     # Extract target implementation file
     impl_file_path = get_impl_file_from_issue_title(issue_title)
-    base_args["impl_file_to_collect_coverage_from"] = impl_file_path
+    if issue_title.startswith(SCHEDULE_PREFIX_INCREASE):
+        base_args["impl_file_to_collect_coverage_from"] = impl_file_path
     test_dir_prefixes = repo_settings["test_dir_prefixes"] if repo_settings else []
 
     # Skip fetching impl_file if already in reference_contents (avoids duplicate)
