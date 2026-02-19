@@ -25,7 +25,11 @@ async def test_run_jest_test_success(mock_exists, mock_subprocess, _mock_distro)
             "clone_dir": "/tmp/clone",
         },
     )
-    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
     assert result.success is True
     assert result.errors == []
     assert result.error_files == set()
@@ -42,7 +46,9 @@ async def test_run_jest_test_no_test_files():
         },
     )
     result = await run_jest_test(
-        base_args=base_args, file_paths=["src/index.ts", "README.md"]
+        base_args=base_args,
+        test_file_paths=["src/index.ts", "README.md"],
+        impl_file_to_collect_coverage_from="",
     )
     assert result.success is True
     assert result.errors == []
@@ -58,7 +64,11 @@ async def test_run_jest_test_no_clone_dir():
             "clone_dir": "",
         },
     )
-    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
     assert result.success is True
     assert result.errors == []
 
@@ -76,7 +86,11 @@ async def test_run_jest_test_no_runner(mock_exists):
             "clone_dir": "/tmp/clone",
         },
     )
-    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
     assert result.success is True
     assert result.errors == []
 
@@ -101,7 +115,11 @@ async def test_run_jest_test_with_failures(mock_exists, mock_subprocess, _mock_d
             "clone_dir": "/tmp/clone",
         },
     )
-    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
     assert result.success is False
     assert len(result.errors) > 0
     assert "src/index.test.ts" in result.error_files
@@ -130,7 +148,11 @@ async def test_run_jest_test_detects_updated_snapshots(
             "clone_dir": "/tmp/clone",
         },
     )
-    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
     assert result.success is True
     assert result.updated_snapshots == {
         "src/__snapshots__/Button.test.tsx.snap",
@@ -158,7 +180,11 @@ async def test_run_jest_test_no_snapshots_updated(
             "clone_dir": "/tmp/clone",
         },
     )
-    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
     assert result.success is True
     assert result.updated_snapshots == set()
 
@@ -187,7 +213,11 @@ async def test_run_jest_test_uses_vitest_when_no_jest(
             "clone_dir": "/tmp/clone",
         },
     )
-    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
     assert result.success is True
 
     # First call is the test, last is git diff
@@ -213,7 +243,8 @@ async def test_run_jest_test_spec_files(mock_exists, mock_subprocess, _mock_dist
     )
     result = await run_jest_test(
         base_args=base_args,
-        file_paths=["src/utils.spec.ts", "src/helper.spec.jsx"],
+        test_file_paths=["src/utils.spec.ts", "src/helper.spec.jsx"],
+        impl_file_to_collect_coverage_from="",
     )
     assert result.success is True
 
@@ -245,7 +276,9 @@ async def test_run_jest_test_multiple_failures(
         },
     )
     result = await run_jest_test(
-        base_args=base_args, file_paths=["src/a.test.ts", "src/b.test.ts"]
+        base_args=base_args,
+        test_file_paths=["src/a.test.ts", "src/b.test.ts"],
+        impl_file_to_collect_coverage_from="",
     )
     assert result.success is False
     assert "src/a.test.ts" in result.error_files
@@ -274,7 +307,11 @@ async def test_run_jest_test_type_error_in_output(
             "clone_dir": "/tmp/clone",
         },
     )
-    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
     assert result.success is False
     assert any("TypeError" in e for e in result.errors)
 
@@ -298,7 +335,11 @@ async def test_run_jest_test_sets_mongoms_download_dir(
             "clone_dir": "/tmp/clone",
         },
     )
-    await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
 
     # Verify jest was called with MONGOMS_DOWNLOAD_DIR in env (first call is jest)
     call_kwargs = mock_subprocess.call_args_list[0].kwargs
@@ -376,7 +417,8 @@ async def test_run_jest_test_captures_full_esm_error(
     )
     result = await run_jest_test(
         base_args=base_args,
-        file_paths=["tests/js/unit/annotation/print_dialog.kyuden.test.js"],
+        test_file_paths=["tests/js/unit/annotation/print_dialog.kyuden.test.js"],
+        impl_file_to_collect_coverage_from="",
     )
     assert result.success is False
     assert "tests/js/unit/annotation/print_dialog.kyuden.test.js" in result.error_files
@@ -418,7 +460,8 @@ async def test_run_jest_test_uses_test_unit_script(
     )
     result = await run_jest_test(
         base_args=base_args,
-        file_paths=["tests/js/unit/annotation/print_dialog.kyuden.test.js"],
+        test_file_paths=["tests/js/unit/annotation/print_dialog.kyuden.test.js"],
+        impl_file_to_collect_coverage_from="",
     )
     assert result.success is True
 
@@ -453,7 +496,11 @@ async def test_run_jest_test_exit_code_1_all_pass_treated_as_success(
             "clone_dir": "/tmp/clone",
         },
     )
-    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
     assert result.success is True
     assert result.errors == []
     assert result.error_files == set()
@@ -482,7 +529,11 @@ async def test_run_jest_test_exit_code_1_with_fail_treated_as_failure(
             "clone_dir": "/tmp/clone",
         },
     )
-    result = await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
     assert result.success is False
     assert len(result.errors) > 0
     assert "src/index.test.ts" in result.error_files
@@ -508,7 +559,11 @@ async def test_run_jest_test_kills_mongod_before_tests(
             "clone_dir": "/tmp/clone",
         },
     )
-    await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
 
     mock_kill.assert_called_once_with("mongod")
 
@@ -533,7 +588,11 @@ async def test_run_jest_test_includes_force_exit(
             "clone_dir": "/tmp/clone",
         },
     )
-    await run_jest_test(base_args=base_args, file_paths=["src/index.test.ts"])
+    await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
 
     # First call is the jest run
     jest_cmd = mock_subprocess.call_args_list[0][0][0]

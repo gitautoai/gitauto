@@ -107,6 +107,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             "repo": repo_name,
             "token": token,
             "issue_number": pr_number,
+            "pull_number": pr_number,
         },
     )
 
@@ -213,7 +214,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             token=token,
             identifiers=[BLOCKED],
         )
-        create_comment(body=msg, base_args=comment_args)
+        create_comment(body=msg, base_args=comment_args, target="pr")
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)
         return
@@ -243,7 +244,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
                 token=token,
                 identifiers=[BLOCKED],
             )
-            create_comment(body=msg, base_args=comment_args)
+            create_comment(body=msg, base_args=comment_args, target="pr")
             slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
             slack_notify(slack_msg)
             return
@@ -273,6 +274,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             token=token,
             identifiers=[BLOCKED],
         )
-        create_comment(body=msg, base_args=comment_args)
+        create_comment(body=msg, base_args=comment_args, target="pr")
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)

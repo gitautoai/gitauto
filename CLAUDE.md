@@ -224,7 +224,7 @@ ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 ## Coding Standards
 
 - No DOCSTRINGS: Do not add docstrings unless explicitly told to. Do not delete existing docstrings unless they are outdated.
-- COMMENTS: Do not delete existing comments unless they are outdated. Preserve URL references and API documentation links. Never explain what was removed or why in the code itself. Explanations belong in terminal responses, not in code.
+- COMMENTS: Do not delete existing comments unless they are outdated. Preserve URL references and API documentation links. Never explain what was removed or why in the code itself. Explanations belong in terminal responses, not in code. Do not split comments across multiple lines unnecessarily - keep them on one line when possible to maintain readability.
 - LOGGERS: Do not delete existing logger statements unless they are outdated.
 - API URLS: Always verify API documentation URLs using WebFetch before using them. Never guess API endpoints.
 - NO TYPE HINTS USING ->: Do not add return type hints using -> because it overwrites the inferred return type without actually validating that the implementation returns that type. It's a lie to the type checker that cannot be verified at runtime. Return type hints are PROHIBITED.

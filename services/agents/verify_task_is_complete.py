@@ -5,12 +5,14 @@ from services.eslint.ensure_eslint_relaxed_for_tests import (
     ensure_eslint_relaxed_for_tests,
 )
 from services.eslint.run_eslint_fix import run_eslint_fix
+from services.github.comments.create_comment import create_comment
 from services.github.commits.replace_remote_file import replace_remote_file_content
 from services.github.files.get_eslint_config import get_eslint_config
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.github_types import BaseArgs
+from services.jest.format_coverage_comment import format_coverage_comment
 from services.jest.run_jest_test import run_jest_test
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
     ensure_jest_uses_tsconfig_for_tests,
@@ -173,12 +175,42 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
             )
             create_tsc_issue(base_args=base_args, unrelated_errors=unrelated_tsc_errors)
 
+    # Set by issue_handler for schedule issues so run_jest_test collects coverage using Istanbul instead of V8.
+    impl_file_to_collect_coverage_from = base_args.get(
+        "impl_file_to_collect_coverage_from", ""
+    )
+
     # Run jest/vitest tests on test files (with -u to auto-update stale snapshots)
-    jest_result = await run_jest_test(base_args=base_args, file_paths=non_removed_files)
+    jest_result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=js_test_files,
+        impl_file_to_collect_coverage_from=impl_file_to_collect_coverage_from,
+    )
     if jest_result.errors:
         for err in jest_result.errors:
             remaining_errors.append(f"- {jest_result.runner_name}: {err}")
         error_files.update(jest_result.error_files)
+
+    # Post coverage results as PR comment and check for incomplete coverage
+    if jest_result.coverage and not jest_result.errors:
+        cov = jest_result.coverage
+        if cov.error:
+            logger.warning("coverage: %s (not fixable by agent, skipping)", cov.error)
+        else:
+            comment_body = format_coverage_comment(
+                cov, impl_file_to_collect_coverage_from
+            )
+            create_comment(body=comment_body, base_args=base_args, target="pr")
+
+            has_incomplete_coverage = (
+                cov.statement_pct < 100
+                or cov.branch_pct < 100
+                or cov.function_pct < 100
+                or cov.line_pct < 100
+            )
+            if has_incomplete_coverage:
+                remaining_errors.append(f"- coverage:\n{comment_body}")
+                error_files.update(js_test_files)
 
     # Commit any snapshot files updated by jest -u
     clone_dir = base_args.get("clone_dir", "")

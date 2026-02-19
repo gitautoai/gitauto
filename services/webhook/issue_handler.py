@@ -143,7 +143,7 @@ async def create_pr_from_issue(
     msg = "Got your request."
     add_log_message(msg, log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    comment_url = create_comment(body=comment_body, base_args=base_args)
+    comment_url = create_comment(body=comment_body, base_args=base_args, target="issue")
     base_args["comment_url"] = comment_url
 
     # Get owner and repo metadata
@@ -316,7 +316,7 @@ async def create_pr_from_issue(
         description = describe_image(base64_image=base64_image, context=context)
         description = f"## {url['alt']}\n\n{description}"
         issue_comments.append(description)
-        create_comment(body=description, base_args=base_args)
+        create_comment(body=description, base_args=base_args, target="issue")
 
     # Check out the URLs in the issue body
     reference_file_paths: set[str] = set()
@@ -338,6 +338,7 @@ async def create_pr_from_issue(
 
     # Extract target implementation file
     impl_file_path = get_impl_file_from_issue_title(issue_title)
+    base_args["impl_file_to_collect_coverage_from"] = impl_file_path
     test_dir_prefixes = repo_settings["test_dir_prefixes"] if repo_settings else []
 
     # Skip fetching impl_file if already in reference_contents (avoids duplicate)

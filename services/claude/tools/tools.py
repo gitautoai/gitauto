@@ -7,7 +7,7 @@ from anthropic.types import ToolUnionParam
 # Local imports
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.env.set_env import SET_ENV, set_env
-from services.github.comments.create_comment import create_comment
+from services.github.comments.create_comment import CREATE_COMMENT, create_comment
 from services.github.commits.apply_diff_to_file import apply_diff_to_file
 from services.github.commits.replace_remote_file import (
     REPLACE_REMOTE_FILE_CONTENT,
@@ -108,23 +108,6 @@ VERIFY_TASK_IS_COMPLETE: ToolUnionParam = {
     "strict": True,
 }
 
-# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
-CREATE_COMMENT: ToolUnionParam = {
-    "name": "create_comment",
-    "description": "Creates a note/notification on the GitHub issue or pull request. The user is not there - they will see it later. After commenting, continue working on what you CAN do. WHEN TO USE: To inform the user about something they need to know (e.g., you are restricted to test files but the fix requires source file changes, or secrets need to be added via GitHub UI). WHEN NOT TO USE: Status updates, progress reports, or asking questions. WHAT TO SAY: State the fact briefly - what you found and what the user needs to do later. Do not ask questions.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "body": {
-                "type": "string",
-                "description": "The comment text to post.",
-            },
-        },
-        "required": ["body"],
-        "additionalProperties": False,
-    },
-    "strict": True,
-}
 
 _TOOLS_BASE: list[ToolUnionParam] = [
     APPLY_DIFF_TO_FILE,

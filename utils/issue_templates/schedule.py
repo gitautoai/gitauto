@@ -1,8 +1,9 @@
 from constants.messages import SETTINGS_LINKS
 from constants.urls import GH_BASE_URL
 
-SCHEDULE_PREFIX_ADD = "Schedule: Add unit tests to "
-SCHEDULE_PREFIX_INCREASE = "Schedule: Achieve 100% test coverage for "
+SCHEDULE_PREFIX = "Schedule:"
+SCHEDULE_PREFIX_ADD = f"{SCHEDULE_PREFIX} Add unit tests to "
+SCHEDULE_PREFIX_INCREASE = f"{SCHEDULE_PREFIX} Achieve 100% test coverage for "
 
 
 def get_issue_title(file_path: str, has_existing_tests: bool = False):

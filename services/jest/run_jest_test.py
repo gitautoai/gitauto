@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from dataclasses import dataclass, field
 
@@ -7,6 +8,7 @@ from constants.files import JS_TEST_FILE_EXTENSIONS
 from services.efs.get_efs_dir import get_efs_dir
 from services.github.types.github_types import BaseArgs
 from services.jest.get_mongoms_distro import get_mongoms_distro
+from services.jest.parse_coverage_json import Coverage, parse_coverage_json
 from services.node.detect_package_manager import detect_package_manager
 from services.node.get_test_script_name import get_test_script_name
 from utils.error.handle_exceptions import handle_exceptions
@@ -21,15 +23,23 @@ class JestResult:
     error_files: set[str] = field(default_factory=set)
     runner_name: str = ""
     updated_snapshots: set[str] = field(default_factory=set)
+    coverage: Coverage | None = None
 
 
 @handle_exceptions(
     default_return_value=JestResult(),
     raise_on_error=False,
 )
-async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
-    test_files = [f for f in file_paths if f.endswith(JS_TEST_FILE_EXTENSIONS)]
-    if not test_files:
+async def run_jest_test(
+    *,
+    base_args: BaseArgs,
+    test_file_paths: list[str],
+    impl_file_to_collect_coverage_from: str,
+):
+    js_ts_test_files = [
+        f for f in test_file_paths if f.endswith(JS_TEST_FILE_EXTENSIONS)
+    ]
+    if not js_ts_test_files:
         logger.info("test: No test files to run")
         return JestResult()
 
@@ -81,13 +91,37 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
     # If a previous jest run's globalTeardown didn't fully clean up, the stale mongod causes "namespace already exists, but with different options" errors.
     kill_processes_by_name("mongod")
 
+    # When impl_file_to_collect_coverage_from is set, add coverage flags to measure statement/branch/function/line coverage using Istanbul instead of V8, because V8 inflates branch counts in single-file mode (??, &&, ternary counted differently).
+    use_coverage = bool(impl_file_to_collect_coverage_from)
+    coverage_dir = os.path.join(clone_dir, "coverage")
+
     # Run each test file individually so we know exactly which files fail
     all_errors: list[str] = []
     error_files: set[str] = set()
-    for test_file in test_files:
+    for test_file in js_ts_test_files:
         # -u (--updateSnapshot) auto-updates stale .snap files instead of failing
         # --forceExit: Force jest to exit after tests complete, preventing hangs from uncleaned resources (e.g. MongoDB connections) that survive globalTeardown.
         cmd = base_cmd + [test_file, "-u", "--forceExit"]
+        if use_coverage and runner_name == "jest":
+            cmd.extend(
+                [
+                    "--coverage",
+                    f"--coverageDirectory={coverage_dir}",
+                    "--coverageProvider=babel",
+                    "--coverageReporters=json",
+                    f"--collectCoverageFrom={impl_file_to_collect_coverage_from}",
+                ]
+            )
+        elif use_coverage and runner_name == "vitest":
+            cmd.extend(
+                [
+                    "--coverage.enabled",
+                    f"--coverage.reportsDirectory={coverage_dir}",
+                    "--coverage.provider=istanbul",
+                    "--coverage.reporter=json",
+                    f"--coverage.include={impl_file_to_collect_coverage_from}",
+                ]
+            )
         logger.info("%s: Running %s...", runner_name, test_file)
         result = subprocess.run(
             cmd,
@@ -112,6 +146,22 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
             error_files.add(test_file)
             all_errors.append(output.strip())
             logger.warning("%s: %s failed:\n%s", runner_name, test_file, output.strip())
+
+    # Parse coverage data if coverage was enabled and tests passed
+    coverage: Coverage | None = None
+    if use_coverage and not error_files:
+        coverage = parse_coverage_json(coverage_dir, impl_file_to_collect_coverage_from)
+        logger.info(
+            "coverage: %s - stmt=%s%%, branch=%s%%, func=%s%%, line=%s%%",
+            impl_file_to_collect_coverage_from,
+            coverage.statement_pct,
+            coverage.branch_pct,
+            coverage.function_pct,
+            coverage.line_pct,
+        )
+    if os.path.isdir(coverage_dir):
+        shutil.rmtree(coverage_dir, ignore_errors=True)
+        logger.info("coverage: Cleaned up %s", coverage_dir)
 
     # Detect snapshot files updated by -u flag
     updated_snapshots: set[str] = set()
@@ -142,6 +192,7 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
             error_files=set(),
             runner_name=runner_name,
             updated_snapshots=updated_snapshots,
+            coverage=coverage,
         )
 
     return JestResult(
@@ -150,4 +201,5 @@ async def run_jest_test(*, base_args: BaseArgs, file_paths: list[str]):
         error_files=error_files,
         runner_name=runner_name,
         updated_snapshots=updated_snapshots,
+        coverage=coverage,
     )

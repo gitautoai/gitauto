@@ -79,4 +79,4 @@ def combine_and_create_comment(
             "issue_number": issue_number,
         },
     )
-    create_comment(body=body, base_args=comment_args)
+    create_comment(body=body, base_args=comment_args, target="issue")
