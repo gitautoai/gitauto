@@ -262,10 +262,10 @@ async def chat_with_agent(
             )
 
         logger.info(
-            "Tool call %d/%d: %s, args: %.200s", i, num_tool_calls, tool_name, tool_args
+            "Tool call %d/%d: %s, args: %s", i, num_tool_calls, tool_name, tool_args
         )
         logger.info(
-            "Tool call %d/%d result: %.200s", i, num_tool_calls, tool_result_content
+            "Tool call %d/%d result: %s", i, num_tool_calls, tool_result_content
         )
 
         tool_result_blocks.append(
