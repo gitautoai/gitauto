@@ -118,7 +118,11 @@ async def verify_task_is_ready(
 
     # Run jest/vitest tests if requested (for check_suite and review handlers)
     if run_jest:
-        jest_result = await run_jest_test(base_args=base_args, file_paths=file_paths)
+        jest_result = await run_jest_test(
+            base_args=base_args,
+            test_file_paths=js_ts_files,
+            impl_file_to_collect_coverage_from="",
+        )
         if jest_result.errors:
             for err in jest_result.errors:
                 errors.append(f"- {jest_result.runner_name}: {err}")
