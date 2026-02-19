@@ -43,7 +43,7 @@ from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
 from services.github.utils.create_permission_url import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree_list import get_file_tree_list
+from services.github.trees.get_local_file_tree import get_local_file_tree
 from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
 from services.claude.tools.tools import TOOLS_FOR_PRS
@@ -579,7 +579,7 @@ async def handle_check_suite(
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
 
-    root_files = get_file_tree_list(base_args=base_args, dir_path="")
+    root_files = get_local_file_tree(base_args=base_args, dir_path="")
     target_dir: str | None = None
     target_dir_files: list[str] = []
     if changed_files:
@@ -590,7 +590,7 @@ async def handle_check_suite(
                 parents.add(parent)
         if len(parents) == 1:
             target_dir = parents.pop()
-            target_dir_files = get_file_tree_list(
+            target_dir_files = get_local_file_tree(
                 base_args=base_args, dir_path=target_dir
             )
 

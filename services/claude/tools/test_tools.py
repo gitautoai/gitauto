@@ -30,14 +30,14 @@ def test_function_schemas_strict_mode_validation():
             )
 
 
-def test_get_file_tree_list_schema_allows_optional_dir_path():
-    """Test that get_file_tree_list schema correctly allows optional dir_path parameter"""
-    schema = tools.GET_FILE_TREE_LIST
+def test_get_local_file_tree_schema_allows_optional_dir_path():
+    """Test that get_local_file_tree schema correctly allows optional dir_path parameter"""
+    schema = tools.GET_LOCAL_FILE_TREE
 
     # Should not have strict=True since dir_path is optional
     assert not schema.get(
         "strict"
-    ), "get_file_tree_list should not use strict=True because dir_path is optional"
+    ), "get_local_file_tree should not use strict=True because dir_path is optional"
 
     # Should have dir_path in properties
     input_schema = schema.get("input_schema", {})
@@ -90,7 +90,7 @@ def test_function_schema_discovery():
 
     # Should find at least the known tools
     expected_tools = [
-        "GET_FILE_TREE_LIST",
+        "GET_LOCAL_FILE_TREE",
         "APPLY_DIFF_TO_FILE",
         "GET_REMOTE_FILE_CONTENT",
     ]

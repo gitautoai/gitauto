@@ -327,7 +327,7 @@ async def chat_with_agent(
             else:
                 msg = "Searched repository but found no matching files."
 
-        elif tool_name == "get_file_tree_list":
+        elif tool_name == "get_local_file_tree":
             if tool_result and isinstance(tool_result, list):
                 file_list = tool_result
                 if (

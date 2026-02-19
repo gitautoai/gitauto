@@ -42,7 +42,7 @@ from services.github.markdown.render_text import render_text
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
-from services.github.trees.get_file_tree_list import get_file_tree_list
+from services.github.trees.get_local_file_tree import get_local_file_tree
 from services.github.types.github_types import GitHubLabeledPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
 from services.claude.tools.tools import TOOLS_FOR_ISSUES
@@ -387,12 +387,8 @@ async def create_pr_from_issue(
                     base_args=base_args,
                 )
 
-    root_files = get_file_tree_list(base_args=base_args, dir_path="")
     parent = str(Path(impl_file_path).parent)
     target_dir = parent if parent != "." else None
-    target_dir_files = (
-        get_file_tree_list(base_args=base_args, dir_path=parent) if target_dir else []
-    )
 
     user_input_obj: dict[str, object] = {
         "today": today,
@@ -410,12 +406,8 @@ async def create_pr_from_issue(
         user_input_obj["parent_issue_title"] = parent_issue_title
     if parent_issue_body:
         user_input_obj["parent_issue_body"] = parent_issue_body
-    if root_files:
-        user_input_obj["root_files"] = root_files
     if target_dir:
         user_input_obj["target_dir"] = target_dir
-    if target_dir_files:
-        user_input_obj["target_dir_files"] = target_dir_files
     if test_dir_prefixes:
         user_input_obj["test_dir_prefixes"] = test_dir_prefixes
 
@@ -460,6 +452,15 @@ async def create_pr_from_issue(
         token=token,
         clone_dir=clone_dir,
     )
+
+    # List file tree from local clone (now that clone_dir is available)
+    root_files = get_local_file_tree(base_args=base_args, dir_path="")
+    if root_files:
+        user_input_obj["root_files"] = root_files
+    if target_dir:
+        target_dir_files = get_local_file_tree(base_args=base_args, dir_path=target_dir)
+        if target_dir_files:
+            user_input_obj["target_dir_files"] = target_dir_files
 
     # Search for test files in the local clone (/tmp, fast)
     test_file_paths = find_test_files(
