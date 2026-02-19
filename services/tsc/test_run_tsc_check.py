@@ -186,6 +186,29 @@ async def test_run_tsc_check_with_empty_lines_in_output(mock_exists, mock_subpro
 @pytest.mark.asyncio
 @patch("services.tsc.run_tsc_check.subprocess.run")
 @patch("services.tsc.run_tsc_check.os.path.exists")
+async def test_run_tsc_check_disables_incremental(mock_exists, mock_subprocess):
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    await run_tsc_check(base_args=base_args, file_paths=["src/index.ts"])
+
+    # Verify --incremental false is passed to avoid stale .tsbuildinfo cache errors
+    cmd = mock_subprocess.call_args[0][0]
+    assert "--incremental" in cmd
+    assert "false" in cmd
+
+
+@pytest.mark.asyncio
+@patch("services.tsc.run_tsc_check.subprocess.run")
+@patch("services.tsc.run_tsc_check.os.path.exists")
 async def test_run_tsc_check_uses_test_config_when_only_one(
     mock_exists, mock_subprocess
 ):

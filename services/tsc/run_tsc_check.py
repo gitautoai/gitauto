@@ -56,7 +56,8 @@ async def run_tsc_check(*, base_args: BaseArgs, file_paths: list[str]):
         return TscResult(success=True, errors=[], error_files=set())
 
     # Run tsc --noEmit to check types without generating output
-    cmd = [tsc_bin, "--noEmit", "-p", tsconfig]
+    # --incremental false: Disable incremental compilation to avoid stale .tsbuildinfo cache causing phantom errors (e.g. reporting errors at line 73 in a 64-line file)
+    cmd = [tsc_bin, "--noEmit", "--incremental", "false", "-p", tsconfig]
     logger.info("tsc: Running type check with %s...", tsconfig)
 
     result = subprocess.run(
