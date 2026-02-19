@@ -39,7 +39,7 @@ def replace_old_file_content(
                     msg["content"] = placeholder
             continue
 
-        # Handle list of content blocks (tool_result from get_remote_file_content)
+        # Handle list of content blocks (tool_result from get_local_file_content)
         if not isinstance(content, list):
             continue
 

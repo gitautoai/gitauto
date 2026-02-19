@@ -27,7 +27,7 @@ from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.files.get_remote_file_content import get_remote_file_content
+from services.github.files.get_local_file_content import get_local_file_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.token.get_installation_token import get_installation_access_token
@@ -219,7 +219,7 @@ async def handle_review_run(
     base_args["comment_url"] = comment_url
 
     # Get a review commented file
-    review_file = get_remote_file_content(file_path=review_path, base_args=base_args)
+    review_file = get_local_file_content(file_path=review_path, base_args=base_args)
     p += 5
     add_log_message(f"Read the file `{review_path}` you commented on.", log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))

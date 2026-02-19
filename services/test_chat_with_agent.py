@@ -75,7 +75,7 @@ async def test_chat_with_agent_returns_token_counts(
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
 @patch("services.chat_with_agent.update_comment")
-async def test_get_remote_file_content_start_line_end_line_logging(
+async def test_get_local_file_content_start_line_end_line_logging(
     mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
     """Test that start_line and end_line parameters are properly logged in chat_with_agent."""
@@ -87,7 +87,7 @@ async def test_get_remote_file_content_start_line_end_line_logging(
                 {
                     "type": "tool_use",
                     "id": "test_id",
-                    "name": "get_remote_file_content",
+                    "name": "get_local_file_content",
                     "input": {"file_path": "test.py", "start_line": 10, "end_line": 20},
                 }
             ],
@@ -95,7 +95,7 @@ async def test_get_remote_file_content_start_line_end_line_logging(
         [
             ToolCall(
                 id="test_id",
-                name="get_remote_file_content",
+                name="get_local_file_content",
                 args={"file_path": "test.py", "start_line": 10, "end_line": 20},
             )
         ],
@@ -546,7 +546,7 @@ async def test_regular_tool_returns_is_completed_false(
                 {
                     "type": "tool_use",
                     "id": "test_id",
-                    "name": "get_remote_file_content",
+                    "name": "get_local_file_content",
                     "input": {"file_path": "test.py"},
                 }
             ],
@@ -554,7 +554,7 @@ async def test_regular_tool_returns_is_completed_false(
         [
             ToolCall(
                 id="test_id",
-                name="get_remote_file_content",
+                name="get_local_file_content",
                 args={"file_path": "test.py"},
             )
         ],
@@ -819,7 +819,7 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
                 {
                     "type": "tool_use",
                     "id": "test_id",
-                    "name": "get_remote_file_content",
+                    "name": "get_local_file_content",
                     "input": {"file_path": "src/main.py"},
                 }
             ],
@@ -827,7 +827,7 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
         [
             ToolCall(
                 id="test_id",
-                name="get_remote_file_content",
+                name="get_local_file_content",
                 args={"file_path": "src/main.py"},
             )
         ],
@@ -875,7 +875,7 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
                 {
                     "type": "tool_use",
                     "id": "test_id",
-                    "name": "get_remote_file_content",
+                    "name": "get_local_file_content",
                     "input": {
                         "file_path": "src/main.py",
                         "start_line": 10,
@@ -887,7 +887,7 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
         [
             ToolCall(
                 id="test_id",
-                name="get_remote_file_content",
+                name="get_local_file_content",
                 args={"file_path": "src/main.py", "start_line": 10, "end_line": 20},
             )
         ],
@@ -934,32 +934,32 @@ async def test_multiple_parallel_tool_calls(
                 {
                     "type": "tool_use",
                     "id": "tool_1",
-                    "name": "get_remote_file_content",
+                    "name": "get_local_file_content",
                     "input": {"file_path": "a.py"},
                 },
                 {
                     "type": "tool_use",
                     "id": "tool_2",
-                    "name": "get_remote_file_content",
+                    "name": "get_local_file_content",
                     "input": {"file_path": "b.py"},
                 },
                 {
                     "type": "tool_use",
                     "id": "tool_3",
-                    "name": "get_remote_file_content",
+                    "name": "get_local_file_content",
                     "input": {"file_path": "c.py"},
                 },
             ],
         },
         [
             ToolCall(
-                id="tool_1", name="get_remote_file_content", args={"file_path": "a.py"}
+                id="tool_1", name="get_local_file_content", args={"file_path": "a.py"}
             ),
             ToolCall(
-                id="tool_2", name="get_remote_file_content", args={"file_path": "b.py"}
+                id="tool_2", name="get_local_file_content", args={"file_path": "b.py"}
             ),
             ToolCall(
-                id="tool_3", name="get_remote_file_content", args={"file_path": "c.py"}
+                id="tool_3", name="get_local_file_content", args={"file_path": "c.py"}
             ),
         ],
         15,
