@@ -38,7 +38,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: "24"
 
       # https://github.com/plhery/node-twitter-api-v2
       - name: Install dependencies
@@ -52,14 +52,14 @@ jobs:
             const postTwitter = require('.github/scripts/post-twitter.js');
             await postTwitter({ context });
         env:
-          TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
-          TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
-          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
-          TWITTER_API_KEY_WES: ${{ secrets.TWITTER_API_KEY_WES }}
-          TWITTER_API_SECRET_WES: ${{ secrets.TWITTER_API_SECRET_WES }}
-          TWITTER_ACCESS_TOKEN_WES: ${{ secrets.TWITTER_ACCESS_TOKEN_WES }}
-          TWITTER_ACCESS_TOKEN_SECRET_WES: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET_WES }}
+          X_OAUTH1_CONSUMER_KEY_GITAUTO: ${{ secrets.X_OAUTH1_CONSUMER_KEY_GITAUTO }}
+          X_OAUTH1_CONSUMER_KEY_SECRET_GITAUTO: ${{ secrets.X_OAUTH1_CONSUMER_KEY_SECRET_GITAUTO }}
+          X_OAUTH1_ACCESS_TOKEN_GITAUTO: ${{ secrets.X_OAUTH1_ACCESS_TOKEN_GITAUTO }}
+          X_OAUTH1_ACCESS_TOKEN_SECRET_GITAUTO: ${{ secrets.X_OAUTH1_ACCESS_TOKEN_SECRET_GITAUTO }}
+          X_OAUTH1_CONSUMER_KEY_WES: ${{ secrets.X_OAUTH1_CONSUMER_KEY_WES }}
+          X_OAUTH1_CONSUMER_KEY_SECRET_WES: ${{ secrets.X_OAUTH1_CONSUMER_KEY_SECRET_WES }}
+          X_OAUTH1_ACCESS_TOKEN_WES: ${{ secrets.X_OAUTH1_ACCESS_TOKEN_WES }}
+          X_OAUTH1_ACCESS_TOKEN_SECRET_WES: ${{ secrets.X_OAUTH1_ACCESS_TOKEN_SECRET_WES }}
 
   post-linkedin:
     needs: check-python-changes
@@ -70,7 +70,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: "24"
 
       # https://github.com/linkedin-developers/linkedin-api-js-client#linkedin-api-javascript-client
       - name: Install dependencies
@@ -94,7 +94,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: "24"
 
       - name: Install dependencies
         run: npm install playwright
