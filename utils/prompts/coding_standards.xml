@@ -46,8 +46,9 @@
   </anti_patterns>
 
   <dead_code_handling>
-    <description>When a linter or type checker identifies code as unreachable or unnecessary (e.g., @typescript-eslint/no-unnecessary-condition), fix the root cause by removing the dead code rather than suppressing the warning with coverage exclusion comments.</description>
+    <description>When a linter, type checker, or coverage tool identifies code as unreachable or unnecessary, fix the root cause by removing the dead code rather than suppressing the warning or trying to test unreachable paths.</description>
     <rule>If a conditional is flagged as always-true or always-false, simplify the code by removing the unnecessary branch</rule>
+    <rule>If coverage shows an unreachable branch caused by a redundant condition, remove the redundant condition from the implementation instead of trying to write a test that covers it</rule>
     <rule>Only use coverage exclusion comments (istanbul ignore, pragma: no cover) as a LAST RESORT when the code is genuinely reachable at runtime but untestable due to framework limitations</rule>
     <examples>
       <wrong><![CDATA[
@@ -59,6 +60,28 @@
 // RIGHT: Remove the dead branch entirely
 <Component />
       ]]></right>
+      <wrong_coverage><![CDATA[
+// WRONG: Redundant condition inside else block creates unreachable V8 branch
+if (!cachedVal) {
+  query();
+} else {
+  if (cachedVal && cachedVal.isInternalUser) {  // cachedVal && is always true here
+    showModal();
+  } else if (cachedVal && !cachedVal.isInternalUser) {  // cachedVal && is always true here
+    redirect();
+  }
+}
+      ]]></wrong_coverage>
+      <right_coverage><![CDATA[
+// RIGHT: Remove redundant conditions since else block guarantees cachedVal is truthy
+if (!cachedVal) {
+  query();
+} else if (cachedVal.isInternalUser) {
+  showModal();
+} else {
+  redirect();
+}
+      ]]></right_coverage>
     </examples>
   </dead_code_handling>
 
