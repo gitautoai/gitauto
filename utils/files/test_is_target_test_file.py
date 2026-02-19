@@ -25,7 +25,7 @@ def test_is_target_test_file_with_uncovered_code():
         {
             "owner": "test",
             "repo": "test",
-            "issue_title": "Schedule: Add tests for uncovered code in utils/files/is_test_file.py",
+            "issue_title": "Schedule: Achieve 100% test coverage for utils/files/is_test_file.py",
         },
     )
 
