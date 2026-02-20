@@ -102,7 +102,6 @@ class Coverages(TypedDict):
     statement_coverage: float | None
     function_coverage: float | None
     branch_coverage: float | None
-    path_coverage: float | None
     line_coverage: float | None
     uncovered_lines: str | None
     created_at: datetime.datetime
@@ -128,7 +127,6 @@ class CoveragesInsert(TypedDict):
     statement_coverage: NotRequired[float | None]
     function_coverage: NotRequired[float | None]
     branch_coverage: NotRequired[float | None]
-    path_coverage: NotRequired[float | None]
     line_coverage: NotRequired[float | None]
     uncovered_lines: NotRequired[str | None]
     created_by: str
@@ -362,10 +360,10 @@ class RepoCoverage(TypedDict):
     repo_id: int
     repo_name: str
     branch_name: str
-    line_coverage: float
-    statement_coverage: float
-    function_coverage: float
-    branch_coverage: float
+    line_coverage: float | None
+    statement_coverage: float | None
+    function_coverage: float | None
+    branch_coverage: float | None
     created_at: datetime.datetime
     created_by: str
     language: str
@@ -383,10 +381,10 @@ class RepoCoverageInsert(TypedDict):
     repo_id: int
     repo_name: str
     branch_name: str
-    line_coverage: float
-    statement_coverage: float
-    function_coverage: float
-    branch_coverage: float
+    line_coverage: NotRequired[float | None]
+    statement_coverage: NotRequired[float | None]
+    function_coverage: NotRequired[float | None]
+    branch_coverage: NotRequired[float | None]
     created_by: str
     language: str
     lines_covered: int

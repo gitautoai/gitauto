@@ -10,29 +10,22 @@ def create_coverage_report(
     if level == "directory" and path == "":
         path = "."
 
-    line_coverage = round(
-        (
-            (stats["lines_covered"] / stats["lines_total"] * 100)
-            if stats["lines_total"] > 0
-            else 100
-        ),
-        2,
+    # None means "not measured" by the coverage tool, not "0% covered" or "100% covered"
+    # e.g. PHP coverage tools (Xdebug/PCOV) don't report branch data in LCOV
+    line_coverage = (
+        round(stats["lines_covered"] / stats["lines_total"] * 100, 1)
+        if stats["lines_total"] > 0
+        else None
     )
-    function_coverage = round(
-        (
-            (stats["functions_covered"] / stats["functions_total"] * 100)
-            if stats["functions_total"] > 0
-            else 100
-        ),
-        2,
+    function_coverage = (
+        round(stats["functions_covered"] / stats["functions_total"] * 100, 1)
+        if stats["functions_total"] > 0
+        else None
     )
-    branch_coverage = round(
-        (
-            (stats["branches_covered"] / stats["branches_total"] * 100)
-            if stats["branches_total"] > 0
-            else 100
-        ),
-        2,
+    branch_coverage = (
+        round(stats["branches_covered"] / stats["branches_total"] * 100, 1)
+        if stats["branches_total"] > 0
+        else None
     )
 
     coverage_report: CoverageReport = {
@@ -44,7 +37,6 @@ def create_coverage_report(
         "line_coverage": line_coverage,
         "function_coverage": function_coverage,
         "branch_coverage": branch_coverage,
-        "path_coverage": branch_coverage,
         "lines_covered": stats["lines_covered"],
         "lines_total": stats["lines_total"],
         "functions_covered": stats["functions_covered"],
@@ -53,7 +45,7 @@ def create_coverage_report(
         "branches_total": stats["branches_total"],
         "uncovered_lines": (
             ", ".join(map(str, sorted(stats["uncovered_lines"])))
-            if level == "file" and line_coverage > 0
+            if level == "file" and line_coverage is not None and line_coverage > 0
             else ""
         ),
         "uncovered_functions": (

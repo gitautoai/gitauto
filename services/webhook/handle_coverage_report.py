@@ -192,8 +192,6 @@ def handle_coverage_report(
 
             for item in parsed_coverage:
                 item["language"] = report_language
-                # LCOV doesn't provide path coverage, use branch coverage as closest approximation
-                item["path_coverage"] = item["branch_coverage"]
 
             coverage_data.extend(parsed_coverage)
         else:
@@ -234,7 +232,6 @@ def handle_coverage_report(
                 "repo_id": repo_id,
                 "branch_name": head_branch,
                 "language": coverage.get("language", "unknown"),
-                "path_coverage": 0,
                 "updated_by": user_name,
                 **coverage,
             }

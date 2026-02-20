@@ -143,7 +143,6 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                 "function_coverage": 0,
                 "branch_coverage": 0,
                 "line_coverage": 0,
-                "path_coverage": 0,
                 "package_name": None,
                 "language": None,
                 "github_issue_url": None,
@@ -175,7 +174,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             func,
             branch,
         )
-        if stmt == 100.0 and func == 100.0 and branch == 100.0:
+        # None means "not measured" by the coverage tool (e.g. PHP doesn't report branch data)
+        all_complete = all(v is None or v == 100.0 for v in (stmt, func, branch))
+        if all_complete:
             logger.info("Skipping %s: all 3 metrics at 100%%", item["full_path"])
         elif item.get("is_excluded_from_testing"):
             continue
@@ -398,7 +399,6 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                 "function_coverage": target_item["function_coverage"],
                 "branch_coverage": target_item["branch_coverage"],
                 "line_coverage": target_item["line_coverage"],
-                "path_coverage": target_item["path_coverage"],
                 "package_name": target_item["package_name"],
                 "language": target_item["language"],
                 "github_issue_url": issue_response["html_url"],
