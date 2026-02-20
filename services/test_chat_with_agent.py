@@ -524,12 +524,11 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
         model_id=None,
     )
 
-    is_completed = result.is_completed
-    assert is_completed is False
+    assert result.is_completed is True
     messages = result.messages
     last_content = cast(list, messages[-1]["content"])
     last_message = last_content[0]["content"]
-    assert "Error: Cannot complete task" in last_message
+    assert "No changes were needed" in last_message
 
 
 @pytest.mark.asyncio

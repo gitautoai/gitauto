@@ -39,7 +39,7 @@ async def handle_installation_repos_added(
     )
 
     # Auto-create coverage workflow PR when a single repo is added
-    if len(repositories) == 1:
+    if repositories and len(repositories) == 1:
         await setup_handler(
             owner_name=owner_name,
             repo_name=repositories[0]["name"],

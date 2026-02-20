@@ -134,9 +134,16 @@ def mock_ensure_tsconfig_relaxed_for_tests():
 
 
 @pytest.fixture
-def mock_get_file_tree():
-    with patch("services.webhook.process_repositories.get_file_tree") as mock:
+def mock_os_listdir():
+    with patch("services.webhook.process_repositories.os.listdir") as mock:
         mock.return_value = []
+        yield mock
+
+
+@pytest.fixture
+def mock_os_path_isfile():
+    with patch("services.webhook.process_repositories.os.path.isfile") as mock:
+        mock.return_value = True
         yield mock
 
 
@@ -202,7 +209,8 @@ async def test_process_repositories_efs_exists_fetches(
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
     mock_ensure_tsconfig_relaxed_for_tests,
-    mock_get_file_tree,
+    mock_os_listdir,
+    mock_os_path_isfile,
     mock_delete_remote_branch,
 ):
     mock_os_path_exists.return_value = True
@@ -245,7 +253,8 @@ async def test_process_repositories_efs_not_exists_clones(
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
     mock_ensure_tsconfig_relaxed_for_tests,
-    mock_get_file_tree,
+    mock_os_listdir,
+    mock_os_path_isfile,
     mock_delete_remote_branch,
 ):
     mock_os_path_exists.return_value = False
@@ -314,7 +323,8 @@ async def test_process_repositories_stats_saved_correctly(
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
     mock_ensure_tsconfig_relaxed_for_tests,
-    mock_get_file_tree,
+    mock_os_listdir,
+    mock_os_path_isfile,
     mock_delete_remote_branch,
 ):
     mock_os_path_exists.return_value = True
@@ -377,7 +387,8 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
     mock_ensure_tsconfig_relaxed_for_tests,
-    mock_get_file_tree,
+    mock_os_listdir,
+    mock_os_path_isfile,
     mock_delete_remote_branch,
 ):
     mock_get_default_branch.return_value = ("main", True)
@@ -440,6 +451,8 @@ async def test_process_repositories_non_typescript_deletes_branch_no_pr(
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
     mock_ensure_tsconfig_relaxed_for_tests,
+    mock_os_listdir,
+    mock_os_path_isfile,
     mock_delete_remote_branch,
     mock_create_pull_request,
 ):
@@ -492,7 +505,8 @@ async def test_process_repositories_typescript_creates_pr(
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
     mock_ensure_tsconfig_relaxed_for_tests,
-    mock_get_file_tree,
+    mock_os_listdir,
+    mock_os_path_isfile,
     mock_delete_remote_branch,
     mock_create_pull_request,
 ):
