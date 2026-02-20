@@ -11,6 +11,7 @@ from constants.system_messages.setup_handler import (
 )
 from services.chat_with_agent import chat_with_agent
 from services.efs.get_efs_dir import get_efs_dir
+from services.git.git_clone_to_efs import git_clone_to_efs
 from services.git.get_clone_url import get_clone_url
 from services.github.branches.create_remote_branch import create_remote_branch
 from services.github.branches.delete_remote_branch import delete_remote_branch
@@ -80,13 +81,14 @@ async def setup_handler(
         logger.info("Using default branch as target: %s", target_branch)
 
     efs_dir = get_efs_dir(owner_name, repo_name)
+    clone_url = get_clone_url(owner_name, repo_name, token)
+    await git_clone_to_efs(efs_dir=efs_dir, clone_url=clone_url, branch=target_branch)
     root_files = [
         f for f in os.listdir(efs_dir) if os.path.isfile(os.path.join(efs_dir, f))
     ]
 
     # Create a branch for the coverage workflow PR
     new_branch = generate_branch_name()
-    clone_url = get_clone_url(owner_name, repo_name, token)
     base_args = cast(
         BaseArgs,
         {

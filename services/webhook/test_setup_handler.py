@@ -1,7 +1,8 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
+import os
 from typing import cast
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from anthropic.types import MessageParam
@@ -36,6 +37,7 @@ INSTALLATION = {"owner_id": 1, "installation_id": 123, "owner_type": "Organizati
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
@@ -47,6 +49,7 @@ async def test_not_completed_closes_pr_and_deletes_branch(
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
+    mock_clone_to_efs,
     mock_clone_url,
     mock_sha,
     mock_create_branch,
@@ -65,6 +68,7 @@ async def test_not_completed_closes_pr_and_deletes_branch(
         token="test-token",
     )
 
+    mock_clone_to_efs.assert_called_once()
     mock_create_pr.assert_called_once()
     mock_close_pr.assert_called_once()
     mock_delete_branch.assert_called_once()
@@ -78,6 +82,7 @@ async def test_not_completed_closes_pr_and_deletes_branch(
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
@@ -89,6 +94,7 @@ async def test_completed_keeps_pr(
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
+    mock_clone_to_efs,
     mock_clone_url,
     mock_sha,
     mock_create_branch,
@@ -120,6 +126,7 @@ async def test_completed_keeps_pr(
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(
@@ -134,6 +141,7 @@ async def test_uses_target_branch_when_set(
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
+    mock_clone_to_efs,
     mock_clone_url,
     mock_sha,
     mock_create_branch,
@@ -169,6 +177,7 @@ async def test_uses_target_branch_when_set(
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
@@ -180,6 +189,7 @@ async def test_passes_existing_workflows_to_claude(
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
+    mock_clone_to_efs,
     mock_clone_url,
     mock_sha,
     mock_create_branch,
@@ -210,6 +220,60 @@ async def test_passes_existing_workflows_to_claude(
     workflows_block = content_blocks[2]["text"]
     assert "ci.yml" in workflows_block
     assert "deploy.yml" in workflows_block
+
+
+@pytest.mark.asyncio
+@patch(f"{MODULE}.delete_remote_branch")
+@patch(f"{MODULE}.close_pull_request")
+@patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
+@patch(f"{MODULE}.create_empty_commit")
+@patch(f"{MODULE}.create_remote_branch")
+@patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
+@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_repository_by_name", return_value=None)
+@patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.chat_with_agent")
+async def test_clones_repo_when_efs_dir_missing(
+    mock_agent: MagicMock,
+    mock_installation,
+    mock_repo,
+    mock_default_branch,
+    mock_efs_dir,
+    mock_clone_to_efs,
+    mock_clone_url,
+    mock_sha,
+    mock_create_branch,
+    mock_empty_commit,
+    mock_create_pr,
+    mock_close_pr,
+    mock_delete_branch,
+    tmp_path,
+):
+    # Point to a non-existent directory to simulate missing EFS clone
+    missing_dir = str(tmp_path / "nonexistent")
+    mock_efs_dir.return_value = missing_dir
+    # Real git_clone_to_efs creates the directory; simulate that
+    mock_clone_to_efs.side_effect = lambda **kwargs: os.makedirs(
+        kwargs["efs_dir"], exist_ok=True
+    )
+    mock_agent.return_value = _make_agent_result(is_completed=True)
+
+    await setup_handler(
+        owner_name="test-owner",
+        repo_name="test-repo",
+        token="test-token",
+    )
+
+    # git_clone_to_efs should be called to clone the repo
+    mock_clone_to_efs.assert_called_once_with(
+        efs_dir=missing_dir,
+        clone_url="https://github.com/o/r.git",
+        branch="main",
+    )
+    mock_create_pr.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -246,6 +310,7 @@ async def test_empty_repo_skips(mock_installation, mock_repo, mock_default_branc
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
@@ -257,6 +322,7 @@ async def test_system_message_mentions_coverage(
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
+    mock_clone_to_efs,
     mock_clone_url,
     mock_sha,
     mock_create_branch,
@@ -288,6 +354,7 @@ async def test_system_message_mentions_coverage(
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
@@ -299,6 +366,7 @@ async def test_sets_pull_number_in_base_args(
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
+    mock_clone_to_efs,
     mock_clone_url,
     mock_sha,
     mock_create_branch,
