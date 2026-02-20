@@ -71,7 +71,11 @@ def _handle_http_error(
     status_code: int = err.response.status_code
 
     if is_server_error(err):
-        logger.warning("%s received server error %s, not reporting to Sentry", func_name, status_code)
+        logger.warning(
+            "%s received server error %s, not reporting to Sentry",
+            func_name,
+            status_code,
+        )
         if raise_on_error:
             raise err
         return error_return, False
