@@ -5,6 +5,7 @@ import requests
 from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 from utils.urls.parse_urls import parse_github_url
 
 
@@ -22,6 +23,10 @@ def get_remote_file_content_by_url(url: str, token: str):
     api_url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
     headers = create_headers(token=token)
     response = requests.get(url=api_url, headers=headers, timeout=TIMEOUT)
+    if response.status_code == 404:
+        logger.warning("%s/%s %s not found on ref %s", owner, repo, file_path, ref)
+        return ("", "")
+
     response.raise_for_status()
     response_json = response.json()
     encoded_content: str = response_json["content"]  # Base64 encoded content
