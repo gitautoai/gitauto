@@ -83,15 +83,19 @@ async function postLinkedIn({ context }) {
   }
 
   // Send the post links to Slack webhook
-  const links = [
-    companyPostUrn ? `https://www.linkedin.com/feed/update/urn:li:activity:${companyPostUrn}` : null,
-    wesPostUrn ? `https://www.linkedin.com/feed/update/urn:li:activity:${wesPostUrn}` : null,
-  ].filter(Boolean).join(" and ");
-  await fetch(process.env.SLACK_WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ msg: `Posted to LinkedIn! ${links}` }),
-  });
+  if (process.env.SLACK_WEBHOOK_URL) {
+    const links = [
+      companyPostUrn ? `https://www.linkedin.com/feed/update/urn:li:activity:${companyPostUrn}` : null,
+      wesPostUrn ? `https://www.linkedin.com/feed/update/urn:li:activity:${wesPostUrn}` : null,
+    ].filter(Boolean).join(" and ");
+    await fetch(process.env.SLACK_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ msg: `Posted to LinkedIn! ${links}` }),
+    });
+  } else {
+    console.log("SLACK_WEBHOOK_URL not set, skipping Slack notification");
+  }
 }
 
 module.exports = postLinkedIn;

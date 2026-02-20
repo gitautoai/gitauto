@@ -60,6 +60,7 @@ jobs:
           X_OAUTH1_CONSUMER_KEY_SECRET_WES: ${{ secrets.X_OAUTH1_CONSUMER_KEY_SECRET_WES }}
           X_OAUTH1_ACCESS_TOKEN_WES: ${{ secrets.X_OAUTH1_ACCESS_TOKEN_WES }}
           X_OAUTH1_ACCESS_TOKEN_SECRET_WES: ${{ secrets.X_OAUTH1_ACCESS_TOKEN_SECRET_WES }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   post-linkedin:
     needs: check-python-changes
