@@ -11,10 +11,12 @@ from services.github.artifacts.get_workflow_artifacts import get_workflow_artifa
 from services.circleci.download_circleci_artifact import download_circleci_artifact
 from services.circleci.get_job_artifacts import get_circleci_job_artifacts
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
+from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.branches.get_branch_head import get_branch_head
 from services.github.branches.get_default_branch import get_default_branch
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 from services.supabase.repositories.get_repository import get_repository
+from services.supabase.repositories.update_repository import update_repository
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.check_suites.get_circleci_workflow_id import (
     get_circleci_workflow_ids_from_check_suite,
@@ -62,6 +64,17 @@ def handle_coverage_report(
     # Only process coverage for target branch
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     target_branch = repo_settings.get("target_branch") if repo_settings else ""
+    if target_branch and not check_branch_exists(
+        owner=owner_name, repo=repo_name, branch_name=target_branch, token=github_token
+    ):
+        logger.warning(
+            "target_branch '%s' no longer exists for %s/%s, clearing and falling back to default branch",
+            target_branch,
+            owner_name,
+            repo_name,
+        )
+        update_repository(owner_id=owner_id, repo_id=repo_id, target_branch="")
+        target_branch = ""
     if not target_branch:
         target_branch, _ = get_default_branch(
             owner=owner_name, repo=repo_name, token=github_token
