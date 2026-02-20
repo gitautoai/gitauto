@@ -675,3 +675,31 @@ class TestGetRemoteFileContentByUrl:
         assert "101: print('line')" in content
         # Should have 102 lines total (1 header + 100 print lines + 1 empty line at end)
         assert len(content.split("\n")) >= 104  # Including the header lines
+
+    @patch("services.github.files.get_remote_file_content_by_url.requests.get")
+    @patch("services.github.files.get_remote_file_content_by_url.create_headers")
+    @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
+    def test_404_returns_empty_without_sentry(
+        self,
+        mock_parse_url,
+        mock_create_headers,
+        mock_requests_get,
+        mock_parse_github_url,
+    ):
+        """Test that 404 returns empty tuple without reporting to Sentry."""
+        mock_parse_url.return_value = mock_parse_github_url
+        mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
+
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_requests_get.return_value = mock_response
+
+        with patch(
+            "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+        ) as mock_sentry:
+            url = "https://github.com/test-owner/test-repo/blob/main/missing.py"
+            result = get_remote_file_content_by_url(url, "test-token")
+
+            assert result == ("", "")
+            mock_response.raise_for_status.assert_not_called()
+            mock_sentry.assert_not_called()
