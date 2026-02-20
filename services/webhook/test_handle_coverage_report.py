@@ -1182,7 +1182,10 @@ def test_handle_coverage_report_stale_target_branch_falls_back():
 
         assert result is None
         mock_branch_exists.assert_called_once_with(
-            owner="test-owner", repo="test-repo", branch_name="test-branch", token="fake-token"
+            owner="test-owner",
+            repo="test-repo",
+            branch_name="test-branch",
+            token="fake-token",
         )
         mock_update_repo.assert_called_once_with(
             owner_id=12345, repo_id=67890, target_branch=""
@@ -1192,5 +1195,7 @@ def test_handle_coverage_report_stale_target_branch_falls_back():
         )
         mock_logger.warning.assert_any_call(
             "target_branch '%s' no longer exists for %s/%s, clearing and falling back to default branch",
-            "test-branch", "test-owner", "test-repo",
+            "test-branch",
+            "test-owner",
+            "test-repo",
         )

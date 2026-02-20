@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 
 from constants.files import JS_TEST_FILE_EXTENSIONS, TS_TEST_FILE_EXTENSIONS
@@ -10,7 +11,6 @@ from services.github.commits.replace_remote_file import replace_remote_file_cont
 from services.github.files.get_eslint_config import get_eslint_config
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
-from services.github.trees.get_file_tree import get_file_tree
 from services.github.types.github_types import BaseArgs
 from services.jest.format_coverage_comment import format_coverage_comment
 from services.jest.run_jest_test import run_jest_test
@@ -59,9 +59,11 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
     )
 
     if not pr_files:
+        logger.info(
+            "No PR file changes found (e.g. setup handler determined no workflows needed), skipping checks"
+        )
         return VerifyTaskIsCompleteResult(
-            success=False,
-            message="Error: Cannot complete task - the PR has no changes. You must make actual code changes before calling verify_task_is_complete. Use apply_diff_to_file or replace_remote_file_content to commit your changes first.",
+            success=True, message="Task completed. No changes were needed."
         )
 
     js_test_files = [
@@ -72,10 +74,12 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
 
     ts_test_files = [f for f in js_test_files if f.endswith(TS_TEST_FILE_EXTENSIONS)]
     if ts_test_files:
-        tree_items = get_file_tree(
-            owner=owner, repo=repo, ref=new_branch, token=token, root_only=True
-        )
-        root_files = [item["path"] for item in tree_items if item["type"] == "blob"]
+        clone_dir = base_args.get("clone_dir", "")
+        root_files = [
+            f
+            for f in os.listdir(clone_dir)
+            if os.path.isfile(os.path.join(clone_dir, f))
+        ]
 
         tsconfig_path, _ = ensure_tsconfig_relaxed_for_tests(
             root_files=root_files,

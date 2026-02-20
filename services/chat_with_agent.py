@@ -198,7 +198,7 @@ async def chat_with_agent(
                     )
 
                 if validation_error:
-                    logger.error(validation_error)
+                    logger.warning(validation_error)
                     tool_result_blocks.append(
                         {
                             "type": "tool_result",

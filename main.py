@@ -22,10 +22,12 @@ from services.efs.cleanup_stale_repos_on_efs import cleanup_stale_repos_on_efs
 from services.aws.cleanup_tmp import cleanup_tmp
 from services.efs.clone_and_install import clone_and_install
 from services.webhook.schedule_handler import schedule_handler
+from services.webhook.setup_handler import setup_handler
 from services.webhook.webhook_handler import handle_webhook_event
 from services.website.sync_files_from_github_to_coverage import (
     sync_files_from_github_to_coverage,
 )
+from services.website.verify_api_key import verify_api_key
 from utils.aws.extract_lambda_info import extract_lambda_info
 from utils.logging.logging_config import (
     clear_state,
@@ -191,4 +193,20 @@ async def api_clone_and_install(
     repo: str,
     api_key: str = Header(..., alias="X-API-Key"),
 ):
-    return await clone_and_install(owner, repo, api_key)
+    verify_api_key(api_key)
+    return await clone_and_install(owner, repo)
+
+
+@app.post(path="/api/{owner}/{repo}/setup_coverage_workflow")
+async def setup_coverage_workflow(
+    owner: str,
+    repo: str,
+    token: str = Header(..., alias="X-GitHub-Token"),
+    api_key: str = Header(..., alias="X-API-Key"),
+):
+    verify_api_key(api_key)
+    return await setup_handler(
+        owner_name=owner,
+        repo_name=repo,
+        token=token,
+    )

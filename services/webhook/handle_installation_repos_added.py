@@ -3,12 +3,14 @@ from services.github.types.github_types import GitHubInstallationRepositoriesPay
 from services.supabase.installations.is_installation_valid import is_installation_valid
 from services.webhook.process_repositories import process_repositories
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import set_trigger
 
 
 @handle_exceptions(raise_on_error=True)
 async def handle_installation_repos_added(
     payload: GitHubInstallationRepositoriesPayload,
 ):
+    set_trigger("installation_repositories")
     installation_id = payload["installation"]["id"]
     if not is_installation_valid(installation_id=installation_id):
         return

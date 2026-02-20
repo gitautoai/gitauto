@@ -117,19 +117,24 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     GET_LOCAL_FILE_TREE,
     MOVE_FILE,
     REPLACE_REMOTE_FILE_CONTENT,
-    SET_ENV,
+    SEARCH_LOCAL_FILE_CONTENT,
     VERIFY_TASK_IS_COMPLETE,
 ]
 
 TOOLS_FOR_ISSUES: list[ToolUnionParam] = _TOOLS_BASE + [
     GET_LOCAL_FILE_CONTENT,
-    SEARCH_LOCAL_FILE_CONTENT,
+    SET_ENV,
 ]
 
 # PR handlers need full file reads (no partial read options)
 TOOLS_FOR_PRS: list[ToolUnionParam] = _TOOLS_BASE + [
     GET_LOCAL_FILE_CONTENT_FULL_ONLY,
-    SEARCH_LOCAL_FILE_CONTENT,
+    SET_ENV,
+]
+
+# Setup handler reads project files to detect language/framework, then creates workflow files
+TOOLS_FOR_SETUP: list[ToolUnionParam] = _TOOLS_BASE + [
+    GET_LOCAL_FILE_CONTENT,
 ]
 
 FILE_EDIT_TOOLS = [

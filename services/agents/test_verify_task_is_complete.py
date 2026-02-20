@@ -72,7 +72,7 @@ def mock_ensure_eslint_relaxed():
 
 
 @pytest.fixture
-def base_args():
+def base_args(tmp_path):
     return cast(
         BaseArgs,
         {
@@ -81,6 +81,7 @@ def base_args():
             "pull_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
+            "clone_dir": str(tmp_path),
         },
     )
 
@@ -139,8 +140,8 @@ async def test_verify_task_is_complete_failure_no_changes(mock_get_files, base_a
 
     result = await verify_task_is_complete(base_args)
 
-    assert result.success is False
-    assert "no changes" in result.message
+    assert result.success is True
+    assert "No changes were needed" in result.message
 
 
 @pytest.mark.asyncio
@@ -203,7 +204,6 @@ async def test_verify_task_is_complete_api_error_returns_default(
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
-@patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.replace_remote_file_content")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
@@ -211,7 +211,6 @@ async def test_verify_autofixes_missing_braces_in_test_file(
     mock_get_files,
     mock_get_raw,
     mock_upload,
-    mock_get_tree,
     mock_ensure_tsconfig,
     _mock_ensure_jest,
     mock_prettier,
@@ -230,7 +229,6 @@ async def test_verify_autofixes_missing_braces_in_test_file(
   });
 });"""
     mock_upload.return_value = True
-    mock_get_tree.return_value = []
     mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
     mock_eslint.return_value = ESLintResult(
@@ -307,13 +305,11 @@ async def test_verify_ignores_removed_test_files(
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
-@patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_checks_both_ts_test_files(
     mock_get_files,
     mock_get_raw,
-    mock_get_tree,
     mock_ensure_tsconfig,
     _mock_ensure_jest,
     mock_prettier,
@@ -329,7 +325,6 @@ async def test_verify_checks_both_ts_test_files(
     expect(true).toBe(true);
   });
 });"""
-    mock_get_tree.return_value = []
     mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
     mock_eslint.return_value = ESLintResult(
@@ -347,13 +342,11 @@ async def test_verify_checks_both_ts_test_files(
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
-@patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_checks_only_ts_when_mixed_with_py(
     mock_get_files,
     mock_get_raw,
-    mock_get_tree,
     mock_ensure_tsconfig,
     _mock_ensure_jest,
     mock_prettier,
@@ -369,7 +362,6 @@ async def test_verify_checks_only_ts_when_mixed_with_py(
     expect(true).toBe(true);
   });
 });"""
-    mock_get_tree.return_value = []
     mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
     mock_eslint.return_value = ESLintResult(
@@ -404,7 +396,6 @@ async def test_verify_ignores_all_non_js_test_files(
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
-@patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.replace_remote_file_content")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
@@ -412,7 +403,6 @@ async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
     mock_get_files,
     mock_get_raw,
     mock_upload,
-    mock_get_tree,
     mock_ensure_tsconfig,
     _mock_ensure_jest,
     mock_prettier,
@@ -438,7 +428,6 @@ async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
 });"""
     mock_get_raw.side_effect = [correct_content, broken_content]
     mock_upload.return_value = True
-    mock_get_tree.return_value = []
     mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
     mock_eslint.return_value = ESLintResult(
@@ -456,7 +445,6 @@ async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
-@patch("services.agents.verify_task_is_complete.get_file_tree")
 @patch("services.agents.verify_task_is_complete.replace_remote_file_content")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
@@ -464,7 +452,6 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
     mock_get_files,
     mock_get_raw,
     mock_upload,
-    mock_get_tree,
     mock_ensure_tsconfig,
     _mock_ensure_jest,
     mock_prettier,
@@ -485,7 +472,6 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
 });"""
     mock_get_raw.return_value = broken_content
     mock_upload.return_value = True
-    mock_get_tree.return_value = []
     mock_ensure_tsconfig.return_value = (None, None)
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
     mock_eslint.return_value = ESLintResult(
@@ -506,7 +492,7 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
 async def test_verify_fails_when_jest_tests_fail(
     mock_get_files, mock_get_raw, mock_tsc, mock_jest, base_args
 ):
-    # Use JS file (not TS) to avoid triggering get_file_tree call for tsconfig
+    # Use JS file (not TS) to avoid triggering tsconfig setup for TS test files
     mock_get_files.return_value = [
         {"filename": "src/index.test.js", "status": "modified"},
     ]
@@ -681,7 +667,7 @@ async def test_all_tsc_errors_pre_existing_passes(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_baseline_tsc_errors_in_pr_files_still_reported(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, tmp_path
 ):
     """Errors in PR-changed files should be reported even if in baseline.
 
@@ -719,6 +705,7 @@ async def test_baseline_tsc_errors_in_pr_files_still_reported(
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {pr_file_error},
+            "clone_dir": str(tmp_path),
         },
     )
     result = await verify_task_is_complete(args)
@@ -955,7 +942,7 @@ async def test_issue_handler_new_non_pr_file_error_reported(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_check_suite_error_in_pr_file_in_baseline_reported(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, tmp_path
 ):
     """check_suite: PR file has error that was also in baseline (PR branch state).
 
@@ -994,6 +981,7 @@ async def test_check_suite_error_in_pr_file_in_baseline_reported(
             "new_branch": "test-branch",
             # Baseline from PR branch contains this error
             "baseline_tsc_errors": {pr_file_error},
+            "clone_dir": str(tmp_path),
         },
     )
     result = await verify_task_is_complete(args)
@@ -1009,7 +997,7 @@ async def test_check_suite_error_in_pr_file_in_baseline_reported(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_check_suite_preexisting_non_pr_file_error_skipped(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, tmp_path
 ):
     """check_suite: Pre-existing error in unrelated file on PR branch.
 
@@ -1043,6 +1031,7 @@ async def test_check_suite_preexisting_non_pr_file_error_skipped(
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {preexisting},
+            "clone_dir": str(tmp_path),
         },
     )
     result = await verify_task_is_complete(args)
@@ -1059,7 +1048,7 @@ async def test_check_suite_preexisting_non_pr_file_error_skipped(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_check_suite_new_non_pr_file_error_reported(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, tmp_path
 ):
     """check_suite: Agent's fix attempt introduced error in a non-PR file.
 
@@ -1093,6 +1082,7 @@ async def test_check_suite_new_non_pr_file_error_reported(
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": set(),
+            "clone_dir": str(tmp_path),
         },
     )
     result = await verify_task_is_complete(args)

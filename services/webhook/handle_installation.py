@@ -17,10 +17,12 @@ from services.stripe.create_stripe_customer import create_stripe_customer
 # Local imports (Others)
 from services.webhook.process_repositories import process_repositories
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import set_trigger
 
 
 @handle_exceptions(raise_on_error=True)
 async def handle_installation_created(payload: GitHubInstallationPayload):
+    set_trigger("installation")
     installation_id = payload["installation"]["id"]
     owner = payload["installation"]["account"]
     owner_id = owner["id"]
