@@ -20,7 +20,7 @@ def test_parse_lcov_python_sample_exact_counts():
     assert repo_coverage["full_path"] == "All"
     assert repo_coverage["statement_coverage"] == 67.9
     assert repo_coverage["function_coverage"] == 80.0
-    assert repo_coverage["branch_coverage"] == 55.09
+    assert repo_coverage["branch_coverage"] == 55.1
     assert repo_coverage["line_coverage"] == 67.9
     assert repo_coverage["lines_covered"] == 3813
     assert repo_coverage["lines_total"] == 5616
@@ -65,8 +65,8 @@ def test_parse_lcov_javascript_sample_exact_counts():
     repo_coverage = repo_level[0]
     assert repo_coverage["full_path"] == "All"
     assert repo_coverage["statement_coverage"] == 3.6
-    assert repo_coverage["function_coverage"] == 2.72
-    assert repo_coverage["branch_coverage"] == 2.54
+    assert repo_coverage["function_coverage"] == 2.7
+    assert repo_coverage["branch_coverage"] == 2.5
     assert repo_coverage["line_coverage"] == 3.6
     assert repo_coverage["lines_covered"] == 141
     assert repo_coverage["lines_total"] == 3919
@@ -106,10 +106,10 @@ def test_parse_lcov_dotnet_real():
 
     repo_coverage = repo_level[0]
     assert repo_coverage["full_path"] == "All"
-    assert repo_coverage["function_coverage"] == 13.95  # Real value from .NET LCOV
-    assert repo_coverage["statement_coverage"] == 30.34  # Real value from .NET LCOV
-    assert repo_coverage["line_coverage"] == 30.34  # Real value from .NET LCOV
-    assert repo_coverage["branch_coverage"] == 4.17  # Real value from .NET LCOV
+    assert repo_coverage["function_coverage"] == 14.0  # Real value from .NET LCOV
+    assert repo_coverage["statement_coverage"] == 30.3  # Real value from .NET LCOV
+    assert repo_coverage["line_coverage"] == 30.3  # Real value from .NET LCOV
+    assert repo_coverage["branch_coverage"] == 4.2  # Real value from .NET LCOV
 
 
 def test_fn_parsing_python():
@@ -175,7 +175,7 @@ def test_fnda_parsing_javascript():
     result = parse_lcov_coverage(lcov_content, set())
     # Check that function coverage is calculated correctly
     repo = [r for r in result if r["level"] == "repository"][0]
-    assert repo["function_coverage"] == 2.72
+    assert repo["function_coverage"] == 2.7
 
 
 def test_fn_parsing_dotnet():
@@ -221,7 +221,7 @@ def test_fnda_parsing_dotnet():
     result = parse_lcov_coverage(lcov_content, set())
     # Check that function coverage is calculated correctly
     repo = [r for r in result if r["level"] == "repository"][0]
-    assert repo["function_coverage"] == 13.95
+    assert repo["function_coverage"] == 14.0
 
 
 def test_fn_fnda_parsing_formats():
@@ -382,10 +382,10 @@ def test_parse_lcov_ts_foxden_tools():
 
     repo_coverage = repo_level[0]
     assert repo_coverage["full_path"] == "All"
-    assert repo_coverage["statement_coverage"] == 14.56
-    assert repo_coverage["function_coverage"] == 22.62
-    assert repo_coverage["branch_coverage"] == 58.76
-    assert repo_coverage["line_coverage"] == 14.56
+    assert repo_coverage["statement_coverage"] == 14.6
+    assert repo_coverage["function_coverage"] == 22.6
+    assert repo_coverage["branch_coverage"] == 58.8
+    assert repo_coverage["line_coverage"] == 14.6
     assert repo_coverage["lines_covered"] == 1272
     assert repo_coverage["lines_total"] == 8738
     assert repo_coverage["functions_covered"] == 38
