@@ -421,6 +421,44 @@ def test_handle_exceptions_500_error_returns_default():
     assert result == "fallback"
 
 
+def test_handle_exceptions_502_error_returns_default_no_sentry():
+    """Test that 502 server errors return default without reporting to Sentry."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def func_raises_502():
+        response = MagicMock()
+        response.status_code = 502
+        error = requests.exceptions.HTTPError("502 Bad Gateway")
+        error.response = response
+        raise error
+
+    with patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        result = func_raises_502()
+        assert result == "fallback"
+        mock_sentry.assert_not_called()
+
+
+def test_handle_exceptions_503_error_returns_default_no_sentry():
+    """Test that 503 server errors return default without reporting to Sentry."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def func_raises_503():
+        response = MagicMock()
+        response.status_code = 503
+        error = requests.exceptions.HTTPError("503 Service Unavailable")
+        error.response = response
+        raise error
+
+    with patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        result = func_raises_503()
+        assert result == "fallback"
+        mock_sentry.assert_not_called()
+
+
 def test_handle_exceptions_primary_rate_limit_with_future_reset():
     with patch("utils.error.handle_exceptions.time.sleep") as mock_sleep, patch(
         "utils.error.handle_exceptions.time.time"
