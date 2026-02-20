@@ -16,6 +16,7 @@ from services.stripe.create_stripe_customer import create_stripe_customer
 
 # Local imports (Others)
 from services.webhook.process_repositories import process_repositories
+from services.webhook.setup_handler import setup_handler
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import set_trigger
 
@@ -72,3 +73,11 @@ async def handle_installation_created(payload: GitHubInstallationPayload):
         user_id=user_id,
         user_name=user_name,
     )
+
+    # Auto-create coverage workflow PR when a single repo is installed
+    if len(repositories) == 1:
+        await setup_handler(
+            owner_name=owner_name,
+            repo_name=repositories[0]["name"],
+            token=token,
+        )
