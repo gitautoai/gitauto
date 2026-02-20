@@ -68,7 +68,8 @@ def test_insert_webhook_delivery_duplicate_key_error_returns_false(
     assert result is False
 
 
-def test_insert_webhook_delivery_exception_returns_false(mock_supabase_client):
+def test_insert_webhook_delivery_exception_returns_none(mock_supabase_client):
+    """DB errors return None so the webhook still gets processed (only False = duplicate)."""
     mock, _ = mock_supabase_client
     mock.table.return_value.insert.return_value.execute.side_effect = Exception(
         "Database error"
@@ -76,4 +77,17 @@ def test_insert_webhook_delivery_exception_returns_false(mock_supabase_client):
 
     result = insert_webhook_delivery(delivery_id="abc-123", event_name="check_suite")
 
-    assert result is False
+    assert result is None
+
+
+def test_insert_webhook_delivery_postgrest_server_error_returns_none(
+    mock_supabase_client,
+):
+    """PostgREST 502/500 returns None so the webhook still gets processed."""
+    mock, _ = mock_supabase_client
+    api_error = APIError({"code": "502", "message": "JSON could not be generated"})
+    mock.table.return_value.insert.return_value.execute.side_effect = api_error
+
+    result = insert_webhook_delivery(delivery_id="abc-123", event_name="check_suite")
+
+    assert result is None

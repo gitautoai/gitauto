@@ -91,8 +91,8 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     event_name: str = request.headers.get("X-GitHub-Event", "Event not specified")
     delivery_id: str = request.headers.get("X-GitHub-Delivery", "No delivery ID")
 
-    # Deduplicate webhook delivery using atomic database insert
-    if not insert_webhook_delivery(delivery_id=delivery_id, event_name=event_name):
+    # Deduplicate webhook delivery using atomic database insert (None = DB error, still process)
+    if insert_webhook_delivery(delivery_id=delivery_id, event_name=event_name) is False:
         logger.info(
             "Duplicate webhook ignored - delivery_id=%s event=%s",
             delivery_id,
