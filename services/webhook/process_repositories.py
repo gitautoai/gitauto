@@ -137,6 +137,7 @@ async def process_repositories(
                 "token": token,
                 "base_branch": default_branch,
                 "new_branch": new_branch,
+                "clone_dir": efs_dir,
             },
         )
 
