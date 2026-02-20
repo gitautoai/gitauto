@@ -134,7 +134,6 @@ def test_insert_coverages_with_all_optional_fields(mock_supabase):
         "is_excluded_from_testing": False,
         "line_coverage": 92.3,
         "package_name": "test.package",
-        "path_coverage": 89.7,
         "language": "typescript",
         "statement_coverage": 94.1,
         "uncovered_branches": "1,3,7",

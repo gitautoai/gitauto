@@ -144,7 +144,7 @@ def test_create_coverage_report_repository_level():
 
 
 def test_create_coverage_report_zero_totals():
-    """Test edge case with zero totals - should default to 100% coverage"""
+    """Test edge case with zero totals - line/function default to 100%, branch defaults to None"""
     stats: CoverageStats = {
         "lines_total": 0,
         "lines_covered": 0,
@@ -161,10 +161,10 @@ def test_create_coverage_report_zero_totals():
 
     assert result["full_path"] == "empty.py"
     assert result["level"] == "file"
-    assert result["line_coverage"] == 100.0
-    assert result["statement_coverage"] == 100.0
-    assert result["function_coverage"] == 100.0
-    assert result["branch_coverage"] == 100.0
+    assert result["line_coverage"] is None
+    assert result["statement_coverage"] is None
+    assert result["function_coverage"] is None
+    assert result["branch_coverage"] is None
     assert result["uncovered_lines"] == ""
     assert result["uncovered_functions"] == ""
     assert result["uncovered_branches"] == ""
@@ -239,10 +239,10 @@ def test_create_coverage_report_rounding():
 
     result = create_coverage_report("rounding.py", stats, "file")
 
-    assert result["line_coverage"] == 33.33
-    assert result["statement_coverage"] == 33.33
-    assert result["function_coverage"] == 66.67
-    assert result["branch_coverage"] == 71.43
+    assert result["line_coverage"] == 33.3
+    assert result["statement_coverage"] == 33.3
+    assert result["function_coverage"] == 66.7
+    assert result["branch_coverage"] == 71.4
 
 
 def test_create_coverage_report_non_file_level_uncovered_lines():

@@ -25,9 +25,10 @@ class Coverage:  # pylint: disable=too-many-instance-attributes
 
 
 def _pct(covered: int, total: int):
+    # Istanbul always reports all metrics; total=0 means the file has no such constructs (e.g. no branches), which is vacuously 100% covered. This differs from LCOV where total=0 means the tool doesn't support the metric (e.g. PHP branch coverage).
     if total == 0:
         return 100.0
-    return round(covered / total * 100, 2)
+    return round(covered / total * 100, 1)
 
 
 def _format_lines(lines: set[int]):

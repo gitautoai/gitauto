@@ -18,11 +18,10 @@ class CoverageReport(TypedDict):
     language: str
     level: Literal["repository", "directory", "file"]
     full_path: str
-    statement_coverage: float
-    function_coverage: float
-    branch_coverage: float
-    line_coverage: float
-    path_coverage: float
+    statement_coverage: float | None
+    function_coverage: float | None
+    branch_coverage: float | None
+    line_coverage: float | None
     lines_covered: int
     lines_total: int
     functions_covered: int
@@ -43,7 +42,6 @@ DEFAULT_COVERAGES: CoverageReport = {
     "function_coverage": 0,
     "branch_coverage": 0,
     "line_coverage": 0,
-    "path_coverage": 0,
     "lines_covered": 0,
     "lines_total": 0,
     "functions_covered": 0,

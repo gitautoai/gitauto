@@ -16,7 +16,6 @@ def create_coverage_record(filename: str, is_excluded: bool = False, **overrides
         "statement_coverage": 80.0,
         "function_coverage": 90.0,
         "branch_coverage": 70.0,
-        "path_coverage": 60.0,
         "line_coverage": 75.5,
         "uncovered_lines": "1,2,3",
         "created_at": datetime.now(),
