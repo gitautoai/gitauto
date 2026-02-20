@@ -459,6 +459,58 @@ def test_handle_exceptions_503_error_returns_default_no_sentry():
         mock_sentry.assert_not_called()
 
 
+def test_handle_exceptions_anthropic_500_no_sentry():
+    """Test that exceptions with status_code >= 500 skip Sentry (e.g. Anthropic InternalServerError)."""
+
+    class FakeServerError(Exception):
+        status_code = 500
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def func_raises_anthropic_500():
+        raise FakeServerError("Internal server error")
+
+    with patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        result = func_raises_anthropic_500()
+        assert result == "fallback"
+        mock_sentry.assert_not_called()
+
+
+def test_handle_exceptions_supabase_502_no_sentry():
+    """Test that Supabase APIError with code 502 skips Sentry."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def func_raises_supabase_502():
+        err = Exception("Bad Gateway")
+        err.code = "502"  # type: ignore[attr-defined]
+        raise err
+
+    with patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        result = func_raises_supabase_502()
+        assert result == "fallback"
+        mock_sentry.assert_not_called()
+
+
+def test_handle_exceptions_supabase_non_5xx_reports_sentry():
+    """Test that Supabase APIError with non-5xx code still reports to Sentry."""
+
+    @handle_exceptions(default_return_value="fallback", raise_on_error=False)
+    def func_raises_supabase_404():
+        err = Exception("Not found")
+        err.code = "PGRST204"  # type: ignore[attr-defined]
+        raise err
+
+    with patch(
+        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+    ) as mock_sentry:
+        result = func_raises_supabase_404()
+        assert result == "fallback"
+        mock_sentry.assert_called_once()
+
+
 def test_handle_exceptions_primary_rate_limit_with_future_reset():
     with patch("utils.error.handle_exceptions.time.sleep") as mock_sleep, patch(
         "utils.error.handle_exceptions.time.time"
