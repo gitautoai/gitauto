@@ -89,14 +89,10 @@ source .env && psql "postgresql://..." -c "SELECT LEFT(long_column, 3000) FROM t
 
 Sentry CLI is available for accessing error logs and issues.
 
-#### Listing Recent Issues
+#### Listing Issues
 
 ```bash
-# List issues from last 24 hours
-source .env && sentry-cli issues list --org gitauto-ai --project agent --query "lastSeen:-24h"
-
-# List issues from last 7 days
-source .env && sentry-cli issues list --org gitauto-ai --project agent --query "lastSeen:-7d"
+source .env && sentry-cli issues list --org gitauto-ai --project agent --query "search terms"
 ```
 
 #### Accessing Sentry Issues
