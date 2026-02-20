@@ -13,6 +13,7 @@ from typing import Any, Callable, Literal, ParamSpec, TypeVar, cast, overload
 import requests
 import sentry_sdk
 
+from utils.error.is_server_error import is_server_error
 from utils.logging.logging_config import logger
 
 P = ParamSpec("P")  # Function parameters (args, kwargs)
@@ -148,19 +149,6 @@ def _handle_json_error(
     return error_return
 
 
-def _is_server_error(err: Exception):
-    """Check if an exception represents a 5xx server error from any SDK."""
-    # Anthropic SDK: APIStatusError has status_code attribute
-    status_code = getattr(err, "status_code", None)
-    if isinstance(status_code, int) and status_code >= 500:
-        return True
-    # Supabase/PostgREST: APIError has code attribute (string like "502", "PGRST204")
-    code = getattr(err, "code", None)
-    if isinstance(code, str) and code.isdigit() and int(code) >= 500:
-        return True
-    return False
-
-
 def _handle_generic_error(
     err: Exception,
     func_name: str,
@@ -170,7 +158,7 @@ def _handle_generic_error(
     error_return: Any,
 ):
     err_msg = f"{func_name} encountered an {type(err).__name__}: {err}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}"
-    if _is_server_error(err):
+    if is_server_error(err):
         logger.warning("%s received server error, not reporting to Sentry", func_name)
     else:
         sentry_sdk.capture_exception(err)
