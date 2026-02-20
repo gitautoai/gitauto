@@ -13,6 +13,7 @@ from typing import Any, Callable, Literal, ParamSpec, TypeVar, cast, overload
 import requests
 import sentry_sdk
 
+from utils.error.is_server_error import is_server_error
 from utils.logging.logging_config import logger
 
 P = ParamSpec("P")  # Function parameters (args, kwargs)
@@ -69,8 +70,12 @@ def _handle_http_error(
 
     status_code: int = err.response.status_code
 
-    if status_code >= 500:
-        logger.warning("%s received server error %s, not reporting to Sentry", func_name, status_code)
+    if is_server_error(err):
+        logger.warning(
+            "%s received server error %s, not reporting to Sentry",
+            func_name,
+            status_code,
+        )
         if raise_on_error:
             raise err
         return error_return, False
@@ -157,7 +162,10 @@ def _handle_generic_error(
     error_return: Any,
 ):
     err_msg = f"{func_name} encountered an {type(err).__name__}: {err}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}"
-    sentry_sdk.capture_exception(err)
+    if is_server_error(err):
+        logger.warning("%s received server error, not reporting to Sentry", func_name)
+    else:
+        sentry_sdk.capture_exception(err)
     logger.error(err_msg)
     if raise_on_error:
         raise err
