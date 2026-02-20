@@ -1,0 +1,321 @@
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
+from typing import cast
+from unittest.mock import MagicMock, patch
+
+import pytest
+from anthropic.types import MessageParam
+
+from services.chat_with_agent import AgentResult
+from services.webhook.setup_handler import setup_handler
+
+
+def _make_agent_result(is_completed=False):
+    messages = cast(list[MessageParam], [{"role": "user", "content": "test"}])
+    return AgentResult(
+        messages=messages,
+        token_input=100,
+        token_output=50,
+        is_completed=is_completed,
+        p=0,
+        is_planned=False,
+    )
+
+
+MODULE = "services.webhook.setup_handler"
+
+
+INSTALLATION = {"owner_id": 1, "installation_id": 123, "owner_type": "Organization"}
+
+
+@pytest.mark.asyncio
+@patch(f"{MODULE}.delete_remote_branch")
+@patch(f"{MODULE}.close_pull_request")
+@patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
+@patch(f"{MODULE}.create_empty_commit")
+@patch(f"{MODULE}.create_remote_branch")
+@patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_repository_by_name", return_value=None)
+@patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.chat_with_agent")
+async def test_not_completed_closes_pr_and_deletes_branch(
+    mock_agent: MagicMock,
+    mock_installation,
+    mock_repo,
+    mock_default_branch,
+    mock_efs_dir,
+    mock_clone_url,
+    mock_sha,
+    mock_create_branch,
+    mock_empty_commit,
+    mock_create_pr,
+    mock_close_pr,
+    mock_delete_branch,
+    tmp_path,
+):
+    mock_efs_dir.return_value = str(tmp_path)
+    mock_agent.return_value = _make_agent_result(is_completed=False)
+
+    await setup_handler(
+        owner_name="test-owner",
+        repo_name="test-repo",
+        token="test-token",
+    )
+
+    mock_create_pr.assert_called_once()
+    mock_close_pr.assert_called_once()
+    mock_delete_branch.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch(f"{MODULE}.delete_remote_branch")
+@patch(f"{MODULE}.close_pull_request")
+@patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
+@patch(f"{MODULE}.create_empty_commit")
+@patch(f"{MODULE}.create_remote_branch")
+@patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_repository_by_name", return_value=None)
+@patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.chat_with_agent")
+async def test_completed_keeps_pr(
+    mock_agent: MagicMock,
+    mock_installation,
+    mock_repo,
+    mock_default_branch,
+    mock_efs_dir,
+    mock_clone_url,
+    mock_sha,
+    mock_create_branch,
+    mock_empty_commit,
+    mock_create_pr,
+    mock_close_pr,
+    mock_delete_branch,
+    tmp_path,
+):
+    mock_efs_dir.return_value = str(tmp_path)
+    mock_agent.return_value = _make_agent_result(is_completed=True)
+
+    await setup_handler(
+        owner_name="test-owner",
+        repo_name="test-repo",
+        token="test-token",
+    )
+
+    mock_create_pr.assert_called_once()
+    mock_close_pr.assert_not_called()
+    mock_delete_branch.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch(f"{MODULE}.delete_remote_branch")
+@patch(f"{MODULE}.close_pull_request")
+@patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
+@patch(f"{MODULE}.create_empty_commit")
+@patch(f"{MODULE}.create_remote_branch")
+@patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(
+    f"{MODULE}.get_repository_by_name",
+    return_value={"target_branch": "develop", "repo_id": 456},
+)
+@patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.chat_with_agent")
+async def test_uses_target_branch_when_set(
+    mock_agent: MagicMock,
+    mock_installation,
+    mock_repo,
+    mock_default_branch,
+    mock_efs_dir,
+    mock_clone_url,
+    mock_sha,
+    mock_create_branch,
+    mock_empty_commit,
+    mock_create_pr,
+    mock_close_pr,
+    mock_delete_branch,
+    tmp_path,
+):
+    mock_efs_dir.return_value = str(tmp_path)
+    mock_agent.return_value = _make_agent_result(is_completed=True)
+
+    await setup_handler(
+        owner_name="test-owner",
+        repo_name="test-repo",
+        token="test-token",
+    )
+
+    # Should use target_branch, not call get_default_branch
+    mock_default_branch.assert_not_called()
+    # Verify "develop" was passed to Claude
+    call_kwargs = mock_agent.call_args.kwargs
+    content_blocks = call_kwargs["messages"][0]["content"]
+    branch_block = content_blocks[1]["text"]
+    assert "develop" in branch_block
+
+
+@pytest.mark.asyncio
+@patch(f"{MODULE}.delete_remote_branch")
+@patch(f"{MODULE}.close_pull_request")
+@patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
+@patch(f"{MODULE}.create_empty_commit")
+@patch(f"{MODULE}.create_remote_branch")
+@patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_repository_by_name", return_value=None)
+@patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.chat_with_agent")
+async def test_passes_existing_workflows_to_claude(
+    mock_agent: MagicMock,
+    mock_installation,
+    mock_repo,
+    mock_default_branch,
+    mock_efs_dir,
+    mock_clone_url,
+    mock_sha,
+    mock_create_branch,
+    mock_empty_commit,
+    mock_create_pr,
+    mock_close_pr,
+    mock_delete_branch,
+    tmp_path,
+):
+    mock_efs_dir.return_value = str(tmp_path)
+
+    # Create local workflow files
+    workflow_dir = tmp_path / ".github" / "workflows"
+    workflow_dir.mkdir(parents=True)
+    (workflow_dir / "ci.yml").write_text("name: CI\non: push\n")
+    (workflow_dir / "deploy.yml").write_text("name: Deploy\non: push\n")
+
+    mock_agent.return_value = _make_agent_result(is_completed=True)
+
+    await setup_handler(
+        owner_name="test-owner",
+        repo_name="test-repo",
+        token="test-token",
+    )
+
+    call_kwargs = mock_agent.call_args.kwargs
+    content_blocks = call_kwargs["messages"][0]["content"]
+    workflows_block = content_blocks[2]["text"]
+    assert "ci.yml" in workflows_block
+    assert "deploy.yml" in workflows_block
+
+
+@pytest.mark.asyncio
+@patch(f"{MODULE}.get_installation_by_owner", return_value=None)
+async def test_no_installation_skips(mock_installation):
+    await setup_handler(
+        owner_name="test-owner",
+        repo_name="test-repo",
+        token="test-token",
+    )
+
+    mock_installation.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch(f"{MODULE}.get_default_branch", return_value=("main", True))
+@patch(f"{MODULE}.get_repository_by_name", return_value=None)
+@patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+async def test_empty_repo_skips(mock_installation, mock_repo, mock_default_branch):
+    await setup_handler(
+        owner_name="test-owner",
+        repo_name="test-repo",
+        token="test-token",
+    )
+
+    mock_default_branch.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch(f"{MODULE}.delete_remote_branch")
+@patch(f"{MODULE}.close_pull_request")
+@patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
+@patch(f"{MODULE}.create_empty_commit")
+@patch(f"{MODULE}.create_remote_branch")
+@patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_repository_by_name", return_value=None)
+@patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.chat_with_agent")
+async def test_system_message_mentions_coverage(
+    mock_agent: MagicMock,
+    mock_installation,
+    mock_repo,
+    mock_default_branch,
+    mock_efs_dir,
+    mock_clone_url,
+    mock_sha,
+    mock_create_branch,
+    mock_empty_commit,
+    mock_create_pr,
+    mock_close_pr,
+    mock_delete_branch,
+    tmp_path,
+):
+    mock_efs_dir.return_value = str(tmp_path)
+    mock_agent.return_value = _make_agent_result(is_completed=True)
+
+    await setup_handler(
+        owner_name="test-owner",
+        repo_name="test-repo",
+        token="test-token",
+    )
+
+    call_kwargs = mock_agent.call_args.kwargs
+    assert "coverage" in call_kwargs["system_message"].lower()
+    assert "coverage-report" in call_kwargs["system_message"]
+
+
+@pytest.mark.asyncio
+@patch(f"{MODULE}.delete_remote_branch")
+@patch(f"{MODULE}.close_pull_request")
+@patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
+@patch(f"{MODULE}.create_empty_commit")
+@patch(f"{MODULE}.create_remote_branch")
+@patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
+@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_repository_by_name", return_value=None)
+@patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.chat_with_agent")
+async def test_sets_pull_number_in_base_args(
+    mock_agent: MagicMock,
+    mock_installation,
+    mock_repo,
+    mock_default_branch,
+    mock_efs_dir,
+    mock_clone_url,
+    mock_sha,
+    mock_create_branch,
+    mock_empty_commit,
+    mock_create_pr,
+    mock_close_pr,
+    mock_delete_branch,
+    tmp_path,
+):
+    mock_efs_dir.return_value = str(tmp_path)
+    mock_agent.return_value = _make_agent_result(is_completed=True)
+
+    await setup_handler(
+        owner_name="test-owner",
+        repo_name="test-repo",
+        token="test-token",
+    )
+
+    call_kwargs = mock_agent.call_args.kwargs
+    assert call_kwargs["base_args"]["pull_number"] == 1

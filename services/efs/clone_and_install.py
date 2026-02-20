@@ -8,14 +8,12 @@ from services.supabase.installations.get_installation_by_owner import (
     get_installation_by_owner,
 )
 from services.supabase.repositories.get_repository_by_name import get_repository_by_name
-from services.website.verify_api_key import verify_api_key
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger, set_owner_repo, set_trigger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def clone_and_install(owner: str, repo: str, api_key: str):
-    verify_api_key(api_key)
+async def clone_and_install(owner: str, repo: str):
     set_owner_repo(owner, repo)
     set_trigger("clone_and_install")
     logger.info("Starting clone_and_install for %s/%s", owner, repo)

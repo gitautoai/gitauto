@@ -68,7 +68,9 @@ def test_get_branch_head_returns_none_on_502_without_sentry():
     http_error.response = mock_response
     mock_response.raise_for_status.side_effect = http_error
 
-    with patch("services.github.branches.get_branch_head.requests.get") as mock_get, patch(
+    with patch(
+        "services.github.branches.get_branch_head.requests.get"
+    ) as mock_get, patch(
         "utils.error.handle_exceptions.sentry_sdk.capture_exception"
     ) as mock_sentry:
         mock_get.return_value = mock_response

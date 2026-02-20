@@ -1,0 +1,61 @@
+name: PyTest
+
+on:
+  # Run tests on PRs to verify code doesn't break before merge
+  pull_request:
+    types: [opened, synchronize]
+    # Your production branch. If not the default, update here and set Target Branch at https://gitauto.ai/settings/rules to match
+    branches: [main]
+    paths:
+      - '**/*.py'
+      - requirements.txt
+      - pyproject.toml
+      - setup.cfg
+  # Run tests after merge and collect coverage as canonical source of truth
+  push:
+    # Your production branch. If not the default, update here and set Target Branch at https://gitauto.ai/settings/rules to match
+    branches: [main]
+    paths:
+      - '**/*.py'
+      - requirements.txt
+      - pyproject.toml
+      - setup.cfg
+  # Allow manual trigger for debugging
+  workflow_dispatch:
+
+# Cancel older runs when new commits are pushed to the same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Match your project's Python version
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python -m pytest
+          else
+            python -m pytest --cov --cov-report=lcov:coverage/lcov.info
+          fi
+
+      - name: Upload coverage report
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/lcov.info
