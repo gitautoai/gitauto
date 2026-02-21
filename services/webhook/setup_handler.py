@@ -188,6 +188,7 @@ async def setup_handler(
             system_message=SETUP_HANDLER_SYSTEM_MESSAGE,
             base_args=base_args,
             tools=TOOLS_FOR_SETUP,
+            usage_id=usage_id,
             allow_edit_any_file=True,
             restrict_edit_to_target_test_file_only=False,
             allowed_to_edit_files=set(),

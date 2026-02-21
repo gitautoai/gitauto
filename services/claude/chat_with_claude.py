@@ -36,7 +36,7 @@ def chat_with_claude(
     system_content: str,
     tools: list[ToolUnionParam],
     model_id: ClaudeModelId,
-    usage_id: int | None = None,
+    usage_id: int,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
     # Apply message optimization functions to save tokens
@@ -120,19 +120,18 @@ def chat_with_claude(
     )
 
     # Combine system message with user messages for logging
-    if usage_id is not None:
-        system_msg: MessageParam = {"role": "user", "content": system_content}
-        full_messages = [system_msg] + list(messages)
-        insert_llm_request(
-            usage_id=usage_id,
-            provider="claude",
-            model_id=model_id,
-            input_messages=full_messages,
-            input_tokens=token_input,
-            output_message=assistant_message,
-            output_tokens=token_output,
-            response_time_ms=response_time_ms,
-        )
+    system_msg: MessageParam = {"role": "user", "content": system_content}
+    full_messages = [system_msg] + list(messages)
+    insert_llm_request(
+        usage_id=usage_id,
+        provider="claude",
+        model_id=model_id,
+        input_messages=full_messages,
+        input_tokens=token_input,
+        output_message=assistant_message,
+        output_tokens=token_output,
+        response_time_ms=response_time_ms,
+    )
 
     return (
         assistant_message,

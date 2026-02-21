@@ -83,7 +83,7 @@ def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
         system_content=system_content,
         tools=tools,
         model_id=ClaudeModelId.SONNET_4_6,
-        usage_id=None,
+        usage_id=456,
     )
 
     _, tool_calls, _, _ = result
@@ -92,7 +92,7 @@ def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
     assert tool_calls[0].name == "test_function"
     assert tool_calls[0].args == {"param": "value"}
 
-    mock_insert_llm_request.assert_not_called()
+    mock_insert_llm_request.assert_called_once()
 
 
 @patch("services.claude.chat_with_claude.insert_llm_request")
@@ -110,12 +110,12 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
         system_content="assistant",
         tools=[],
         model_id=ClaudeModelId.SONNET_4_6,
-        usage_id=None,
+        usage_id=789,
     )
 
     _, _, _, token_output = result
     assert token_output == 0  # output tokens should be 0 when no usage info
-    mock_insert_llm_request.assert_not_called()
+    mock_insert_llm_request.assert_called_once()
 
 
 @patch(
@@ -144,6 +144,7 @@ def test_chat_with_claude_calls_optimization_functions(
         system_content="You are helpful",
         tools=[],
         model_id=ClaudeModelId.SONNET_4_6,
+        usage_id=101,
     )
 
     mock_remove_outdated_apply_diff_to_file_attempts_and_results.assert_called_once()
