@@ -230,6 +230,7 @@ ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 - NO ANY: Do not use Any type. Fix the specific type issues instead. When you have to use `as any` in TypeScript/JavaScript, ALWAYS add a comment above explaining why it's needed. Example:
 - No annotations: Don't use annotations like var: type = value. Fix the root cause of type issues instead.
 - NO UNNECESSARY HELPER FUNCTIONS: Do not extract code into helper functions unless the code is used multiple times. Single-use helper functions add unnecessary indirection and make code harder to follow. Keep logic inline when it's only used once.
+- ALWAYS USE `@handle_exceptions` DECORATOR: Every function (sync or async) must use the `@handle_exceptions` decorator from `utils.error.handle_exceptions`. This ensures consistent error handling, Sentry reporting, and logging across the codebase. Use `@handle_exceptions(default_return_value=..., raise_on_error=False)` with an appropriate default return value.
 - NO `__init__.py`: Do not create `__init__.py` files. Python 3.3+ supports implicit namespace packages, so `__init__.py` is not required. This project uses Python 3.13.
 
 ## Testing Anti-Patterns to Avoid
