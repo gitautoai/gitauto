@@ -63,6 +63,10 @@ async def setup_handler(
     installation = get_installation_by_owner(owner_name)
     if not installation:
         logger.warning("No installation found for %s", owner_name)
+        slack_notify(
+            f"Setup skipped for {owner_name}/{repo_name}: no installation found",
+            thread_ts=thread_ts,
+        )
         return
     installation_id = installation["installation_id"]
     owner_id = installation["owner_id"]
@@ -79,6 +83,10 @@ async def setup_handler(
         )
         if is_empty:
             logger.info("Repository %s/%s is empty, skipping", owner_name, repo_name)
+            slack_notify(
+                f"Setup skipped for {owner_name}/{repo_name}: repository is empty",
+                thread_ts=thread_ts,
+            )
             return
         logger.info("Using default branch as target: %s", target_branch)
 
