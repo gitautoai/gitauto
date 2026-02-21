@@ -14,9 +14,6 @@ from payloads.github.pull_request_review_comment.types import (
 )
 from services.aws.delete_scheduler import delete_scheduler
 from services.aws.get_schedulers import get_schedulers_by_owner_id
-from services.github.comments.create_gitauto_button_comment import (
-    create_gitauto_button_comment,
-)
 from services.github.types.github_types import (
     CheckSuiteCompletedPayload,
     GitHubInstallationPayload,
@@ -182,49 +179,12 @@ async def handle_webhook_event(
 
     # Handle issue events
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues
-    if event_name == "issues":
-        if action == "labeled":
-            await create_pr_from_issue(
-                payload=cast(GitHubLabeledPayload, payload),
-                trigger="issue_label",
-                lambda_info=lambda_info,
-            )
-            return
-        if action == "opened":
-            assert "sender" in payload and "login" in payload["sender"]
-            sender_login: str = payload["sender"]["login"]
-            if GITHUB_APP_USER_NAME in sender_login:
-                create_gitauto_button_comment(
-                    payload=cast(GitHubLabeledPayload, payload)
-                )
-            return
-
-    # Run GitAuto when "Generate PR" checkbox is checked
-    # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
-    if event_name == "issue_comment" and action == "edited":
-        search_text = "- [x] Generate PR"
-        comment_body = payload["comment"]["body"]
-
-        # For dev environment, require "- [x] Generate PR - dev" checkbox
-        if (
-            PRODUCT_ID != "gitauto"
-            and (search_text + " - " + PRODUCT_ID) in comment_body
-        ):
-            await create_pr_from_issue(
-                payload=cast(GitHubLabeledPayload, payload),
-                trigger="issue_comment",
-                lambda_info=lambda_info,
-            )
-            return
-
-        # For production environment, ensure it's just "- [x] Generate PR" without any suffix
-        # This prevents both prod and dev from triggering on prod checkbox
-        if search_text in comment_body and (search_text + " - ") not in comment_body:
-            await create_pr_from_issue(
-                payload=cast(GitHubLabeledPayload, payload),
-                trigger="issue_comment",
-                lambda_info=lambda_info,
-            )
+    if event_name == "issues" and action == "labeled":
+        await create_pr_from_issue(
+            payload=cast(GitHubLabeledPayload, payload),
+            trigger="issue_label",
+            lambda_info=lambda_info,
+        )
         return
 
     # Write a PR description to the issue when GitAuto opened the PR

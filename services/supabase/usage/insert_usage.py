@@ -6,10 +6,11 @@ from utils.error.handle_exceptions import handle_exceptions
 Trigger = Literal[
     "issue_label",
     "issue_comment",
+    "pr_review",
     "review_comment",
     "test_failure",
-    "pr_checkbox",
     "pr_merge",
+    "setup",
     # "push",
     # "schedule",
 ]

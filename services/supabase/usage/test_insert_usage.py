@@ -101,7 +101,6 @@ def test_insert_usage_with_different_triggers():
         "issue_comment",
         "review_comment",
         "test_failure",
-        "pr_checkbox",
         "pr_merge",
     ]
 

@@ -199,7 +199,6 @@ class TestCreateUserRequest:
             "issue_label",
             "review_comment",
             "test_failure",
-            "pr_checkbox",
             "pr_merge",
         ]
 
