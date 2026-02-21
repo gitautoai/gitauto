@@ -56,7 +56,7 @@ async def setup_handler(
 ):
     set_owner_repo(owner_name, repo_name)
     set_trigger("setup")
-    slack_notify(f"Setup started for {owner_name}/{repo_name}")
+    thread_ts = slack_notify(f"Setup started for {owner_name}/{repo_name}")
 
     installation = get_installation_by_owner(owner_name)
     if not installation:
@@ -111,7 +111,7 @@ async def setup_handler(
     create_empty_commit(
         base_args=base_args, message="Initial empty commit to create PR [skip ci]"
     )
-    _url, pr_number = create_pull_request(
+    pr_url, pr_number = create_pull_request(
         body=SETUP_PR_BODY,
         title="Set up test coverage workflow",
         base_args=base_args,
@@ -217,9 +217,9 @@ async def setup_handler(
         )
 
     if is_completed:
-        slack_notify(f"Setup completed for {owner_name}/{repo_name}#{pr_number}")
+        slack_notify(f"Setup completed for {owner_name}/{repo_name}#{pr_number}\n{pr_url}", thread_ts=thread_ts)
     else:
         logger.warning("Setup agent did not complete, closing PR and deleting branch")
         close_pull_request(pull_number=pr_number, base_args=base_args)
         delete_remote_branch(base_args=base_args)
-        slack_notify(f"Setup did not complete for {owner_name}/{repo_name}, PR closed")
+        slack_notify(f"Setup did not complete for {owner_name}/{repo_name}, PR closed", thread_ts=thread_ts)
