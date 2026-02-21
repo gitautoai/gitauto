@@ -23,7 +23,8 @@ IMPORTANT:
 - Do NOT create a workflow if the repo already has test/coverage set up in existing workflows
 - The workflow file path must be .github/workflows/<name>.yml
 - If you cannot determine the language or appropriate test setup, do nothing
-- For multi-language repos, create one workflow per language that needs test + coverage"""
+- For multi-language repos, create one workflow per language that needs test + coverage
+- ALWAYS call verify_task_is_complete when you are done, whether you made changes or not"""
 
 
 SETUP_PR_BODY = """## Summary
