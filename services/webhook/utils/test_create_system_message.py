@@ -91,7 +91,6 @@ def test_all_trigger_types(mock_read_xml_file, mock_get_trigger_prompt):
         "issue_comment",
         "review_comment",
         "test_failure",
-        "pr_checkbox",
         "pr_merge",
     ]
 

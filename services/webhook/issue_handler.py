@@ -123,7 +123,7 @@ async def create_pr_from_issue(
     start_msg = f"Issue handler started: `{trigger}` by `{sender_name}` for `{issue_number}:{issue_title}` in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
 
-    # Delete all comments made by GitAuto except the one with the checkbox to clean up the issue
+    # Delete previous GitAuto comments to clean up the issue
     gitauto_identifiers = [
         COMPLETED_PR,
         UPDATE_COMMENT_FOR_422,

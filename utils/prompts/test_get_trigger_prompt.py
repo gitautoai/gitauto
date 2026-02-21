@@ -57,16 +57,6 @@ def test_get_trigger_prompt_review_comment(mock_read_xml_file, mock_xml_content)
     mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/review.xml")
 
 
-def test_get_trigger_prompt_pr_checkbox(mock_read_xml_file, mock_xml_content):
-    """Test that pr_checkbox trigger returns correct XML content."""
-    mock_read_xml_file.return_value = mock_xml_content
-
-    result = get_trigger_prompt("pr_checkbox")
-
-    assert result == mock_xml_content
-    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/pr_checkbox.xml")
-
-
 def test_get_trigger_prompt_pr_merge(mock_read_xml_file, mock_xml_content):
     """Test that pr_merge trigger returns correct XML content."""
     mock_read_xml_file.return_value = mock_xml_content
@@ -126,7 +116,6 @@ def test_get_trigger_prompt_whitespace_xml_content(mock_read_xml_file):
         ("issue_label", "utils/prompts/triggers/issue.xml"),
         ("test_failure", "utils/prompts/triggers/check_run.xml"),
         ("review_comment", "utils/prompts/triggers/review.xml"),
-        ("pr_checkbox", "utils/prompts/triggers/pr_checkbox.xml"),
         ("pr_merge", "utils/prompts/triggers/pr_merge.xml"),
     ],
 )

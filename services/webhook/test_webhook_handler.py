@@ -69,14 +69,6 @@ def mock_create_pr_from_issue():
 
 
 @pytest.fixture
-def mock_create_gitauto_button_comment():
-    with patch(
-        "services.webhook.webhook_handler.create_gitauto_button_comment"
-    ) as mock:
-        yield mock
-
-
-@pytest.fixture
 def mock_handle_check_suite():
     with patch("services.webhook.webhook_handler.handle_check_suite") as mock:
         yield mock
@@ -255,82 +247,6 @@ class TestHandleWebhookEvent:
             trigger="issue_label",
             lambda_info=None,
         )
-
-    @pytest.mark.asyncio
-    async def test_handle_webhook_event_issues_opened(
-        self, mock_create_gitauto_button_comment
-    ):
-        """Test handling of issues opened event by gitauto bot."""
-        with patch("services.webhook.webhook_handler.GITHUB_APP_USER_NAME", "gitauto"):
-            payload = {"action": "opened", "sender": {"login": "gitauto[bot]"}}
-
-            await handle_webhook_event(event_name="issues", payload=payload)
-
-            mock_create_gitauto_button_comment.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_handle_webhook_event_issues_opened_by_user(
-        self, mock_create_gitauto_button_comment
-    ):
-        """Test that issues opened by regular users do not trigger button comment."""
-        with patch("services.webhook.webhook_handler.GITHUB_APP_USER_NAME", "gitauto"):
-            payload = {"action": "opened", "sender": {"login": "some-user"}}
-
-            await handle_webhook_event(event_name="issues", payload=payload)
-
-            mock_create_gitauto_button_comment.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_handle_webhook_event_issue_comment_edited_dev_env(
-        self, mock_create_pr_from_issue
-    ):
-        """Test handling of issue comment edited event in dev environment."""
-        with patch("services.webhook.webhook_handler.PRODUCT_ID", "dev"):
-            payload = {
-                "action": "edited",
-                "comment": {"body": "- [x] Generate PR - dev"},
-            }
-
-            await handle_webhook_event(event_name="issue_comment", payload=payload)
-
-            mock_create_pr_from_issue.assert_called_once_with(
-                payload=payload,
-                trigger="issue_comment",
-                lambda_info=None,
-            )
-
-    @pytest.mark.asyncio
-    async def test_handle_webhook_event_issue_comment_edited_prod_env(
-        self, mock_create_pr_from_issue
-    ):
-        """Test handling of issue comment edited event in production environment."""
-        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
-            payload = {
-                "action": "edited",
-                "comment": {"body": "- [x] Generate PR"},
-            }
-
-            await handle_webhook_event(event_name="issue_comment", payload=payload)
-
-            mock_create_pr_from_issue.assert_called_once_with(
-                payload=payload,
-                trigger="issue_comment",
-                lambda_info=None,
-            )
-
-    @pytest.mark.asyncio
-    async def test_handle_webhook_event_issue_comment_edited_no_trigger(
-        self, mock_create_pr_from_issue
-    ):
-        """Test handling of issue comment edited event with no trigger text."""
-        payload = {
-            "action": "edited",
-            "comment": {"body": "Some other comment text"},
-        }
-
-        await handle_webhook_event(event_name="issue_comment", payload=payload)
-
-        mock_create_pr_from_issue.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_check_suite_completed_failure(

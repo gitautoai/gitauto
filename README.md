@@ -14,14 +14,13 @@
 1. Install GitAuto to your repositories from [GitHub Marketplace](https://github.com/apps/gitauto-ai).
    1. Choose the repositories where you want to use GitAuto.
    2. You can change the repositories later.
-2. Create a new issue, then GitAuto shows up in the issue comment.
+2. Create a new issue.
    1. Or create a new issue with a template.
    2. Or pick up an existing issue.
-3. Check the checkbox to assign GitAuto to the issue, then GitAuto starts to work on the issue.
-   1. Or label the issue with `gitauto`, which also assigns GitAuto to the issue.
+3. Label the issue with `gitauto` to assign GitAuto to the issue.
 4. Check the progress of GitAuto in the bottom of the issue comment. You will get a notification once GitAuto completes the PR.
 5. Review the PR and merge it if it looks good.
-6. If not, update the issue with more details and re-run GitAuto by checking the checkbox again.
+6. If not, update the issue with more details and re-label to re-run GitAuto.
 
 ## 3. How to run GitAuto locally
 

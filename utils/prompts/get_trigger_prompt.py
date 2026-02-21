@@ -7,9 +7,8 @@ def get_trigger_prompt(trigger: Trigger):
     trigger_files = {
         "issue_comment": f"{base_path}/issue.xml",
         "issue_label": f"{base_path}/issue.xml",
-        "test_failure": f"{base_path}/check_run.xml",
         "review_comment": f"{base_path}/review.xml",
-        "pr_checkbox": f"{base_path}/pr_checkbox.xml",
+        "test_failure": f"{base_path}/check_run.xml",
         "pr_merge": f"{base_path}/pr_merge.xml",
     }
 
