@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name, unused-argument
 import os
 from unittest.mock import patch
 
