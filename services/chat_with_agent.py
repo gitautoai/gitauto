@@ -47,7 +47,7 @@ async def chat_with_agent(
     tools: list[ToolUnionParam],
     p: int = 0,
     log_messages: list[str] | None = None,
-    usage_id: int | None = None,
+    usage_id: int,
     allow_edit_any_file: bool = False,
     restrict_edit_to_target_test_file_only: bool = True,
     allowed_to_edit_files: set[str],
