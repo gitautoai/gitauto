@@ -31,9 +31,9 @@ async def handle_installation_created(payload: GitHubInstallationPayload):
     owner_type = owner["type"]
     repositories = payload["repositories"]
     user_id = payload["sender"]["id"]
-    user_name = payload["sender"]["login"]
+    sender_name = payload["sender"]["login"]
     token = get_installation_access_token(installation_id=installation_id)
-    email = get_user_public_email(username=user_name, token=token)
+    email = get_user_public_email(username=sender_name, token=token)
 
     if not check_owner_exists(owner_id=owner_id):
         customer_id = create_stripe_customer(
@@ -41,14 +41,14 @@ async def handle_installation_created(payload: GitHubInstallationPayload):
             owner_id=owner_id,
             installation_id=installation_id,
             user_id=user_id,
-            user_name=user_name,
+            user_name=sender_name,
         )
         insert_owner(
             owner_id=owner_id,
             owner_name=owner_name,
             owner_type=owner_type,
             user_id=user_id,
-            user_name=user_name,
+            user_name=sender_name,
             stripe_customer_id=customer_id or "",
         )
 
@@ -62,7 +62,7 @@ async def handle_installation_created(payload: GitHubInstallationPayload):
         owner_name=owner_name,
     )
 
-    upsert_user(user_id=user_id, user_name=user_name, email=email)
+    upsert_user(user_id=user_id, user_name=sender_name, email=email)
 
     await process_repositories(
         owner_id=owner_id,
@@ -71,7 +71,7 @@ async def handle_installation_created(payload: GitHubInstallationPayload):
         repositories=repositories,
         token=token,
         user_id=user_id,
-        user_name=user_name,
+        user_name=sender_name,
     )
 
     # Auto-create coverage workflow PR when a single repo is installed
@@ -80,4 +80,5 @@ async def handle_installation_created(payload: GitHubInstallationPayload):
             owner_name=owner_name,
             repo_name=repositories[0]["name"],
             token=token,
+            sender_name=sender_name,
         )

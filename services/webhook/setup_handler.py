@@ -54,6 +54,7 @@ async def setup_handler(
     owner_name: str,
     repo_name: str,
     token: str,
+    sender_name: str,
 ):
     set_owner_repo(owner_name, repo_name)
     set_trigger("setup")
@@ -104,6 +105,7 @@ async def setup_handler(
             "base_branch": target_branch,
             "new_branch": new_branch,
             "clone_dir": efs_dir,
+            "reviewers": [sender_name] if sender_name else [],
         },
     )
 

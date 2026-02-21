@@ -1,8 +1,10 @@
 # pylint: disable=unused-argument,redefined-outer-name
+from typing import cast
 from unittest.mock import Mock, patch
 import pytest
 import requests
 from services.github.pulls.add_reviewers import add_reviewers
+from services.github.types.github_types import BaseArgs
 
 
 @pytest.fixture
@@ -161,6 +163,28 @@ def test_add_reviewers_empty_reviewers_list(
     assert result is None
 
     # No collaborator checks should be made for empty list
+    mock_check_collaborator.assert_not_called()
+
+
+@patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
+def test_add_reviewers_missing_reviewers_key(
+    mock_check_collaborator,
+    test_owner,
+    test_repo,
+):
+    # base_args without "reviewers" key at all (AGENT-2TF scenario)
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": test_owner,
+            "repo": test_repo,
+            "pr_number": 123,
+            "token": "test-token-mock",
+        },
+    )
+    result = add_reviewers(base_args)
+
+    assert result is None
     mock_check_collaborator.assert_not_called()
 
 
@@ -345,10 +369,11 @@ def test_add_reviewers_mixed_collaborator_results(
     def collaborator_side_effect(owner, repo, user, token):
         if user == "reviewer1":
             return True
-        elif user == "reviewer2":
-            raise Exception("API error")  # This should be handled by handle_exceptions
-        else:  # reviewer3
-            return False
+        if user == "reviewer2":
+            raise RuntimeError(
+                "API error"
+            )  # This should be handled by handle_exceptions
+        return False  # reviewer3
 
     mock_check_collaborator.side_effect = collaborator_side_effect
     mock_post.return_value = mock_success_response
