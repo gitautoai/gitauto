@@ -1,4 +1,5 @@
-"""Integration tests for review_run_handler.py token accumulation"""
+# pylint: disable=unused-argument
+"""Integration tests for review_run_handler.py"""
 
 # pyright: reportUnusedVariable=false
 
@@ -128,6 +129,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
             token_input=120,
             token_output=80,
             is_completed=True,
+            completion_reason="",
             p=40,
             is_planned=False,
         ),
@@ -238,6 +240,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
             token_input=120,
             token_output=80,
             is_completed=False,
+            completion_reason="",
             p=40,
             is_planned=False,
         ),
@@ -246,6 +249,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
             token_input=100,
             token_output=60,
             is_completed=False,
+            completion_reason="",
             p=60,
             is_planned=False,
         ),

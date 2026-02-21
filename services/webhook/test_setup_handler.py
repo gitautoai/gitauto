@@ -18,6 +18,7 @@ def _make_agent_result(is_completed=False):
         token_input=100,
         token_output=50,
         is_completed=is_completed,
+        completion_reason="",
         p=0,
         is_planned=False,
     )
@@ -30,6 +31,10 @@ INSTALLATION = {"owner_id": 1, "installation_id": 123, "owner_type": "Organizati
 
 
 @pytest.mark.asyncio
+@patch(f"{MODULE}.slack_notify")
+@patch(f"{MODULE}.get_pull_request_files", return_value=[])
+@patch(f"{MODULE}.update_usage")
+@patch(f"{MODULE}.insert_usage", return_value=1)
 @patch(f"{MODULE}.delete_remote_branch")
 @patch(f"{MODULE}.close_pull_request")
 @patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
@@ -57,6 +62,10 @@ async def test_not_completed_closes_pr_and_deletes_branch(
     mock_create_pr,
     mock_close_pr,
     mock_delete_branch,
+    mock_insert_usage,
+    mock_update_usage,
+    mock_get_pr_files,
+    mock_slack,
     tmp_path,
 ):
     mock_efs_dir.return_value = str(tmp_path)
@@ -66,6 +75,7 @@ async def test_not_completed_closes_pr_and_deletes_branch(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_name="test-user",
     )
 
     mock_clone_to_efs.assert_called_once()
@@ -75,6 +85,10 @@ async def test_not_completed_closes_pr_and_deletes_branch(
 
 
 @pytest.mark.asyncio
+@patch(f"{MODULE}.slack_notify")
+@patch(f"{MODULE}.get_pull_request_files", return_value=[{"filename": "ci.yml"}])
+@patch(f"{MODULE}.update_usage")
+@patch(f"{MODULE}.insert_usage", return_value=1)
 @patch(f"{MODULE}.delete_remote_branch")
 @patch(f"{MODULE}.close_pull_request")
 @patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
@@ -102,6 +116,10 @@ async def test_completed_keeps_pr(
     mock_create_pr,
     mock_close_pr,
     mock_delete_branch,
+    mock_insert_usage,
+    mock_update_usage,
+    mock_get_pr_files,
+    mock_slack,
     tmp_path,
 ):
     mock_efs_dir.return_value = str(tmp_path)
@@ -111,6 +129,7 @@ async def test_completed_keeps_pr(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_name="test-user",
     )
 
     mock_create_pr.assert_called_once()
@@ -119,6 +138,10 @@ async def test_completed_keeps_pr(
 
 
 @pytest.mark.asyncio
+@patch(f"{MODULE}.slack_notify")
+@patch(f"{MODULE}.get_pull_request_files", return_value=[{"filename": "ci.yml"}])
+@patch(f"{MODULE}.update_usage")
+@patch(f"{MODULE}.insert_usage", return_value=1)
 @patch(f"{MODULE}.delete_remote_branch")
 @patch(f"{MODULE}.close_pull_request")
 @patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
@@ -149,6 +172,10 @@ async def test_uses_target_branch_when_set(
     mock_create_pr,
     mock_close_pr,
     mock_delete_branch,
+    mock_insert_usage,
+    mock_update_usage,
+    mock_get_pr_files,
+    mock_slack,
     tmp_path,
 ):
     mock_efs_dir.return_value = str(tmp_path)
@@ -158,6 +185,7 @@ async def test_uses_target_branch_when_set(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_name="test-user",
     )
 
     # Should use target_branch, not call get_default_branch
@@ -170,6 +198,10 @@ async def test_uses_target_branch_when_set(
 
 
 @pytest.mark.asyncio
+@patch(f"{MODULE}.slack_notify")
+@patch(f"{MODULE}.get_pull_request_files", return_value=[{"filename": "ci.yml"}])
+@patch(f"{MODULE}.update_usage")
+@patch(f"{MODULE}.insert_usage", return_value=1)
 @patch(f"{MODULE}.delete_remote_branch")
 @patch(f"{MODULE}.close_pull_request")
 @patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
@@ -197,6 +229,10 @@ async def test_passes_existing_workflows_to_claude(
     mock_create_pr,
     mock_close_pr,
     mock_delete_branch,
+    mock_insert_usage,
+    mock_update_usage,
+    mock_get_pr_files,
+    mock_slack,
     tmp_path,
 ):
     mock_efs_dir.return_value = str(tmp_path)
@@ -213,6 +249,7 @@ async def test_passes_existing_workflows_to_claude(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_name="test-user",
     )
 
     call_kwargs = mock_agent.call_args.kwargs
@@ -223,6 +260,10 @@ async def test_passes_existing_workflows_to_claude(
 
 
 @pytest.mark.asyncio
+@patch(f"{MODULE}.slack_notify")
+@patch(f"{MODULE}.get_pull_request_files", return_value=[{"filename": "ci.yml"}])
+@patch(f"{MODULE}.update_usage")
+@patch(f"{MODULE}.insert_usage", return_value=1)
 @patch(f"{MODULE}.delete_remote_branch")
 @patch(f"{MODULE}.close_pull_request")
 @patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
@@ -250,6 +291,10 @@ async def test_clones_repo_when_efs_dir_missing(
     mock_create_pr,
     mock_close_pr,
     mock_delete_branch,
+    mock_insert_usage,
+    mock_update_usage,
+    mock_get_pr_files,
+    mock_slack,
     tmp_path,
 ):
     # Point to a non-existent directory to simulate missing EFS clone
@@ -265,6 +310,7 @@ async def test_clones_repo_when_efs_dir_missing(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_name="test-user",
     )
 
     # git_clone_to_efs should be called to clone the repo
@@ -283,6 +329,7 @@ async def test_no_installation_skips(mock_installation):
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_name="test-user",
     )
 
     mock_installation.assert_called_once()
@@ -297,12 +344,17 @@ async def test_empty_repo_skips(mock_installation, mock_repo, mock_default_branc
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_name="test-user",
     )
 
     mock_default_branch.assert_called_once()
 
 
 @pytest.mark.asyncio
+@patch(f"{MODULE}.slack_notify")
+@patch(f"{MODULE}.get_pull_request_files", return_value=[{"filename": "ci.yml"}])
+@patch(f"{MODULE}.update_usage")
+@patch(f"{MODULE}.insert_usage", return_value=1)
 @patch(f"{MODULE}.delete_remote_branch")
 @patch(f"{MODULE}.close_pull_request")
 @patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
@@ -330,6 +382,10 @@ async def test_system_message_mentions_coverage(
     mock_create_pr,
     mock_close_pr,
     mock_delete_branch,
+    mock_insert_usage,
+    mock_update_usage,
+    mock_get_pr_files,
+    mock_slack,
     tmp_path,
 ):
     mock_efs_dir.return_value = str(tmp_path)
@@ -339,6 +395,7 @@ async def test_system_message_mentions_coverage(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_name="test-user",
     )
 
     call_kwargs = mock_agent.call_args.kwargs
@@ -347,6 +404,10 @@ async def test_system_message_mentions_coverage(
 
 
 @pytest.mark.asyncio
+@patch(f"{MODULE}.slack_notify")
+@patch(f"{MODULE}.get_pull_request_files", return_value=[{"filename": "ci.yml"}])
+@patch(f"{MODULE}.update_usage")
+@patch(f"{MODULE}.insert_usage", return_value=1)
 @patch(f"{MODULE}.delete_remote_branch")
 @patch(f"{MODULE}.close_pull_request")
 @patch(f"{MODULE}.create_pull_request", return_value=("https://pr", 1))
@@ -374,6 +435,10 @@ async def test_sets_pull_number_in_base_args(
     mock_create_pr,
     mock_close_pr,
     mock_delete_branch,
+    mock_insert_usage,
+    mock_update_usage,
+    mock_get_pr_files,
+    mock_slack,
     tmp_path,
 ):
     mock_efs_dir.return_value = str(tmp_path)
@@ -383,6 +448,7 @@ async def test_sets_pull_number_in_base_args(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_name="test-user",
     )
 
     call_kwargs = mock_agent.call_args.kwargs

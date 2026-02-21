@@ -44,4 +44,5 @@ async def handle_installation_repos_added(
             owner_name=owner_name,
             repo_name=repositories[0]["name"],
             token=token,
+            sender_name=sender_name,
         )

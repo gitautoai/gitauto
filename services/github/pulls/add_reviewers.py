@@ -18,11 +18,15 @@ def add_reviewers(base_args: BaseArgs):
         base_args["repo"],
         base_args.get("pr_number"),
         base_args["token"],
-        base_args["reviewers"],
+        base_args.get("reviewers", []),
     )
 
     if not pr_number:
         raise ValueError("pr_number is required for add_reviewers")
+
+    if not reviewers:
+        logger.info("No reviewers to add, skipping")
+        return
 
     # Check if the reviewers are collaborators because reviewers must be collaborators
     valid_reviewers: list[str] = []
