@@ -34,6 +34,7 @@ class AgentResult:
     token_input: int
     token_output: int
     is_completed: bool
+    completion_reason: str
     p: int
     is_planned: bool
 
@@ -89,12 +90,24 @@ async def chat_with_agent(
             token_input=token_input,
             token_output=token_output,
             is_completed=False,
+            completion_reason="",
             p=p,
             is_planned=False,
         )
 
     # Append assistant message before processing tool calls
     messages.append(response_message)
+
+    # Extract text from the assistant message for completion context
+    content = response_message["content"]
+    if isinstance(content, str):
+        assistant_text = content
+    else:
+        assistant_text = "".join(
+            block.get("text", "")
+            for block in content
+            if isinstance(block, dict) and block.get("type") == "text"
+        )
 
     # Process all tool calls
     tool_result_blocks: list[ToolResultBlockParam] = []
@@ -411,6 +424,7 @@ async def chat_with_agent(
         token_input=token_input,
         token_output=token_output,
         is_completed=is_completed,
+        completion_reason=assistant_text,
         p=p + 5 * len(tool_calls),
         is_planned=False,
     )

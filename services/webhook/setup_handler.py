@@ -21,8 +21,9 @@ from services.github.commits.get_latest_remote_commit_sha import (
     get_latest_remote_commit_sha,
 )
 from services.claude.tools.tools import TOOLS_FOR_SETUP
-from services.github.pulls.create_pull_request import create_pull_request
 from services.github.pulls.close_pull_request import close_pull_request
+from services.github.pulls.create_pull_request import create_pull_request
+from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.types.github_types import BaseArgs
 from services.slack.slack_notify import slack_notify
 from services.supabase.usage.insert_usage import insert_usage
@@ -182,6 +183,7 @@ async def setup_handler(
     total_token_output = 0
     is_completed = False
 
+    completion_reason = ""
     for _iteration in range(MAX_ITERATIONS):
         result = await chat_with_agent(
             messages=messages,
@@ -197,6 +199,7 @@ async def setup_handler(
         messages = result.messages
         total_token_input += result.token_input
         total_token_output += result.token_output
+        completion_reason = result.completion_reason
 
         if result.is_completed:
             is_completed = True
@@ -217,10 +220,21 @@ async def setup_handler(
             token_output=total_token_output,
         )
 
-    if is_completed:
-        slack_notify(f"Setup completed for {owner_name}/{repo_name}#{pr_number}\n{pr_url}", thread_ts=thread_ts)
+    # Check if the PR has actual file changes
+    pr_files = get_pull_request_files(
+        owner=owner_name, repo=repo_name, pull_number=pr_number, token=token
+    )
+
+    if is_completed and pr_files:
+        slack_notify(
+            f"Setup completed for {owner_name}/{repo_name}#{pr_number}\n{pr_url}",
+            thread_ts=thread_ts,
+        )
     else:
-        logger.warning("Setup agent did not complete, closing PR and deleting branch")
+        logger.info("Closing PR, no file changes. Agent: %s", completion_reason)
         close_pull_request(pull_number=pr_number, base_args=base_args)
         delete_remote_branch(base_args=base_args)
-        slack_notify(f"Setup did not complete for {owner_name}/{repo_name}, PR closed", thread_ts=thread_ts)
+        slack_notify(
+            f"Setup closed for {owner_name}/{repo_name}: {completion_reason}",
+            thread_ts=thread_ts,
+        )
