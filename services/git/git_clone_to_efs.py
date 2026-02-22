@@ -1,8 +1,7 @@
 import asyncio
 import os
 
-from services.git.remove_stale_git_locks import remove_stale_git_locks
-from services.git.wait_for_git_locks import wait_for_git_locks
+from services.git.resolve_git_locks import resolve_git_locks
 from utils.command.run_subprocess_async import run_subprocess_async
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -33,10 +32,8 @@ async def git_clone_to_efs(efs_dir: str, clone_url: str, branch: str):
     if os.path.exists(efs_git_dir):
         logger.info("EFS already has .git at %s, ensuring latest", efs_dir)
 
-        # Poll every 2s up to 60s for locks held by concurrent Lambdas, force-remove on timeout
-        await wait_for_git_locks(efs_git_dir)
-        # Remove locks >10min old left by crashed Lambdas
-        remove_stale_git_locks(efs_git_dir)
+        # Remove stale locks (>10min, crashed Lambda) and wait for fresh ones (concurrent Lambda)
+        await resolve_git_locks(efs_git_dir)
 
         # EFS persists across Lambda invocations; origin URL may contain expired token
         # Check if origin remote exists (may be missing if previous clone was interrupted)

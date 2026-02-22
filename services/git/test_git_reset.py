@@ -10,9 +10,7 @@ async def test_git_reset_success():
     with patch(
         "services.git.git_reset.run_subprocess_async", new_callable=AsyncMock
     ) as mock_run, patch(
-        "services.git.git_reset.os.path.exists", return_value=False
-    ), patch(
-        "services.git.git_reset.remove_stale_git_locks"
+        "services.git.git_reset.resolve_git_locks", new_callable=AsyncMock
     ):
         mock_run.return_value = (0, "")
         result = await git_reset("/tmp/repo")
@@ -26,9 +24,7 @@ async def test_git_reset_failure():
     with patch(
         "services.git.git_reset.run_subprocess_async", new_callable=AsyncMock
     ) as mock_run, patch(
-        "services.git.git_reset.os.path.exists", return_value=False
-    ), patch(
-        "services.git.git_reset.remove_stale_git_locks"
+        "services.git.git_reset.resolve_git_locks", new_callable=AsyncMock
     ):
         mock_run.return_value = (1, "fatal: reset failed")
         result = await git_reset("/tmp/repo")
@@ -38,36 +34,13 @@ async def test_git_reset_failure():
 
 
 @pytest.mark.asyncio
-async def test_git_reset_waits_for_fresh_lock_then_skips():
-    """Fresh lock disappears after one poll — skip reset since other process did it."""
-    exists_calls = [True, False]  # Lock exists, then gone
-
+async def test_git_reset_calls_resolve_git_locks():
     with patch(
         "services.git.git_reset.run_subprocess_async", new_callable=AsyncMock
     ) as mock_run, patch(
-        "services.git.git_reset.os.path.exists", side_effect=exists_calls
-    ), patch(
-        "services.git.git_reset.asyncio.sleep", new_callable=AsyncMock
-    ), patch(
-        "services.git.git_reset.remove_stale_git_locks"
-    ):
-        result = await git_reset("/tmp/repo")
-
-        assert result is True
-        mock_run.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_git_reset_calls_remove_stale_git_locks():
-    """Verify remove_stale_git_locks is called with the .git directory."""
-    with patch(
-        "services.git.git_reset.run_subprocess_async", new_callable=AsyncMock
-    ) as mock_run, patch(
-        "services.git.git_reset.os.path.exists", return_value=False
-    ), patch(
-        "services.git.git_reset.remove_stale_git_locks"
-    ) as mock_remove:
+        "services.git.git_reset.resolve_git_locks", new_callable=AsyncMock
+    ) as mock_clear:
         mock_run.return_value = (0, "")
         await git_reset("/tmp/repo")
 
-        mock_remove.assert_called_once_with("/tmp/repo/.git")
+        mock_clear.assert_called_once_with("/tmp/repo/.git")
