@@ -17,24 +17,14 @@ def mock_read_xml_file():
         yield mock
 
 
-def test_get_trigger_prompt_issue_comment(mock_read_xml_file, mock_xml_content):
-    """Test that issue_comment trigger returns correct XML content."""
+def test_get_trigger_prompt_dashboard(mock_read_xml_file, mock_xml_content):
+    """Test that dashboard trigger returns correct XML content."""
     mock_read_xml_file.return_value = mock_xml_content
 
-    result = get_trigger_prompt("issue_comment")
+    result = get_trigger_prompt("dashboard")
 
     assert result == mock_xml_content
-    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
-
-
-def test_get_trigger_prompt_issue_label(mock_read_xml_file, mock_xml_content):
-    """Test that issue_label trigger returns correct XML content."""
-    mock_read_xml_file.return_value = mock_xml_content
-
-    result = get_trigger_prompt("issue_label")
-
-    assert result == mock_xml_content
-    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/pr.xml")
 
 
 def test_get_trigger_prompt_test_failure(mock_read_xml_file, mock_xml_content):
@@ -57,16 +47,6 @@ def test_get_trigger_prompt_review_comment(mock_read_xml_file, mock_xml_content)
     mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/review.xml")
 
 
-def test_get_trigger_prompt_pr_merge(mock_read_xml_file, mock_xml_content):
-    """Test that pr_merge trigger returns correct XML content."""
-    mock_read_xml_file.return_value = mock_xml_content
-
-    result = get_trigger_prompt("pr_merge")
-
-    assert result == mock_xml_content
-    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/pr_merge.xml")
-
-
 def test_get_trigger_prompt_unknown_trigger(mock_read_xml_file):
     """Test that unknown trigger returns None."""
     # Cast to bypass type checking for testing invalid input
@@ -83,19 +63,19 @@ def test_get_trigger_prompt_file_read_exception(mock_read_xml_file):
     mock_read_xml_file.side_effect = FileNotFoundError("File not found")
 
     with pytest.raises(FileNotFoundError):
-        get_trigger_prompt("issue_comment")
+        get_trigger_prompt("dashboard")
 
-    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/pr.xml")
 
 
 def test_get_trigger_prompt_empty_xml_content(mock_read_xml_file):
     """Test that function handles empty XML content."""
     mock_read_xml_file.return_value = ""
 
-    result = get_trigger_prompt("issue_comment")
+    result = get_trigger_prompt("dashboard")
 
     assert result == ""
-    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/pr.xml")
 
 
 def test_get_trigger_prompt_whitespace_xml_content(mock_read_xml_file):
@@ -103,20 +83,19 @@ def test_get_trigger_prompt_whitespace_xml_content(mock_read_xml_file):
     whitespace_content = "   \n\t  \n   "
     mock_read_xml_file.return_value = whitespace_content
 
-    result = get_trigger_prompt("issue_comment")
+    result = get_trigger_prompt("dashboard")
 
     assert result == whitespace_content
-    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/pr.xml")
 
 
 @pytest.mark.parametrize(
     "trigger,expected_file",
     [
-        ("issue_comment", "utils/prompts/triggers/issue.xml"),
-        ("issue_label", "utils/prompts/triggers/issue.xml"),
+        ("dashboard", "utils/prompts/triggers/pr.xml"),
+        ("schedule", "utils/prompts/triggers/pr.xml"),
         ("test_failure", "utils/prompts/triggers/check_run.xml"),
         ("review_comment", "utils/prompts/triggers/review.xml"),
-        ("pr_merge", "utils/prompts/triggers/pr_merge.xml"),
     ],
 )
 def test_get_trigger_prompt_file_mapping(mock_read_xml_file, trigger, expected_file):
@@ -129,10 +108,10 @@ def test_get_trigger_prompt_none_return_from_read_xml_file(mock_read_xml_file):
     """Test that function handles None return from read_xml_file."""
     mock_read_xml_file.return_value = None
 
-    result = get_trigger_prompt("issue_comment")
+    result = get_trigger_prompt("dashboard")
 
     assert result is None
-    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/pr.xml")
 
 
 def test_get_trigger_prompt_large_xml_content(mock_read_xml_file):
@@ -140,10 +119,10 @@ def test_get_trigger_prompt_large_xml_content(mock_read_xml_file):
     large_content = "<trigger_instruction>\n" + "x" * 10000 + "\n</trigger_instruction>"
     mock_read_xml_file.return_value = large_content
 
-    result = get_trigger_prompt("issue_comment")
+    result = get_trigger_prompt("dashboard")
 
     assert result == large_content
-    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/pr.xml")
 
 
 def test_get_trigger_prompt_special_characters_xml_content(mock_read_xml_file):
@@ -151,7 +130,7 @@ def test_get_trigger_prompt_special_characters_xml_content(mock_read_xml_file):
     special_content = "<trigger_instruction>\n  Special chars: àáâãäåæçèéêë ñòóôõö ùúûüý\n</trigger_instruction>"
     mock_read_xml_file.return_value = special_content
 
-    result = get_trigger_prompt("issue_comment")
+    result = get_trigger_prompt("dashboard")
 
     assert result == special_content
-    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/issue.xml")
+    mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/pr.xml")

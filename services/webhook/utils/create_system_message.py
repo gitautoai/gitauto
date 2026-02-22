@@ -4,7 +4,7 @@ from typing import Any, cast
 from schemas.supabase.types import Repositories
 
 # Local imports
-from services.supabase.usage.insert_usage import Trigger
+from constants.triggers import Trigger
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.read_xml_file import read_xml_file
 from utils.logging.logging_config import logger

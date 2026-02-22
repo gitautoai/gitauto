@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines,import-outside-toplevel
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -23,7 +24,7 @@ def sample_params():
     return {
         "owner": "test-owner",
         "repo": "test-repo",
-        "pull_number": 123,
+        "pr_number": 123,
         "comment_node_id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
         "token": "test-token",
     }
@@ -316,7 +317,7 @@ def test_get_review_thread_comments_with_different_parameters(mock_graphql_clien
     result = get_review_thread_comments(
         owner="special-owner",
         repo="special-repo",
-        pull_number=999,
+        pr_number=999,
         comment_node_id="SpecialCommentId123",
         token="special-token",
     )
@@ -842,7 +843,7 @@ def test_get_review_thread_comments_parameter_validation():
         result = get_review_thread_comments(
             owner="test-owner-123",
             repo="test-repo_name",
-            pull_number=999999,
+            pr_number=999999,
             comment_node_id="very-long-comment-node-id-with-special-chars_123",
             token="ghp_very_long_token_string_with_special_characters_123456789",
         )

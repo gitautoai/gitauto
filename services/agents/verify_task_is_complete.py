@@ -47,15 +47,17 @@ class VerifyTaskIsCompleteResult:
 async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
     owner = base_args.get("owner", "")
     repo = base_args.get("repo", "")
-    pull_number = base_args.get("pull_number")
+    pr_number = base_args.get("pr_number")
     token = base_args.get("token", "")
     new_branch = base_args.get("new_branch", "")
 
-    if not pull_number:
-        raise ValueError("pull_number is required for verify_task_is_complete")
+    if not pr_number:
+        raise ValueError(
+            f"pr_number is required for verify_task_is_complete but got: {pr_number}"
+        )
 
     pr_files = get_pull_request_files(
-        owner=owner, repo=repo, pull_number=pull_number, token=token
+        owner=owner, repo=repo, pr_number=pr_number, token=token
     )
 
     if not pr_files:
@@ -179,7 +181,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
             )
             create_tsc_issue(base_args=base_args, unrelated_errors=unrelated_tsc_errors)
 
-    # Set by issue_handler for schedule issues so run_jest_test collects coverage using Istanbul instead of V8.
+    # Set by new_pr_handler for schedule PRs so run_jest_test collects coverage using Istanbul instead of V8.
     impl_file_to_collect_coverage_from = base_args.get(
         "impl_file_to_collect_coverage_from", ""
     )
@@ -204,7 +206,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
             comment_body = format_coverage_comment(
                 cov, impl_file_to_collect_coverage_from
             )
-            create_comment(body=comment_body, base_args=base_args, target="pr")
+            create_comment(body=comment_body, base_args=base_args)
 
             has_incomplete_coverage = (
                 cov.statement_pct < 100

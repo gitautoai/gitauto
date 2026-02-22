@@ -15,10 +15,13 @@ def count_unique_requests(installation_id: int, _start_date: datetime):
         .in_(
             "trigger",
             [
+                "dashboard",
                 "issue_comment",
                 "issue_label",
                 "manual",
                 "pull_request",
+                "schedule",
+                "unknown",
             ],
         )
         # .eq("is_completed", True)

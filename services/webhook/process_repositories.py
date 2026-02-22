@@ -77,7 +77,7 @@ async def process_repositories(
             )
             continue
 
-        # Clone or update EFS (reusable for future issue/PR work)
+        # Clone or update EFS (reusable for future PR work)
         efs_dir = get_efs_dir(owner_name, repo_name)
         efs_git_dir = os.path.join(efs_dir, ".git")
         clone_url = get_clone_url(owner_name, repo_name, token)
@@ -127,7 +127,7 @@ async def process_repositories(
         )
 
         # Create GitAuto setup PR with any necessary configuration
-        new_branch = generate_branch_name()
+        new_branch = generate_branch_name(trigger="setup")
 
         base_args = cast(
             BaseArgs,

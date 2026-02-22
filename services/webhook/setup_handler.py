@@ -98,7 +98,7 @@ async def setup_handler(
     ]
 
     # Create a branch for the coverage workflow PR
-    new_branch = generate_branch_name()
+    new_branch = generate_branch_name(trigger="setup")
     base_args = cast(
         BaseArgs,
         {
@@ -127,7 +127,7 @@ async def setup_handler(
         title="Set up test coverage workflow",
         base_args=base_args,
     )
-    base_args["pull_number"] = pr_number
+    base_args["pr_number"] = pr_number
     set_pr_number(pr_number)
     logger.info("Created coverage PR %s/%s#%d", owner_name, repo_name, pr_number)
 
@@ -137,12 +137,11 @@ async def setup_handler(
         owner_name=owner_name,
         repo_id=repo_id,
         repo_name=repo_name,
-        issue_number=0,
+        pr_number=pr_number,
         user_id=0,
         installation_id=installation_id,
         source="setup_handler",
         trigger="setup",
-        pr_number=pr_number,
     )
 
     # Read existing workflow files from local clone at EFS
@@ -232,7 +231,7 @@ async def setup_handler(
 
     # Check if the PR has actual file changes
     pr_files = get_pull_request_files(
-        owner=owner_name, repo=repo_name, pull_number=pr_number, token=token
+        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
 
     if is_completed and pr_files:
@@ -242,7 +241,7 @@ async def setup_handler(
         )
     else:
         logger.info("Closing PR, no file changes. Agent: %s", completion_reason)
-        close_pull_request(pull_number=pr_number, base_args=base_args)
+        close_pull_request(pr_number=pr_number, base_args=base_args)
         delete_remote_branch(base_args=base_args)
         slack_notify(
             f"Setup closed for {owner_name}/{repo_name}: {completion_reason}",

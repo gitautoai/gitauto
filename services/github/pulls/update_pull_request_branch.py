@@ -10,10 +10,10 @@ from utils.error.handle_exceptions import handle_exceptions
     default_return_value=("failed", "Unknown error"), raise_on_error=False
 )
 def update_pull_request_branch(
-    owner: str, repo: str, pull_number: int, token: str
+    owner: str, repo: str, pr_number: int, token: str
 ) -> tuple[str, str | None]:
     """https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#update-a-pull-request-branch"""
-    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pull_number}/update-branch"
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}/update-branch"
     headers = create_headers(token=token)
     response = requests.put(url=url, headers=headers, timeout=TIMEOUT)
 

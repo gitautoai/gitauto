@@ -14,13 +14,12 @@
 1. Install GitAuto to your repositories from [GitHub Marketplace](https://github.com/apps/gitauto-ai).
    1. Choose the repositories where you want to use GitAuto.
    2. You can change the repositories later.
-2. Create a new issue.
-   1. Or create a new issue with a template.
-   2. Or pick up an existing issue.
-3. Label the issue with `gitauto` to assign GitAuto to the issue.
-4. Check the progress of GitAuto in the bottom of the issue comment. You will get a notification once GitAuto completes the PR.
-5. Review the PR and merge it if it looks good.
-6. If not, update the issue with more details and re-label to re-run GitAuto.
+2. Trigger GitAuto in one of these ways:
+   - **Dashboard**: Go to the [GitAuto dashboard](https://gitauto.ai/dashboard/coverage) to select files with low test coverage and create PRs.
+   - **Schedule**: Enable daily automation on the dashboard. GitAuto creates PRs automatically once a day at 00:00 UTC for files with low test coverage.
+3. GitAuto creates a PR and works on the changes. You will get a notification once GitAuto completes.
+4. Review the PR and merge it if it looks good.
+5. If changes are needed, leave a review comment on the PR. GitAuto responds to review comments and updates the code.
 
 ## 3. How to run GitAuto locally
 
@@ -30,7 +29,7 @@
 2. Click `New GitHub App`.
 3. Fill in `GitHub App name` like `GitAuto Dev {Your Name}` e.g. `GitAuto Dev John`.
 4. Fill in `Homepage URL` like `http://localhost:8000`.
-5. Fill in `Webhook URL` like `https://your-name.ngrok.dev/webhook`. GitHub requires HTTPS for the webhook URL, so we need to use ngrok or something similar instead of `localhost`. GitHub sends webhook events (e.g. an issue is created) to the webhook URL and ngrok tunnels to localhost. You can update this URL later after setting up the ngrok tunnel.
+5. Fill in `Webhook URL` like `https://your-name.ngrok.dev/webhook`. GitHub requires HTTPS for the webhook URL, so we need to use ngrok or something similar instead of `localhost`. GitHub sends webhook events (e.g. a PR is created) to the webhook URL and ngrok tunnels to localhost. You can update this URL later after setting up the ngrok tunnel.
 6. Fill in `Webhook secret` with your preferred secret.
 7. Fill in `Repository permissions`
    - `Actions`: Read & Write

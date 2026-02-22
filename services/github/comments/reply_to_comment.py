@@ -12,12 +12,20 @@ def reply_to_comment(base_args: BaseArgs, body: str):
     owner = base_args["owner"]
     repo = base_args["repo"]
     token = base_args["token"]
-    pull_number = base_args.get("pull_number")
+    pr_number = base_args.get("pr_number")
     comment_id = base_args.get("review_id")
 
-    if not pull_number or not comment_id:
-        raise ValueError("pull_number and review_id are required for reply_to_comment")
-    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies"
+    if not pr_number:
+        raise ValueError(
+            f"pr_number is required for reply_to_comment but got: {pr_number}"
+        )
+
+    if not comment_id:
+        raise ValueError(
+            f"review_id is required for reply_to_comment but got: {comment_id}"
+        )
+
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}/comments/{comment_id}/replies"
     headers: dict[str, str] = create_headers(token=token)
     response = requests.post(
         url=url, headers=headers, json={"body": body}, timeout=TIMEOUT

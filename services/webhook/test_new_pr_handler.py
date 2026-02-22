@@ -10,83 +10,14 @@ import pytest
 
 from config import PRODUCT_ID
 from services.chat_with_agent import AgentResult
-from services.github.types.github_types import GitHubLabeledPayload
-from services.webhook.issue_handler import create_pr_from_issue
+from services.github.types.github_types import PrLabeledPayload
+from services.webhook.new_pr_handler import handle_new_pr
 
 
-@pytest.mark.asyncio
-async def test_create_pr_from_issue_wrong_label_early_return():
-    """Test early return when wrong label is provided"""
-    payload_dict = {
-        "action": "labeled",
-        "label": {"name": "wrong-label"},  # Not "gitauto"
-        "issue": {
-            "number": 123,
-            "title": "Schedule: Add unit tests to services/test_file.py",
-        },
-        "repository": {"name": "test_repo"},
-    }
-    payload = cast(GitHubLabeledPayload, payload_dict)
+def test_handle_new_pr_signature():
+    """Test that handle_new_pr has the expected signature with lambda_info parameter"""
 
-    lambda_info: dict[str, str | None] = {
-        "log_group": "test",
-        "log_stream": "test",
-        "request_id": "test",
-    }
-
-    # Function should complete without errors (early return due to wrong label)
-    await create_pr_from_issue(
-        payload=payload,
-        trigger="issue_label",
-        lambda_info=lambda_info,
-    )
-
-
-@pytest.mark.asyncio
-@patch("services.webhook.issue_handler.create_user_request")
-async def test_lambda_info_parameter_exists(mock_create_user_request):
-    """Test that the create_pr_from_issue function accepts lambda_info parameter"""
-
-    # This test just verifies the function signature accepts lambda_info
-    # without actually running the complex function logic
-
-    payload_dict = {
-        "action": "labeled",
-        "label": {"name": "wrong-label"},  # This will cause early return
-        "issue": {
-            "number": 123,
-            "title": "Schedule: Add unit tests to services/test_file.py",
-        },
-        "repository": {"name": "test_repo"},
-    }
-    payload = cast(GitHubLabeledPayload, payload_dict)
-
-    lambda_info: dict[str, str | None] = {
-        "log_group": "/aws/lambda/pr-agent-prod",
-        "log_stream": "2025/09/04/pr-agent-prod[$LATEST]841315c5",
-        "request_id": "17921070-5cb6-43ee-8d2e-b5161ae89729",
-    }
-
-    # Test with lambda_info
-    await create_pr_from_issue(
-        payload=payload,
-        trigger="issue_label",
-        lambda_info=lambda_info,
-    )
-
-    # Test without lambda_info (should default to None)
-    await create_pr_from_issue(payload=payload, trigger="issue_label")
-
-    # Function calls completed without errors (early return due to wrong label)
-
-    # create_user_request should not be called due to early return
-    mock_create_user_request.assert_not_called()
-
-
-def test_create_pr_from_issue_signature():
-    """Test that create_pr_from_issue has the expected signature with lambda_info parameter"""
-
-    sig = inspect.signature(create_pr_from_issue)
+    sig = inspect.signature(handle_new_pr)
     params = list(sig.parameters.keys())
 
     # Verify lambda_info parameter exists and is optional
@@ -101,17 +32,17 @@ def _get_base_args():
         "owner_id": 456,
         "owner_type": "User",
         "repo_id": 789,
-        "issue_body": "Test issue body",
+        "pr_body": "Test PR body",
         "owner": "test_owner",
         "repo": "test_repo",
-        "issue_number": 100,
-        "issue_title": "Schedule: Add unit tests to services/test_file.py",
+        "pr_number": 100,
+        "pr_title": "Schedule: Add unit tests to services/test_file.py",
         "sender_name": "test_sender",
         "repo_full_name": "test_owner/test_repo",
-        "issuer_name": "test_issuer",
+        "pr_creator": "test_creator",
         "sender_id": 888,
         "token": "github_token_123",
-        "new_branch": "gitauto/issue-100",
+        "new_branch": "gitauto/dashboard-20250101-120000-Ab1C",
         "sender_email": "test@example.com",
         "github_urls": {
             "issues": "https://api.github.com/repos/test_owner/test_repo/issues",
@@ -125,14 +56,19 @@ def _get_base_args():
 
 def _get_test_payload():
     return cast(
-        GitHubLabeledPayload,
+        PrLabeledPayload,
         {
             "action": "labeled",
+            "number": 100,
             "label": {"name": PRODUCT_ID},
             "issue": {
                 "number": 100,
                 "title": "Schedule: Add unit tests to services/test_file.py",
                 "body": "Test body",
+            },
+            "pull_request": {
+                "html_url": "https://github.com/test_owner/test_repo/pull/100",
+                "head": {"ref": "gitauto/dashboard-20250101-120000-Ab1C"},
             },
             "repository": {"name": "test_repo", "full_name": "test_owner/test_repo"},
             "sender": {"login": "test_sender"},
@@ -141,23 +77,19 @@ def _get_test_payload():
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_can_proceed_false_early_return(
     mock_deconstruct,
     mock_check_availability,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_comment,
@@ -185,9 +117,9 @@ async def test_can_proceed_false_early_return(
         "log_message": "User has no credits",
     }
 
-    await create_pr_from_issue(
+    await handle_new_pr(
         payload=_get_test_payload(),
-        trigger="issue_label",
+        trigger="dashboard",
     )
 
     mock_update_comment.assert_called()
@@ -198,25 +130,21 @@ async def test_can_proceed_false_early_return(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.update_stripe_customer_id")
-@patch("services.webhook.issue_handler.create_stripe_customer")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.update_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.create_stripe_customer")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_stripe_customer_id_update(
     mock_deconstruct,
     mock_check_availability,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_comment,
@@ -247,50 +175,43 @@ async def test_stripe_customer_id_update(
         "log_message": "No credits",
     }
 
-    await create_pr_from_issue(
+    await handle_new_pr(
         payload=_get_test_payload(),
-        trigger="issue_label",
+        trigger="dashboard",
     )
 
     mock_update_stripe.assert_called_once_with(456, "cus_new123")
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.get_base64")
-@patch("services.webhook.issue_handler.describe_image")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.get_base64")
+@patch("services.webhook.new_pr_handler.describe_image")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_image_urls_processing(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_comment,
@@ -306,10 +227,7 @@ async def test_image_urls_processing(
     mock_get_base64,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_update_usage,
@@ -342,8 +260,6 @@ async def test_image_urls_processing(
     mock_get_base64.return_value = "base64encodedimage"
     mock_describe_image.return_value = "Description of the image"
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],
         token_input=10,
@@ -355,9 +271,9 @@ async def test_image_urls_processing(
     )
     mock_get_pr_files.return_value = []
 
-    await create_pr_from_issue(
+    await handle_new_pr(
         payload=_get_test_payload(),
-        trigger="issue_label",
+        trigger="dashboard",
     )
 
     mock_extract_image_urls.assert_called()
@@ -366,40 +282,33 @@ async def test_image_urls_processing(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.get_base64")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.get_base64")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_image_unsupported_format_skipped(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_comment,
@@ -414,10 +323,7 @@ async def test_image_unsupported_format_skipped(
     mock_get_base64,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_update_usage,
@@ -447,8 +353,6 @@ async def test_image_unsupported_format_skipped(
         {"url": "http://example.com/image.svg", "alt": "svg image"}
     ]
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],
         token_input=10,
@@ -460,47 +364,40 @@ async def test_image_unsupported_format_skipped(
     )
     mock_get_pr_files.return_value = []
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_get_base64.assert_not_called()
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.get_base64")
-@patch("services.webhook.issue_handler.describe_image")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.get_base64")
+@patch("services.webhook.new_pr_handler.describe_image")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_image_base64_fetch_failed(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_comment,
@@ -516,10 +413,7 @@ async def test_image_base64_fetch_failed(
     mock_get_base64,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_update_usage,
@@ -550,8 +444,6 @@ async def test_image_base64_fetch_failed(
     ]
     mock_get_base64.return_value = None
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],
         token_input=10,
@@ -563,46 +455,39 @@ async def test_image_base64_fetch_failed(
     )
     mock_get_pr_files.return_value = []
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_get_base64.assert_called_once()
     mock_describe_image.assert_not_called()
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=True)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=True)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_timeout_approaching_breaks_loop(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_usage,
@@ -617,10 +502,7 @@ async def test_timeout_approaching_breaks_loop(
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
 ):
@@ -647,50 +529,41 @@ async def test_timeout_approaching_breaks_loop(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_get_pr_files.return_value = []
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_should_bail.assert_called_once()
     mock_chat_with_agent.assert_not_called()
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=True)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=True)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_branch_deleted_breaks_loop(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_usage,
@@ -705,10 +578,7 @@ async def test_branch_deleted_breaks_loop(
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
 ):
@@ -735,52 +605,43 @@ async def test_branch_deleted_breaks_loop(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_get_pr_files.return_value = []
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_should_bail.assert_called()
     mock_chat_with_agent.assert_not_called()
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.MAX_ITERATIONS", 10)
-@patch("services.webhook.issue_handler.verify_task_is_complete")
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.MAX_ITERATIONS", 10)
+@patch("services.webhook.new_pr_handler.verify_task_is_complete")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_usage,
@@ -795,10 +656,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_verify_task_is_complete,
@@ -826,8 +684,6 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_get_pr_files.return_value = []
     mock_chat_with_agent.side_effect = [
         AgentResult(
@@ -926,48 +782,41 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
         "message": "Task completed.",
     }
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     assert mock_chat_with_agent.call_count == 10
     mock_verify_task_is_complete.assert_called_once()
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.MAX_ITERATIONS", 9)
-@patch("services.webhook.issue_handler.verify_task_is_complete")
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.MAX_ITERATIONS", 9)
+@patch("services.webhook.new_pr_handler.verify_task_is_complete")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_usage,
@@ -982,10 +831,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_verify_task_is_complete,
@@ -1013,8 +859,6 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_get_pr_files.return_value = []
     mock_chat_with_agent.side_effect = [
         AgentResult(
@@ -1104,46 +948,39 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
         "message": "Task completed.",
     }
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     assert mock_chat_with_agent.call_count == 9
     mock_verify_task_is_complete.assert_called_once()
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_retry_counter_reset_on_successful_loop(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_usage,
@@ -1158,10 +995,7 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
 ):
@@ -1188,8 +1022,6 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_get_pr_files.return_value = []
     mock_chat_with_agent.side_effect = [
         AgentResult(
@@ -1221,46 +1053,39 @@ async def test_retry_counter_reset_on_successful_loop(
         ),
     ]
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     assert mock_chat_with_agent.call_count == 3
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.is_test_file")
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.is_test_file")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_non_test_file_skipped_in_header_merge(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_usage,
@@ -1275,10 +1100,7 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_is_test_file,
@@ -1306,8 +1128,6 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],
         token_input=10,
@@ -1320,49 +1140,42 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_get_pr_files.return_value = [{"filename": "src/main.py"}]
     mock_is_test_file.return_value = False
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_is_test_file.assert_called_with("src/main.py")
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.replace_remote_file_content")
-@patch("services.webhook.issue_handler.merge_test_file_headers")
-@patch("services.webhook.issue_handler.get_raw_content")
-@patch("services.webhook.issue_handler.is_test_file")
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.replace_remote_file_content")
+@patch("services.webhook.new_pr_handler.merge_test_file_headers")
+@patch("services.webhook.new_pr_handler.get_raw_content")
+@patch("services.webhook.new_pr_handler.is_test_file")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_test_file_header_merge(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_usage,
@@ -1377,10 +1190,7 @@ async def test_test_file_header_merge(
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_is_test_file,
@@ -1411,8 +1221,6 @@ async def test_test_file_header_merge(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],
         token_input=10,
@@ -1427,7 +1235,7 @@ async def test_test_file_header_merge(
     mock_get_raw_content.return_value = "def test_something(): pass"
     mock_merge_headers.return_value = "import pytest\n\ndef test_something(): pass"
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_is_test_file.assert_called_with("tests/test_example.py")
     mock_get_raw_content.assert_called()
@@ -1436,43 +1244,36 @@ async def test_test_file_header_merge(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.replace_remote_file_content")
-@patch("services.webhook.issue_handler.merge_test_file_headers")
-@patch("services.webhook.issue_handler.get_raw_content")
-@patch("services.webhook.issue_handler.is_test_file")
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.replace_remote_file_content")
+@patch("services.webhook.new_pr_handler.merge_test_file_headers")
+@patch("services.webhook.new_pr_handler.get_raw_content")
+@patch("services.webhook.new_pr_handler.is_test_file")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_test_file_header_merge_no_content(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_usage,
@@ -1487,10 +1288,7 @@ async def test_test_file_header_merge_no_content(
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_is_test_file,
@@ -1521,8 +1319,6 @@ async def test_test_file_header_merge_no_content(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],
         token_input=10,
@@ -1536,7 +1332,7 @@ async def test_test_file_header_merge_no_content(
     mock_is_test_file.return_value = True
     mock_get_raw_content.return_value = None
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_is_test_file.assert_called()
     mock_get_raw_content.assert_called()
@@ -1545,43 +1341,36 @@ async def test_test_file_header_merge_no_content(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.replace_remote_file_content")
-@patch("services.webhook.issue_handler.merge_test_file_headers")
-@patch("services.webhook.issue_handler.get_raw_content")
-@patch("services.webhook.issue_handler.is_test_file")
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.replace_remote_file_content")
+@patch("services.webhook.new_pr_handler.merge_test_file_headers")
+@patch("services.webhook.new_pr_handler.get_raw_content")
+@patch("services.webhook.new_pr_handler.is_test_file")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_test_file_header_merge_no_change(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_usage,
@@ -1596,10 +1385,7 @@ async def test_test_file_header_merge_no_change(
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_is_test_file,
@@ -1630,8 +1416,6 @@ async def test_test_file_header_merge_no_change(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],
         token_input=10,
@@ -1646,7 +1430,7 @@ async def test_test_file_header_merge_no_change(
     mock_get_raw_content.return_value = "import pytest\n\ndef test_something(): pass"
     mock_merge_headers.return_value = "import pytest\n\ndef test_something(): pass"
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_is_test_file.assert_called()
     mock_get_raw_content.assert_called()
@@ -1654,45 +1438,38 @@ async def test_test_file_header_merge_no_change(
     mock_replace_remote.assert_not_called()
 
 
-@patch("services.webhook.issue_handler.send_email")
+@patch("services.webhook.new_pr_handler.send_email")
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.get_credits_depleted_email_text")
-@patch("services.webhook.issue_handler.get_user")
-@patch("services.webhook.issue_handler.get_owner")
-@patch("services.webhook.issue_handler.insert_credit")
-@patch("services.webhook.issue_handler.get_pull_request_files")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.extract_image_urls")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.get_stripe_customer_id")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.get_credits_depleted_email_text")
+@patch("services.webhook.new_pr_handler.get_user")
+@patch("services.webhook.new_pr_handler.get_owner")
+@patch("services.webhook.new_pr_handler.insert_credit")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_credits_depleted_email_sent(
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
     mock_render_text,
-    mock_delete_comments,
-    mock_add_reaction,
     mock_create_comment,
     mock_create_progress_bar,
     mock_update_usage,
@@ -1707,10 +1484,7 @@ async def test_credits_depleted_email_sent(
     mock_extract_image_urls,
     mock_get_remote_file,
     mock_should_bail,
-    mock_get_latest_sha,
-    mock_create_remote_branch,
     mock_create_empty_commit,
-    mock_create_pr,
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_insert_credit,
@@ -1742,8 +1516,6 @@ async def test_credits_depleted_email_sent(
     mock_get_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
-    mock_get_latest_sha.return_value = "abc123"
-    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],
         token_input=10,
@@ -1758,7 +1530,7 @@ async def test_credits_depleted_email_sent(
     mock_get_user.return_value = {"id": 888, "email": "user@example.com"}
     mock_get_email_text.return_value = ("Credits Depleted", "Your credits are gone")
 
-    await create_pr_from_issue(payload=_get_test_payload(), trigger="issue_label")
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_insert_credit.assert_called_once()
     mock_get_owner.assert_called_with(owner_id=456)
@@ -1770,31 +1542,26 @@ async def test_credits_depleted_email_sent(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.insert_credit")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.get_owner")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
-@patch("services.webhook.issue_handler.get_pull_request_files")
-async def test_issue_handler_token_accumulation(
+@patch("services.webhook.new_pr_handler.insert_credit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.get_owner")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+async def test_new_pr_handler_token_accumulation(
     mock_get_pull_request_files,
     mock_deconstruct_github_payload,
     mock_render_text,
@@ -1808,19 +1575,14 @@ async def test_issue_handler_token_accumulation(
     mock_chat_with_agent,
     mock_update_usage,
     mock_create_progress_bar,
-    mock_delete_comments_by_identifiers,
     mock_slack_notify,
-    mock_add_reaction_to_issue,
     mock_get_comments,
     mock_get_remote_file_content_by_url,
-    mock_get_latest_remote_commit_sha,
-    mock_create_remote_branch,
-    mock_create_pull_request,
     mock_create_empty_commit,
     mock_should_bail,
     mock_insert_credit,
 ):
-    """Test that issue handler accumulates tokens correctly and calls update_usage"""
+    """Test that PR handler accumulates tokens correctly and calls update_usage"""
     mock_get_pull_request_files.return_value = []
 
     # Mock the payload deconstruction
@@ -1830,17 +1592,17 @@ async def test_issue_handler_token_accumulation(
             "owner_id": 456,
             "owner_type": "User",
             "repo_id": 789,
-            "issue_body": "Test issue body",
+            "pr_body": "Test PR body",
             "owner": "test_owner",
             "repo": "test_repo",
-            "issue_number": 100,
-            "issue_title": "Schedule: Add unit tests to services/test_file.py",
+            "pr_number": 100,
+            "pr_title": "Schedule: Add unit tests to services/test_file.py",
             "sender_name": "test_sender",
             "repo_full_name": "test_owner/test_repo",
-            "issuer_name": "test_issuer",
+            "pr_creator": "test_creator",
             "sender_id": 888,
             "token": "github_token_123",
-            "new_branch": "gitauto/issue-100",
+            "new_branch": "gitauto/dashboard-20250101-120000-Ab1C",
             "sender_email": "test@example.com",
             "github_urls": {
                 "issues": "https://api.github.com/repos/test_owner/test_repo/issues",
@@ -1852,21 +1614,11 @@ async def test_issue_handler_token_accumulation(
         },
         None,
     )
-
-    mock_render_text.return_value = "Rendered issue body"
+    mock_render_text.return_value = "Rendered PR body"
     mock_slack_notify.return_value = "thread_123"
-    mock_delete_comments_by_identifiers.return_value = None
     mock_create_progress_bar.return_value = "Progress bar content"
-    mock_add_reaction_to_issue.return_value = None
     mock_get_comments.return_value = []
     mock_get_remote_file_content_by_url.return_value = ("", "")
-    mock_get_latest_remote_commit_sha.return_value = "abc123"
-    mock_create_remote_branch.return_value = None
-
-    mock_create_pull_request.return_value = (
-        "https://github.com/test/repo/pull/123",
-        123,
-    )
     mock_create_empty_commit.return_value = None
     mock_insert_credit.return_value = None
 
@@ -1918,14 +1670,19 @@ async def test_issue_handler_token_accumulation(
 
     # Create test payload
     payload = cast(
-        GitHubLabeledPayload,
+        PrLabeledPayload,
         {
             "action": "labeled",
+            "number": 100,
             "label": {"name": "gitauto"},
             "issue": {
                 "number": 100,
                 "title": "Schedule: Add unit tests to services/test_file.py",
                 "body": "Test body",
+            },
+            "pull_request": {
+                "html_url": "https://github.com/test_owner/test_repo/pull/100",
+                "head": {"ref": "gitauto/dashboard-20250101-120000-Ab1C"},
             },
             "repository": {"name": "test_repo", "full_name": "test_owner/test_repo"},
             "sender": {"login": "test_sender"},
@@ -1933,9 +1690,9 @@ async def test_issue_handler_token_accumulation(
     )
 
     # Call the function
-    await create_pr_from_issue(
+    await handle_new_pr(
         payload=payload,
-        trigger="issue_comment",
+        trigger="dashboard",
         lambda_info={
             "log_group": "/aws/lambda/test",
             "log_stream": "test_stream",
@@ -1957,31 +1714,26 @@ async def test_issue_handler_token_accumulation(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.insert_credit")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.get_owner")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.insert_credit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.get_owner")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_deconstruct_github_payload,
     mock_render_text,
@@ -1997,14 +1749,9 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_update_comment,
     mock_update_usage,
     mock_create_progress_bar,
-    mock_delete_comments_by_identifiers,
     mock_slack_notify,
-    mock_add_reaction_to_issue,
     mock_get_comments,
     mock_get_remote_file_content_by_url,
-    mock_get_latest_remote_commit_sha,
-    mock_create_remote_branch,
-    mock_create_pull_request,
     mock_create_empty_commit,
     mock_should_bail,
     mock_insert_credit,
@@ -2015,17 +1762,17 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
             "owner_id": 456,
             "owner_type": "User",
             "repo_id": 789,
-            "issue_body": "Test issue body",
+            "pr_body": "Test PR body",
             "owner": "test_owner",
             "repo": "test_repo",
-            "issue_number": 100,
-            "issue_title": "Schedule: Add unit tests to services/test_file.py",
+            "pr_number": 100,
+            "pr_title": "Schedule: Add unit tests to services/test_file.py",
             "sender_name": "test_sender",
             "repo_full_name": "test_owner/test_repo",
-            "issuer_name": "test_issuer",
+            "pr_creator": "test_creator",
             "sender_id": 888,
             "token": "github_token_123",
-            "new_branch": "gitauto/issue-100",
+            "new_branch": "gitauto/dashboard-20250101-120000-Ab1C",
             "sender_email": "test@example.com",
             "github_urls": {},
             "is_automation": False,
@@ -2034,8 +1781,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
         },
         None,
     )
-
-    mock_render_text.return_value = "Rendered issue body"
+    mock_render_text.return_value = "Rendered PR body"
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -2046,7 +1792,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
         "log_message": "Proceeding",
     }
 
-    mock_render_text.return_value = "Rendered issue body"
+    mock_render_text.return_value = "Rendered PR body"
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -2075,38 +1821,35 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_update_comment.return_value = None
     mock_update_usage.return_value = None
     mock_create_progress_bar.return_value = "Progress: 0%"
-    mock_delete_comments_by_identifiers.return_value = None
     mock_slack_notify.return_value = "thread_1"
-    mock_add_reaction_to_issue.return_value = None
     mock_get_comments.return_value = []
     mock_get_remote_file_content_by_url.return_value = ("", "")
-    mock_get_latest_remote_commit_sha.return_value = "abc123"
-    mock_create_remote_branch.return_value = None
-    mock_create_pull_request.return_value = (
-        "https://github.com/test/repo/pull/123",
-        123,
-    )
     mock_create_empty_commit.return_value = None
     mock_insert_credit.return_value = None
 
     payload = cast(
-        GitHubLabeledPayload,
+        PrLabeledPayload,
         {
             "action": "labeled",
+            "number": 100,
             "label": {"name": "gitauto"},
             "issue": {
                 "number": 100,
                 "title": "Schedule: Add unit tests to services/test_file.py",
                 "body": "Test body",
             },
+            "pull_request": {
+                "html_url": "https://github.com/test_owner/test_repo/pull/100",
+                "head": {"ref": "gitauto/dashboard-20250101-120000-Ab1C"},
+            },
             "repository": {"name": "test_repo", "full_name": "test_owner/test_repo"},
             "sender": {"login": "test_sender"},
         },
     )
 
-    await create_pr_from_issue(
+    await handle_new_pr(
         payload=payload,
-        trigger="issue_comment",
+        trigger="dashboard",
     )
 
     call_kwargs = mock_chat_with_agent.call_args.kwargs
@@ -2122,33 +1865,28 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.insert_credit")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.read_local_file")
-@patch("services.webhook.issue_handler.find_test_files")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.get_owner")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.insert_credit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.read_local_file")
+@patch("services.webhook.new_pr_handler.find_test_files")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.get_owner")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_few_test_files_include_contents_in_prompt(
     mock_deconstruct_github_payload,
     mock_render_text,
@@ -2166,14 +1904,9 @@ async def test_few_test_files_include_contents_in_prompt(
     mock_update_comment,
     mock_update_usage,
     mock_create_progress_bar,
-    mock_delete_comments_by_identifiers,
     mock_slack_notify,
-    mock_add_reaction_to_issue,
     mock_get_comments,
     mock_get_remote_file_content_by_url,
-    mock_get_latest_remote_commit_sha,
-    mock_create_remote_branch,
-    mock_create_pull_request,
     mock_create_empty_commit,
     mock_should_bail,
     mock_insert_credit,
@@ -2184,17 +1917,17 @@ async def test_few_test_files_include_contents_in_prompt(
             "owner_id": 456,
             "owner_type": "User",
             "repo_id": 789,
-            "issue_body": "Test issue body",
+            "pr_body": "Test PR body",
             "owner": "test_owner",
             "repo": "test_repo",
-            "issue_number": 100,
-            "issue_title": "Schedule: Add unit tests to src/logger.ts",
+            "pr_number": 100,
+            "pr_title": "Schedule: Add unit tests to src/logger.ts",
             "sender_name": "test_sender",
             "repo_full_name": "test_owner/test_repo",
-            "issuer_name": "test_issuer",
+            "pr_creator": "test_creator",
             "sender_id": 888,
             "token": "github_token_123",
-            "new_branch": "gitauto/issue-100",
+            "new_branch": "gitauto/dashboard-20250101-120000-Ab1C",
             "sender_email": "test@example.com",
             "github_urls": {},
             "is_automation": False,
@@ -2203,7 +1936,7 @@ async def test_few_test_files_include_contents_in_prompt(
         },
         None,
     )
-    mock_render_text.return_value = "Rendered issue body"
+    mock_render_text.return_value = "Rendered PR body"
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -2241,36 +1974,33 @@ async def test_few_test_files_include_contents_in_prompt(
     mock_update_comment.return_value = None
     mock_update_usage.return_value = None
     mock_create_progress_bar.return_value = "Progress: 0%"
-    mock_delete_comments_by_identifiers.return_value = None
     mock_slack_notify.return_value = "thread_1"
-    mock_add_reaction_to_issue.return_value = None
     mock_get_comments.return_value = []
     mock_get_remote_file_content_by_url.return_value = ("", "")
-    mock_get_latest_remote_commit_sha.return_value = "abc123"
-    mock_create_remote_branch.return_value = None
-    mock_create_pull_request.return_value = (
-        "https://github.com/test/repo/pull/123",
-        123,
-    )
     mock_create_empty_commit.return_value = None
     mock_insert_credit.return_value = None
 
     payload = cast(
-        GitHubLabeledPayload,
+        PrLabeledPayload,
         {
             "action": "labeled",
+            "number": 100,
             "label": {"name": "gitauto"},
             "issue": {
                 "number": 100,
                 "title": "Schedule: Add unit tests to src/logger.ts",
                 "body": "Test body",
             },
+            "pull_request": {
+                "html_url": "https://github.com/test_owner/test_repo/pull/100",
+                "head": {"ref": "gitauto/dashboard-20250101-120000-Ab1C"},
+            },
             "repository": {"name": "test_repo", "full_name": "test_owner/test_repo"},
             "sender": {"login": "test_sender"},
         },
     )
 
-    await create_pr_from_issue(payload=payload, trigger="issue_comment")
+    await handle_new_pr(payload=payload, trigger="dashboard")
 
     # Verify test_files contents are included in the prompt (not just paths)
     call_kwargs = mock_chat_with_agent.call_args.kwargs
@@ -2282,33 +2012,28 @@ async def test_few_test_files_include_contents_in_prompt(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.issue_handler.insert_credit")
-@patch("services.webhook.issue_handler.should_bail", return_value=False)
-@patch("services.webhook.issue_handler.create_empty_commit")
-@patch("services.webhook.issue_handler.create_pull_request")
-@patch("services.webhook.issue_handler.create_remote_branch")
-@patch("services.webhook.issue_handler.get_latest_remote_commit_sha")
-@patch("services.webhook.issue_handler.get_remote_file_content_by_url")
-@patch("services.webhook.issue_handler.get_comments")
-@patch("services.webhook.issue_handler.add_reaction_to_issue")
-@patch("services.webhook.issue_handler.slack_notify")
-@patch("services.webhook.issue_handler.delete_comments_by_identifiers")
-@patch("services.webhook.issue_handler.create_progress_bar")
-@patch("services.webhook.issue_handler.update_usage")
-@patch("services.webhook.issue_handler.update_comment")
-@patch("services.webhook.issue_handler.get_repository_features")
-@patch("services.webhook.issue_handler.chat_with_agent")
-@patch("services.webhook.issue_handler.create_user_request")
-@patch("services.webhook.issue_handler.read_local_file")
-@patch("services.webhook.issue_handler.find_test_files")
-@patch("services.webhook.issue_handler.prepare_repo_for_work", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.ensure_node_packages", new_callable=AsyncMock)
-@patch("services.webhook.issue_handler.get_owner")
-@patch("services.webhook.issue_handler.create_comment")
-@patch("services.webhook.issue_handler.check_availability")
-@patch("services.webhook.issue_handler.render_text")
-@patch("services.webhook.issue_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.insert_credit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.get_repository_features")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.read_local_file")
+@patch("services.webhook.new_pr_handler.find_test_files")
+@patch("services.webhook.new_pr_handler.prepare_repo_for_work", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.ensure_node_packages", new_callable=AsyncMock)
+@patch("services.webhook.new_pr_handler.get_owner")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_many_test_files_include_paths_only_in_prompt(
     mock_deconstruct_github_payload,
     mock_render_text,
@@ -2326,14 +2051,9 @@ async def test_many_test_files_include_paths_only_in_prompt(
     mock_update_comment,
     mock_update_usage,
     mock_create_progress_bar,
-    mock_delete_comments_by_identifiers,
     mock_slack_notify,
-    mock_add_reaction_to_issue,
     mock_get_comments,
     mock_get_remote_file_content_by_url,
-    mock_get_latest_remote_commit_sha,
-    mock_create_remote_branch,
-    mock_create_pull_request,
     mock_create_empty_commit,
     mock_should_bail,
     mock_insert_credit,
@@ -2344,17 +2064,17 @@ async def test_many_test_files_include_paths_only_in_prompt(
             "owner_id": 456,
             "owner_type": "User",
             "repo_id": 789,
-            "issue_body": "Test issue body",
+            "pr_body": "Test PR body",
             "owner": "test_owner",
             "repo": "test_repo",
-            "issue_number": 100,
-            "issue_title": "Schedule: Add unit tests to src/logger.ts",
+            "pr_number": 100,
+            "pr_title": "Schedule: Add unit tests to src/logger.ts",
             "sender_name": "test_sender",
             "repo_full_name": "test_owner/test_repo",
-            "issuer_name": "test_issuer",
+            "pr_creator": "test_creator",
             "sender_id": 888,
             "token": "github_token_123",
-            "new_branch": "gitauto/issue-100",
+            "new_branch": "gitauto/dashboard-20250101-120000-Ab1C",
             "sender_email": "test@example.com",
             "github_urls": {},
             "is_automation": False,
@@ -2363,7 +2083,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
         },
         None,
     )
-    mock_render_text.return_value = "Rendered issue body"
+    mock_render_text.return_value = "Rendered PR body"
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
@@ -2397,36 +2117,33 @@ async def test_many_test_files_include_paths_only_in_prompt(
     mock_update_comment.return_value = None
     mock_update_usage.return_value = None
     mock_create_progress_bar.return_value = "Progress: 0%"
-    mock_delete_comments_by_identifiers.return_value = None
     mock_slack_notify.return_value = "thread_1"
-    mock_add_reaction_to_issue.return_value = None
     mock_get_comments.return_value = []
     mock_get_remote_file_content_by_url.return_value = ("", "")
-    mock_get_latest_remote_commit_sha.return_value = "abc123"
-    mock_create_remote_branch.return_value = None
-    mock_create_pull_request.return_value = (
-        "https://github.com/test/repo/pull/123",
-        123,
-    )
     mock_create_empty_commit.return_value = None
     mock_insert_credit.return_value = None
 
     payload = cast(
-        GitHubLabeledPayload,
+        PrLabeledPayload,
         {
             "action": "labeled",
+            "number": 100,
             "label": {"name": "gitauto"},
             "issue": {
                 "number": 100,
                 "title": "Schedule: Add unit tests to src/logger.ts",
                 "body": "Test body",
             },
+            "pull_request": {
+                "html_url": "https://github.com/test_owner/test_repo/pull/100",
+                "head": {"ref": "gitauto/dashboard-20250101-120000-Ab1C"},
+            },
             "repository": {"name": "test_repo", "full_name": "test_owner/test_repo"},
             "sender": {"login": "test_sender"},
         },
     )
 
-    await create_pr_from_issue(payload=payload, trigger="issue_comment")
+    await handle_new_pr(payload=payload, trigger="dashboard")
 
     # Verify only paths are included (not contents) when >5 test files
     call_kwargs = mock_chat_with_agent.call_args.kwargs

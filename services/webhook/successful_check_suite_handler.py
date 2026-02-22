@@ -24,14 +24,13 @@ from services.supabase.repository_features.get_repository_features import (
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_config_file import is_config_file
 from utils.files.is_test_file import is_test_file
-from utils.logging.logging_config import logger, set_pr_number, set_trigger
+from utils.logging.logging_config import logger, set_pr_number
 
 BLOCKED = "Auto-merge blocked"
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
-    set_trigger("auto_merge")
     check_suite = payload["check_suite"]
     pull_requests = check_suite["pull_requests"]
 
@@ -106,8 +105,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             "owner": owner_name,
             "repo": repo_name,
             "token": token,
-            "issue_number": pr_number,
-            "pull_number": pr_number,
+            "pr_number": pr_number,
         },
     )
 
@@ -161,7 +159,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
 
     # Fetch full PR details to get mergeable_state (not in simplified PR from check_suite webhook)
     full_pr = get_pull_request(
-        owner=owner_name, repo=repo_name, pull_number=pr_number, token=token
+        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
     if not full_pr:
         msg = f"Failed to fetch full PR details for #{pr_number}"
@@ -210,18 +208,18 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         delete_comments_by_identifiers(
             owner=owner_name,
             repo=repo_name,
-            issue_number=pr_number,
+            pr_number=pr_number,
             token=token,
             identifiers=[BLOCKED],
         )
-        create_comment(body=msg, base_args=comment_args, target="pr")
+        create_comment(body=msg, base_args=comment_args)
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)
         return
 
     # Get PR files
     changed_files = get_pull_request_files(
-        owner=owner_name, repo=repo_name, pull_number=pr_number, token=token
+        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
 
     # Check if only test files restriction is enabled
@@ -240,11 +238,11 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             delete_comments_by_identifiers(
                 owner=owner_name,
                 repo=repo_name,
-                issue_number=pr_number,
+                pr_number=pr_number,
                 token=token,
                 identifiers=[BLOCKED],
             )
-            create_comment(body=msg, base_args=comment_args, target="pr")
+            create_comment(body=msg, base_args=comment_args)
             slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
             slack_notify(slack_msg)
             return
@@ -256,7 +254,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     result = merge_pull_request(
         owner=owner_name,
         repo=repo_name,
-        pull_number=pr_number,
+        pr_number=pr_number,
         token=token,
         merge_method=merge_method,
     )
@@ -270,10 +268,10 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         delete_comments_by_identifiers(
             owner=owner_name,
             repo=repo_name,
-            issue_number=pr_number,
+            pr_number=pr_number,
             token=token,
             identifiers=[BLOCKED],
         )
-        create_comment(body=msg, base_args=comment_args, target="pr")
+        create_comment(body=msg, base_args=comment_args)
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)

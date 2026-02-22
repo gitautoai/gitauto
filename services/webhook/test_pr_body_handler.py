@@ -70,13 +70,6 @@ def mock_get_pull_request_file_changes():
 
 
 @pytest.fixture
-def mock_get_issue_body():
-    """Mock get_issue_body function."""
-    with patch("services.webhook.pr_body_handler.get_issue_body") as mock:
-        yield mock
-
-
-@pytest.fixture
 def mock_is_pull_request_open():
     """Mock is_pull_request_open function."""
     with patch("services.webhook.pr_body_handler.is_pull_request_open") as mock:
@@ -117,7 +110,6 @@ def mock_github_app_user_name():
 def all_mocks(
     mock_get_installation_access_token,
     mock_get_pull_request_file_changes,
-    mock_get_issue_body,
     mock_is_pull_request_open,
     mock_check_branch_exists,
     mock_chat_with_ai,
@@ -128,7 +120,6 @@ def all_mocks(
     return {
         "get_installation_access_token": mock_get_installation_access_token,
         "get_pull_request_file_changes": mock_get_pull_request_file_changes,
-        "get_issue_body": mock_get_issue_body,
         "is_pull_request_open": mock_is_pull_request_open,
         "check_branch_exists": mock_check_branch_exists,
         "chat_with_ai": mock_chat_with_ai,
@@ -147,7 +138,7 @@ class TestWritePrDescription:
         all_mocks["get_pull_request_file_changes"].return_value = [
             {"filename": "test.py", "status": "modified"}
         ]
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -164,19 +155,11 @@ class TestWritePrDescription:
             token="ghs_test_token",
         )
 
-        # Verify issue body retrieval
-        all_mocks["get_issue_body"].assert_called_once_with(
-            owner="test-owner",
-            repo="test-repo",
-            issue_number=456,
-            token="ghs_test_token",
-        )
-
         # Verify safety checks
         all_mocks["is_pull_request_open"].assert_called_once_with(
             owner="test-owner",
             repo="test-repo",
-            pull_number=123,
+            pr_number=123,
             token="ghs_test_token",
         )
         all_mocks["check_branch_exists"].assert_called_once_with(
@@ -194,7 +177,6 @@ class TestWritePrDescription:
 
         # Verify PR body update
         expected_body = (
-            "Resolves #456\n\n"
             "Generated PR description\n\n"
             "```\n"
             "git commit -m 'Fix auth issue'\n"
@@ -216,7 +198,6 @@ class TestWritePrDescription:
         # Verify no functions are called
         all_mocks["get_installation_access_token"].assert_not_called()
         all_mocks["get_pull_request_file_changes"].assert_not_called()
-        all_mocks["get_issue_body"].assert_not_called()
         all_mocks["is_pull_request_open"].assert_not_called()
         all_mocks["check_branch_exists"].assert_not_called()
         all_mocks["chat_with_ai"].assert_not_called()
@@ -230,7 +211,7 @@ class TestWritePrDescription:
         mock_pr_payload["pull_request"]["title"] = "Fix issue with authentication"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -241,7 +222,7 @@ class TestWritePrDescription:
         # Verify AI call with correct title
         call_args = all_mocks["chat_with_ai"].call_args
         user_input = call_args.kwargs["user_input"]
-        assert '"issue_title": "Fix issue with authentication"' in user_input
+        assert '"pr_title": "Fix issue with authentication"' in user_input
 
     def test_write_pr_description_without_resolves_statement(
         self, mock_pr_payload, all_mocks
@@ -258,8 +239,7 @@ class TestWritePrDescription:
         # Execute
         write_pr_description(mock_pr_payload)
 
-        # Verify issue body is not retrieved
-        all_mocks["get_issue_body"].assert_not_called()
+        # Verify PR body update
 
         # Verify PR body update without resolves statement
         expected_body = "Generated PR description\n\n```\n\n```"
@@ -282,7 +262,7 @@ class TestWritePrDescription:
         )
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -292,7 +272,6 @@ class TestWritePrDescription:
 
         # Verify PR body update with multiple commands
         expected_body = (
-            "Resolves #456\n\n"
             "Generated PR description\n\n"
             "```\n"
             "git add .\n"
@@ -313,7 +292,7 @@ class TestWritePrDescription:
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = False
         all_mocks["check_branch_exists"].return_value = True
 
@@ -331,7 +310,7 @@ class TestWritePrDescription:
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = False
 
@@ -342,14 +321,13 @@ class TestWritePrDescription:
         all_mocks["chat_with_ai"].assert_not_called()
         all_mocks["update_pull_request_body"].assert_not_called()
 
-    def test_write_pr_description_with_none_issue_body(
-        self, mock_pr_payload, all_mocks
-    ):
-        """Test PR description generation when issue body is None."""
+    def test_write_pr_description_with_none_pr_body(self, mock_pr_payload, all_mocks):
+        """Test PR description generation when PR body is None."""
         # Setup
+        mock_pr_payload["pull_request"]["body"] = None
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = None
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -357,10 +335,10 @@ class TestWritePrDescription:
         # Execute
         write_pr_description(mock_pr_payload)
 
-        # Verify AI call with empty issue body
+        # Verify AI call with empty pr body
         call_args = all_mocks["chat_with_ai"].call_args
         user_input = call_args.kwargs["user_input"]
-        assert '"issue_body": ""' in user_input
+        assert '"pr_body": ""' in user_input
 
     def test_write_pr_description_with_empty_file_changes(
         self, mock_pr_payload, all_mocks
@@ -369,7 +347,7 @@ class TestWritePrDescription:
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -394,7 +372,7 @@ class TestWritePrDescription:
         ]
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = file_changes
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -425,7 +403,7 @@ class TestWritePrDescription:
         )
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -435,7 +413,6 @@ class TestWritePrDescription:
 
         # Verify PR body update with extracted commands
         expected_body = (
-            "Resolves #456\n\n"
             "Generated PR description\n\n"
             "```\n"
             "git add .\n"
@@ -448,10 +425,10 @@ class TestWritePrDescription:
             body=expected_body,
         )
 
-    def test_write_pr_description_with_invalid_issue_number(
+    def test_write_pr_description_with_invalid_pr_number(
         self, mock_pr_payload, all_mocks
     ):
-        """Test PR description generation with invalid issue number format."""
+        """Test PR description generation with invalid PR number format."""
         # Setup
         mock_pr_payload["pull_request"]["body"] = "Resolves #invalid"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
@@ -463,8 +440,7 @@ class TestWritePrDescription:
         # Execute - should handle ValueError gracefully
         write_pr_description(mock_pr_payload)
 
-        # Verify issue body is not retrieved due to invalid number
-        all_mocks["get_issue_body"].assert_not_called()
+        # Verify PR body update due to invalid number
 
     def test_write_pr_description_with_multiple_resolves_statements(
         self, mock_pr_payload, all_mocks
@@ -479,7 +455,7 @@ class TestWritePrDescription:
         )
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -487,21 +463,9 @@ class TestWritePrDescription:
         # Execute
         write_pr_description(mock_pr_payload)
 
-        # Verify only first issue is processed
-        all_mocks["get_issue_body"].assert_called_once_with(
-            owner="test-owner",
-            repo="test-repo",
-            issue_number=456,
-            token="ghs_test_token",
-        )
-
-        # Verify only first resolves statement is used
+        # Verify PR body update with commands
         expected_body = (
-            "Resolves #456\n\n"
-            "Generated PR description\n\n"
-            "```\n"
-            "git commit -m 'Fix issues'\n"
-            "```"
+            "Generated PR description\n\n```\ngit commit -m 'Fix issues'\n```"
         )
         all_mocks["update_pull_request_body"].assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/pulls/123",
@@ -522,8 +486,7 @@ class TestWritePrDescription:
         # Execute
         write_pr_description(mock_pr_payload)
 
-        # Verify no issue body retrieval
-        all_mocks["get_issue_body"].assert_not_called()
+        # Verify PR body update
 
         # Verify PR body update without resolves statement or commands
         expected_body = "Generated PR description\n\n```\n\n```"
@@ -533,23 +496,7 @@ class TestWritePrDescription:
             body=expected_body,
         )
 
-    def test_write_pr_description_with_none_pr_body(self, mock_pr_payload, all_mocks):
-        """Test PR description generation with None PR body."""
-        # Setup
-        mock_pr_payload["pull_request"]["body"] = None
-        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["is_pull_request_open"].return_value = True
-        all_mocks["check_branch_exists"].return_value = True
-        all_mocks["chat_with_ai"].return_value = "Generated PR description"
-
-        # Execute - should handle None gracefully
-        write_pr_description(mock_pr_payload)
-
-        # Verify no issue body retrieval
-        all_mocks["get_issue_body"].assert_not_called()
-
-    def test_write_pr_description_with_string_pull_number(
+    def test_write_pr_description_with_string_pr_number(
         self, mock_pr_payload, all_mocks
     ):
         """Test PR description generation with string pull number."""
@@ -557,7 +504,7 @@ class TestWritePrDescription:
         mock_pr_payload["pull_request"]["number"] = "123"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -569,7 +516,7 @@ class TestWritePrDescription:
         all_mocks["is_pull_request_open"].assert_called_once_with(
             owner="test-owner",
             repo="test-repo",
-            pull_number="123",
+            pr_number="123",
             token="ghs_test_token",
         )
 
@@ -581,7 +528,7 @@ class TestWritePrDescription:
         mock_pr_payload["installation"]["id"] = "12345"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -604,7 +551,7 @@ class TestWritePrDescription:
         mock_pr_payload["repository"]["name"] = "tëst-rëpö"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Ïssüé dëscrïptïön"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Gënërätëd PR dëscrïptïön"
@@ -613,13 +560,6 @@ class TestWritePrDescription:
         write_pr_description(mock_pr_payload)
 
         # Verify calls with unicode characters
-        all_mocks["get_issue_body"].assert_called_once_with(
-            owner="tëst-öwnér",
-            repo="tëst-rëpö",
-            issue_number=456,
-            token="ghs_test_token",
-        )
-
         # Verify AI call with unicode title
         call_args = all_mocks["chat_with_ai"].call_args
         user_input = call_args.kwargs["user_input"]
@@ -637,7 +577,7 @@ class TestWritePrDescription:
         mock_pr_payload["pull_request"]["head"]["ref"] = "feature/fix-issue#456"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -662,7 +602,7 @@ class TestWritePrDescription:
         mock_pr_payload["pull_request"]["title"] = long_title
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -670,20 +610,18 @@ class TestWritePrDescription:
         # Execute
         write_pr_description(mock_pr_payload)
 
-        # Verify AI call with long title (without GitAuto prefix)
+        # Verify AI call with long title
         call_args = all_mocks["chat_with_ai"].call_args
         user_input = call_args.kwargs["user_input"]
-        assert '"issue_title": "' + "a" * 1000 + '"' in user_input
+        assert '"pr_title": "GitAuto: ' + "a" * 1000 + '"' in user_input
 
-    def test_write_pr_description_with_zero_issue_number(
-        self, mock_pr_payload, all_mocks
-    ):
-        """Test PR description generation with zero issue number."""
+    def test_write_pr_description_with_zero_pr_number(self, mock_pr_payload, all_mocks):
+        """Test PR description generation with zero PR number."""
         # Setup
         mock_pr_payload["pull_request"]["body"] = "Resolves #0\n\ngit commit -m 'Fix'"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -691,64 +629,8 @@ class TestWritePrDescription:
         # Execute
         write_pr_description(mock_pr_payload)
 
-        # Verify issue body retrieval with zero issue number
-        all_mocks["get_issue_body"].assert_called_once_with(
-            owner="test-owner",
-            repo="test-repo",
-            issue_number=0,
-            token="ghs_test_token",
-        )
-
-    def test_write_pr_description_with_negative_issue_number(
-        self, mock_pr_payload, all_mocks
-    ):
-        """Test PR description generation with negative issue number."""
-        # Setup
-        mock_pr_payload["pull_request"]["body"] = "Resolves #-1\n\ngit commit -m 'Fix'"
-        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
-        all_mocks["is_pull_request_open"].return_value = True
-        all_mocks["check_branch_exists"].return_value = True
-        all_mocks["chat_with_ai"].return_value = "Generated PR description"
-
-        # Execute
-        write_pr_description(mock_pr_payload)
-
-        # Verify issue body retrieval with negative issue number
-        all_mocks["get_issue_body"].assert_called_once_with(
-            owner="test-owner",
-            repo="test-repo",
-            issue_number=-1,
-            token="ghs_test_token",
-        )
-
-    def test_write_pr_description_with_large_issue_number(
-        self, mock_pr_payload, all_mocks
-    ):
-        """Test PR description generation with large issue number."""
-        # Setup
-        large_number = 999999999
-        mock_pr_payload["pull_request"][
-            "body"
-        ] = f"Resolves #{large_number}\n\ngit commit -m 'Fix'"
-        all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
-        all_mocks["is_pull_request_open"].return_value = True
-        all_mocks["check_branch_exists"].return_value = True
-        all_mocks["chat_with_ai"].return_value = "Generated PR description"
-
-        # Execute
-        write_pr_description(mock_pr_payload)
-
-        # Verify issue body retrieval with large issue number
-        all_mocks["get_issue_body"].assert_called_once_with(
-            owner="test-owner",
-            repo="test-repo",
-            issue_number=large_number,
-            token="ghs_test_token",
-        )
+        # Verify AI call was made
+        all_mocks["chat_with_ai"].assert_called_once()
 
     def test_write_pr_description_with_git_commands_containing_quotes(
         self, mock_pr_payload, all_mocks
@@ -762,7 +644,7 @@ class TestWritePrDescription:
         )
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -772,7 +654,6 @@ class TestWritePrDescription:
 
         # Verify PR body update with quoted commands
         expected_body = (
-            "Resolves #456\n\n"
             "Generated PR description\n\n"
             "```\n"
             'git commit -m "Fix issue with \\"quotes\\""\n'
@@ -797,7 +678,7 @@ class TestWritePrDescription:
         )
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -806,7 +687,7 @@ class TestWritePrDescription:
         write_pr_description(mock_pr_payload)
 
         # Verify PR body update with minimal git commands (only 'git ' is included)
-        expected_body = "Resolves #456\n\nGenerated PR description\n\n```\ngit \n```"
+        expected_body = "Generated PR description\n\n```\ngit \n```"
         all_mocks["update_pull_request_body"].assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/pulls/123",
             token="ghs_test_token",
@@ -821,7 +702,7 @@ class TestWritePrDescription:
         mock_pr_payload["pull_request"]["user"]["login"] = "GitAuto-AI[bot]"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -890,7 +771,7 @@ class TestWritePrDescription:
         mock_pr_payload["pull_request"]["user"]["login"] = "custom-bot"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = []
-        all_mocks["get_issue_body"].return_value = "Issue description"
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -911,7 +792,7 @@ class TestWritePrDescription:
         file_changes = [{"filename": "file\nwith\nnewlines.py", "status": "modified"}]
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
         all_mocks["get_pull_request_file_changes"].return_value = file_changes
-        all_mocks["get_issue_body"].return_value = 'Issue with "quotes" and \n newlines'
+
         all_mocks["is_pull_request_open"].return_value = True
         all_mocks["check_branch_exists"].return_value = True
         all_mocks["chat_with_ai"].return_value = "Generated PR description"
@@ -946,7 +827,7 @@ class TestWritePrDescription:
 
         # Verify no further functions are called after token failure
         all_mocks["get_pull_request_file_changes"].assert_not_called()
-        all_mocks["get_issue_body"].assert_not_called()
+
         all_mocks["is_pull_request_open"].assert_not_called()
 
     def test_write_pr_description_with_malformed_resolves_statement(
@@ -964,8 +845,7 @@ class TestWritePrDescription:
         # Execute - should handle IndexError gracefully
         write_pr_description(mock_pr_payload)
 
-        # Verify issue body is not retrieved due to malformed resolves statement
-        all_mocks["get_issue_body"].assert_not_called()
+        # Verify PR body update due to malformed resolves statement
 
         # Verify AI call still proceeds
         all_mocks["chat_with_ai"].assert_called_once()

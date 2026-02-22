@@ -48,7 +48,7 @@ def test_has_comment_with_text_found_single_text(
     result = has_comment_with_text(
         owner=owner,
         repo=repo,
-        issue_number=fake.random_int(min=1, max=999),
+        pr_number=fake.random_int(min=1, max=999),
         token=token,
         texts=["specific text"],
     )
@@ -70,7 +70,7 @@ def test_has_comment_with_text_found_multiple_texts(
     result = has_comment_with_text(
         owner=owner,
         repo=repo,
-        issue_number=fake.random_int(min=1, max=999),
+        pr_number=fake.random_int(min=1, max=999),
         token=token,
         texts=["first text", "second text", "third text"],
     )
@@ -90,7 +90,7 @@ def test_has_comment_with_text_not_found(owner, repo, token, mock_get_all_commen
     result = has_comment_with_text(
         owner=owner,
         repo=repo,
-        issue_number=fake.random_int(min=1, max=999),
+        pr_number=fake.random_int(min=1, max=999),
         token=token,
         texts=["missing text"],
     )
@@ -107,7 +107,7 @@ def test_has_comment_with_text_wrong_user(owner, repo, token, mock_get_all_comme
     result = has_comment_with_text(
         owner=owner,
         repo=repo,
-        issue_number=fake.random_int(min=1, max=999),
+        pr_number=fake.random_int(min=1, max=999),
         token=token,
         texts=["target text"],
     )
@@ -123,7 +123,7 @@ def test_has_comment_with_text_empty_comments(
     result = has_comment_with_text(
         owner=owner,
         repo=repo,
-        issue_number=fake.random_int(min=1, max=999),
+        pr_number=fake.random_int(min=1, max=999),
         token=token,
         texts=["any text"],
     )
@@ -142,7 +142,7 @@ def test_has_comment_with_text_empty_texts_list(
     result = has_comment_with_text(
         owner=owner,
         repo=repo,
-        issue_number=fake.random_int(min=1, max=999),
+        pr_number=fake.random_int(min=1, max=999),
         token=token,
         texts=[],
     )
@@ -158,7 +158,7 @@ def test_has_comment_with_text_get_all_comments_exception(
     result = has_comment_with_text(
         owner=owner,
         repo=repo,
-        issue_number=fake.random_int(min=1, max=999),
+        pr_number=fake.random_int(min=1, max=999),
         token=token,
         texts=["any text"],
     )

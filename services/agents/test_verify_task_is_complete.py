@@ -78,7 +78,7 @@ def base_args(tmp_path):
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "clone_dir": str(tmp_path),
@@ -99,7 +99,7 @@ async def test_verify_task_is_complete_success_with_changes(mock_get_files, base
     assert result.message == "Task completed."
     assert result.fixes_applied == []
     mock_get_files.assert_called_once_with(
-        owner="test-owner", repo="test-repo", pull_number=123, token="test-token"
+        owner="test-owner", repo="test-repo", pr_number=123, token="test-token"
     )
 
 
@@ -146,35 +146,13 @@ async def test_verify_task_is_complete_failure_no_changes(mock_get_files, base_a
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_verify_task_is_complete_no_pull_number_returns_default(mock_get_files):
+async def test_verify_task_is_complete_no_pr_number_returns_default(mock_get_files):
     args = cast(
         BaseArgs,
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": None,
-            "token": "test-token",
-        },
-    )
-
-    result = await verify_task_is_complete(args)
-
-    assert result.success is False
-    assert "error" in result.message.lower()
-    mock_get_files.assert_not_called()
-
-
-@pytest.mark.asyncio
-@patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_verify_task_is_complete_no_pull_number_with_issue_returns_default(
-    mock_get_files,
-):
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "issue_number": 456,
+            "pr_number": None,
             "token": "test-token",
         },
     )
@@ -597,7 +575,7 @@ async def test_baseline_tsc_errors_filtered(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {pre_existing_error},
@@ -647,7 +625,7 @@ async def test_all_tsc_errors_pre_existing_passes(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {pre_existing},
@@ -701,7 +679,7 @@ async def test_baseline_tsc_errors_in_pr_files_still_reported(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {pr_file_error},
@@ -752,7 +730,7 @@ async def test_verify_commits_updated_snapshots(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "clone_dir": "/tmp/clone",
@@ -775,14 +753,14 @@ async def test_verify_commits_updated_snapshots(
 # ============================================================
 # 9 handler × error-case matrix tests
 # ============================================================
-# 3 handlers: issue_handler, check_suite_handler, review_run_handler
+# 3 handlers: new_pr_handler, check_suite_handler, review_run_handler
 # 3 cases per handler:
 #   1. Error in PR file → always report
 #   2. Error in non-PR file AND in baseline → skip (pre-existing)
 #   3. Error in non-PR file AND NOT in baseline → report
 
 
-# --- issue_handler: baseline comes from master (base) branch ---
+# --- new_pr_handler: baseline comes from master (base) branch ---
 
 
 @pytest.mark.asyncio
@@ -790,10 +768,10 @@ async def test_verify_commits_updated_snapshots(
 @patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_issue_handler_error_in_pr_file_reported(
+async def test_new_pr_handler_error_in_pr_file_reported(
     mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
 ):
-    """issue_handler: Agent wrote new code with a type error in a PR file.
+    """new_pr_handler: Agent wrote new code with a type error in a PR file.
 
     Baseline is from master (clean), so error is NOT in baseline.
     Error must be reported because the file is in the PR.
@@ -821,7 +799,7 @@ async def test_issue_handler_error_in_pr_file_reported(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": set(),  # Master was clean
@@ -839,10 +817,10 @@ async def test_issue_handler_error_in_pr_file_reported(
 @patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_issue_handler_preexisting_non_pr_file_error_skipped(
+async def test_new_pr_handler_preexisting_non_pr_file_error_skipped(
     mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
 ):
-    """issue_handler: Master has a pre-existing tsc error in an unrelated file.
+    """new_pr_handler: Master has a pre-existing tsc error in an unrelated file.
 
     Error is in a non-PR file AND in baseline → skip.
     Task should pass since the error is not caused by the PR.
@@ -870,7 +848,7 @@ async def test_issue_handler_preexisting_non_pr_file_error_skipped(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {preexisting},
@@ -889,10 +867,10 @@ async def test_issue_handler_preexisting_non_pr_file_error_skipped(
 @patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_issue_handler_new_non_pr_file_error_reported(
+async def test_new_pr_handler_new_non_pr_file_error_reported(
     mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
 ):
-    """issue_handler: PR changes caused a type error in a file the agent didn't modify.
+    """new_pr_handler: PR changes caused a type error in a file the agent didn't modify.
 
     Error is in a non-PR file AND NOT in baseline → report.
     The PR changes broke an importing file.
@@ -920,7 +898,7 @@ async def test_issue_handler_new_non_pr_file_error_reported(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": set(),  # Master was clean
@@ -976,7 +954,7 @@ async def test_check_suite_error_in_pr_file_in_baseline_reported(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             # Baseline from PR branch contains this error
@@ -1027,7 +1005,7 @@ async def test_check_suite_preexisting_non_pr_file_error_skipped(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {preexisting},
@@ -1078,7 +1056,7 @@ async def test_check_suite_new_non_pr_file_error_reported(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": set(),
@@ -1134,7 +1112,7 @@ async def test_review_run_error_in_pr_file_in_baseline_reported(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {pr_file_error},
@@ -1182,7 +1160,7 @@ async def test_review_run_preexisting_non_pr_file_error_skipped(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {preexisting},
@@ -1231,7 +1209,7 @@ async def test_review_run_new_non_pr_file_error_reported(
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": set(),

@@ -10,8 +10,7 @@ BASE_ARGS = cast(
     {
         "owner": "test-owner",
         "repo": "test-repo",
-        "issue_number": 42,
-        "pull_number": 43,
+        "pr_number": 42,
         "new_branch": "feature-branch",
         "token": "test-token",
     },
@@ -123,15 +122,14 @@ def test_skips_slack_when_thread_ts_is_none(
 @patch("services.webhook.utils.should_bail.is_pull_request_open")
 @patch(MOCK_OOM_OK, return_value=(False, 500.0))
 @patch(MOCK_TIMEOUT, return_value=(False, 60.0))
-def test_skips_pr_check_when_pull_number_not_set(
+def test_skips_pr_check_when_pr_number_not_set(
     _mock_timeout, _mock_oom, mock_pr_open, _mock_branch
 ):
-    args_without_pull_number = cast(
+    args_without_pr_number = cast(
         BaseArgs,
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "issue_number": 42,
             "new_branch": "feature-branch",
             "token": "test-token",
         },
@@ -139,7 +137,7 @@ def test_skips_pr_check_when_pull_number_not_set(
     result = should_bail(
         current_time=1000.0,
         phase="execution",
-        base_args=args_without_pull_number,
+        base_args=args_without_pr_number,
         slack_thread_ts=None,
     )
     assert result is False

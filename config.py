@@ -79,10 +79,8 @@ CREDIT_AMOUNTS_USD = {
     "usage": -CREDIT_USAGE_USD,
     "grant": CREDIT_USAGE_USD * 3,
 }
-ISSUE_NUMBER_FORMAT = "/issue-"  # DO NOT USE "#" as it is a special character and has to be encoded in URL, like in GitHub API URL
 MAX_RETRIES = 3
 PER_PAGE = 100
-PR_BODY_STARTS_WITH = "Resolves #"  # https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue
 PRODUCT_ID = get_env_var(name="PRODUCT_ID")
 PRODUCT_NAME = "GitAuto"
 TIMEOUT = 120  # seconds

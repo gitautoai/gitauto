@@ -1,19 +1,8 @@
-from typing import Literal, cast
+from typing import cast
+
+from constants.triggers import Trigger
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
-
-
-Trigger = Literal[
-    "issue_label",
-    "issue_comment",
-    "pr_review",
-    "review_comment",
-    "test_failure",
-    "pr_merge",
-    "setup",
-    # "push",
-    # "schedule",
-]
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -23,12 +12,11 @@ def insert_usage(
     owner_name: str,
     repo_id: int,
     repo_name: str,
-    issue_number: int,
+    pr_number: int,
     user_id: int,
     installation_id: int,
     source: str,
     trigger: Trigger,
-    pr_number: int | None = None,
     lambda_log_group: str | None = None,
     lambda_log_stream: str | None = None,
     lambda_request_id: str | None = None,
@@ -42,7 +30,7 @@ def insert_usage(
                 "owner_name": owner_name,
                 "repo_id": repo_id,
                 "repo_name": repo_name,
-                "issue_number": issue_number,
+                "issue_number": pr_number,
                 "user_id": user_id,
                 "installation_id": installation_id,
                 "source": source,

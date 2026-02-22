@@ -8,7 +8,7 @@ def test_update_pull_request_branch_success():
 
     with patch("requests.put", return_value=mock_response) as mock_put:
         status, error = update_pull_request_branch(
-            owner="test-owner", repo="test-repo", pull_number=123, token="test-token"
+            owner="test-owner", repo="test-repo", pr_number=123, token="test-token"
         )
 
         assert status == "updated"
@@ -21,7 +21,7 @@ def test_update_pull_request_branch_success():
 def test_update_pull_request_branch_error():
     with patch("requests.put", side_effect=Exception("API error")):
         status, error = update_pull_request_branch(
-            owner="test-owner", repo="test-repo", pull_number=123, token="test-token"
+            owner="test-owner", repo="test-repo", pr_number=123, token="test-token"
         )
 
         assert status == "failed"
@@ -37,7 +37,7 @@ def test_update_pull_request_branch_already_up_to_date():
 
     with patch("requests.put", return_value=mock_response):
         status, error = update_pull_request_branch(
-            owner="test-owner", repo="test-repo", pull_number=123, token="test-token"
+            owner="test-owner", repo="test-repo", pr_number=123, token="test-token"
         )
 
         assert status == "up_to_date"
@@ -53,7 +53,7 @@ def test_update_pull_request_branch_merge_conflict():
 
     with patch("requests.put", return_value=mock_response):
         status, error = update_pull_request_branch(
-            owner="test-owner", repo="test-repo", pull_number=123, token="test-token"
+            owner="test-owner", repo="test-repo", pr_number=123, token="test-token"
         )
 
         assert status == "conflict"
@@ -67,7 +67,7 @@ def test_update_pull_request_branch_http_error():
 
     with patch("requests.put", return_value=mock_response):
         status, error = update_pull_request_branch(
-            owner="test-owner", repo="test-repo", pull_number=123, token="test-token"
+            owner="test-owner", repo="test-repo", pr_number=123, token="test-token"
         )
 
         assert status == "failed"

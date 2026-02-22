@@ -3,43 +3,32 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 
+# Local imports
 from config import PRODUCT_ID
-
-# Local imports (Types)
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 from schemas.supabase.types import Coverages, CoveragesInsert
-
-# Local imports (AI)
 from services.claude.evaluate_condition import evaluate_condition
-
-# Local imports (AWS)
 from services.aws.delete_scheduler import delete_scheduler
-
-# Local imports (GitHub)
+from services.github.branches.create_remote_branch import create_remote_branch
 from services.github.branches.get_default_branch import get_default_branch
+from services.github.commits.create_empty_commit import create_empty_commit
+from services.github.commits.get_latest_remote_commit_sha import (
+    get_latest_remote_commit_sha,
+)
 from services.github.files.get_raw_content import get_raw_content
-from services.github.issues.create_issue import create_issue
+from services.github.labels.add_labels import add_labels
+from services.github.pulls.create_pull_request import create_pull_request
 from services.github.pulls.get_open_pull_requests import get_open_pull_requests
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree import get_file_tree
-
-# Local imports (Notifications)
-from services.resend.send_email import send_email
-from services.resend.text.issues_disabled_email import get_issues_disabled_email_text
-from services.slack.slack_notify import slack_notify
-
-# Local imports (Supabase)
+from services.github.types.github_types import BaseArgs
 from services.supabase.coverages.exclude_from_testing import exclude_from_testing
 from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.supabase.coverages.insert_coverages import insert_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
 from services.supabase.repositories.get_repository import get_repository
-from services.supabase.repositories.update_repository import update_repository
 from services.supabase.schedule_pauses.is_schedule_paused import is_schedule_paused
-from services.supabase.users.get_user import get_user
 from services.stripe.check_availability import check_availability
-
-# Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_code_file import is_code_file
 from utils.files.is_config_file import is_config_file
@@ -48,8 +37,10 @@ from utils.files.is_migration_file import is_migration_file
 from utils.files.is_test_file import is_test_file
 from utils.files.is_type_file import is_type_file
 from utils.files.should_skip_test import should_skip_test
-from utils.issue_templates.schedule import get_issue_title, get_issue_body
+from utils.generate_branch_name import generate_branch_name
+from utils.pr_templates.schedule import get_pr_title, get_pr_body
 from utils.logging.logging_config import logger, set_trigger
+from utils.text.text_copy import git_command
 from utils.prompts.should_test_file import SHOULD_TEST_FILE_PROMPT
 
 
@@ -61,7 +52,6 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     owner_name = event.get("ownerName")
     repo_id = event.get("repoId")
     repo_name = event.get("repoName")
-    user_id = event.get("userId")
     user_name = event.get("userName")
     installation_id = event.get("installationId")
 
@@ -329,8 +319,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     has_existing_tests = any(
         is_test_file(fp) and target_stem in fp.lower() for fp, _ in all_files_with_sizes
     )
-    title = get_issue_title(target_path, has_existing_tests=has_existing_tests)
-    body = get_issue_body(
+    title = get_pr_title(target_path, has_existing_tests=has_existing_tests)
+    body = get_pr_body(
         owner=owner_name,
         repo=repo_name,
         branch=target_branch,
@@ -344,83 +334,71 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         uncovered_branches=target_item["uncovered_branches"],
     )
 
-    # Create the issue with gitauto label and assign to the user
-    status_code, issue_response = create_issue(
+    # Create a PR
+    new_branch = generate_branch_name(trigger="schedule")
+    clone_url = f"https://github.com/{owner_name}/{repo_name}.git"
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": owner_name,
+            "repo": repo_name,
+            "base_branch": target_branch,
+            "new_branch": new_branch,
+            "token": token,
+            "clone_url": clone_url,
+        },
+    )
+    latest_sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
+    create_remote_branch(sha=latest_sha, base_args=base_args)
+    create_empty_commit(
+        base_args=base_args, message="Initial empty commit to create PR [skip ci]"
+    )
+    pr_body = body + git_command(new_branch_name=new_branch)
+    pr_url, pr_number = create_pull_request(
+        body=pr_body, title=title, base_args=base_args
+    )
+
+    # Add gitauto label to trigger issues.labeled webhook, which runs the agent
+    add_labels(
         owner=owner_name,
         repo=repo_name,
+        pr_number=pr_number,
         token=token,
-        title=title,
-        body=body,
-        assignees=[user_name],
         labels=[PRODUCT_ID],
     )
 
-    # Handle 410 - issues are disabled for this repository
-    if status_code == 410:
-        # Disable schedule trigger in database
-        update_repository(
+    # Update coverage record with PR URL
+    if target_item["id"] == 0:
+        coverage_record: CoveragesInsert = {
+            "full_path": target_item["full_path"],
+            "owner_id": target_item["owner_id"],
+            "repo_id": target_item["repo_id"],
+            "branch_name": target_item["branch_name"],
+            "created_by": target_item["created_by"],
+            "updated_by": target_item["updated_by"],
+            "level": target_item["level"],
+            "file_size": target_item["file_size"],
+            "statement_coverage": target_item["statement_coverage"],
+            "function_coverage": target_item["function_coverage"],
+            "branch_coverage": target_item["branch_coverage"],
+            "line_coverage": target_item["line_coverage"],
+            "package_name": target_item["package_name"],
+            "language": target_item["language"],
+            "github_issue_url": pr_url,
+            "is_excluded_from_testing": target_item["is_excluded_from_testing"],
+            "exclusion_reason": target_item["exclusion_reason"],
+            "uncovered_lines": target_item["uncovered_lines"],
+            "uncovered_functions": target_item["uncovered_functions"],
+            "uncovered_branches": target_item["uncovered_branches"],
+        }
+        insert_coverages(coverage_record)
+    else:
+        update_issue_url(
             owner_id=owner_id,
             repo_id=repo_id,
-            trigger_on_schedule=False,
-            updated_by=user_name,
+            file_path=target_path,
+            github_issue_url=pr_url,
         )
 
-        # Delete AWS scheduler
-        schedule_name = f"gitauto-repo-{owner_id}-{repo_id}"
-        delete_scheduler(schedule_name)
-
-        # Send email notification to user
-        if user_id:
-            user = get_user(user_id=user_id)
-            email = user.get("email") if user else None
-            if email:
-                subject, text = get_issues_disabled_email_text(
-                    user_name, owner_name, repo_name
-                )
-                send_email(to=email, subject=subject, text=text)
-
-        msg = "Issues are disabled. Disabled schedule trigger."
-        logger.warning(msg)
-        slack_notify(msg)
-        return {"status": "skipped", "message": msg}
-
-    if status_code == 200 and issue_response and "html_url" in issue_response:
-        if target_item["id"] == 0:
-            coverage_record: CoveragesInsert = {
-                "full_path": target_item["full_path"],
-                "owner_id": target_item["owner_id"],
-                "repo_id": target_item["repo_id"],
-                "branch_name": target_item["branch_name"],
-                "created_by": target_item["created_by"],
-                "updated_by": target_item["updated_by"],
-                "level": target_item["level"],
-                "file_size": target_item["file_size"],
-                "statement_coverage": target_item["statement_coverage"],
-                "function_coverage": target_item["function_coverage"],
-                "branch_coverage": target_item["branch_coverage"],
-                "line_coverage": target_item["line_coverage"],
-                "package_name": target_item["package_name"],
-                "language": target_item["language"],
-                "github_issue_url": issue_response["html_url"],
-                "is_excluded_from_testing": target_item["is_excluded_from_testing"],
-                "exclusion_reason": target_item["exclusion_reason"],
-                "uncovered_lines": target_item["uncovered_lines"],
-                "uncovered_functions": target_item["uncovered_functions"],
-                "uncovered_branches": target_item["uncovered_branches"],
-            }
-            insert_coverages(coverage_record)
-        else:
-            update_issue_url(
-                owner_id=owner_id,
-                repo_id=repo_id,
-                file_path=target_path,
-                github_issue_url=issue_response["html_url"],
-            )
-
-        msg = f"created issue for {target_path}"
-        return {"status": "success", "message": msg}
-
-    # Handle other errors
-    msg = f"Failed to create issue for {target_path} (status: {status_code})"
-    logger.error(msg)
-    return {"status": "failed", "message": msg}
+    msg = f"created PR for {target_path}: {pr_url}"
+    return {"status": "success", "message": msg}

@@ -4,7 +4,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=True, raise_on_error=False)
-def is_pull_request_open(owner: str, repo: str, pull_number: int, token: str):
+def is_pull_request_open(owner: str, repo: str, pr_number: int, token: str):
     """Check if a pull request is still open using GraphQL"""
     client = get_graphql_client(token=token)
     query = gql(
@@ -21,7 +21,7 @@ def is_pull_request_open(owner: str, repo: str, pull_number: int, token: str):
 
     result = client.execute(
         query,
-        variable_values={"owner": owner, "repo": repo, "pullNumber": pull_number},
+        variable_values={"owner": owner, "repo": repo, "pullNumber": pr_number},
     )
 
     repository = result.get("repository")

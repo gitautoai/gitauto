@@ -20,7 +20,7 @@ def sample_params():
     return {
         "owner": "test-owner",
         "repo": "test-repo",
-        "pull_number": 123,
+        "pr_number": 123,
         "token": "test-token",
     }
 

@@ -178,13 +178,13 @@ async def handle_check_suite(
         return
 
     pull_request = pull_requests[0]
-    pull_number = pull_request["number"]
-    set_pr_number(pull_number)
+    pr_number = pull_request["number"]
+    set_pr_number(pr_number)
 
     full_pr = get_pull_request(
-        owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
-    pull_title = full_pr["title"]
+    pr_title = full_pr["title"]
     target_branch = full_pr["base"]["ref"]
 
     # Get repository settings - check if trigger_on_test_failure is enabled
@@ -193,13 +193,12 @@ async def handle_check_suite(
         return
 
     # Start notification
-    start_msg = f"Check run handler started for `{check_run_name}` in PR #{pull_number} in `{owner_name}/{repo_name}`"
+    start_msg = f"Check run handler started for `{check_run_name}` in PR #{pr_number} in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
 
-    clone_dir = get_clone_dir(owner_name, repo_name, pull_number)
+    clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args: BaseArgs = {
         # Required fields
-        "input_from": "github",
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
@@ -207,12 +206,12 @@ async def handle_check_suite(
         "repo": repo_name,
         "clone_url": repo["clone_url"],
         "is_fork": is_fork,
-        "issue_number": pull_number,
-        "issue_title": pull_title,
-        "issue_body": f"Automated fix for failed check run: {check_run_name}",
-        "issue_comments": [],
+        "pr_number": pr_number,
+        "pr_title": pr_title,
+        "pr_body": full_pr["body"] or "",
+        "pr_comments": [],  # Not needed - check_suite agent uses CI error logs, not PR discussion
         "latest_commit_sha": check_run["head_sha"],
-        "issuer_name": sender_name,
+        "pr_creator": sender_name,
         "base_branch": head_branch,
         "new_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_file_tree requires the base branch
         "installation_id": installation_id,
@@ -225,8 +224,6 @@ async def handle_check_suite(
         "github_urls": [],
         "other_urls": [],
         "clone_dir": clone_dir,
-        # Extra fields for backward compatibility
-        "pull_number": pull_number,
         "workflow_id": circleci_workflow_id if is_circleci else github_run_id,
         "check_run_name": check_run_name,
         "skip_ci": True,
@@ -256,11 +253,11 @@ async def handle_check_suite(
     if has_comment_with_text(
         owner=owner_name,
         repo=repo_name,
-        issue_number=pull_number,
+        pr_number=pr_number,
         token=token,
         texts=[CHECK_RUN_STUMBLED_MESSAGE],
     ):
-        msg = f"Skipped - stumbled comment exists for PR #{pull_number}"
+        msg = f"Skipped - stumbled comment exists for PR #{pr_number}"
         logger.info(msg)
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
@@ -268,18 +265,18 @@ async def handle_check_suite(
     if has_comment_with_text(
         owner=owner_name,
         repo=repo_name,
-        issue_number=pull_number,
+        pr_number=pr_number,
         token=token,
         texts=[PERMISSION_DENIED_MESSAGE],
     ):
-        msg = f"Skipped - permission request pending for PR #{pull_number}"
+        msg = f"Skipped - permission request pending for PR #{pr_number}"
         logger.error(msg)
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
     # Check if there are too many GitAuto commits (prevent infinite retry loops)
     pr_commits = get_pull_request_commits(
-        owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
     gitauto_commit_count = sum(
         1
@@ -290,9 +287,9 @@ async def handle_check_suite(
 
     if gitauto_commit_count >= MAX_GITAUTO_COMMITS_PER_PR:
         comment_msg = f"I've made {gitauto_commit_count} commits trying to fix this, but the tests keep failing with slightly different errors. I'm going to stop here to avoid an infinite loop. Could you take a look?"
-        msg = f"Stopped after {gitauto_commit_count} commits in PR #{pull_number} - preventing infinite loop"
+        msg = f"Stopped after {gitauto_commit_count} commits in PR #{pr_number} - preventing infinite loop"
         logger.info(msg)
-        create_comment(body=comment_msg, base_args=base_args, target="pr")
+        create_comment(body=comment_msg, base_args=base_args)
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
@@ -302,7 +299,7 @@ async def handle_check_suite(
     msg = CHECK_RUN_STUMBLED_MESSAGE
     add_log_message(msg, log_messages)
     body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    comment_url = create_comment(body=body, base_args=base_args, target="pr")
+    comment_url = create_comment(body=body, base_args=base_args)
     base_args["comment_url"] = comment_url
 
     # Create a usage record
@@ -315,11 +312,10 @@ async def handle_check_suite(
         owner_name=owner_name,
         repo_id=repo_id,
         repo_name=repo_name,
-        issue_number=pull_number,
+        pr_number=pr_number,
         source="github",
         trigger="test_failure",
         email=None,
-        pr_number=pull_number,
         lambda_info=lambda_info,
     )
 
@@ -330,7 +326,7 @@ async def handle_check_suite(
 
     # Get changed files in the PR
     changed_files = get_pull_request_files(
-        owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
 
     p += 5
@@ -493,7 +489,7 @@ async def handle_check_suite(
                     token_output=0,
                     total_seconds=int(time.time() - current_time),
                     is_completed=True,
-                    pr_number=pull_number,
+                    pr_number=pr_number,
                     original_error_log=error_log,
                     minimized_error_log=clean_logs(error_log),
                 )
@@ -513,7 +509,7 @@ async def handle_check_suite(
                 token_output=0,
                 total_seconds=int(time.time() - current_time),
                 is_completed=True,
-                pr_number=pull_number,
+                pr_number=pr_number,
                 original_error_log=error_log,
                 minimized_error_log=clean_logs(error_log),
             )
@@ -531,7 +527,7 @@ async def handle_check_suite(
         workflow_id = str(github_run_id)
     current_pair = f"{workflow_id}:{error_log_hash}"
     logger.info("Workflow ID and error log hash pair: %s", current_pair)
-    logger.info("Error log content for PR #%s:", pull_number)
+    logger.info("Error log content for PR #%s:", pr_number)
     logger.info(error_log)
 
     # Clean logs using the complete pipeline
@@ -539,7 +535,7 @@ async def handle_check_suite(
 
     # Check if this exact pair exists
     existing_pairs = get_retry_workflow_id_hash_pairs(
-        owner_id=owner_id, repo_id=repo_id, pr_number=pull_number
+        owner_id=owner_id, repo_id=repo_id, pr_number=pr_number
     )
     if existing_pairs and current_pair in existing_pairs:
         msg = f"Skipping `{check_run_name}` because GitAuto has already tried to fix this exact error before `{current_pair}`."
@@ -554,7 +550,7 @@ async def handle_check_suite(
                 token_output=0,
                 total_seconds=int(time.time() - current_time),
                 is_completed=True,
-                pr_number=pull_number,
+                pr_number=pr_number,
                 retry_workflow_id_hash_pairs=existing_pairs,
                 original_error_log=error_log,
                 minimized_error_log=minimized_log,
@@ -568,7 +564,7 @@ async def handle_check_suite(
     # Save the pair to avoid infinite loops
     existing_pairs.append(current_pair)
     update_retry_workflow_id_hash_pairs(
-        owner_id=owner_id, repo_id=repo_id, pr_number=pull_number, pairs=existing_pairs
+        owner_id=owner_id, repo_id=repo_id, pr_number=pr_number, pairs=existing_pairs
     )
 
     p += 5
@@ -595,7 +591,7 @@ async def handle_check_suite(
             )
 
     input_message: dict[str, str | list[str] | None] = {
-        "pull_request_title": pull_title,
+        "pull_request_title": pr_title,
         "changed_files": json.dumps(obj=changed_files),
         "step_1_ci_error_log": minimized_log,
         "today": today,
@@ -638,14 +634,14 @@ async def handle_check_suite(
             check_older_active_test_failure_request(
                 owner_id=owner_id,
                 repo_id=repo_id,
-                pr_number=pull_number,
+                pr_number=pr_number,
                 current_usage_id=usage_id,
             )
             if usage_id
             else None
         )
         if older_active_request:
-            body = f"Stopped - older active test failure request found for PR #{pull_number}. Avoiding race condition."
+            body = f"Stopped - older active test failure request found for PR #{pr_number}. Avoiding race condition."
             logger.info(body)
             if comment_url:
                 update_comment(body=body, base_args=base_args)
@@ -705,7 +701,7 @@ async def handle_check_suite(
             token_input=total_token_input,
             token_output=total_token_output,
             total_seconds=int(end_time - current_time),
-            pr_number=pull_number,
+            pr_number=pr_number,
             is_completed=True,
             retry_workflow_id_hash_pairs=existing_pairs,
             original_error_log=error_log,

@@ -276,7 +276,7 @@ def test_auto_merge_success(
         mock_merge_pr.assert_called_once_with(
             owner="gitautoai",
             repo="circle-ci-test",
-            pull_number=2,
+            pr_number=2,
             token="test-token",
             merge_method="squash",
         )
@@ -406,7 +406,7 @@ def test_auto_merge_multiple_test_files_changed(
         mock_merge_pr.assert_called_once_with(
             owner="gitautoai",
             repo="circle-ci-test",
-            pull_number=2,
+            pr_number=2,
             token="test-token",
             merge_method="merge",
         )
@@ -558,7 +558,7 @@ def test_auto_merge_with_non_test_files_allowed(
         mock_merge_pr.assert_called_once_with(
             owner="gitautoai",
             repo="circle-ci-test",
-            pull_number=2,
+            pr_number=2,
             token="test-token",
             merge_method="merge",
         )
@@ -834,7 +834,7 @@ def test_auto_merge_with_unstable_state(
         mock_merge_pr.assert_called_once_with(
             owner="gitautoai",
             repo="circle-ci-test",
-            pull_number=2,
+            pr_number=2,
             token="test-token",
             merge_method="merge",
         )

@@ -1,6 +1,7 @@
+from constants.triggers import Trigger
 from services.supabase.issues.get_issue import get_issue
 from services.supabase.issues.insert_issue import insert_issue
-from services.supabase.usage.insert_usage import insert_usage, Trigger
+from services.supabase.usage.insert_usage import insert_usage
 from services.supabase.users.upsert_user import upsert_user
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -15,18 +16,17 @@ def create_user_request(
     owner_name: str,
     repo_id: int,
     repo_name: str,
-    issue_number: int,
+    pr_number: int,
     source: str,
     trigger: Trigger,
     email: str | None,
-    pr_number: int | None = None,
     lambda_info: dict[str, str | None] | None = None,
 ):
     existing_issue = get_issue(
         owner_type=owner_type,
         owner_name=owner_name,
         repo_name=repo_name,
-        issue_number=issue_number,
+        pr_number=pr_number,
     )
 
     if not existing_issue:
@@ -36,7 +36,7 @@ def create_user_request(
             owner_name=owner_name,
             repo_id=repo_id,
             repo_name=repo_name,
-            issue_number=issue_number,
+            pr_number=pr_number,
             installation_id=installation_id,
         )
 
@@ -51,12 +51,11 @@ def create_user_request(
         owner_name=owner_name,
         repo_id=repo_id,
         repo_name=repo_name,
-        issue_number=issue_number,
+        pr_number=pr_number,
         user_id=user_id,
         installation_id=installation_id,
         source=source,
         trigger=trigger,
-        pr_number=pr_number,
         lambda_log_group=lambda_log_group,
         lambda_log_stream=lambda_log_stream,
         lambda_request_id=lambda_request_id,

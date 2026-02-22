@@ -216,10 +216,10 @@ def test_handle_push_local_main_to_remote_main_handled(
     )
     assert mock_update_pr.call_count == 2
     mock_update_pr.assert_any_call(
-        owner="test-owner", repo="test-repo", pull_number=1, token="test-token"
+        owner="test-owner", repo="test-repo", pr_number=1, token="test-token"
     )
     mock_update_pr.assert_any_call(
-        owner="test-owner", repo="test-repo", pull_number=2, token="test-token"
+        owner="test-owner", repo="test-repo", pr_number=2, token="test-token"
     )
     mock_logger.info.assert_called_once()
 
@@ -260,7 +260,7 @@ def test_handle_push_remote_feature_to_remote_main_handled(
         owner="test-owner", repo="test-repo", target_branch="main", token="test-token"
     )
     mock_update_pr.assert_called_once_with(
-        owner="test-owner", repo="test-repo", pull_number=5, token="test-token"
+        owner="test-owner", repo="test-repo", pr_number=5, token="test-token"
     )
     mock_logger.info.assert_called_once()
 

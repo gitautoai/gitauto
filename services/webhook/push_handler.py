@@ -56,7 +56,7 @@ def handle_push(payload: PushWebhookPayload):
     for pr in open_prs:
         pr_number = pr["number"]
         status, error = update_pull_request_branch(
-            owner=owner_name, repo=repo_name, pull_number=pr_number, token=token
+            owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
         )
         if status == "updated":
             updated_count += 1

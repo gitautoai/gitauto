@@ -83,7 +83,7 @@ class Repository(TypedDict):
     archived: bool
     disabled: bool
     open_issues_count: int
-    license: Optional[str]
+    license: Optional[dict]
     allow_forking: bool
     is_template: bool
     web_commit_signoff_required: bool

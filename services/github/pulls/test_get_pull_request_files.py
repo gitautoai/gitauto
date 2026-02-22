@@ -33,7 +33,7 @@ def test_get_pull_request_files_success(mock_requests, mock_create_headers):
     mock_requests.get.side_effect = [mock_response, empty_response]
 
     result = get_pull_request_files(
-        owner="test-owner", repo="test-repo", pull_number=1, token="token123"
+        owner="test-owner", repo="test-repo", pr_number=1, token="token123"
     )
 
     expected = [
@@ -67,7 +67,7 @@ def test_get_pull_request_files_pagination():
         mock_get.side_effect = [mock_response1, mock_response2, mock_response3]
 
         result = get_pull_request_files(
-            owner="test-owner", repo="test-repo", pull_number=1, token="token123"
+            owner="test-owner", repo="test-repo", pr_number=1, token="token123"
         )
 
         expected = [
@@ -99,7 +99,7 @@ def test_get_pull_request_files_missing_fields():
         mock_get.side_effect = [mock_response, empty_response]
 
         result = get_pull_request_files(
-            owner="test-owner", repo="test-repo", pull_number=1, token="token123"
+            owner="test-owner", repo="test-repo", pr_number=1, token="token123"
         )
 
         expected = [
@@ -120,7 +120,7 @@ def test_get_pull_request_files_http_error():
         mock_get.return_value = mock_response
 
         result = get_pull_request_files(
-            owner="test-owner", repo="test-repo", pull_number=1, token="token123"
+            owner="test-owner", repo="test-repo", pr_number=1, token="token123"
         )
 
         assert not result
@@ -134,7 +134,7 @@ def test_get_pull_request_files_empty_response():
         mock_get.return_value = mock_response
 
         result = get_pull_request_files(
-            owner="test-owner", repo="test-repo", pull_number=1, token="token123"
+            owner="test-owner", repo="test-repo", pr_number=1, token="token123"
         )
 
         assert not result
@@ -148,7 +148,7 @@ def test_get_pull_request_files_constructs_correct_url():
         mock_get.return_value = mock_response
 
         get_pull_request_files(
-            owner="my-org", repo="my-repo", pull_number=42, token="token123"
+            owner="my-org", repo="my-repo", pr_number=42, token="token123"
         )
 
         call_args = mock_get.call_args
