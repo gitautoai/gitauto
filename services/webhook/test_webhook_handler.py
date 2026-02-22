@@ -238,7 +238,9 @@ class TestHandleWebhookEvent:
         """Test handling of pull request labeled event from dashboard triggers handle_new_pr."""
         payload = {
             "action": "labeled",
+            "label": {"name": "gitauto"},
             "pull_request": {"head": {"ref": "gitauto/dashboard-20250101-120000-Ab12"}},
+            "sender": {"login": "test-user", "id": 12345},
         }
 
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
@@ -257,7 +259,9 @@ class TestHandleWebhookEvent:
         """Test handling of pull request labeled event from schedule triggers handle_new_pr."""
         payload = {
             "action": "labeled",
+            "label": {"name": "gitauto"},
             "pull_request": {"head": {"ref": "gitauto/schedule-20250101-120000-Ab12"}},
+            "sender": {"login": "test-user", "id": 12345},
         }
 
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
@@ -268,6 +272,76 @@ class TestHandleWebhookEvent:
             trigger="schedule",
             lambda_info=None,
         )
+
+    @pytest.mark.asyncio
+    async def test_handle_webhook_event_pull_request_labeled_non_gitauto_label_ignored(
+        self, mock_handle_new_pr
+    ):
+        """Test that non-gitauto labels (e.g. dependabot's 'dependencies') are ignored."""
+        payload = {
+            "action": "labeled",
+            "label": {"name": "dependencies"},
+            "pull_request": {"head": {"ref": "dependabot/npm_and_yarn/ajv-6.14.0"}},
+            "sender": {"login": "dependabot[bot]", "id": 49699333},
+        }
+
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(event_name="pull_request", payload=payload)
+
+        mock_handle_new_pr.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_handle_webhook_event_pull_request_labeled_bot_sender_ignored(
+        self, mock_handle_new_pr
+    ):
+        """Test that bot senders (other than GitAuto) are rejected even with gitauto label."""
+        payload = {
+            "action": "labeled",
+            "label": {"name": "gitauto"},
+            "pull_request": {"head": {"ref": "dependabot/npm_and_yarn/ajv-6.14.0"}},
+            "sender": {"login": "dependabot[bot]", "id": 49699333},
+        }
+
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(event_name="pull_request", payload=payload)
+
+        mock_handle_new_pr.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_handle_webhook_event_pull_request_labeled_gitauto_bot_allowed(
+        self, mock_handle_new_pr
+    ):
+        """Test that GitAuto's own bot is allowed (for schedule triggers)."""
+        payload = {
+            "action": "labeled",
+            "label": {"name": "gitauto"},
+            "pull_request": {"head": {"ref": "gitauto/schedule-20250101-120000-Ab12"}},
+            "sender": {"login": "gitauto[bot]", "id": 160085510},
+        }
+
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"), patch(
+            "services.webhook.webhook_handler.GITHUB_APP_USER_ID", 160085510
+        ):
+            await handle_webhook_event(event_name="pull_request", payload=payload)
+
+        mock_handle_new_pr.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_handle_webhook_event_pull_request_labeled_non_gitauto_branch_ignored(
+        self, mock_handle_new_pr
+    ):
+        """Test that a gitauto label on a non-gitauto branch is ignored."""
+        payload = {
+            "action": "labeled",
+            "label": {"name": "gitauto"},
+            "pull_request": {"head": {"ref": "feature/some-branch"}},
+            "sender": {"login": "test-user", "id": 12345},
+        }
+
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(event_name="pull_request", payload=payload)
+
+        mock_handle_new_pr.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_check_suite_completed_failure(

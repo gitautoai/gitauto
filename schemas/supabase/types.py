@@ -160,6 +160,22 @@ class CreditsInsert(TypedDict):
     expires_at: NotRequired[datetime.datetime | None]
 
 
+class EmailSends(TypedDict):
+    id: int
+    owner_id: int
+    owner_name: str
+    email_type: str
+    resend_email_id: str | None
+    created_at: datetime.datetime
+
+
+class EmailSendsInsert(TypedDict):
+    owner_id: int
+    owner_name: str
+    email_type: str
+    resend_email_id: NotRequired[str | None]
+
+
 class Installations(TypedDict):
     created_at: datetime.datetime
     installation_id: int

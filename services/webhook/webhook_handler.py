@@ -3,6 +3,7 @@ from typing import Any, cast
 
 # Local imports
 from config import (
+    GITHUB_APP_USER_ID,
     GITHUB_CHECK_RUN_FAILURES,
     PRODUCT_ID,
 )
@@ -183,11 +184,29 @@ async def handle_webhook_event(
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
     if event_name == "pull_request" and action == "labeled":
         typed_payload = cast(PrLabeledPayload, payload)
+
+        # Only process when the "gitauto" label is specifically added
+        label_name = typed_payload["label"]["name"]
+        if label_name != PRODUCT_ID:
+            logger.info("Ignoring non-gitauto label: %s", label_name)
+            return
+
+        # Reject bot senders (except GitAuto's own app for schedule triggers)
+        sender = typed_payload["sender"]
+        sender_login = sender["login"]
+        if sender_login.endswith("[bot]") and sender["id"] != GITHUB_APP_USER_ID:
+            logger.info("Ignoring label event from bot: %s", sender_login)
+            return
+
         # Determine trigger from branch name: {PRODUCT_ID}/schedule-* vs {PRODUCT_ID}/dashboard-*
         head_ref = typed_payload["pull_request"]["head"]["ref"]
         prefix = f"{PRODUCT_ID}/"
-        suffix = head_ref[len(prefix) :] if head_ref.startswith(prefix) else ""
-        trigger = cast(Trigger, suffix.split("-")[0] if suffix else "dashboard")
+        if not head_ref.startswith(prefix):
+            logger.info("Ignoring non-gitauto branch: %s", head_ref)
+            return
+
+        suffix = head_ref[len(prefix) :]
+        trigger = cast(Trigger, suffix.split("-")[0])
         await handle_new_pr(
             payload=typed_payload,
             trigger=trigger,
