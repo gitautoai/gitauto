@@ -181,34 +181,6 @@ class InstallationsInsert(TypedDict):
     uninstalled_by: NotRequired[str | None]
 
 
-class Issues(TypedDict):
-    id: int
-    created_at: datetime.datetime
-    run_id: int | None
-    installation_id: int
-    merged: bool
-    created_by: str | None
-    owner_id: int
-    owner_type: str
-    owner_name: str
-    repo_id: int
-    repo_name: str
-    issue_number: int
-
-
-class IssuesInsert(TypedDict):
-    run_id: NotRequired[int | None]
-    installation_id: int
-    merged: bool
-    created_by: NotRequired[str | None]
-    owner_id: int
-    owner_type: str
-    owner_name: str
-    repo_id: int
-    repo_name: str
-    issue_number: int
-
-
 class JiraGithubLinks(TypedDict):
     id: int
     jira_site_id: str
@@ -604,44 +576,6 @@ class UsageInsert(TypedDict):
     lambda_log_group: NotRequired[str | None]
     lambda_log_stream: NotRequired[str | None]
     lambda_request_id: NotRequired[str | None]
-
-
-class UsageWithIssues(TypedDict):
-    id: int | None
-    created_at: datetime.datetime | None
-    is_completed: bool | None
-    token_input: int | None
-    token_output: int | None
-    user_id: int | None
-    installation_id: int | None
-    created_by: str | None
-    total_seconds: int | None
-    owner_id: int | None
-    owner_type: str | None
-    owner_name: str | None
-    repo_id: int | None
-    repo_name: str | None
-    issue_number: int | None
-    source: str | None
-    merged: bool | None
-
-
-class UsageWithIssuesInsert(TypedDict):
-    is_completed: NotRequired[bool | None]
-    token_input: NotRequired[int | None]
-    token_output: NotRequired[int | None]
-    user_id: NotRequired[int | None]
-    installation_id: NotRequired[int | None]
-    created_by: NotRequired[str | None]
-    total_seconds: NotRequired[int | None]
-    owner_id: NotRequired[int | None]
-    owner_type: NotRequired[str | None]
-    owner_name: NotRequired[str | None]
-    repo_id: NotRequired[int | None]
-    repo_name: NotRequired[str | None]
-    issue_number: NotRequired[int | None]
-    source: NotRequired[str | None]
-    merged: NotRequired[bool | None]
 
 
 class Users(TypedDict):
