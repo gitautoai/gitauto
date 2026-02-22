@@ -9,9 +9,9 @@ import time
 from anthropic.types import MessageParam
 
 # Local imports
-from config import PRODUCT_ID, PR_BODY_STARTS_WITH
 from constants.agent import MAX_ITERATIONS
-from constants.messages import COMPLETED_PR, SETTINGS_LINKS
+from constants.messages import SETTINGS_LINKS
+from constants.triggers import Trigger
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
@@ -22,28 +22,19 @@ from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
-from services.github.branches.create_remote_branch import create_remote_branch
 from services.github.comments.create_comment import create_comment
-from services.github.comments.delete_comments_by_identifiers import (
-    delete_comments_by_identifiers,
-)
 from services.github.comments.get_comments import get_comments
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.commits.get_latest_remote_commit_sha import (
-    get_latest_remote_commit_sha,
-)
 from services.github.commits.replace_remote_file import replace_remote_file_content
 from services.github.files.get_raw_content import get_raw_content
 from services.github.files.get_remote_file_content_by_url import (
     get_remote_file_content_by_url,
 )
 from services.github.markdown.render_text import render_text
-from services.github.pulls.create_pull_request import create_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
-from services.github.reactions.add_reaction_to_issue import add_reaction_to_issue
 from services.github.trees.get_local_file_tree import get_local_file_tree
-from services.github.types.github_types import GitHubLabeledPayload
+from services.github.types.github_types import PrLabeledPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
 from services.claude.tools.tools import TOOLS_FOR_ISSUES
 from services.openai.vision import describe_image
@@ -58,7 +49,6 @@ from services.supabase.owners.update_stripe_customer_id import update_stripe_cus
 from services.supabase.repository_features.get_repository_features import (
     get_repository_features,
 )
-from services.supabase.usage.insert_usage import Trigger
 from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 from services.stripe.check_availability import check_availability
@@ -68,8 +58,8 @@ from services.claude.evaluate_condition import EvaluationResult
 from services.claude.is_code_untestable import is_code_untestable
 from services.supabase.coverages.get_coverages import get_coverages
 from services.webhook.utils.should_bail import should_bail
-from utils.files.get_impl_file_from_issue_title import get_impl_file_from_issue_title
-from utils.issue_templates.schedule import SCHEDULE_PREFIX_INCREASE
+from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title
+from utils.pr_templates.schedule import SCHEDULE_PREFIX_INCREASE
 from utils.files.find_test_files import find_test_files
 from utils.files.is_config_file import is_config_file
 from utils.files.read_local_file import read_local_file
@@ -80,33 +70,26 @@ from utils.images.get_base64 import get_base64
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.progress_bar.progress_bar import create_progress_bar
-from utils.text.comment_identifiers import PROGRESS_BAR_EMPTY, PROGRESS_BAR_FILLED
 from utils.text.text_copy import (
-    UPDATE_COMMENT_FOR_422,
-    git_command,
     pull_request_completed,
 )
 from utils.urls.extract_urls import extract_image_urls
 
 
-async def create_pr_from_issue(
-    payload: GitHubLabeledPayload,
+async def handle_new_pr(
+    payload: PrLabeledPayload,
     trigger: Trigger,
     lambda_info: dict[str, str | None] | None = None,
 ) -> None:
     set_trigger(trigger)
     current_time: float = time.time()
 
-    # Extract label and validate it
-    if (
-        trigger == "issue_label"
-        and "label" in payload
-        and payload["label"]["name"] != PRODUCT_ID
-    ):
-        return
-
     # Deconstruct payload
     base_args, repo_settings = deconstruct_github_payload(payload=payload)
+
+    pr_number = payload["number"]
+    base_args["pr_number"] = pr_number
+    pr_url = payload["pull_request"]["html_url"]
 
     # Ensure skip_ci is set to True for development commits
     base_args["skip_ci"] = True
@@ -114,29 +97,13 @@ async def create_pr_from_issue(
     # Get some base args for early notifications
     owner_name = base_args["owner"]
     repo_name = base_args["repo"]
-    issue_number = base_args["issue_number"]
-    issue_title = base_args["issue_title"]
-    sender_name = base_args["sender_name"]
     token = base_args["token"]
+    pr_title = base_args["pr_title"]
+    sender_name = base_args["sender_name"]
 
     # Start notification
-    start_msg = f"Issue handler started: `{trigger}` by `{sender_name}` for `{issue_number}:{issue_title}` in `{owner_name}/{repo_name}`"
+    start_msg = f"PR handler started: `{trigger}` by `{sender_name}` for `{pr_number}:{pr_title}` in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
-
-    # Delete previous GitAuto comments to clean up the issue
-    gitauto_identifiers = [
-        COMPLETED_PR,
-        UPDATE_COMMENT_FOR_422,
-        PROGRESS_BAR_FILLED,
-        PROGRESS_BAR_EMPTY,
-    ]
-    delete_comments_by_identifiers(
-        owner=owner_name,
-        repo=repo_name,
-        issue_number=issue_number,
-        token=token,
-        identifiers=gitauto_identifiers,
-    )
 
     # Create a comment to track progress
     p = 0
@@ -144,7 +111,7 @@ async def create_pr_from_issue(
     msg = "Got your request."
     add_log_message(msg, log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    comment_url = create_comment(body=comment_body, base_args=base_args, target="issue")
+    comment_url = create_comment(body=comment_body, base_args=base_args)
     base_args["comment_url"] = comment_url
 
     # Get owner and repo metadata
@@ -154,12 +121,10 @@ async def create_pr_from_issue(
     repo_id = base_args["repo_id"]
     set_npm_token_env(owner_id)
 
-    # Extract issue metadata
-    issue_body = base_args["issue_body"].replace(SETTINGS_LINKS, "").strip()
-    issue_body_rendered = render_text(base_args=base_args, text=issue_body)
-    issuer_name = base_args["issuer_name"]
-    parent_issue_title = base_args.get("parent_issue_title")
-    parent_issue_body = base_args.get("parent_issue_body")
+    # Extract PR metadata
+    pr_body = base_args["pr_body"].replace(SETTINGS_LINKS, "").strip()
+    pr_body_rendered = render_text(base_args=base_args, text=pr_body)
+    pr_creator = base_args["pr_creator"]
 
     # Extract more base args
     new_branch_name = base_args["new_branch"]
@@ -260,7 +225,7 @@ async def create_pr_from_issue(
         owner_name=owner_name,
         repo_id=repo_id,
         repo_name=repo_name,
-        issue_number=issue_number,
+        pr_number=pr_number,
         source="github",
         trigger=trigger,
         email=sender_email,
@@ -271,23 +236,19 @@ async def create_pr_from_issue(
     if billing_type == "credit":
         insert_credit(owner_id=owner_id, transaction_type="usage", usage_id=usage_id)
 
-    add_reaction_to_issue(
-        issue_number=issue_number, content="eyes", base_args=base_args
-    )
-
-    # Check out the issue comments
-    issue_comments = get_comments(issue_number=issue_number, base_args=base_args)
-    comment_body = f"Found {len(issue_comments)} issue comments."
+    # Check out the PR comments
+    pr_comments = get_comments(pr_number=pr_number, base_args=base_args)
+    comment_body = f"Found {len(pr_comments)} PR comments."
     p += 5
     add_log_message(comment_body, log_messages)
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
 
-    # Check out the image URLs in the issue body and comments
-    image_urls = extract_image_urls(text=issue_body_rendered)
+    # Check out the image URLs in the PR body and comments
+    image_urls = extract_image_urls(text=pr_body_rendered)
     if image_urls:
-        comment_body = f"Found {len(image_urls)} images in the issue body."
+        comment_body = f"Found {len(image_urls)} images in the PR body."
         p += 5
         add_log_message(comment_body, log_messages)
         update_comment(
@@ -295,9 +256,9 @@ async def create_pr_from_issue(
             base_args=base_args,
         )
 
-    for issue_comment in issue_comments:
-        issue_comment_rendered = render_text(base_args=base_args, text=issue_comment)
-        image_urls.extend(extract_image_urls(text=issue_comment_rendered))
+    for pr_comment in pr_comments:
+        pr_comment_rendered = render_text(base_args=base_args, text=pr_comment)
+        image_urls.extend(extract_image_urls(text=pr_comment_rendered))
     for url in image_urls:
         # Check if URL has a valid image extension (OpenAI only supports: png, jpeg, gif, webp)
         image_extensions = (".png", ".jpg", ".jpeg", ".gif", ".webp")
@@ -313,17 +274,17 @@ async def create_pr_from_issue(
             logger.warning("Failed to fetch image from URL: %s", url["url"])
             continue
 
-        context = f"## Issue:\n{issue_title}\n\n## Issue Body:\n{issue_body}\n\n## Issue Comments:\n{'\n'.join(issue_comments)}"
+        context = f"## PR Title:\n{pr_title}\n\n## PR Body:\n{pr_body}\n\n## PR Comments:\n{'\n'.join(pr_comments)}"
         description = describe_image(base64_image=base64_image, context=context)
         description = f"## {url['alt']}\n\n{description}"
-        issue_comments.append(description)
-        create_comment(body=description, base_args=base_args, target="issue")
+        pr_comments.append(description)
+        create_comment(body=description, base_args=base_args)
 
-    # Check out the URLs in the issue body
+    # Check out the URLs in the PR body
     reference_file_paths: set[str] = set()
     reference_contents: list[str] = []
     for url in github_urls:
-        comment_body = "Also checking out the URLs in the issue body."
+        comment_body = "Also checking out the URLs in the PR body."
         p += 5
         add_log_message(comment_body, log_messages)
         update_comment(
@@ -338,8 +299,8 @@ async def create_pr_from_issue(
     today = datetime.now().strftime("%Y-%m-%d")
 
     # Extract target implementation file
-    impl_file_path = get_impl_file_from_issue_title(issue_title)
-    if issue_title.startswith(SCHEDULE_PREFIX_INCREASE):
+    impl_file_path = get_impl_file_from_pr_title(pr_title)
+    if pr_title.startswith(SCHEDULE_PREFIX_INCREASE):
         base_args["impl_file_to_collect_coverage_from"] = impl_file_path
     test_dir_prefixes = repo_settings["test_dir_prefixes"] if repo_settings else []
 
@@ -397,53 +358,20 @@ async def create_pr_from_issue(
         "today": today,
         "owner": owner_name,
         "repo": repo_name,
-        "issue_title": issue_title,
-        "issue_body": issue_body,
+        "pr_title": pr_title,
+        "pr_body": pr_body,
         "impl_file_path": impl_file_path,
     }
 
     # Only include non-empty values to reduce token usage
-    if issue_comments:
-        user_input_obj["issue_comments"] = issue_comments
-    if parent_issue_title:
-        user_input_obj["parent_issue_title"] = parent_issue_title
-    if parent_issue_body:
-        user_input_obj["parent_issue_body"] = parent_issue_body
+    if pr_comments:
+        user_input_obj["pr_comments"] = pr_comments
     if target_dir:
         user_input_obj["target_dir"] = target_dir
     if test_dir_prefixes:
         user_input_obj["test_dir_prefixes"] = test_dir_prefixes
 
-    # Create a remote branch
-    latest_commit_sha = get_latest_remote_commit_sha(
-        clone_url=base_args["clone_url"], base_args=base_args
-    )
-    create_remote_branch(sha=latest_commit_sha, base_args=base_args)
-    comment_body = f"Created a branch: `{new_branch_name}`"
-    p += 5
-    add_log_message(comment_body, log_messages)
-    update_comment(
-        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
-    )
-
-    # Create initial empty commit and PR early in the process
-    comment_body = "Creating initial PR..."
-    p += 5
-    add_log_message(comment_body, log_messages)
-    update_comment(
-        body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
-    )
-    create_empty_commit(
-        base_args=base_args, message="Initial empty commit to create PR [skip ci]"
-    )
-
-    issue_link: str = f"{PR_BODY_STARTS_WITH}{issue_number}\n\n"
-    pr_body = issue_link + git_command(new_branch_name=new_branch_name)
-    pr_url, pr_number = create_pull_request(
-        body=pr_body, title=issue_title, base_args=base_args
-    )
     set_pr_number(pr_number)
-    base_args["pull_number"] = pr_number
 
     # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
@@ -533,14 +461,6 @@ async def create_pr_from_issue(
         logger.warning("Remaining errors:\n%s", pre_existing_errors)
     fixes_applied = validation_result.fixes_applied
 
-    comment_body = f"Created pull request: {pr_url}"
-    p += 5
-    add_log_message(comment_body, log_messages)
-    update_comment(
-        body=create_progress_bar(p=p, msg="\n".join(log_messages)),
-        base_args=base_args,
-    )
-
     # Notify agent of auto-fixes and remaining errors (in timeline order)
     allowed_to_edit_files = set(validation_result.files_with_errors)
 
@@ -573,7 +493,7 @@ async def create_pr_from_issue(
     for _iteration in range(MAX_ITERATIONS):
         if should_bail(
             current_time=current_time,
-            phase="issue processing",
+            phase="pr processing",
             base_args=base_args,
             slack_thread_ts=None,
         ):
@@ -616,7 +536,7 @@ async def create_pr_from_issue(
     # Add headers to test files before triggering CI
     last_commit_sha = ""
     changed_files = get_pull_request_files(
-        owner=owner_name, repo=repo_name, pull_number=pr_number, token=token
+        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
 
     for file_change in changed_files:
@@ -655,11 +575,10 @@ async def create_pr_from_issue(
     )
     create_empty_commit(base_args=base_args, parent_sha=last_commit_sha)
 
-    # Update the issue comment
+    # Update the PR comment
     body_after_pr = pull_request_completed(
-        issuer_name=issuer_name,
+        pr_creator=pr_creator,
         sender_name=sender_name,
-        pr_url=pr_url,
         is_automation=is_automation,
     )
     update_comment(body=body_after_pr, base_args=base_args)

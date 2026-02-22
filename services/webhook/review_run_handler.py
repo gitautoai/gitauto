@@ -11,6 +11,7 @@ from anthropic.types import MessageParam
 # Local imports
 from config import GITHUB_APP_USER_NAME
 from constants.agent import MAX_ITERATIONS
+from constants.triggers import ReviewTrigger
 from payloads.github.pull_request_review_comment.types import (
     PullRequestReviewCommentPayload,
 )
@@ -46,10 +47,10 @@ from utils.progress_bar.progress_bar import create_progress_bar
 
 async def handle_review_run(
     payload: PullRequestReviewCommentPayload,
+    trigger: ReviewTrigger,
     lambda_info: dict[str, str | None] | None = None,
 ):
     current_time = time.time()
-    trigger = "review_comment"
     set_trigger(trigger)
 
     # Extract review comment etc
@@ -83,16 +84,16 @@ async def handle_review_run(
 
     # Extract PR related variables
     pull_request = payload["pull_request"]
-    pull_number = pull_request["number"]
-    set_pr_number(pull_number)
-    pull_title = pull_request["title"]
-    pull_body = pull_request["body"]
-    pull_url = pull_request["url"]
-    pull_file_url = f"{pull_url}/files"
-    head_branch = pull_request["head"]["ref"]  # gitauto/issue-167-20250101-155924
+    pr_number = pull_request["number"]
+    set_pr_number(pr_number)
+    pr_title = pull_request["title"]
+    pr_body = pull_request["body"]
+    pr_url = pull_request["url"]
+    pr_file_url = f"{pr_url}/files"
+    head_branch = pull_request["head"]["ref"]  # gitauto/dashboard-20250101-155924-Ab1C
     base_branch = pull_request["base"]["ref"]  # main, master, etc.
-    pull_user = pull_request["user"]["login"]
-    if pull_user != GITHUB_APP_USER_NAME:
+    pr_creator = pull_request["user"]["login"]
+    if pr_creator != GITHUB_APP_USER_NAME:
         return
 
     # Extract sender related variables and return if sender is GitAuto itself
@@ -109,7 +110,7 @@ async def handle_review_run(
     thread_comments = get_review_thread_comments(
         owner=owner_name,
         repo=repo_name,
-        pull_number=pull_number,
+        pr_number=pr_number,
         comment_node_id=review_node_id,
         token=token,
     )
@@ -126,10 +127,9 @@ async def handle_review_run(
         # Fallback to single comment if thread fetch fails
         review_comment += f"{review_body}"
 
-    clone_dir = get_clone_dir(owner_name, repo_name, pull_number)
+    clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args: ReviewBaseArgs = {
         # Required fields
-        "input_from": "github",
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
@@ -137,12 +137,9 @@ async def handle_review_run(
         "repo": repo_name,
         "clone_url": repo["clone_url"],
         "is_fork": is_fork,
-        "issue_number": pull_number,
-        "issue_title": pull_title,
-        "issue_body": pull_body or "",
-        "issue_comments": [],
+        "pr_number": pr_number,
+        "pr_comments": [],
         "latest_commit_sha": pull_request["head"]["sha"],
-        "issuer_name": sender_name,
         "base_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_file_tree requires the base branch
         "new_branch": head_branch,
         "installation_id": installation_id,
@@ -155,12 +152,11 @@ async def handle_review_run(
         "github_urls": [],
         "other_urls": [],
         "clone_dir": clone_dir,
-        # Extra fields for backward compatibility
-        "pull_number": pull_number,
-        "pull_title": pull_title,
-        "pull_body": pull_body,
-        "pull_url": pull_url,
-        "pull_file_url": pull_file_url,
+        "pr_title": pr_title,
+        "pr_body": pr_body or "",
+        "pr_creator": pr_creator,
+        "pr_url": pr_url,
+        "pr_file_url": pr_file_url,
         "review_id": review_id,
         "review_path": review_path,
         "review_subject_type": review_subject_type,
@@ -202,7 +198,7 @@ async def handle_review_run(
         owner_name=owner_name,
         repo_id=repo_id,
         repo_name=repo_name,
-        issue_number=pull_number,
+        pr_number=pr_number,
         source="github",
         trigger="review_comment",
         email=None,
@@ -226,16 +222,16 @@ async def handle_review_run(
     update_comment(body=comment_body, base_args=base_args)
 
     # Get list of changed files in the PR (filenames only, not contents)
-    pull_files = get_pull_request_files(
-        owner=owner_name, repo=repo_name, pull_number=pull_number, token=token
+    pr_files = get_pull_request_files(
+        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
     p += 5
-    add_log_message(f"Found {len(pull_files)} changed files in the PR.", log_messages)
+    add_log_message(f"Found {len(pr_files)} changed files in the PR.", log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
     update_comment(body=comment_body, base_args=base_args)
 
     # Validate files for syntax issues before editing
-    files_to_validate = [f["filename"] for f in pull_files if f["status"] != "removed"]
+    files_to_validate = [f["filename"] for f in pr_files if f["status"] != "removed"]
     validation_result = await verify_task_is_ready(
         base_args=base_args, file_paths=files_to_validate, run_tsc=True, run_jest=True
     )
@@ -263,10 +259,10 @@ async def handle_review_run(
 
     input_message = {
         "step_1_review_comment": review_comment,
-        "pull_request_title": pull_title,
-        "pull_request_body": pull_body,
+        "pull_request_title": pr_title,
+        "pull_request_body": pr_body,
         "review_file": review_file,
-        "pull_files": pull_files,
+        "pr_files": pr_files,
         "today": today,
         "root_files": root_files,
         "target_dir": target_dir,
@@ -355,7 +351,7 @@ async def handle_review_run(
             token_input=total_token_input,
             token_output=total_token_output,
             total_seconds=int(end_time - current_time),
-            pr_number=pull_number,
+            pr_number=pr_number,
             is_completed=True,
         )
     return

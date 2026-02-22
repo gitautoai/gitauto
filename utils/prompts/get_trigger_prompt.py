@@ -1,15 +1,14 @@
-from services.supabase.usage.insert_usage import Trigger
+from constants.triggers import Trigger
 from utils.files.read_xml_file import read_xml_file
 
 
 def get_trigger_prompt(trigger: Trigger):
     base_path = "utils/prompts/triggers"
     trigger_files = {
-        "issue_comment": f"{base_path}/issue.xml",
-        "issue_label": f"{base_path}/issue.xml",
+        "dashboard": f"{base_path}/pr.xml",
+        "schedule": f"{base_path}/pr.xml",
         "review_comment": f"{base_path}/review.xml",
         "test_failure": f"{base_path}/check_run.xml",
-        "pr_merge": f"{base_path}/pr_merge.xml",
     }
 
     if trigger in trigger_files:

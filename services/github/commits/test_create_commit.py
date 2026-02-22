@@ -312,7 +312,7 @@ def test_create_commit_extracts_base_args_correctly(
         owner="extracted_owner",
         repo="extracted_repo",
         token="extracted_token",
-        issue_number=123,
+        pr_number=123,
         sender_name="test_sender",
         new_branch="test_branch",
     )

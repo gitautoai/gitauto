@@ -266,7 +266,7 @@ def test_create_remote_branch_extracts_base_args_correctly(
         new_branch="extracted/branch",
         token="extracted_token",
         # Include other fields that should be ignored
-        issue_number=123,
+        pr_number=123,
         sender_name="test_sender",
     )
 

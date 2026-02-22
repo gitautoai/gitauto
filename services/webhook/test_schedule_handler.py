@@ -1,13 +1,13 @@
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
+
 # Standard imports
-from typing import cast
 from unittest.mock import patch, MagicMock
 
 # Third-party imports
 import pytest
 
 # Local imports
-from config import PRODUCT_ID
-from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 from services.claude.evaluate_condition import EvaluationResult
 from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.webhook.schedule_handler import schedule_handler
@@ -140,6 +140,12 @@ def test_get_all_coverages_contract():
         assert isinstance(result, list)
 
 
+@patch("services.webhook.schedule_handler.add_labels")
+@patch("services.webhook.schedule_handler.create_pull_request")
+@patch("services.webhook.schedule_handler.create_empty_commit")
+@patch("services.webhook.schedule_handler.create_remote_branch")
+@patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
+@patch("services.webhook.schedule_handler.generate_branch_name")
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.should_skip_test")
 @patch("services.webhook.schedule_handler.evaluate_condition")
@@ -151,9 +157,7 @@ def test_get_all_coverages_contract():
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.get_raw_content")
-@patch("services.webhook.schedule_handler.create_issue")
 def test_schedule_handler_skips_export_only_files(
-    mock_create_issue,
     mock_get_raw_content,
     mock_get_all_coverages,
     mock_get_file_tree,
@@ -165,6 +169,12 @@ def test_schedule_handler_skips_export_only_files(
     mock_evaluate_condition,
     mock_should_skip_test,
     mock_get_open_pull_requests,
+    mock_generate_branch_name,
+    mock_get_latest_sha,
+    mock_create_remote_branch,
+    mock_create_empty_commit,
+    mock_create_pr,
+    mock_add_labels,
     mock_event,
 ):
     mock_get_token.return_value = "test-token"
@@ -194,10 +204,9 @@ def test_schedule_handler_skips_export_only_files(
         return content_map.get(file_path or "")
 
     mock_get_raw_content.side_effect = mock_content_side_effect
-    mock_create_issue.return_value = (
-        200,
-        {"html_url": "https://github.com/test/issue/1"},
-    )
+    mock_generate_branch_name.return_value = "gitauto/schedule-20240101-120000-ABCD"
+    mock_get_latest_sha.return_value = "abc123"
+    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
 
     def mock_should_skip_side_effect(file_path, content):
         if (
@@ -221,13 +230,18 @@ def test_schedule_handler_skips_export_only_files(
         ref="main",
         token="test-token",
     )
-    mock_create_issue.assert_called_once()
-    call_kwargs = mock_create_issue.call_args.kwargs
+    mock_create_pr.assert_called_once()
+    call_kwargs = mock_create_pr.call_args.kwargs
     assert "src/utils/helper.ts" in call_kwargs["title"]
-    assert call_kwargs["labels"] == [PRODUCT_ID]
     assert result["status"] == "success"
 
 
+@patch("services.webhook.schedule_handler.add_labels")
+@patch("services.webhook.schedule_handler.create_pull_request")
+@patch("services.webhook.schedule_handler.create_empty_commit")
+@patch("services.webhook.schedule_handler.create_remote_branch")
+@patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
+@patch("services.webhook.schedule_handler.generate_branch_name")
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.is_schedule_paused")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
@@ -238,9 +252,7 @@ def test_schedule_handler_skips_export_only_files(
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.get_raw_content")
 @patch("services.webhook.schedule_handler.evaluate_condition")
-@patch("services.webhook.schedule_handler.create_issue")
 def test_schedule_handler_skips_empty_files(
-    mock_create_issue,
     mock_evaluate_condition,
     mock_get_raw_content,
     mock_get_all_coverages,
@@ -251,6 +263,12 @@ def test_schedule_handler_skips_empty_files(
     mock_get_token,
     mock_is_paused,
     mock_get_open_pull_requests,
+    mock_generate_branch_name,
+    mock_get_latest_sha,
+    mock_create_remote_branch,
+    mock_create_empty_commit,
+    mock_create_pr,
+    mock_add_labels,
     mock_event,
 ):
     mock_get_token.return_value = "test-token"
@@ -283,137 +301,25 @@ def test_schedule_handler_skips_empty_files(
     mock_evaluate_condition.return_value = EvaluationResult(
         True, "has logic worth testing"
     )
-    mock_create_issue.return_value = (
-        200,
-        {"html_url": "https://github.com/test/issue/2"},
-    )
+    mock_generate_branch_name.return_value = "gitauto/schedule-20240101-120000-ABCD"
+    mock_get_latest_sha.return_value = "abc123"
+    mock_create_pr.return_value = ("https://github.com/test/repo/pull/2", 2)
     mock_get_open_pull_requests.return_value = []
 
     result = schedule_handler(mock_event)
 
-    mock_create_issue.assert_called_once()
-    call_kwargs = mock_create_issue.call_args.kwargs
+    mock_create_pr.assert_called_once()
+    call_kwargs = mock_create_pr.call_args.kwargs
     assert "src/app.ts" in call_kwargs["title"]
     assert result["status"] == "success"
 
 
-@patch("services.webhook.schedule_handler.send_email")
-@patch("services.webhook.schedule_handler.get_user")
-@patch("services.webhook.schedule_handler.slack_notify")
-@patch("services.webhook.schedule_handler.delete_scheduler")
-@patch("services.webhook.schedule_handler.update_repository")
-@patch("services.webhook.schedule_handler.get_issue_body")
-@patch("services.webhook.schedule_handler.get_issue_title")
-@patch("services.webhook.schedule_handler.get_open_pull_requests")
-@patch("services.webhook.schedule_handler.evaluate_condition")
-@patch("services.webhook.schedule_handler.should_skip_test")
-@patch("services.webhook.schedule_handler.get_raw_content")
-@patch("services.webhook.schedule_handler.get_all_coverages")
-@patch("services.webhook.schedule_handler.get_file_tree")
-@patch("services.webhook.schedule_handler.get_default_branch")
-@patch("services.webhook.schedule_handler.check_availability")
-@patch("services.webhook.schedule_handler.get_repository")
-@patch("services.webhook.schedule_handler.create_issue")
-@patch("services.webhook.schedule_handler.get_installation_access_token")
-@patch("services.webhook.schedule_handler.is_schedule_paused")
-@patch("services.webhook.schedule_handler.is_migration_file")
-@patch("services.webhook.schedule_handler.is_type_file")
-@patch("services.webhook.schedule_handler.is_test_file")
-@patch("services.webhook.schedule_handler.is_code_file")
-def test_schedule_handler_410_issues_disabled(
-    mock_is_code_file,
-    mock_is_test_file,
-    mock_is_type_file,
-    mock_is_migration_file,
-    mock_is_paused,
-    mock_get_token,
-    mock_create_issue,
-    mock_get_repository,
-    mock_check_availability,
-    mock_get_default_branch,
-    mock_get_file_tree,
-    mock_get_all_coverages,
-    mock_get_raw_content,
-    mock_should_skip_test,
-    mock_evaluate_condition,
-    mock_get_open_pull_requests,
-    mock_get_issue_title,
-    mock_get_issue_body,
-    mock_update_repository,
-    mock_delete_scheduler,
-    mock_slack_notify,
-    mock_get_user,
-    mock_send_email,
-    mock_event,
-):
-    mock_get_token.return_value = "test-token"
-    mock_is_paused.return_value = False
-    mock_get_repository.return_value = {"trigger_on_schedule": True}
-    mock_check_availability.return_value = {
-        "can_proceed": True,
-        "billing_type": "exception",
-        "requests_left": None,
-        "credit_balance_usd": 0,
-        "period_end_date": None,
-        "user_message": "",
-        "log_message": "Exception owner - unlimited access.",
-    }
-    mock_get_default_branch.return_value = ("main", None)
-    mock_get_file_tree.return_value = [
-        {"path": "src/test.py", "type": "blob", "size": 100}
-    ]
-    mock_get_all_coverages.return_value = [
-        {
-            "id": 1,
-            "full_path": "src/test.py",
-            "file_size": 100,
-            "statement_coverage": 0.0,
-            "function_coverage": 0.0,
-            "branch_coverage": 0.0,
-            "line_coverage": 0.0,
-            "uncovered_lines": None,
-            "uncovered_functions": None,
-            "uncovered_branches": None,
-            "created_at": "2024-01-01",
-            "updated_at": "2024-01-01",
-            "github_issue_url": None,
-            "is_excluded_from_testing": False,
-        }
-    ]
-    mock_is_code_file.return_value = True
-    mock_is_test_file.return_value = False
-    mock_is_type_file.return_value = False
-    mock_is_migration_file.return_value = False
-    mock_get_raw_content.return_value = "def test_function(): return True"
-    mock_should_skip_test.return_value = False
-    mock_evaluate_condition.return_value = EvaluationResult(True, "has testable logic")
-    mock_get_open_pull_requests.return_value = []
-    mock_get_issue_title.return_value = "Test Title"
-    mock_get_issue_body.return_value = "Test Body"
-    mock_create_issue.return_value = (410, None)
-    mock_get_user.return_value = {"email": "test@example.com", "user_id": 789}
-
-    result = schedule_handler(cast(EventBridgeSchedulerEvent, mock_event))
-
-    assert result["status"] == "skipped"
-    assert "Issues are disabled" in result["message"]
-    mock_update_repository.assert_called_once_with(
-        owner_id=123, repo_id=456, trigger_on_schedule=False, updated_by="test-user"
-    )
-    mock_delete_scheduler.assert_called_once_with("gitauto-repo-123-456")
-    mock_get_user.assert_called_once_with(user_id=789)
-    mock_send_email.assert_called_once()
-    email_call = mock_send_email.call_args
-    assert email_call.kwargs["to"] == "test@example.com"
-    assert email_call.kwargs["subject"] == "Enable Issues to use GitAuto"
-    assert "Hi test-user," in email_call.kwargs["text"]
-    assert "test-org/test-repo" in email_call.kwargs["text"]
-    assert "https://github.com/test-org/test-repo/settings" in email_call.kwargs["text"]
-    mock_slack_notify.assert_called_once()
-    slack_msg = mock_slack_notify.call_args[0][0]
-    assert "Issues are disabled" in slack_msg
-
-
+@patch("services.webhook.schedule_handler.add_labels")
+@patch("services.webhook.schedule_handler.create_pull_request")
+@patch("services.webhook.schedule_handler.create_empty_commit")
+@patch("services.webhook.schedule_handler.create_remote_branch")
+@patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
+@patch("services.webhook.schedule_handler.generate_branch_name")
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.evaluate_condition")
 @patch("services.webhook.schedule_handler.should_skip_test")
@@ -425,9 +331,7 @@ def test_schedule_handler_410_issues_disabled(
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.get_raw_content")
-@patch("services.webhook.schedule_handler.create_issue")
 def test_schedule_handler_prioritizes_zero_coverage_files(
-    mock_create_issue,
     mock_get_raw_content,
     mock_get_all_coverages,
     mock_get_file_tree,
@@ -439,6 +343,12 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
     mock_should_skip_test,
     mock_evaluate_condition,
     mock_get_open_pull_requests,
+    mock_generate_branch_name,
+    mock_get_latest_sha,
+    mock_create_remote_branch,
+    mock_create_empty_commit,
+    mock_create_pr,
+    mock_add_labels,
     mock_event,
 ):
     mock_get_token.return_value = "test-token"
@@ -513,17 +423,16 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
     mock_should_skip_test.return_value = False
     mock_evaluate_condition.return_value = EvaluationResult(True, "has testable logic")
     mock_get_open_pull_requests.return_value = []
-    mock_create_issue.return_value = (
-        200,
-        {"html_url": "https://github.com/test/issue/1"},
-    )
+    mock_generate_branch_name.return_value = "gitauto/schedule-20240101-120000-ABCD"
+    mock_get_latest_sha.return_value = "abc123"
+    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
 
     with patch("services.webhook.schedule_handler.insert_coverages") as mock_insert:
         result = schedule_handler(mock_event)
 
         assert result["status"] == "success"
-        mock_create_issue.assert_called_once()
-        call_kwargs = mock_create_issue.call_args.kwargs
+        mock_create_pr.assert_called_once()
+        call_kwargs = mock_create_pr.call_args.kwargs
         assert "src/new_file.py" in call_kwargs["title"]
         assert "Add unit tests to" in call_kwargs["title"]
 
@@ -543,7 +452,9 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
         assert coverage_record["line_coverage"] == 0
         assert coverage_record["package_name"] is None
         assert coverage_record["language"] is None
-        assert coverage_record["github_issue_url"] == "https://github.com/test/issue/1"
+        assert (
+            coverage_record["github_issue_url"] == "https://github.com/test/repo/pull/1"
+        )
         assert coverage_record["is_excluded_from_testing"] is False
         assert coverage_record["uncovered_lines"] is None
         assert coverage_record["uncovered_functions"] is None
@@ -564,9 +475,7 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.get_raw_content")
-@patch("services.webhook.schedule_handler.create_issue")
 def test_schedule_handler_skips_none_coverage_as_fully_covered(
-    mock_create_issue,
     mock_get_raw_content,
     mock_get_all_coverages,
     mock_get_file_tree,
@@ -634,6 +543,5 @@ def test_schedule_handler_skips_none_coverage_as_fully_covered(
 
     result = schedule_handler(mock_event)
 
-    # All files skipped (100% stmt + 100% func + None branch = fully covered), no issue created
+    # All files skipped (100% stmt + 100% func + None branch = fully covered), no PR created
     assert result["status"] == "skipped"
-    mock_create_issue.assert_not_called()

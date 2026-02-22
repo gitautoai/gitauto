@@ -12,9 +12,9 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_pull_request(owner: str, repo: str, pull_number: int, token: str):
+def get_pull_request(owner: str, repo: str, pr_number: int, token: str):
     """https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#get-a-pull-request"""
-    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pull_number}"
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}"
     headers = create_headers(token=token)
     response = requests.get(url=url, headers=headers, timeout=TIMEOUT)
     response.raise_for_status()

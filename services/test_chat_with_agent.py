@@ -463,7 +463,7 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
         },
     )
@@ -481,7 +481,7 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
     is_completed = result.is_completed
     assert is_completed is True
     mock_get_pr_files.assert_called_once_with(
-        owner="test-owner", repo="test-repo", pull_number=123, token="test-token"
+        owner="test-owner", repo="test-repo", pr_number=123, token="test-token"
     )
 
 
@@ -517,7 +517,7 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
         {
             "owner": "test-owner",
             "repo": "test-repo",
-            "pull_number": 123,
+            "pr_number": 123,
             "token": "test-token",
         },
     )

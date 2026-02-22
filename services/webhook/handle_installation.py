@@ -1,20 +1,13 @@
-# Local imports (Github)
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.github_types import GitHubInstallationPayload
+from services.github.types.github_types import InstallationPayload
 from services.github.users.get_user_public_email import get_user_public_email
-
-# Local imports (Supabase)
 from services.supabase.credits.check_grant_exists import check_grant_exists
 from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.installations.insert_installation import insert_installation
 from services.supabase.owners.check_owner_exists import check_owner_exists
 from services.supabase.owners.insert_owner import insert_owner
 from services.supabase.users.upsert_user import upsert_user
-
-# Local imports (Stripe)
 from services.stripe.create_stripe_customer import create_stripe_customer
-
-# Local imports (Others)
 from services.webhook.process_repositories import process_repositories
 from services.webhook.setup_handler import setup_handler
 from utils.error.handle_exceptions import handle_exceptions
@@ -22,7 +15,7 @@ from utils.logging.logging_config import set_trigger
 
 
 @handle_exceptions(raise_on_error=True)
-async def handle_installation_created(payload: GitHubInstallationPayload):
+async def handle_installation_created(payload: InstallationPayload):
     set_trigger("installation")
     installation_id = payload["installation"]["id"]
     owner = payload["installation"]["account"]

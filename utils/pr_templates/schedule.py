@@ -6,12 +6,12 @@ SCHEDULE_PREFIX_ADD = f"{SCHEDULE_PREFIX} Add unit tests to "
 SCHEDULE_PREFIX_INCREASE = f"{SCHEDULE_PREFIX} Achieve 100% test coverage for "
 
 
-def get_issue_title(file_path: str, has_existing_tests: bool = False):
+def get_pr_title(file_path: str, has_existing_tests: bool = False):
     prefix = SCHEDULE_PREFIX_INCREASE if has_existing_tests else SCHEDULE_PREFIX_ADD
     return f"{prefix}{file_path}"
 
 
-def get_issue_body(
+def get_pr_body(
     owner: str,
     repo: str,
     branch: str,

@@ -3,7 +3,8 @@ import json
 from unittest.mock import Mock, MagicMock
 import requests
 
-from services.supabase.usage.insert_usage import Trigger, insert_usage
+from constants.triggers import Trigger
+from services.supabase.usage.insert_usage import insert_usage
 
 
 def _mock_response(data):
@@ -28,19 +29,18 @@ def test_insert_usage_success_with_all_parameters():
             owner_name="test_org",
             repo_id=2,
             repo_name="test_repo",
-            issue_number=3,
+            pr_number=3,
             user_id=4,
             installation_id=5,
             source="test",
-            trigger="issue_label",
-            pr_number=6,
+            trigger="dashboard",
         )
 
         assert result == 123
         mock_supabase.table.assert_called_once_with(table_name="usage")
 
 
-def test_insert_usage_success_without_pr_number():
+def test_insert_usage_success_minimal_parameters():
     from unittest.mock import patch
 
     mock_supabase = MagicMock()
@@ -56,11 +56,11 @@ def test_insert_usage_success_without_pr_number():
             owner_name="test_org",
             repo_id=2,
             repo_name="test_repo",
-            issue_number=3,
+            pr_number=3,
             user_id=4,
             installation_id=5,
             source="test",
-            trigger="issue_label",
+            trigger="dashboard",
         )
 
         assert result == 123
@@ -82,12 +82,11 @@ def test_insert_usage_with_zero_values():
             owner_name="test_org",
             repo_id=0,
             repo_name="test_repo",
-            issue_number=0,
+            pr_number=0,
             user_id=0,
             installation_id=0,
             source="test",
-            trigger="issue_label",
-            pr_number=0,
+            trigger="dashboard",
         )
 
         assert result == 0
@@ -97,11 +96,10 @@ def test_insert_usage_with_different_triggers():
     from unittest.mock import patch
 
     triggers: list[Trigger] = [
-        "issue_label",
-        "issue_comment",
+        "dashboard",
         "review_comment",
         "test_failure",
-        "pr_merge",
+        "schedule",
     ]
 
     mock_supabase = MagicMock()
@@ -118,7 +116,7 @@ def test_insert_usage_with_different_triggers():
                 owner_name="test_org",
                 repo_id=2,
                 repo_name="test_repo",
-                issue_number=3,
+                pr_number=3,
                 user_id=4,
                 installation_id=5,
                 source="test",
@@ -141,11 +139,11 @@ def test_insert_usage_with_exception():
             owner_name="test_org",
             repo_id=2,
             repo_name="test_repo",
-            issue_number=3,
+            pr_number=3,
             user_id=4,
             installation_id=5,
             source="test",
-            trigger="issue_label",
+            trigger="dashboard",
         )
 
         assert result is None
@@ -171,11 +169,11 @@ def test_insert_usage_with_http_error():
             owner_name="test_org",
             repo_id=2,
             repo_name="test_repo",
-            issue_number=3,
+            pr_number=3,
             user_id=4,
             installation_id=5,
             source="test",
-            trigger="issue_label",
+            trigger="dashboard",
         )
 
         assert result is None
@@ -194,11 +192,11 @@ def test_insert_usage_with_json_decode_error():
             owner_name="test_org",
             repo_id=2,
             repo_name="test_repo",
-            issue_number=3,
+            pr_number=3,
             user_id=4,
             installation_id=5,
             source="test",
-            trigger="issue_label",
+            trigger="dashboard",
         )
 
         assert result is None
@@ -220,11 +218,11 @@ def test_insert_usage_execute_exception():
             owner_name="test_org",
             repo_id=2,
             repo_name="test_repo",
-            issue_number=3,
+            pr_number=3,
             user_id=4,
             installation_id=5,
             source="test",
-            trigger="issue_label",
+            trigger="dashboard",
         )
 
         assert result is None

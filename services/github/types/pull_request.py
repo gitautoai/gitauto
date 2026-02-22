@@ -20,7 +20,7 @@ class PullRequest(TypedDict):
     locked: bool
     title: str
     user: User
-    body: str
+    body: str | None
     created_at: str
     updated_at: str
     closed_at: Optional[str]

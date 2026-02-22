@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from schemas.supabase.types import Repositories
-from services.supabase.usage.insert_usage import Trigger
+from constants.triggers import Trigger
 from services.webhook.utils.create_system_message import create_system_message
 
 
@@ -74,10 +74,10 @@ def test_minimal_call_no_repo_settings(mock_read_xml_file, mock_get_trigger_prom
         "<trigger_instruction>Issue trigger</trigger_instruction>"
     )
 
-    result = create_system_message("issue_comment")
+    result = create_system_message("dashboard")
 
     assert "<trigger_instruction>Issue trigger</trigger_instruction>" in result
-    mock_get_trigger_prompt.assert_called_once_with("issue_comment")
+    mock_get_trigger_prompt.assert_called_once_with("dashboard")
     # read_xml_file is called for coding_standards.xml
     assert mock_read_xml_file.call_count == 1
 
@@ -87,11 +87,10 @@ def test_all_trigger_types(mock_read_xml_file, mock_get_trigger_prompt):
     mock_get_trigger_prompt.return_value = "<trigger>Content</trigger>"
 
     triggers: list[Trigger] = [
-        "issue_label",
-        "issue_comment",
+        "dashboard",
         "review_comment",
         "test_failure",
-        "pr_merge",
+        "schedule",
     ]
 
     for trigger in triggers:
@@ -112,7 +111,7 @@ def test_with_structured_rules_only(mock_read_xml_file, mock_get_trigger_prompt)
     }
     repo_settings = create_repositories_data(structured_rules=structured_rules)
 
-    result = create_system_message("issue_comment", repo_settings)
+    result = create_system_message("dashboard", repo_settings)
 
     assert "<structured_repository_rules>" in result
     assert "codePatternStrategy: Best practices first" in result
@@ -130,7 +129,7 @@ def test_with_repo_rules_only(mock_read_xml_file, mock_get_trigger_prompt):
     repo_rules = "Always use TypeScript\nPrefer functional components\nUse ESLint"
     repo_settings = create_repositories_data(repo_rules=repo_rules)
 
-    result = create_system_message("issue_comment", repo_settings)
+    result = create_system_message("dashboard", repo_settings)
 
     assert "<freeform_repository_rules>" in result
     assert "Always use TypeScript" in result
@@ -155,7 +154,7 @@ def test_with_both_structured_and_repo_rules(
         structured_rules=structured_rules, repo_rules=repo_rules
     )
 
-    result = create_system_message("issue_comment", repo_settings)
+    result = create_system_message("dashboard", repo_settings)
 
     assert "<structured_repository_rules>" in result
     assert "testFramework: Jest" in result
@@ -173,7 +172,7 @@ def test_with_empty_structured_rules(mock_read_xml_file, mock_get_trigger_prompt
 
     repo_settings = create_repositories_data(structured_rules={})
 
-    result = create_system_message("issue_comment", repo_settings)
+    result = create_system_message("dashboard", repo_settings)
 
     assert "<structured_repository_rules>" not in result
     assert "<freeform_repository_rules>" not in result
@@ -185,7 +184,7 @@ def test_with_empty_repo_rules(mock_read_xml_file, mock_get_trigger_prompt):
 
     repo_settings = create_repositories_data(repo_rules="")
 
-    result = create_system_message("issue_comment", repo_settings)
+    result = create_system_message("dashboard", repo_settings)
 
     assert "<freeform_repository_rules>" not in result
 
@@ -196,7 +195,7 @@ def test_with_whitespace_only_repo_rules(mock_read_xml_file, mock_get_trigger_pr
 
     repo_settings = create_repositories_data(repo_rules="   \n\t  ")
 
-    result = create_system_message("issue_comment", repo_settings)
+    result = create_system_message("dashboard", repo_settings)
 
     assert "<freeform_repository_rules>" not in result
 
@@ -207,7 +206,7 @@ def test_with_none_structured_rules(mock_read_xml_file, mock_get_trigger_prompt)
 
     repo_settings = create_repositories_data(structured_rules=None)
 
-    result = create_system_message("issue_comment", repo_settings)
+    result = create_system_message("dashboard", repo_settings)
 
     assert "<structured_repository_rules>" not in result
 
@@ -218,7 +217,7 @@ def test_with_none_repo_rules(mock_read_xml_file, mock_get_trigger_prompt):
 
     repo_settings = create_repositories_data(repo_rules=None)
 
-    result = create_system_message("issue_comment", repo_settings)
+    result = create_system_message("dashboard", repo_settings)
 
     assert "<freeform_repository_rules>" not in result
 
@@ -227,7 +226,7 @@ def test_trigger_prompt_returns_none(mock_read_xml_file, mock_get_trigger_prompt
     mock_read_xml_file.return_value = "<rules>Rules</rules>"
     mock_get_trigger_prompt.return_value = None
 
-    result = create_system_message("issue_comment")
+    result = create_system_message("dashboard")
 
     assert result
     assert "<rules>Rules</rules>" in result
@@ -250,7 +249,7 @@ def test_structured_rules_with_various_data_types(
     }
     repo_settings = create_repositories_data(structured_rules=structured_rules)
 
-    result = create_system_message("issue_comment", repo_settings)
+    result = create_system_message("dashboard", repo_settings)
 
     assert "stringValue: test string" in result
     assert "intValue: 42" in result
@@ -270,7 +269,7 @@ def test_repo_rules_with_leading_trailing_whitespace(
     repo_rules = "  \n  Use clean code principles  \n  "
     repo_settings = create_repositories_data(repo_rules=repo_rules)
 
-    result = create_system_message("issue_comment", repo_settings)
+    result = create_system_message("dashboard", repo_settings)
 
     assert "<freeform_repository_rules>" in result
     assert "Use clean code principles" in result
@@ -285,7 +284,7 @@ def test_integration_without_mocks():
         structured_rules=structured_rules, repo_rules=repo_rules
     )
 
-    result = create_system_message("issue_comment", repo_settings)
+    result = create_system_message("dashboard", repo_settings)
 
     assert isinstance(result, str)
 
@@ -296,7 +295,7 @@ def test_exception_handling_returns_default_value(
     mock_read_xml_file.side_effect = Exception("File read error")
     mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
 
-    result = create_system_message("issue_comment")
+    result = create_system_message("dashboard")
 
     assert result == ""
 
@@ -305,7 +304,7 @@ def test_file_not_found_error_handling(mock_read_xml_file, mock_get_trigger_prom
     mock_read_xml_file.side_effect = FileNotFoundError("XML file not found")
     mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
 
-    result = create_system_message("issue_comment")
+    result = create_system_message("dashboard")
 
     assert result == ""
 
@@ -319,7 +318,7 @@ def test_type_error_in_structured_rules_handling(
     mock_repo_settings = MagicMock()
     mock_repo_settings.get.side_effect = TypeError("Type error in get method")
 
-    result = create_system_message("issue_comment", mock_repo_settings)
+    result = create_system_message("dashboard", mock_repo_settings)
 
     assert result == ""
 
@@ -328,6 +327,6 @@ def test_attribute_error_handling(mock_read_xml_file, mock_get_trigger_prompt):
     mock_read_xml_file.return_value = "<rules>Rules</rules>"
     mock_get_trigger_prompt.side_effect = AttributeError("Attribute error")
 
-    result = create_system_message("issue_comment")
+    result = create_system_message("dashboard")
 
     assert result == ""

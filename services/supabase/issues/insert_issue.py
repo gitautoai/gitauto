@@ -9,7 +9,7 @@ def insert_issue(
     owner_name: str,
     repo_id: int,
     repo_name: str,
-    issue_number: int,
+    pr_number: int,
     installation_id: int,
 ):
     supabase.table(table_name="issues").insert(
@@ -19,7 +19,7 @@ def insert_issue(
             "owner_name": owner_name,
             "repo_id": repo_id,
             "repo_name": repo_name,
-            "issue_number": issue_number,
+            "issue_number": pr_number,
             "installation_id": installation_id,
         }
     ).execute()

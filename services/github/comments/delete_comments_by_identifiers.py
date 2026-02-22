@@ -11,13 +11,13 @@ def delete_comments_by_identifiers(
     *,
     owner: str,
     repo: str,
-    issue_number: int,
+    pr_number: int,
     token: str,
     identifiers: list[str],
 ):
     """Delete all comments containing the identifiers made by GitAuto"""
     comments = get_all_comments(
-        owner=owner, repo=repo, issue_number=issue_number, token=token
+        owner=owner, repo=repo, pr_number=pr_number, token=token
     )
     matching_comments = filter_comments_by_identifiers(comments, identifiers)
     for comment in matching_comments:

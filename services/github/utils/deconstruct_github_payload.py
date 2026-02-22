@@ -4,28 +4,27 @@ from typing import cast
 # Local imports
 from config import GITHUB_APP_USER_ID
 from services.github.branches.check_branch_exists import check_branch_exists
-from services.github.issues.get_parent_issue import get_parent_issue
-from services.github.types.github_types import BaseArgs, GitHubLabeledPayload
+from services.github.types.github_types import BaseArgs, PrLabeledPayload
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.users.get_user_public_email import get_user_public_email
 from services.supabase.repositories.get_repository import get_repository
 from utils.error.handle_exceptions import handle_exceptions
-from utils.generate_branch_name import generate_branch_name
 from utils.logging.logging_config import logger
 from utils.urls.extract_urls import extract_urls
 
 
 @handle_exceptions(default_return_value=(None, None), raise_on_error=True)
 def deconstruct_github_payload(
-    payload: GitHubLabeledPayload,
+    payload: PrLabeledPayload,
 ):
-    # Extract issue related variables
-    issue = payload["issue"]
-    issue_number = issue["number"]
-    issue_title = issue["title"]
-    issue_body = issue["body"] or ""
-    issuer_name = issue["user"]["login"]
-    assignees = issue.get("assignees", [])
+    # Extract PR related variables (payload is from pull_request.labeled webhook)
+    pr = payload["pull_request"]
+    pr_number = pr["number"]
+    pr_title = pr["title"]
+    pr_body = pr["body"] or ""
+    pr_creator = pr["user"]["login"]
+    new_branch_name = pr["head"]["ref"]
+    assignees = pr.get("assignees", [])
     assignee_names = [a["login"] for a in assignees]
 
     # Extract repository related variables
@@ -60,41 +59,25 @@ def deconstruct_github_payload(
         base_branch_name = target_branch
         logger.info("Using target branch: %s", target_branch)
 
-    new_branch_name = generate_branch_name(issue_number=issue_number)
-
     # Extract sender related variables
     sender_id = payload["sender"]["id"]
     sender_name = payload["sender"]["login"]
     is_automation = sender_id == GITHUB_APP_USER_ID
 
-    # Build reviewers from sender, issuer, and issue assignees (for schedule triggers where both sender and issuer are bots, assignees provide the human reviewer)
+    # Build reviewers from sender, PR creator, and PR assignees (for schedule triggers where both sender and creator are bots, assignees provide the human reviewer)
     reviewers = list(
         set(
             name
-            for name in (*assignee_names, sender_name, issuer_name)
+            for name in (*assignee_names, sender_name, pr_creator)
             if "[bot]" not in name
         )
     )
 
     # Extract other information
-    github_urls, other_urls = extract_urls(text=issue_body)
+    github_urls, other_urls = extract_urls(text=pr_body)
     sender_email = get_user_public_email(username=sender_name, token=token)
 
-    # Extract its parent issue
-    parent_issue = get_parent_issue(
-        owner=owner_name,
-        repo=repo_name,
-        issue_number=issue_number,
-        token=token,
-    )
-    parent_issue_number = (
-        cast(int, parent_issue.get("number")) if parent_issue else None
-    )
-    parent_issue_title = cast(str, parent_issue.get("title")) if parent_issue else None
-    parent_issue_body = cast(str, parent_issue.get("body")) if parent_issue else None
-
     base_args: BaseArgs = {
-        "input_from": "github",
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
@@ -102,13 +85,11 @@ def deconstruct_github_payload(
         "repo": repo_name,
         "clone_url": clone_url,
         "is_fork": is_fork,
-        "issue_number": issue_number,
-        "issue_title": issue_title,
-        "issue_body": issue_body,
-        "issuer_name": issuer_name,
-        "parent_issue_number": parent_issue_number,
-        "parent_issue_title": parent_issue_title,
-        "parent_issue_body": parent_issue_body,
+        "pr_number": pr_number,
+        "pr_title": pr_title,
+        "pr_body": pr_body,
+        "pr_comments": [],
+        "pr_creator": pr_creator,
         "base_branch": base_branch_name,
         "new_branch": new_branch_name,
         "installation_id": installation_id,

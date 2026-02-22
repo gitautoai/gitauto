@@ -19,9 +19,9 @@ class FileChange(TypedDict):
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_pull_request_files(owner: str, repo: str, pull_number: int, token: str):
+def get_pull_request_files(owner: str, repo: str, pr_number: int, token: str):
     """https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests-files"""
-    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pull_number}/files"
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}/files"
     headers = create_headers(token=token)
     file_changes: list[FileChange] = []
     page = 1

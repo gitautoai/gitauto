@@ -2,35 +2,35 @@
 from unittest.mock import patch
 
 import pytest
-from utils.issue_templates.schedule import get_issue_body, get_issue_title
+from utils.pr_templates.schedule import get_pr_body, get_pr_title
 
 
-class TestGetIssueTitle:
-    """Test cases for get_issue_title function."""
+class TestGetPrTitle:
+    """Test cases for get_pr_title function."""
 
-    def test_get_issue_title_basic_file_path(self):
-        """Test generating issue title with a basic file path."""
+    def test_get_pr_title_basic_file_path(self):
+        """Test generating PR title with a basic file path."""
         file_path = "src/main.py"
-        result = get_issue_title(file_path)
+        result = get_pr_title(file_path)
         expected = "Schedule: Add unit tests to src/main.py"
         assert result == expected
 
-    def test_get_issue_title_nested_file_path(self):
-        """Test generating issue title with a nested file path."""
+    def test_get_pr_title_nested_file_path(self):
+        """Test generating PR title with a nested file path."""
         file_path = "utils/helpers/database.py"
-        result = get_issue_title(file_path)
+        result = get_pr_title(file_path)
         expected = "Schedule: Add unit tests to utils/helpers/database.py"
         assert result == expected
 
-    def test_get_issue_title_empty_string(self):
-        """Test generating issue title with an empty string."""
+    def test_get_pr_title_empty_string(self):
+        """Test generating PR title with an empty string."""
         file_path = ""
-        result = get_issue_title(file_path)
+        result = get_pr_title(file_path)
         expected = "Schedule: Add unit tests to "
         assert result == expected
 
-    def test_get_issue_title_special_characters(self):
-        """Test generating issue title with file paths containing special characters."""
+    def test_get_pr_title_special_characters(self):
+        """Test generating PR title with file paths containing special characters."""
         test_cases = [
             "src/file-with-dashes.py",
             "src/file_with_underscores.py",
@@ -39,27 +39,27 @@ class TestGetIssueTitle:
         ]
 
         for file_path in test_cases:
-            result = get_issue_title(file_path)
+            result = get_pr_title(file_path)
             expected = f"Schedule: Add unit tests to {file_path}"
             assert result == expected
 
 
-class TestGetIssueBody:
-    """Test cases for get_issue_body function."""
+class TestGetPrBody:
+    """Test cases for get_pr_body function."""
 
     @pytest.fixture
     def mock_constants(self):
         """Mock the imported constants."""
         with patch(
-            "utils.issue_templates.schedule.GH_BASE_URL", "https://github.com"
+            "utils.pr_templates.schedule.GH_BASE_URL", "https://github.com"
         ) as mock_gh_url, patch(
-            "utils.issue_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS"
+            "utils.pr_templates.schedule.SETTINGS_LINKS", "MOCK_SETTINGS_LINKS"
         ) as mock_settings:
             yield mock_gh_url, mock_settings
 
-    def test_get_issue_body_no_coverage_data(self, mock_constants):
+    def test_get_pr_body_no_coverage_data(self, mock_constants):
         """Test early return when all coverage data is None."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -83,9 +83,9 @@ class TestGetIssueBody:
         )
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_line_coverage_with_uncovered_lines(self, mock_constants):
+    def test_get_pr_body_line_coverage_with_uncovered_lines(self, mock_constants):
         """Test line coverage branch (line 33) with uncovered lines."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -107,9 +107,9 @@ class TestGetIssueBody:
         assert "Branch Coverage" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_line_coverage_without_uncovered_lines(self, mock_constants):
+    def test_get_pr_body_line_coverage_without_uncovered_lines(self, mock_constants):
         """Test line coverage branch (line 33) without uncovered lines."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -129,11 +129,9 @@ class TestGetIssueBody:
         assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_line_coverage_with_empty_uncovered_lines(
-        self, mock_constants
-    ):
+    def test_get_pr_body_line_coverage_with_empty_uncovered_lines(self, mock_constants):
         """Test line coverage branch (line 33) with empty uncovered lines string."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -153,9 +151,9 @@ class TestGetIssueBody:
         assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_statement_coverage_only(self, mock_constants):
+    def test_get_pr_body_statement_coverage_only(self, mock_constants):
         """Test statement coverage branch (line 41)."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -177,11 +175,11 @@ class TestGetIssueBody:
         assert "Branch Coverage" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_function_coverage_with_uncovered_functions(
+    def test_get_pr_body_function_coverage_with_uncovered_functions(
         self, mock_constants
     ):
         """Test function coverage branch (line 44) with uncovered functions."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -203,11 +201,11 @@ class TestGetIssueBody:
         assert "Branch Coverage" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_function_coverage_without_uncovered_functions(
+    def test_get_pr_body_function_coverage_without_uncovered_functions(
         self, mock_constants
     ):
         """Test function coverage branch (line 44) without uncovered functions."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -227,11 +225,11 @@ class TestGetIssueBody:
         assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_function_coverage_with_empty_uncovered_functions(
+    def test_get_pr_body_function_coverage_with_empty_uncovered_functions(
         self, mock_constants
     ):
         """Test function coverage branch (line 44) with empty uncovered functions string."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -251,11 +249,9 @@ class TestGetIssueBody:
         assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_branch_coverage_with_uncovered_branches(
-        self, mock_constants
-    ):
+    def test_get_pr_body_branch_coverage_with_uncovered_branches(self, mock_constants):
         """Test branch coverage branch (line 54) with uncovered branches."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -277,11 +273,11 @@ class TestGetIssueBody:
         assert "Function Coverage" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_branch_coverage_without_uncovered_branches(
+    def test_get_pr_body_branch_coverage_without_uncovered_branches(
         self, mock_constants
     ):
         """Test branch coverage branch (line 54) without uncovered branches."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -301,11 +297,11 @@ class TestGetIssueBody:
         assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_branch_coverage_with_empty_uncovered_branches(
+    def test_get_pr_body_branch_coverage_with_empty_uncovered_branches(
         self, mock_constants
     ):
         """Test branch coverage branch (line 54) with empty uncovered branches string."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -325,11 +321,9 @@ class TestGetIssueBody:
         assert "(Uncovered:" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_all_coverage_types_with_uncovered_items(
-        self, mock_constants
-    ):
+    def test_get_pr_body_all_coverage_types_with_uncovered_items(self, mock_constants):
         """Test with all coverage types and uncovered items."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -352,11 +346,11 @@ class TestGetIssueBody:
         assert "Focus on covering the uncovered areas." in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_all_coverage_types_without_uncovered_items(
+    def test_get_pr_body_all_coverage_types_without_uncovered_items(
         self, mock_constants
     ):
         """Test with all coverage types but no uncovered items."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -379,9 +373,9 @@ class TestGetIssueBody:
         assert "(Uncovered" not in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_zero_coverage(self, mock_constants):
+    def test_get_pr_body_zero_coverage(self, mock_constants):
         """Test with zero coverage values."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="owner",
             repo="repo",
             branch="develop",
@@ -405,9 +399,9 @@ class TestGetIssueBody:
         assert "- Branch Coverage: 0% (Uncovered: if_branch1,else_branch1)" in result
         assert "MOCK_SETTINGS_LINKS" in result
 
-    def test_get_issue_body_decimal_coverage_values(self, mock_constants):
+    def test_get_pr_body_decimal_coverage_values(self, mock_constants):
         """Test with decimal coverage values that get converted to integers."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="owner",
             repo="repo",
             branch="main",
@@ -426,9 +420,9 @@ class TestGetIssueBody:
         assert "- Function Coverage: 80% (Uncovered: test_func)" in result
         assert "- Branch Coverage: 65% (Uncovered: branch1)" in result
 
-    def test_get_issue_body_coverage_order(self, mock_constants):
+    def test_get_pr_body_coverage_order(self, mock_constants):
         """Test that coverage details appear in the correct order."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="owner",
             repo="repo",
             branch="main",
@@ -451,9 +445,9 @@ class TestGetIssueBody:
         assert "Function Coverage:" in coverage_lines[2]
         assert "Branch Coverage:" in coverage_lines[3]
 
-    def test_get_issue_body_url_construction(self, mock_constants):
+    def test_get_pr_body_url_construction(self, mock_constants):
         """Test that the GitHub URL is constructed correctly."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="myowner",
             repo="myrepo",
             branch="mybranch",
@@ -470,7 +464,7 @@ class TestGetIssueBody:
         expected_url = "https://github.com/myowner/myrepo/blob/mybranch/myfile.py"
         assert expected_url in result
 
-    def test_get_issue_body_special_characters_in_paths(self, mock_constants):
+    def test_get_pr_body_special_characters_in_paths(self, mock_constants):
         """Test with special characters in file paths."""
         test_files = [
             "src/file-with-dashes.py",
@@ -480,7 +474,7 @@ class TestGetIssueBody:
         ]
 
         for file_path in test_files:
-            result = get_issue_body(
+            result = get_pr_body(
                 owner="test-owner",
                 repo="test_repo",
                 branch="main",
@@ -499,7 +493,7 @@ class TestGetIssueBody:
             assert f"[{file_path}]({expected_url})" in result
             assert "- Statement Coverage: 42%" in result
 
-    def test_get_issue_body_different_branches(self, mock_constants):
+    def test_get_pr_body_different_branches(self, mock_constants):
         """Test with different branch names."""
         test_branches = [
             "main",
@@ -511,7 +505,7 @@ class TestGetIssueBody:
         ]
 
         for branch in test_branches:
-            result = get_issue_body(
+            result = get_pr_body(
                 owner="owner",
                 repo="repo",
                 branch=branch,
@@ -528,10 +522,10 @@ class TestGetIssueBody:
             assert expected_url in result
             assert "- Statement Coverage: 50%" in result
 
-    def test_get_issue_body_edge_cases(self, mock_constants):
+    def test_get_pr_body_edge_cases(self, mock_constants):
         """Test edge cases."""
         # Test with empty strings for owner, repo, branch, file_path
-        result = get_issue_body(
+        result = get_pr_body(
             owner="",
             repo="",
             branch="",
@@ -548,7 +542,7 @@ class TestGetIssueBody:
         assert expected_url in result
 
         # Test with very small coverage values
-        result = get_issue_body(
+        result = get_pr_body(
             owner="owner",
             repo="repo",
             branch="main",
@@ -563,9 +557,9 @@ class TestGetIssueBody:
         )
         assert "- Statement Coverage: 0%" in result
 
-    def test_get_issue_body_return_type(self, mock_constants):
+    def test_get_pr_body_return_type(self, mock_constants):
         """Test that the function returns a string."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="owner",
             repo="repo",
             branch="main",
@@ -580,7 +574,7 @@ class TestGetIssueBody:
         )
         assert isinstance(result, str)
 
-        result = get_issue_body(
+        result = get_pr_body(
             owner="owner",
             repo="repo",
             branch="main",
@@ -595,9 +589,9 @@ class TestGetIssueBody:
         )
         assert isinstance(result, str)
 
-    def test_get_issue_body_integration_without_mocking(self):
+    def test_get_pr_body_integration_without_mocking(self):
         """Test the function with actual imported constants."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="testowner",
             repo="testrepo",
             branch="main",
@@ -622,10 +616,10 @@ class TestGetIssueBody:
         assert "update coding rules" in result
         assert "exclude files" in result
 
-    def test_get_issue_body_mixed_coverage_combinations(self, mock_constants):
+    def test_get_pr_body_mixed_coverage_combinations(self, mock_constants):
         """Test various combinations of coverage types."""
         # Test line + statement coverage only
-        result = get_issue_body(
+        result = get_pr_body(
             owner="owner",
             repo="repo",
             branch="main",
@@ -644,7 +638,7 @@ class TestGetIssueBody:
         assert "Branch Coverage:" not in result
 
         # Test function + branch coverage only
-        result = get_issue_body(
+        result = get_pr_body(
             owner="owner",
             repo="repo",
             branch="main",
@@ -662,9 +656,9 @@ class TestGetIssueBody:
         assert "Line Coverage:" not in result
         assert "Statement Coverage:" not in result
 
-    def test_get_issue_body_whitespace_uncovered_strings(self, mock_constants):
+    def test_get_pr_body_whitespace_uncovered_strings(self, mock_constants):
         """Test with whitespace-only uncovered strings."""
-        result = get_issue_body(
+        result = get_pr_body(
             owner="owner",
             repo="repo",
             branch="main",
