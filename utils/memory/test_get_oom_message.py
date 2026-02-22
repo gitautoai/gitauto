@@ -12,8 +12,8 @@ def test_default_process_name():
 
 
 def test_custom_process_name():
-    msg = get_oom_message(1900.0, "issue processing")
-    assert "issue processing stopped" in msg
+    msg = get_oom_message(1900.0, "pr processing")
+    assert "pr processing stopped" in msg
     assert "1900MB" in msg
 
 

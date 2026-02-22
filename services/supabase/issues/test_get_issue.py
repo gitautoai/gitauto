@@ -34,7 +34,7 @@ class TestGetIssue(unittest.TestCase):
             "owner_type": "Organization",
             "owner_name": "test-owner",
             "repo_name": "test-repo",
-            "issue_number": 123,
+            "pr_number": 123,
         }
 
     def _setup_supabase_mock(self, mock_supabase, return_data):
@@ -66,7 +66,7 @@ class TestGetIssue(unittest.TestCase):
             owner_type="Organization",
             owner_name="test-owner",
             repo_name="test-repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         assert result is not None
@@ -83,7 +83,7 @@ class TestGetIssue(unittest.TestCase):
             owner_type="Organization",
             owner_name="nonexistent-owner",
             repo_name="nonexistent-repo",
-            issue_number=999,
+            pr_number=999,
         )
 
         self.assertIsNone(result)
@@ -111,7 +111,7 @@ class TestGetIssue(unittest.TestCase):
             owner_type="User",
             owner_name="individual-user",
             repo_name="personal-repo",
-            issue_number=789,
+            pr_number=789,
         )
 
         assert result is not None
@@ -126,13 +126,13 @@ class TestGetIssue(unittest.TestCase):
             owner_type="Organization",
             owner_name="test-owner",
             repo_name="test-repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         self.assertIsNone(result)
 
     @patch("services.supabase.issues.get_issue.supabase")
-    def test_get_issue_with_zero_issue_number(self, mock_supabase):
+    def test_get_issue_with_zero_pr_number(self, mock_supabase):
         issue_data = self.sample_issue_data.copy()
         issue_data["issue_number"] = 0
         self._setup_supabase_mock(mock_supabase, [issue_data])
@@ -141,28 +141,28 @@ class TestGetIssue(unittest.TestCase):
             owner_type="Organization",
             owner_name="test-owner",
             repo_name="test-repo",
-            issue_number=0,
+            pr_number=0,
         )
 
         assert result is not None
         self.assertEqual(result["issue_number"], 0)
 
     @patch("services.supabase.issues.get_issue.supabase")
-    def test_get_issue_with_large_issue_number(self, mock_supabase):
-        large_issue_number = 999999999
+    def test_get_issue_with_large_pr_number(self, mock_supabase):
+        large_pr_number = 999999999
         issue_data = self.sample_issue_data.copy()
-        issue_data["issue_number"] = large_issue_number
+        issue_data["issue_number"] = large_pr_number
         self._setup_supabase_mock(mock_supabase, [issue_data])
 
         result = get_issue(
             owner_type="User",
             owner_name="test-user",
             repo_name="test-repo",
-            issue_number=large_issue_number,
+            pr_number=large_pr_number,
         )
 
         assert result is not None
-        self.assertEqual(result["issue_number"], large_issue_number)
+        self.assertEqual(result["issue_number"], large_pr_number)
 
     @patch("services.supabase.issues.get_issue.supabase")
     def test_get_issue_returns_first_result_only(self, mock_supabase):
@@ -231,7 +231,7 @@ class TestGetIssue(unittest.TestCase):
             owner_type="Organization",
             owner_name="minimal-owner",
             repo_name="minimal-repo",
-            issue_number=1,
+            pr_number=1,
         )
 
         assert result is not None

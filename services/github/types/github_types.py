@@ -1,5 +1,5 @@
 # Standard imports
-from typing import Literal, Optional, TypedDict, Union
+from typing import Optional, TypedDict, Union
 from typing_extensions import NotRequired
 
 # Local imports
@@ -7,7 +7,6 @@ from services.github.types.check_run import CheckRun
 from services.github.types.check_suite import CheckSuite
 from services.github.types.installation import Installation
 from services.github.types.installation_details import InstallationDetails
-from services.github.types.issue import Issue
 from services.github.types.label import Label
 from services.github.types.organization import Organization
 from services.github.types.owner import OwnerType
@@ -19,7 +18,6 @@ from services.github.types.user import User
 
 class BaseArgs(TypedDict):
     # Required fields
-    input_from: Literal["github"]
     owner_type: OwnerType
     owner_id: int
     owner: str
@@ -27,12 +25,6 @@ class BaseArgs(TypedDict):
     repo: str
     clone_url: str
     is_fork: bool
-    issue_number: int
-    issue_title: str
-    issue_body: str
-    issue_comments: NotRequired[list[str]]
-    latest_commit_sha: NotRequired[str]
-    issuer_name: str
     base_branch: str
     new_branch: str
     installation_id: int
@@ -45,18 +37,17 @@ class BaseArgs(TypedDict):
     github_urls: list[str]
     other_urls: list[str]
     clone_dir: str
+    pr_number: int
+    pr_title: str
+    pr_body: str
+    pr_comments: list[str]
+    pr_creator: str
 
     # Optional fields
     check_run_name: NotRequired[str]
     comment_url: NotRequired[str | None]
-    issuer_email: NotRequired[str]
-    pull_number: NotRequired[int]
+    latest_commit_sha: NotRequired[str]
     workflow_id: NotRequired[str | int]
-    parent_issue_body: NotRequired[str | None]
-    parent_issue_number: NotRequired[int | None]
-    parent_issue_title: NotRequired[str | None]
-    pr_body: NotRequired[str]
-    pr_number: NotRequired[int]
     baseline_tsc_errors: NotRequired[set[str]]
     impl_file_to_collect_coverage_from: NotRequired[str]
     review_id: NotRequired[int]
@@ -64,10 +55,8 @@ class BaseArgs(TypedDict):
 
 
 class ReviewBaseArgs(BaseArgs):
-    pull_title: str
-    pull_body: str
-    pull_url: str
-    pull_file_url: str
+    pr_url: str
+    pr_file_url: str
     review_path: str
     review_subject_type: str
     review_line: int
@@ -92,7 +81,7 @@ class CheckSuiteCompletedPayload(TypedDict):
     installation: Installation
 
 
-class GitHubInstallationPayload(TypedDict):
+class InstallationPayload(TypedDict):
     action: str
     installation: InstallationDetails
     repositories: list[RepositoryAddedOrRemoved]
@@ -100,7 +89,7 @@ class GitHubInstallationPayload(TypedDict):
     sender: User
 
 
-class GitHubInstallationRepositoriesPayload(TypedDict):
+class InstallationRepositoriesPayload(TypedDict):
     action: str
     installation: InstallationDetails
     repository_selection: str
@@ -110,9 +99,11 @@ class GitHubInstallationRepositoriesPayload(TypedDict):
     sender: User
 
 
-class GitHubLabeledPayload(TypedDict, total=True):
+# Payload for pull_request.labeled webhook event
+class PrLabeledPayload(TypedDict, total=True):
     action: str
-    issue: Issue
+    number: int
+    pull_request: PullRequest
     label: Label
     repository: Repository
     organization: Organization
@@ -120,7 +111,7 @@ class GitHubLabeledPayload(TypedDict, total=True):
     installation: Installation
 
 
-class GitHubPullRequestClosedPayload(TypedDict, total=True):
+class PrClosedPayload(TypedDict, total=True):
     action: str
     number: int
     pull_request: PullRequest
@@ -130,6 +121,4 @@ class GitHubPullRequestClosedPayload(TypedDict, total=True):
     installation: Installation
 
 
-GitHubEventPayload = Union[
-    GitHubInstallationPayload, GitHubLabeledPayload, GitHubPullRequestClosedPayload
-]
+EventPayload = Union[InstallationPayload, PrLabeledPayload, PrClosedPayload]

@@ -87,7 +87,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     mock_chat_with_agent,
     _mock_should_bail,
     mock_update_comment,
-    mock_get_pull_files,
+    mock_get_pr_files,
     mock_get_file_content,
     mock_reply_to_comment,
     mock_get_thread_comments,
@@ -113,7 +113,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     mock_get_file_content.return_value = (
         "def main():\n    # File content here\n    pass"
     )
-    mock_get_pull_files.return_value = [
+    mock_get_pr_files.return_value = [
         {"filename": "src/main.py", "status": "modified"},
         {"filename": "src/utils.py", "status": "added"},
     ]
@@ -136,7 +136,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     ]
 
     # Execute the function
-    await handle_review_run(mock_review_comment_payload)
+    await handle_review_run(mock_review_comment_payload, trigger="review_comment")
 
     assert mock_chat_with_agent.call_count == 1
 
@@ -200,7 +200,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
     mock_chat_with_agent,
     _mock_should_bail,
     mock_update_comment,
-    mock_get_pull_files,
+    mock_get_pr_files,
     mock_get_file_content,
     mock_reply_to_comment,
     mock_get_thread_comments,
@@ -224,7 +224,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
     ]
     mock_reply_to_comment.return_value = "http://comment-url"
     mock_get_file_content.return_value = "def main():\n    pass"
-    mock_get_pull_files.return_value = [
+    mock_get_pr_files.return_value = [
         {"filename": "src/main.py", "status": "modified"},
     ]
     mock_update_comment.return_value = None
@@ -255,7 +255,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
         ),
     ]
 
-    await handle_review_run(mock_review_comment_payload)
+    await handle_review_run(mock_review_comment_payload, trigger="review_comment")
 
     assert mock_chat_with_agent.call_count == 2
     mock_verify_task_is_complete.assert_called_once()

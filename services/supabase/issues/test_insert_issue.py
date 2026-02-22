@@ -38,7 +38,7 @@ def test_insert_issue_success(mock_supabase):
         owner_name=TEST_OWNER_NAME,
         repo_id=TEST_REPO_ID,
         repo_name=TEST_REPO_NAME,
-        issue_number=TEST_ISSUE_NUMBER,
+        pr_number=TEST_ISSUE_NUMBER,
         installation_id=TEST_INSTALLATION_ID,
     )
 
@@ -66,7 +66,7 @@ def test_insert_issue_with_zero_values(mock_supabase):
     # Arrange
     owner_id = 0
     repo_id = 0
-    issue_number = 0
+    pr_number = 0
     installation_id = 0
 
     # Act
@@ -76,7 +76,7 @@ def test_insert_issue_with_zero_values(mock_supabase):
         owner_name=TEST_OWNER_NAME,
         repo_id=repo_id,
         repo_name=TEST_REPO_NAME,
-        issue_number=issue_number,
+        pr_number=pr_number,
         installation_id=installation_id,
     )
 
@@ -90,7 +90,7 @@ def test_insert_issue_with_zero_values(mock_supabase):
             "owner_name": TEST_OWNER_NAME,
             "repo_id": repo_id,
             "repo_name": TEST_REPO_NAME,
-            "issue_number": issue_number,
+            "issue_number": pr_number,
             "installation_id": installation_id,
         }
     )
@@ -110,7 +110,7 @@ def test_insert_issue_with_empty_strings(mock_supabase):
         owner_name=owner_name,
         repo_id=TEST_REPO_ID,
         repo_name=repo_name,
-        issue_number=TEST_ISSUE_NUMBER,
+        pr_number=TEST_ISSUE_NUMBER,
         installation_id=TEST_INSTALLATION_ID,
     )
 
@@ -135,7 +135,7 @@ def test_insert_issue_with_large_values(mock_supabase):
     # Arrange
     large_owner_id = 9999999999
     large_repo_id = 9999999999
-    large_issue_number = 9999999999
+    large_pr_number = 9999999999
     large_installation_id = 9999999999
 
     # Act
@@ -145,7 +145,7 @@ def test_insert_issue_with_large_values(mock_supabase):
         owner_name=TEST_OWNER_NAME,
         repo_id=large_repo_id,
         repo_name=TEST_REPO_NAME,
-        issue_number=large_issue_number,
+        pr_number=large_pr_number,
         installation_id=large_installation_id,
     )
 
@@ -159,7 +159,7 @@ def test_insert_issue_with_large_values(mock_supabase):
             "owner_name": TEST_OWNER_NAME,
             "repo_id": large_repo_id,
             "repo_name": TEST_REPO_NAME,
-            "issue_number": large_issue_number,
+            "issue_number": large_pr_number,
             "installation_id": large_installation_id,
         }
     )
@@ -180,7 +180,7 @@ def test_insert_issue_supabase_exception_raises(mock_supabase):
             owner_name=TEST_OWNER_NAME,
             repo_id=TEST_REPO_ID,
             repo_name=TEST_REPO_NAME,
-            issue_number=TEST_ISSUE_NUMBER,
+            pr_number=TEST_ISSUE_NUMBER,
             installation_id=TEST_INSTALLATION_ID,
         )
 
@@ -194,7 +194,7 @@ def test_insert_issue_table_method_called_correctly(mock_supabase):
         owner_name=TEST_OWNER_NAME,
         repo_id=TEST_REPO_ID,
         repo_name=TEST_REPO_NAME,
-        issue_number=TEST_ISSUE_NUMBER,
+        pr_number=TEST_ISSUE_NUMBER,
         installation_id=TEST_INSTALLATION_ID,
     )
 

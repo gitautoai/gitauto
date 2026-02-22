@@ -51,7 +51,7 @@ def test_get_all_comments_success(
     mock_response.json.return_value = expected_comments
     mock_requests_get.return_value = mock_response
 
-    result = get_all_comments(owner=owner, repo=repo, issue_number=123, token=token)
+    result = get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
 
     assert result == expected_comments
     mock_create_headers.assert_called_once_with(token=token)
@@ -64,7 +64,7 @@ def test_get_all_comments_empty_response(owner, repo, token, mock_requests_get):
     mock_response.json.return_value = []
     mock_requests_get.return_value = mock_response
 
-    result = get_all_comments(owner=owner, repo=repo, issue_number=123, token=token)
+    result = get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
 
     assert not result
     mock_requests_get.assert_called_once()
@@ -77,7 +77,7 @@ def test_get_all_comments_correct_url_construction(
     mock_response.json.return_value = []
     mock_requests_get.return_value = mock_response
 
-    get_all_comments(owner=owner, repo=repo, issue_number=123, token=token)
+    get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
 
     expected_url = f"https://api.github.com/repos/{owner}/{repo}/issues/123/comments"
     call_args = mock_requests_get.call_args
@@ -89,7 +89,7 @@ def test_get_all_comments_timeout_parameter(owner, repo, token, mock_requests_ge
     mock_response.json.return_value = []
     mock_requests_get.return_value = mock_response
 
-    get_all_comments(owner=owner, repo=repo, issue_number=123, token=token)
+    get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
 
     call_args = mock_requests_get.call_args
     assert "timeout" in call_args[1]
@@ -107,7 +107,7 @@ def test_get_all_comments_http_error(owner, repo, token, mock_requests_get):
     mock_response.raise_for_status.side_effect = http_error
     mock_requests_get.return_value = mock_response
 
-    result = get_all_comments(owner=owner, repo=repo, issue_number=123, token=token)
+    result = get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
 
     assert not result
 
@@ -115,7 +115,7 @@ def test_get_all_comments_http_error(owner, repo, token, mock_requests_get):
 def test_get_all_comments_network_error(owner, repo, token, mock_requests_get):
     mock_requests_get.side_effect = requests.exceptions.ConnectionError("Network error")
 
-    result = get_all_comments(owner=owner, repo=repo, issue_number=123, token=token)
+    result = get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
 
     assert not result
 
@@ -131,7 +131,7 @@ def test_get_all_comments_uses_github_api_url_constant(
         "services.github.comments.get_all_comments.GITHUB_API_URL",
         "https://custom.api.github.com",
     ):
-        get_all_comments(owner=owner, repo=repo, issue_number=123, token=token)
+        get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
 
     expected_url = (
         f"https://custom.api.github.com/repos/{owner}/{repo}/issues/123/comments"
@@ -147,5 +147,5 @@ def test_get_all_comments_decorator_configuration():
 def test_get_all_comments_function_signature_compliance():
     sig = inspect.signature(get_all_comments)
     params = list(sig.parameters.keys())
-    expected_params = ["owner", "repo", "issue_number", "token"]
+    expected_params = ["owner", "repo", "pr_number", "token"]
     assert params == expected_params

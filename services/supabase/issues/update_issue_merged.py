@@ -7,7 +7,7 @@ def update_issue_merged(
     owner_type: str,
     owner_name: str,
     repo_name: str,
-    issue_number: int,
+    pr_number: int,
     merged: bool = True,
 ):
     (
@@ -16,6 +16,6 @@ def update_issue_merged(
         .eq(column="owner_type", value=owner_type)
         .eq(column="owner_name", value=owner_name)
         .eq(column="repo_name", value=repo_name)
-        .eq(column="issue_number", value=issue_number)
+        .eq(column="issue_number", value=pr_number)
         .execute()
     )

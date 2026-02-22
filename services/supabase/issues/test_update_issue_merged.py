@@ -27,7 +27,7 @@ def sample_parameters():
         "owner_type": TEST_OWNER_TYPE,
         "owner_name": TEST_OWNER_NAME,
         "repo_name": TEST_REPO_NAME,
-        "issue_number": TEST_ISSUE_NUMBER,
+        "pr_number": TEST_ISSUE_NUMBER,
         "merged": True,
     }
 
@@ -55,7 +55,7 @@ class TestUpdateIssueMerged:
             owner_type=sample_parameters["owner_type"],
             owner_name=sample_parameters["owner_name"],
             repo_name=sample_parameters["repo_name"],
-            issue_number=sample_parameters["issue_number"],
+            pr_number=sample_parameters["pr_number"],
         )
 
         # Assert
@@ -153,7 +153,7 @@ class TestUpdateIssueMerged:
                 owner_type=owner_type,
                 owner_name="test_owner",
                 repo_name="test_repo",
-                issue_number=123,
+                pr_number=123,
             )
 
             # Assert that the correct owner_type was used
@@ -163,8 +163,8 @@ class TestUpdateIssueMerged:
             )
             assert owner_type_call[1]["value"] == owner_type
 
-    def test_update_issue_merged_with_various_issue_numbers(self, mock_supabase):
-        """Test function with various issue number values."""
+    def test_update_issue_merged_with_various_pr_numbers(self, mock_supabase):
+        """Test function with various PR number values."""
         # Arrange
         mock_table = MagicMock()
         mock_update = MagicMock()
@@ -176,9 +176,9 @@ class TestUpdateIssueMerged:
         mock_eq_chain.eq.return_value = mock_eq_chain
         mock_eq_chain.execute.return_value = MagicMock()
 
-        issue_numbers = [1, 999, 12345, 999999]
+        pr_numbers = [1, 999, 12345, 999999]
 
-        for issue_number in issue_numbers:
+        for pr_num in pr_numbers:
             # Reset mocks for each iteration
             mock_update.reset_mock()
             mock_eq_chain.reset_mock()
@@ -187,15 +187,15 @@ class TestUpdateIssueMerged:
                 owner_type="Organization",
                 owner_name="test_owner",
                 repo_name="test_repo",
-                issue_number=issue_number,
+                pr_number=pr_num,
             )
 
-            # Assert that the correct issue_number was used
+            # Assert that the correct issue_number DB column was used
             eq_calls = mock_update.eq.call_args_list + mock_eq_chain.eq.call_args_list
             issue_number_call = next(
                 call for call in eq_calls if call[1].get("column") == "issue_number"
             )
-            assert issue_number_call[1]["value"] == issue_number
+            assert issue_number_call[1]["value"] == pr_num
 
     def test_update_issue_merged_with_special_characters_in_names(self, mock_supabase):
         """Test function with special characters in owner and repo names."""
@@ -227,7 +227,7 @@ class TestUpdateIssueMerged:
                 owner_type="Organization",
                 owner_name=owner_name,
                 repo_name=repo_name,
-                issue_number=1,
+                pr_number=1,
             )
 
             # Assert that the correct names were used
@@ -253,7 +253,7 @@ class TestUpdateIssueMerged:
             owner_type="Organization",
             owner_name="test_owner",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         # Assert
@@ -276,7 +276,7 @@ class TestUpdateIssueMerged:
             owner_type="Organization",
             owner_name="test_owner",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         # Assert
@@ -299,7 +299,7 @@ class TestUpdateIssueMerged:
             owner_type="Organization",
             owner_name="test_owner",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         # Assert
@@ -316,7 +316,7 @@ class TestUpdateIssueMerged:
             owner_type="Organization",
             owner_name="test_owner",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         # Assert
@@ -332,7 +332,7 @@ class TestUpdateIssueMerged:
             owner_type="Organization",
             owner_name="test_owner",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         # Assert
@@ -348,7 +348,7 @@ class TestUpdateIssueMerged:
             owner_type="Organization",
             owner_name="test_owner",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         # Assert
@@ -364,7 +364,7 @@ class TestUpdateIssueMerged:
             owner_type="Organization",
             owner_name="test_owner",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         # Assert
@@ -388,7 +388,7 @@ class TestUpdateIssueMerged:
             owner_type="Organization",
             owner_name="test_owner",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
             merged=True,
         )
 
@@ -418,7 +418,7 @@ class TestUpdateIssueMerged:
             owner_type="Organization",
             owner_name="test_owner",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
             merged=merged_value,
         )
 

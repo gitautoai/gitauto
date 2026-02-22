@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 # Local imports
-from services.github.types.github_types import GitHubInstallationRepositoriesPayload
+from services.github.types.github_types import InstallationRepositoriesPayload
 from services.webhook.handle_installation_repos_added import (
     handle_installation_repos_added,
 )
@@ -289,7 +289,7 @@ class TestHandleInstallationReposAdded:
         # Execute - exception is re-raised due to raise_on_error=True
         with pytest.raises(KeyError, match="sender"):
             await handle_installation_repos_added(
-                cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
+                cast(InstallationRepositoriesPayload, incomplete_payload)
             )
 
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -326,7 +326,7 @@ class TestHandleInstallationReposAdded:
         # Execute - exception is re-raised due to raise_on_error=True
         with pytest.raises(KeyError, match="id"):
             await handle_installation_repos_added(
-                cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
+                cast(InstallationRepositoriesPayload, incomplete_payload)
             )
 
         mock_is_installation_valid.assert_not_called()
@@ -359,7 +359,7 @@ class TestHandleInstallationReposAdded:
         # Execute - exception is re-raised due to raise_on_error=True
         with pytest.raises(KeyError, match="account"):
             await handle_installation_repos_added(
-                cast(GitHubInstallationRepositoriesPayload, incomplete_payload)
+                cast(InstallationRepositoriesPayload, incomplete_payload)
             )
 
         mock_is_installation_valid.assert_called_once_with(installation_id=67890)
@@ -639,7 +639,7 @@ class TestHandleInstallationReposAdded:
         # Execute - exception is re-raised due to raise_on_error=True
         with pytest.raises(TypeError):
             await handle_installation_repos_added(
-                cast(GitHubInstallationRepositoriesPayload, invalid_payload)
+                cast(InstallationRepositoriesPayload, invalid_payload)
             )
 
         mock_is_installation_valid.assert_not_called()

@@ -56,7 +56,16 @@ def test_count_unique_requests_with_valid_data():
         mock_table.gt.assert_not_called()
         mock_table.eq.assert_any_call("installation_id", 123)
         mock_table.in_.assert_called_once_with(
-            "trigger", ["issue_comment", "issue_label", "manual", "pull_request"]
+            "trigger",
+            [
+                "dashboard",
+                "issue_comment",
+                "issue_label",
+                "manual",
+                "pull_request",
+                "schedule",
+                "unknown",
+            ],
         )
         mock_table.execute.assert_called_once()
 

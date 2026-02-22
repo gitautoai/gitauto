@@ -4,7 +4,6 @@
 def create_test_base_args(**overrides):
     """Helper function to create valid BaseArgs dictionary for testing."""
     default_args = {
-        "input_from": "github",
         "owner_type": "User",
         "owner_id": 123456,
         "owner": "test_owner",
@@ -12,12 +11,12 @@ def create_test_base_args(**overrides):
         "repo": "test_repo",
         "clone_url": "https://github.com/test_owner/test_repo.git",
         "is_fork": False,
-        "issue_number": 1,
-        "issue_title": "Test Issue",
-        "issue_body": "Test issue body",
-        "issue_comments": [],
+        "pr_number": 1,
+        "pr_title": "Test PR",
+        "pr_body": "Test PR body",
+        "pr_comments": [],
         "latest_commit_sha": "abc123",
-        "issuer_name": "test_issuer",
+        "pr_creator": "test_creator",
         "base_branch": "main",
         "new_branch": "feature/test-branch",
         "installation_id": 12345,

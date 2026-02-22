@@ -50,7 +50,6 @@ def test_token():
 def create_test_base_args():
     def _create(**overrides) -> BaseArgs:
         defaults: BaseArgs = {
-            "input_from": "github",
             "owner_type": "User",
             "owner_id": random.randint(1, 999999),
             "owner": "test-owner",
@@ -58,12 +57,12 @@ def create_test_base_args():
             "repo": "test-repo",
             "clone_url": "https://github.com/test-owner/test-repo.git",
             "is_fork": False,
-            "issue_number": random.randint(1, 9999),
-            "issue_title": "Test Issue",
-            "issue_body": "Test issue body",
-            "issue_comments": [],
+            "pr_number": random.randint(1, 9999),
+            "pr_title": "Test Issue",
+            "pr_body": "Test PR body",
+            "pr_comments": [],
             "latest_commit_sha": "abc123",
-            "issuer_name": "test-user",
+            "pr_creator": "test-user",
             "base_branch": "main",
             "new_branch": "test-branch",
             "installation_id": random.randint(1, 999999),

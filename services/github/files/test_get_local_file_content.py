@@ -11,7 +11,6 @@ def _make_base_args(clone_dir: str):
     return cast(
         BaseArgs,
         {
-            "input_from": "github",
             "owner_type": "Organization",
             "owner_id": 1,
             "owner": "test-owner",
@@ -19,10 +18,10 @@ def _make_base_args(clone_dir: str):
             "repo": "test-repo",
             "clone_url": "https://github.com/test-owner/test-repo.git",
             "is_fork": False,
-            "issue_number": 1,
-            "issue_title": "Test",
-            "issue_body": "Test body",
-            "issuer_name": "tester",
+            "pr_number": 1,
+            "pr_title": "Test",
+            "pr_body": "Test body",
+            "pr_creator": "tester",
             "base_branch": "main",
             "new_branch": "feature",
             "installation_id": 1,

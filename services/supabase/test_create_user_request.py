@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 """Test for create_user_request function."""
 
 from unittest.mock import patch
@@ -21,11 +22,10 @@ class TestCreateUserRequest:
             "owner_name": "test_org",
             "repo_id": 22222,
             "repo_name": "test_repo",
-            "issue_number": 123,
+            "pr_number": 123,
             "source": "github",
-            "trigger": "issue_comment",
+            "trigger": "dashboard",
             "email": "test@example.com",
-            "pr_number": 456,
         }
 
     @pytest.fixture
@@ -51,7 +51,7 @@ class TestCreateUserRequest:
     def test_create_user_request_existing_issue(self, sample_params, mock_dependencies):
         """Test create_user_request when issue already exists."""
         # Setup
-        existing_issue = {"id": 1, "issue_number": 123}
+        existing_issue = {"id": 1, "pr_number": 123}
         mock_dependencies["get_issue"].return_value = existing_issue
         mock_dependencies["insert_usage"].return_value = 999
 
@@ -66,7 +66,7 @@ class TestCreateUserRequest:
             owner_type="Organization",
             owner_name="test_org",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         # Verify insert_issue was NOT called since issue exists
@@ -79,12 +79,11 @@ class TestCreateUserRequest:
             owner_name="test_org",
             repo_id=22222,
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
             user_id=12345,
             installation_id=67890,
             source="github",
-            trigger="issue_comment",
-            pr_number=456,
+            trigger="dashboard",
             lambda_log_group=None,
             lambda_log_stream=None,
             lambda_request_id=None,
@@ -114,7 +113,7 @@ class TestCreateUserRequest:
             owner_type="Organization",
             owner_name="test_org",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         # Verify insert_issue WAS called since issue doesn't exist
@@ -124,7 +123,7 @@ class TestCreateUserRequest:
             owner_name="test_org",
             repo_id=22222,
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
             installation_id=67890,
         )
 
@@ -137,37 +136,14 @@ class TestCreateUserRequest:
     def test_create_user_request_without_pr_number(
         self, sample_params, mock_dependencies
     ):
-        """Test create_user_request without pr_number."""
-        # Setup
+        """Test create_user_request without pr_number raises TypeError."""
+        # Setup - pr_number is now required, so removing it should cause an error
         params_without_pr = sample_params.copy()
         del params_without_pr["pr_number"]
 
-        mock_dependencies["get_issue"].return_value = {"id": 1}
-        mock_dependencies["insert_usage"].return_value = 777
-
-        # Execute
-        result = create_user_request(**params_without_pr)
-
-        # Assert
-        assert result == 777
-
-        # Verify insert_usage was called with pr_number=None
-        mock_dependencies["insert_usage"].assert_called_once_with(
-            owner_id=11111,
-            owner_type="Organization",
-            owner_name="test_org",
-            repo_id=22222,
-            repo_name="test_repo",
-            issue_number=123,
-            user_id=12345,
-            installation_id=67890,
-            source="github",
-            trigger="issue_comment",
-            pr_number=None,
-            lambda_log_group=None,
-            lambda_log_stream=None,
-            lambda_request_id=None,
-        )
+        # Execute - should raise TypeError for missing required argument
+        with pytest.raises(TypeError):
+            create_user_request(**params_without_pr)
 
     def test_create_user_request_without_email(self, sample_params, mock_dependencies):
         """Test create_user_request without email."""
@@ -196,10 +172,10 @@ class TestCreateUserRequest:
     ):
         """Test create_user_request with different trigger types."""
         triggers = [
-            "issue_label",
+            "dashboard",
             "review_comment",
             "test_failure",
-            "pr_merge",
+            "schedule",
         ]
 
         for trigger in triggers:
@@ -248,7 +224,7 @@ class TestCreateUserRequest:
             owner_type="User",
             owner_name="individual_user",
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
         )
 
         # Verify insert_issue was called with User owner_type
@@ -258,7 +234,7 @@ class TestCreateUserRequest:
             owner_name="individual_user",
             repo_id=22222,
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
             installation_id=67890,
         )
 
@@ -286,7 +262,7 @@ class TestCreateUserRequest:
             owner_type="Organization",
             owner_name="org-with-dashes",
             repo_name="repo_with_underscores",
-            issue_number=123,
+            pr_number=123,
         )
 
         mock_dependencies["upsert_user"].assert_called_once_with(
@@ -295,13 +271,13 @@ class TestCreateUserRequest:
             email="test@example.com",
         )
 
-    def test_create_user_request_with_zero_issue_number(
+    def test_create_user_request_with_zero_pr_number(
         self, sample_params, mock_dependencies
     ):
-        """Test create_user_request with issue number 0."""
+        """Test create_user_request with pr number 0."""
         # Setup
         params = sample_params.copy()
-        params["issue_number"] = 0
+        params["pr_number"] = 0
 
         mock_dependencies["get_issue"].return_value = None
         mock_dependencies["insert_usage"].return_value = 222
@@ -312,12 +288,12 @@ class TestCreateUserRequest:
         # Assert
         assert result == 222
 
-        # Verify functions were called with issue_number=0
+        # Verify functions were called with pr_number=0
         mock_dependencies["get_issue"].assert_called_once_with(
             owner_type="Organization",
             owner_name="test_org",
             repo_name="test_repo",
-            issue_number=0,
+            pr_number=0,
         )
 
     def test_create_user_request_exception_handling(self, sample_params):
@@ -377,7 +353,7 @@ class TestCreateUserRequest:
             owner_name="test_org",
             repo_id=777777777,
             repo_name="test_repo",
-            issue_number=123,
+            pr_number=123,
             installation_id=666666666,
         )
 

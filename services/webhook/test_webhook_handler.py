@@ -1,4 +1,6 @@
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines,unused-argument
+
+# pyright: reportUnusedVariable=false
 
 # Standard imports
 import json
@@ -10,9 +12,9 @@ import pytest
 from config import UTF8
 from services.github.types.github_types import (
     CheckSuiteCompletedPayload,
-    GitHubInstallationRepositoriesPayload,
-    GitHubLabeledPayload,
-    GitHubPullRequestClosedPayload,
+    InstallationRepositoriesPayload,
+    PrClosedPayload,
+    PrLabeledPayload,
 )
 from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
 from services.webhook.webhook_handler import handle_webhook_event
@@ -62,8 +64,8 @@ def mock_handle_installation_repos_removed():
 
 
 @pytest.fixture
-def mock_create_pr_from_issue():
-    with patch("services.webhook.webhook_handler.create_pr_from_issue") as mock:
+def mock_handle_new_pr():
+    with patch("services.webhook.webhook_handler.handle_new_pr") as mock:
         mock.return_value = None
         yield mock
 
@@ -77,12 +79,6 @@ def mock_handle_check_suite():
 @pytest.fixture
 def mock_write_pr_description():
     with patch("services.webhook.webhook_handler.write_pr_description") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_update_issue_merged():
-    with patch("services.webhook.webhook_handler.update_issue_merged") as mock:
         yield mock
 
 
@@ -236,15 +232,40 @@ class TestHandleWebhookEvent:
         mock_handle_installation_repos_added.assert_called_once_with(payload=payload)
 
     @pytest.mark.asyncio
-    async def test_handle_webhook_event_issues_labeled(self, mock_create_pr_from_issue):
-        """Test handling of issues labeled event."""
-        payload = {"action": "labeled"}
+    async def test_handle_webhook_event_pull_request_labeled_dashboard(
+        self, mock_handle_new_pr
+    ):
+        """Test handling of pull request labeled event from dashboard triggers handle_new_pr."""
+        payload = {
+            "action": "labeled",
+            "pull_request": {"head": {"ref": "gitauto/dashboard-20250101-120000-Ab12"}},
+        }
 
-        await handle_webhook_event(event_name="issues", payload=payload)
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(event_name="pull_request", payload=payload)
 
-        mock_create_pr_from_issue.assert_called_once_with(
+        mock_handle_new_pr.assert_called_once_with(
             payload=payload,
-            trigger="issue_label",
+            trigger="dashboard",
+            lambda_info=None,
+        )
+
+    @pytest.mark.asyncio
+    async def test_handle_webhook_event_pull_request_labeled_schedule(
+        self, mock_handle_new_pr
+    ):
+        """Test handling of pull request labeled event from schedule triggers handle_new_pr."""
+        payload = {
+            "action": "labeled",
+            "pull_request": {"head": {"ref": "gitauto/schedule-20250101-120000-Ab12"}},
+        }
+
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(event_name="pull_request", payload=payload)
+
+        mock_handle_new_pr.assert_called_once_with(
+            payload=payload,
+            trigger="schedule",
             lambda_info=None,
         )
 
@@ -302,15 +323,6 @@ class TestHandleWebhookEvent:
         mock_write_pr_description.assert_called_once_with(payload=payload)
 
     @pytest.mark.asyncio
-    async def test_handle_webhook_event_pull_request_closed_no_pull_request(self):
-        """Test handling of pull request closed event with no pull_request."""
-        payload = {"action": "closed"}
-
-        await handle_webhook_event(event_name="pull_request", payload=payload)
-
-        # Should return early with no errors
-
-    @pytest.mark.asyncio
     async def test_handle_webhook_event_pull_request_closed_not_merged(self):
         """Test handling of pull request closed event that wasn't merged."""
         payload = {
@@ -326,70 +338,92 @@ class TestHandleWebhookEvent:
     async def test_handle_webhook_event_pull_request_closed_non_gitauto_branch(self):
         """Test handling of pull request closed event from non-GitAuto branch."""
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
-            with patch(
-                "services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"
-            ):
-                payload = {
-                    "action": "closed",
-                    "pull_request": {
-                        "merged_at": "2023-01-01T00:00:00Z",
-                        "head": {"ref": "feature/some-branch"},
-                    },
-                }
+            payload = {
+                "action": "closed",
+                "pull_request": {
+                    "merged_at": "2023-01-01T00:00:00Z",
+                    "head": {"ref": "feature/some-branch"},
+                },
+            }
 
-                # Should return early without errors (non-GitAuto branches are ignored)
-                await handle_webhook_event(event_name="pull_request", payload=payload)
+            # Should return early without errors (non-GitAuto branches are ignored)
+            await handle_webhook_event(event_name="pull_request", payload=payload)
 
     @pytest.mark.asyncio
+    @patch("services.webhook.webhook_handler.get_usage_by_pr")
+    @patch("services.webhook.webhook_handler.update_usage")
     async def test_handle_webhook_event_pull_request_closed_gitauto_branch_no_body(
-        self, mock_update_issue_merged, mock_slack_notify
+        self,
+        mock_update_usage,
+        mock_get_usage_by_pr,
+        mock_slack_notify,
     ):
-        """Test handling of pull request closed event from GitAuto branch with no body."""
+        """Test handling of pull request closed event from GitAuto branch with no body (schedule PR)."""
+        mock_get_usage_by_pr.return_value = []
+
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
-            with patch(
-                "services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"
-            ):
-                payload = {
-                    "action": "closed",
-                    "pull_request": {
-                        "merged_at": "2023-01-01T00:00:00Z",
-                        "head": {"ref": "gitauto/issue-123"},
-                        "body": None,
+            payload = {
+                "action": "closed",
+                "pull_request": {
+                    "merged_at": "2023-01-01T00:00:00Z",
+                    "head": {"ref": "gitauto/schedule-20250101-1200-abc123"},
+                    "body": None,
+                    "number": 456,
+                    "title": "Test PR",
+                },
+                "repository": {
+                    "id": 789,
+                    "owner": {
+                        "type": "Organization",
+                        "login": "owner-name",
+                        "id": 111,
                     },
-                }
+                    "name": "repo-name",
+                },
+                "sender": {"login": "sender-name"},
+            }
 
-                await handle_webhook_event(event_name="pull_request", payload=payload)
+            await handle_webhook_event(event_name="pull_request", payload=payload)
 
-                mock_update_issue_merged.assert_not_called()
-                mock_slack_notify.assert_not_called()
+            mock_slack_notify.assert_called_once()
 
     @pytest.mark.asyncio
+    @patch("services.webhook.webhook_handler.get_usage_by_pr")
+    @patch("services.webhook.webhook_handler.update_usage")
     async def test_handle_webhook_event_pull_request_closed_gitauto_branch_wrong_body_format(
-        self, mock_update_issue_merged, mock_slack_notify
+        self,
+        mock_update_usage,
+        mock_get_usage_by_pr,
+        mock_slack_notify,
     ):
-        """Test handling of pull request closed event from GitAuto branch with wrong body format."""
+        """Test handling of pull request closed event from GitAuto branch with different body format."""
+        mock_get_usage_by_pr.return_value = []
+
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
-            with patch(
-                "services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"
-            ):
-                with patch(
-                    "services.webhook.webhook_handler.PR_BODY_STARTS_WITH", "Resolves #"
-                ):
-                    payload = {
-                        "action": "closed",
-                        "pull_request": {
-                            "merged_at": "2023-01-01T00:00:00Z",
-                            "head": {"ref": "gitauto/issue-123"},
-                            "body": "Fixes issue #123",
-                        },
-                    }
+            payload = {
+                "action": "closed",
+                "pull_request": {
+                    "merged_at": "2023-01-01T00:00:00Z",
+                    "head": {"ref": "gitauto/dashboard-20250101-1200-abc123"},
+                    "body": "Fixes issue #123",
+                    "number": 456,
+                    "title": "Test PR",
+                },
+                "repository": {
+                    "id": 789,
+                    "owner": {
+                        "type": "Organization",
+                        "login": "owner-name",
+                        "id": 111,
+                    },
+                    "name": "repo-name",
+                },
+                "sender": {"login": "sender-name"},
+            }
 
-                    await handle_webhook_event(
-                        event_name="pull_request", payload=payload
-                    )
+            await handle_webhook_event(event_name="pull_request", payload=payload)
 
-                    mock_update_issue_merged.assert_not_called()
-                    mock_slack_notify.assert_not_called()
+            mock_slack_notify.assert_called_once()
 
     @pytest.mark.asyncio
     @patch("services.webhook.webhook_handler.get_usage_by_pr")
@@ -398,59 +432,43 @@ class TestHandleWebhookEvent:
         self,
         mock_update_usage,
         mock_get_usage_by_pr,
-        mock_update_issue_merged,
         mock_slack_notify,
     ):
         """Test handling of pull request closed event from GitAuto branch with success."""
         mock_get_usage_by_pr.return_value = [{"id": 1}, {"id": 2}]
 
         with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
-            with patch(
-                "services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"
-            ):
-                with patch(
-                    "services.webhook.webhook_handler.PR_BODY_STARTS_WITH", "Resolves #"
-                ):
-                    payload = {
-                        "action": "closed",
-                        "pull_request": {
-                            "merged_at": "2023-01-01T00:00:00Z",
-                            "head": {"ref": "gitauto/issue-123"},
-                            "body": "Resolves #123",
-                            "user": {"login": "author-name"},
-                            "number": 456,
-                            "title": "Fix issue #123",
-                        },
-                        "repository": {
-                            "id": 789,
-                            "owner": {
-                                "type": "Organization",
-                                "login": "owner-name",
-                                "id": 111,
-                            },
-                            "name": "repo-name",
-                        },
-                        "sender": {"login": "sender-name"},
-                    }
+            payload = {
+                "action": "closed",
+                "pull_request": {
+                    "merged_at": "2023-01-01T00:00:00Z",
+                    "head": {"ref": "gitauto/dashboard-20250101-1200-abc123"},
+                    "body": "Automated PR by GitAuto",
+                    "user": {"login": "author-name"},
+                    "number": 456,
+                    "title": "Fix issue #123",
+                },
+                "repository": {
+                    "id": 789,
+                    "owner": {
+                        "type": "Organization",
+                        "login": "owner-name",
+                        "id": 111,
+                    },
+                    "name": "repo-name",
+                },
+                "sender": {"login": "sender-name"},
+            }
 
-                    await handle_webhook_event(
-                        event_name="pull_request", payload=payload
-                    )
+            await handle_webhook_event(event_name="pull_request", payload=payload)
 
-                    mock_update_issue_merged.assert_called_once_with(
-                        owner_type="Organization",
-                        owner_name="owner-name",
-                        repo_name="repo-name",
-                        issue_number=123,
-                        merged=True,
-                    )
-                    mock_get_usage_by_pr.assert_called_once_with(111, 789, 456)
-                    assert mock_update_usage.call_count == 2
-                    mock_update_usage.assert_any_call(usage_id=1, is_merged=True)
-                    mock_update_usage.assert_any_call(usage_id=2, is_merged=True)
-                    mock_slack_notify.assert_called_once_with(
-                        "🎉 PR #456 merged by `sender-name` for `owner-name/repo-name`: Fix issue #123"
-                    )
+            mock_get_usage_by_pr.assert_called_once_with(111, 789, 456)
+            assert mock_update_usage.call_count == 2
+            mock_update_usage.assert_any_call(usage_id=1, is_merged=True)
+            mock_update_usage.assert_any_call(usage_id=2, is_merged=True)
+            mock_slack_notify.assert_called_once_with(
+                "🎉 PR #456 merged by `sender-name` for `owner-name/repo-name`: Fix issue #123"
+            )
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_pull_request_review_comment_created(
@@ -464,7 +482,7 @@ class TestHandleWebhookEvent:
         )
 
         mock_handle_review_run.assert_called_once_with(
-            payload=payload, lambda_info=None
+            payload=payload, trigger="review_comment", lambda_info=None
         )
 
     @pytest.mark.asyncio
@@ -479,7 +497,7 @@ class TestHandleWebhookEvent:
         )
 
         mock_handle_review_run.assert_called_once_with(
-            payload=payload, lambda_info=None
+            payload=payload, trigger="review_comment", lambda_info=None
         )
 
     @pytest.mark.asyncio
@@ -625,51 +643,21 @@ class TestHandleWebhookEvent:
 
         mock_handle_check_suite.assert_not_called()
 
-    def test_github_labeled_payload_cast(self):
-        with open("payloads/github/issues/labeled.json", "r", encoding=UTF8) as f:
-            payload = json.load(f)
-
-        casted_payload = cast(GitHubLabeledPayload, payload)
-
-        assert casted_payload["action"] == "labeled"
-        assert casted_payload["issue"]["id"] == 2145314834
-        assert casted_payload["issue"]["number"] == 13
-        assert casted_payload["issue"]["title"] == "Add Python Unit Testing"
-        assert casted_payload["label"]["id"] == 6588739585
-        assert casted_payload["label"]["name"] == "pragent"
-        assert casted_payload["repository"]["id"] == 756737722
-        assert casted_payload["repository"]["name"] == "issue-to-pr"
-        assert casted_payload["repository"]["owner"]["login"] == "issue-to-pr"
-        assert casted_payload["organization"]["login"] == "issue-to-pr"
-        assert casted_payload["sender"]["login"] == "hiroshinishio"
-        assert casted_payload["installation"]["id"] == 47463026
-
     @pytest.mark.asyncio
-    async def test_issues_labeled_type_checking_with_real_payload(
-        self, mock_create_pr_from_issue
-    ):
+    async def test_issues_labeled_is_ignored(self, mock_handle_new_pr):
+        """Regular issues.labeled events are no longer handled (we use pull_request.labeled)."""
         with open("payloads/github/issues/labeled.json", "r", encoding=UTF8) as f:
             payload = json.load(f)
 
         await handle_webhook_event("issues", payload)
 
-        mock_create_pr_from_issue.assert_called_once()
-
-        call_args = mock_create_pr_from_issue.call_args[1]
-        received_payload = call_args["payload"]
-
-        assert isinstance(received_payload, dict)
-        assert received_payload["action"] == "labeled"
-        assert received_payload["issue"]["number"] == 13
-        assert received_payload["label"]["name"] == "pragent"
-        assert received_payload["repository"]["name"] == "issue-to-pr"
-        assert received_payload["sender"]["login"] == "hiroshinishio"
+        mock_handle_new_pr.assert_not_called()
 
     def test_github_pull_request_closed_payload_cast(self):
         with open("payloads/github/pull_request/closed.json", "r", encoding=UTF8) as f:
             payload = json.load(f)
 
-        casted_payload = cast(GitHubPullRequestClosedPayload, payload)
+        casted_payload = cast(PrClosedPayload, payload)
 
         assert casted_payload["action"] == "closed"
         assert casted_payload["number"] == 715
@@ -695,7 +683,6 @@ class TestHandleWebhookEvent:
         self,
         mock_update_usage,
         mock_get_usage_by_pr,
-        mock_update_issue_merged,
         mock_slack_notify,
     ):
         mock_get_usage_by_pr.return_value = [{"id": 123}]
@@ -703,23 +690,12 @@ class TestHandleWebhookEvent:
         with open("payloads/github/pull_request/closed.json", "r", encoding=UTF8) as f:
             payload = json.load(f)
 
-        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto-wes"), patch(
-            "services.webhook.webhook_handler.ISSUE_NUMBER_FORMAT", "/issue-"
-        ), patch("services.webhook.webhook_handler.PR_BODY_STARTS_WITH", "Resolves #"):
-
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto-wes"):
             await handle_webhook_event("pull_request", payload)
 
-            mock_update_issue_merged.assert_called_once()
             mock_slack_notify.assert_called_once()
             mock_get_usage_by_pr.assert_called_once()
             mock_update_usage.assert_called_once_with(usage_id=123, is_merged=True)
-
-            call_args = mock_update_issue_merged.call_args[1]
-            assert call_args["owner_type"] == "Organization"
-            assert call_args["owner_name"] == "gitautoai"
-            assert call_args["repo_name"] == "gitauto"
-            assert call_args["issue_number"] == 714
-            assert call_args["merged"] is True
 
     def test_github_installation_repositories_payload_cast(self):
         with open(
@@ -727,7 +703,7 @@ class TestHandleWebhookEvent:
         ) as f:
             payload = json.load(f)
 
-        casted_payload = cast(GitHubInstallationRepositoriesPayload, payload)
+        casted_payload = cast(InstallationRepositoriesPayload, payload)
 
         assert casted_payload["action"] == "added"
         assert casted_payload["installation"]["id"] == 52733965
@@ -913,3 +889,58 @@ class TestHandleWebhookEvent:
 
         mock_handle_coverage_report.assert_not_called()
         mock_handle_successful_check_suite.assert_called_once()
+
+    def test_pr_labeled_payload_cast(self):
+        with open("payloads/github/pull_request/labeled.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        casted_payload = cast(PrLabeledPayload, payload)
+
+        assert casted_payload["action"] == "labeled"
+        assert casted_payload["number"] == 2304
+        assert casted_payload["pull_request"]["id"] == 3311605509
+        assert casted_payload["pull_request"]["number"] == 2304
+        assert (
+            casted_payload["pull_request"]["title"]
+            == "Low Test Coverage: utils/logs/clean_logs.py"
+        )
+        assert casted_payload["pull_request"]["state"] == "open"
+        assert casted_payload["pull_request"]["merged"] is False
+        assert (
+            casted_payload["pull_request"]["head"]["ref"]
+            == "gitauto-wes/schedule-20260221-225547-4tb2"
+        )
+        assert casted_payload["pull_request"]["base"]["ref"] == "main"
+        assert casted_payload["label"]["id"] == 8502925420
+        assert casted_payload["label"]["name"] == "gitauto-wes"
+        assert casted_payload["repository"]["id"] == 756737722
+        assert casted_payload["repository"]["name"] == "gitauto"
+        assert casted_payload["repository"]["owner"]["login"] == "gitautoai"
+        assert casted_payload["organization"]["login"] == "gitautoai"
+        assert casted_payload["sender"]["login"] == "hiroshinishio"
+        assert casted_payload["installation"]["id"] == 60314628
+
+    @pytest.mark.asyncio
+    async def test_pull_request_labeled_type_checking_with_real_payload(
+        self, mock_handle_new_pr
+    ):
+        with open("payloads/github/pull_request/labeled.json", "r", encoding=UTF8) as f:
+            payload = json.load(f)
+
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto-wes"):
+            await handle_webhook_event("pull_request", payload)
+
+        mock_handle_new_pr.assert_called_once()
+
+        call_args = mock_handle_new_pr.call_args[1]
+        received_payload = call_args["payload"]
+        received_trigger = call_args["trigger"]
+
+        assert isinstance(received_payload, dict)
+        assert received_payload["action"] == "labeled"
+        assert received_payload["number"] == 2304
+        assert (
+            received_payload["pull_request"]["head"]["ref"]
+            == "gitauto-wes/schedule-20260221-225547-4tb2"
+        )
+        assert received_trigger == "schedule"

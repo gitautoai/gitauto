@@ -1,9 +1,7 @@
+# pylint: disable=unused-argument
 from unittest.mock import patch, MagicMock
 import pytest
 import requests
-from requests.exceptions import HTTPError
-
-# pylint: disable=unused-argument
 from config import TIMEOUT
 from services.github.comments.reply_to_comment import reply_to_comment
 
@@ -15,7 +13,7 @@ def mock_base_args():
         "owner": "test-owner",
         "repo": "test-repo",
         "token": "test-token",
-        "pull_number": 123,
+        "pr_number": 123,
         "review_id": 456,
     }
 
@@ -165,7 +163,7 @@ def test_reply_to_comment_http_error_handled(mock_base_args, mock_create_headers
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_response = MagicMock()
         # Create a proper HTTPError with a response object
-        http_error = HTTPError("404 Not Found")
+        http_error = requests.exceptions.HTTPError("404 Not Found")
         http_error.response = MagicMock()
         http_error.response.status_code = 404
         http_error.response.reason = "Not Found"
@@ -219,19 +217,19 @@ def test_reply_to_comment_url_construction(
 ):
     """Test that the URL is constructed correctly with different parameters."""
     test_cases = [
-        {"owner": "owner1", "repo": "repo1", "pull_number": 1, "review_id": 100},
+        {"owner": "owner1", "repo": "repo1", "pr_number": 1, "review_id": 100},
         {
             "owner": "test-org",
             "repo": "my-repo",
-            "pull_number": 999,
+            "pr_number": 999,
             "review_id": 12345,
         },
-        {"owner": "user", "repo": "project", "pull_number": 42, "review_id": 789},
+        {"owner": "user", "repo": "project", "pr_number": 42, "review_id": 789},
     ]
 
     for case in test_cases:
         base_args = {**mock_base_args, **case}
-        expected_url = f"https://api.github.com/repos/{case['owner']}/{case['repo']}/pulls/{case['pull_number']}/comments/{case['review_id']}/replies"
+        expected_url = f"https://api.github.com/repos/{case['owner']}/{case['repo']}/pulls/{case['pr_number']}/comments/{case['review_id']}/replies"
 
         with patch(
             "services.github.comments.reply_to_comment.requests.post"
@@ -293,18 +291,18 @@ def test_reply_to_comment_response_url_extraction(mock_base_args, mock_create_he
 
 
 @pytest.mark.parametrize(
-    "pull_number,review_id",
+    "pr_number,review_id",
     [
         (1, 1),
         (999999, 888888),
     ],
 )
 def test_reply_to_comment_various_ids(
-    mock_base_args, mock_post_response, mock_create_headers, pull_number, review_id
+    mock_base_args, mock_post_response, mock_create_headers, pr_number, review_id
 ):
-    """Test reply to comment with various pull number and review ID combinations."""
-    base_args = {**mock_base_args, "pull_number": pull_number, "review_id": review_id}
-    expected_url = f"https://api.github.com/repos/test-owner/test-repo/pulls/{pull_number}/comments/{review_id}/replies"
+    """Test reply to comment with various PR number and review ID combinations."""
+    base_args = {**mock_base_args, "pr_number": pr_number, "review_id": review_id}
+    expected_url = f"https://api.github.com/repos/test-owner/test-repo/pulls/{pr_number}/comments/{review_id}/replies"
 
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
@@ -326,7 +324,7 @@ def test_reply_to_comment_with_zero_values_returns_none(
     mock_base_args, mock_create_headers
 ):
     """Test that zero values are treated as invalid and function returns None."""
-    base_args = {**mock_base_args, "pull_number": 0, "review_id": 0}
+    base_args = {**mock_base_args, "pr_number": 0, "review_id": 0}
 
     # Should return None due to handle_exceptions decorator when validation fails
     # Intentionally passing merged dict to test runtime behavior
@@ -385,7 +383,7 @@ def test_reply_to_comment_with_none_values():
         "owner": None,
         "repo": None,
         "token": None,
-        "pull_number": None,
+        "pr_number": None,
         "review_id": None,
     }
 

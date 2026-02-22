@@ -43,7 +43,7 @@ def test_delete_comments_by_identifiers_successful_deletion(
 ):
     owner = fake.user_name()
     repo = fake.slug()
-    issue_number = fake.random_int(min=1, max=999)
+    pr_number = fake.random_int(min=1, max=999)
     token = fake.sha256()
 
     sample_comments = [
@@ -59,14 +59,14 @@ def test_delete_comments_by_identifiers_successful_deletion(
     result = delete_comments_by_identifiers(
         owner=owner,
         repo=repo,
-        issue_number=issue_number,
+        pr_number=pr_number,
         token=token,
         identifiers=identifiers,
     )
 
     assert result is None
     mock_get_all_comments.assert_called_once_with(
-        owner=owner, repo=repo, issue_number=issue_number, token=token
+        owner=owner, repo=repo, pr_number=pr_number, token=token
     )
     assert mock_delete_comment.call_count == 2
 
@@ -78,7 +78,7 @@ def test_delete_comments_by_identifiers_no_comments_found(
 ):
     owner = fake.user_name()
     repo = fake.slug()
-    issue_number = fake.random_int(min=1, max=999)
+    pr_number = fake.random_int(min=1, max=999)
     token = fake.sha256()
 
     mock_get_all_comments.return_value = []
@@ -87,7 +87,7 @@ def test_delete_comments_by_identifiers_no_comments_found(
     result = delete_comments_by_identifiers(
         owner=owner,
         repo=repo,
-        issue_number=issue_number,
+        pr_number=pr_number,
         token=token,
         identifiers=["test-identifier"],
     )
@@ -103,7 +103,7 @@ def test_delete_comments_by_identifiers_no_matching_comments(
 ):
     owner = fake.user_name()
     repo = fake.slug()
-    issue_number = fake.random_int(min=1, max=999)
+    pr_number = fake.random_int(min=1, max=999)
     token = fake.sha256()
 
     sample_comments = [
@@ -115,7 +115,7 @@ def test_delete_comments_by_identifiers_no_matching_comments(
     result = delete_comments_by_identifiers(
         owner=owner,
         repo=repo,
-        issue_number=issue_number,
+        pr_number=pr_number,
         token=token,
         identifiers=["non-existent"],
     )
@@ -131,7 +131,7 @@ def test_delete_comments_by_identifiers_exception_handling(
 ):
     owner = fake.user_name()
     repo = fake.slug()
-    issue_number = fake.random_int(min=1, max=999)
+    pr_number = fake.random_int(min=1, max=999)
     token = fake.sha256()
 
     mock_get_all_comments.side_effect = Exception("API error")
@@ -139,7 +139,7 @@ def test_delete_comments_by_identifiers_exception_handling(
     result = delete_comments_by_identifiers(
         owner=owner,
         repo=repo,
-        issue_number=issue_number,
+        pr_number=pr_number,
         token=token,
         identifiers=["test-identifier"],
     )
@@ -156,7 +156,7 @@ def test_delete_comments_by_identifiers_delete_comment_exception(
 ):
     owner = fake.user_name()
     repo = fake.slug()
-    issue_number = fake.random_int(min=1, max=999)
+    pr_number = fake.random_int(min=1, max=999)
     token = fake.sha256()
 
     matching_comments = [
@@ -169,7 +169,7 @@ def test_delete_comments_by_identifiers_delete_comment_exception(
     result = delete_comments_by_identifiers(
         owner=owner,
         repo=repo,
-        issue_number=issue_number,
+        pr_number=pr_number,
         token=token,
         identifiers=["test-identifier"],
     )
@@ -184,7 +184,7 @@ def test_delete_comments_by_identifiers_function_signature():
 
     assert "owner" in params
     assert "repo" in params
-    assert "issue_number" in params
+    assert "pr_number" in params
     assert "token" in params
     assert "identifiers" in params
     assert len(params) == 5

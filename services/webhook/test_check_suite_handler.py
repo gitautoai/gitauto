@@ -24,7 +24,7 @@ def mock_check_run_payload(test_owner, test_repo):
         "action": "completed",
         "check_suite": {
             "id": 12345,
-            "head_branch": f"{PRODUCT_ID}/issue-123",
+            "head_branch": f"{PRODUCT_ID}/dashboard-20250101-120000-Ab1C",
             "head_sha": "abc123",
             "status": "completed",
             "conclusion": "failure",

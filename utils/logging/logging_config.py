@@ -7,6 +7,7 @@ from aws_lambda_powertools import Logger
 
 from config import PRODUCT_NAME
 from constants.general import IS_PRD
+from constants.triggers import Trigger
 
 if IS_PRD:
     logger = Logger(service=PRODUCT_NAME, log_uncaught_exceptions=True)
@@ -44,7 +45,13 @@ def set_pr_number(pr_number: int):
         cast(Logger, logger).append_keys(pr_number=pr_number)
 
 
-def set_trigger(trigger: str):
+def set_event_action(event_name: str, action: str):
+    """Set webhook event name and action for log filtering."""
+    if IS_PRD and event_name and action:
+        cast(Logger, logger).append_keys(event_action=f"{event_name}_{action}")
+
+
+def set_trigger(trigger: Trigger):
     """Set trigger name for current context."""
     if IS_PRD and trigger:
         cast(Logger, logger).append_keys(trigger=trigger)

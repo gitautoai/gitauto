@@ -10,14 +10,14 @@ from utils.error.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def get_comments(
-    issue_number: int, base_args: BaseArgs, includes_me: bool = False
+    pr_number: int, base_args: BaseArgs, includes_me: bool = False
 ) -> list[str]:
     """https://docs.github.com/en/rest/issues/comments#list-issue-comments"""
     owner = base_args["owner"]
     repo = base_args["repo"]
     token = base_args["token"]
     response = requests.get(
-        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{issue_number}/comments",
+        url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{pr_number}/comments",
         headers=create_headers(token=token),
         timeout=TIMEOUT,
     )

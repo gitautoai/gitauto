@@ -6,7 +6,6 @@ from config import GITHUB_APP_USER_NAME
 
 # Local imports (GitHub)
 from services.github.branches.check_branch_exists import check_branch_exists
-from services.github.issues.get_issue_body import get_issue_body
 from services.github.pulls.get_pull_request_file_changes import (
     get_pull_request_file_changes,
 )
@@ -46,63 +45,46 @@ def write_pr_description(payload: dict):
     token = get_installation_access_token(installation_id)
 
     # Get the pull request information
-    pull_title: str = pull["title"]
-    if pull_title.startswith("GitAuto: "):
-        pull_title = pull_title[9:]  # Remove "GitAuto: " prefix
-    pull_number: int = pull["number"]
-    pull_body: str = pull["body"]
-    # Handle None pull_body
-    if pull_body is None:
-        pull_body = ""
+    pr_title: str = pull["title"]
+    pr_number: int = pull["number"]
+    pr_body_raw: str = pull["body"]
+    # Handle None pr_body_raw
+    if pr_body_raw is None:
+        pr_body_raw = ""
 
-    pull_url: str = pull["url"]
-    pull_files_url = pull_url + "/files"
+    pr_url: str = pull["url"]
+    pr_files_url = pr_url + "/files"
     head_branch: str = pull["head"]["ref"]
 
+    # Schedule PRs and dashboard PRs don't need body rewriting - skip
+    if "/schedule-" in head_branch or "/dashboard-" in head_branch:
+        return
+
     # Get the pull request file changes
-    file_changes = get_pull_request_file_changes(url=pull_files_url, token=token)
+    file_changes = get_pull_request_file_changes(url=pr_files_url, token=token)
 
-    # Extract issue number from "Resolves #<issue_number>"
-    issue_number = None
-    issue_body = None
-    resolves_statement = None
+    # Parse git commands from the body
     commands = []
-
-    # Parse the body line by line
-    for line in pull_body.split("\n"):
-        if line.startswith("Resolves #"):
-            try:
-                if issue_number is None:  # Only process the first resolves statement
-                    issue_number = int(line.split("#")[1])
-                    resolves_statement = line
-            except (ValueError, IndexError):
-                # Skip invalid issue number format
-                pass
-        elif line.startswith("git "):
+    for line in pr_body_raw.split("\n"):
+        if line.startswith("git "):
             commands.append(line)
-
-    # Get the issue title and body
-    if issue_number is not None:
-        issue_body: str | None = get_issue_body(
-            owner=owner, repo=repo_name, issue_number=issue_number, token=token
-        )
 
     # Create an input object
     user_input = dumps(
         {
             "owner": owner,
             "repo": repo_name,
-            "issue_title": pull_title,
-            "issue_body": issue_body or "",
+            "pr_title": pr_title,
+            "pr_body": pr_body_raw,
             "file_changes": file_changes,
         }
     )
 
     # Safety check: Stop if PR is closed or branch is deleted before AI call
     if not is_pull_request_open(
-        owner=owner, repo=repo_name, pull_number=pull_number, token=token
+        owner=owner, repo=repo_name, pr_number=pr_number, token=token
     ):
-        logger.info("Skipping AI call: PR #%d has been closed", pull_number)
+        logger.info("Skipping AI call: PR #%d has been closed", pr_number)
         return
 
     if not check_branch_exists(
@@ -111,18 +93,14 @@ def write_pr_description(payload: dict):
         logger.info("Skipping AI call: Branch '%s' has been deleted", head_branch)
         return
 
-    # Write a PR description to the issue
+    # Write a PR description
     pr_body = chat_with_ai(
         system_input=WRITE_PR_BODY,
         user_input=user_input,
     )
 
-    # Add a resolves statement if this PR comes from an GitHub issue
-    if resolves_statement:
-        pr_body = resolves_statement + "\n\n" + pr_body
-
     # Add commands at the end
     pr_body = pr_body + "\n\n" + "```\n" + "\n".join(commands) + "\n```"
 
     # Update the PR with the PR description
-    update_pull_request_body(url=pull_url, token=token, body=pr_body)
+    update_pull_request_body(url=pr_url, token=token, body=pr_body)

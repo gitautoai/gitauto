@@ -5,10 +5,10 @@ from utils.error.handle_exceptions import handle_exceptions
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def has_comment_with_text(
-    *, owner: str, repo: str, issue_number: int, token: str, texts: list[str]
+    *, owner: str, repo: str, pr_number: int, token: str, texts: list[str]
 ):
     comments = get_all_comments(
-        owner=owner, repo=repo, issue_number=issue_number, token=token
+        owner=owner, repo=repo, pr_number=pr_number, token=token
     )
 
     for comment in comments:

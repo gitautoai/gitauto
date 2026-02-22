@@ -1,3 +1,4 @@
+import inspect
 from unittest.mock import patch, MagicMock
 import json
 
@@ -228,7 +229,7 @@ def test_find_pull_request_by_branch_returns_first_pull_request_when_multiple_fo
     [
         ("owner1", "repo1", "branch1", "token1"),
         ("test-org", "test-project", "feature/new-feature", "ghp_token123"),
-        ("user", "my-repo", "bugfix/issue-123", "personal_access_token"),
+        ("user", "my-repo", "bugfix/fix-login-123", "personal_access_token"),
         ("company", "product", "release/v1.0.0", "bot_token_xyz"),
     ],
 )
@@ -385,8 +386,6 @@ def test_find_pull_request_by_branch_graphql_query_structure(mock_graphql_client
 
 def test_find_pull_request_by_branch_return_type_annotation():
     """Test that the function has the correct return type annotation."""
-    import inspect
-
     # Get the function signature
     sig = inspect.signature(find_pull_request_by_branch)
 
@@ -397,8 +396,6 @@ def test_find_pull_request_by_branch_return_type_annotation():
 
 def test_find_pull_request_by_branch_parameter_types():
     """Test that the function has the correct parameter type annotations."""
-    import inspect
-
     # Get the function signature
     sig = inspect.signature(find_pull_request_by_branch)
 

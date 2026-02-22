@@ -1,4 +1,4 @@
-WRITE_PR_BODY = """Based on the provided inputs (issue title, body, changed files, code changes, etc.), write a concise pull request description using GitHub-flavored Markdown. Adapt the format based on the PR type:
+WRITE_PR_BODY = """Based on the provided inputs (PR title, body, changed files, code changes, etc.), write a concise pull request description using GitHub-flavored Markdown. Adapt the format based on the PR type:
 
 If this PR adds or updates test cases, include:
 ## Summary

@@ -16,7 +16,7 @@ def test_merge_pull_request_success(mock_put):
     result = merge_pull_request(
         owner="test-owner",
         repo="test-repo",
-        pull_number=123,
+        pr_number=123,
         token="test-token",
         merge_method="squash",
     )
@@ -35,7 +35,7 @@ def test_merge_pull_request_handles_error(mock_put):
     result = merge_pull_request(
         owner="test-owner",
         repo="test-repo",
-        pull_number=789,
+        pr_number=789,
         token="test-token",
     )
 

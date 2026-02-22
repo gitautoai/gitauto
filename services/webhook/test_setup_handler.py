@@ -421,7 +421,7 @@ async def test_system_message_mentions_coverage(
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
 @patch(f"{MODULE}.chat_with_agent")
-async def test_sets_pull_number_in_base_args(
+async def test_sets_pr_number_in_base_args(
     mock_agent: MagicMock,
     mock_installation,
     mock_repo,
@@ -452,4 +452,4 @@ async def test_sets_pull_number_in_base_args(
     )
 
     call_kwargs = mock_agent.call_args.kwargs
-    assert call_kwargs["base_args"]["pull_number"] == 1
+    assert call_kwargs["base_args"]["pr_number"] == 1

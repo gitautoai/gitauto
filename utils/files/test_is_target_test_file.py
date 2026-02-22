@@ -10,12 +10,12 @@ def test_is_target_test_file_with_add_unit_tests():
         {
             "owner": "test",
             "repo": "test",
-            "issue_title": "Schedule: Add unit tests to services/webhook/schedule_handler.py",
+            "pr_title": "Schedule: Add unit tests to services/webhook/schedule_handler.py",
         },
     )
 
     assert is_target_test_file("services/webhook/test_schedule_handler.py", base_args)
-    assert not is_target_test_file("services/webhook/test_issue_handler.py", base_args)
+    assert not is_target_test_file("services/webhook/test_new_pr_handler.py", base_args)
     assert not is_target_test_file("services/webhook/schedule_handler.py", base_args)
 
 
@@ -25,7 +25,7 @@ def test_is_target_test_file_with_uncovered_code():
         {
             "owner": "test",
             "repo": "test",
-            "issue_title": "Schedule: Achieve 100% test coverage for utils/files/is_test_file.py",
+            "pr_title": "Schedule: Achieve 100% test coverage for utils/files/is_test_file.py",
         },
     )
 
@@ -41,14 +41,14 @@ def test_is_target_test_file_with_non_test_file():
         {
             "owner": "test",
             "repo": "test",
-            "issue_title": "Schedule: Add unit tests to services/chat_with_agent.py",
+            "pr_title": "Schedule: Add unit tests to services/chat_with_agent.py",
         },
     )
 
     assert not is_target_test_file("services/chat_with_agent.py", base_args)
 
 
-def test_is_target_test_file_with_no_issue_title():
+def test_is_target_test_file_with_no_pr_title():
     base_args = cast(BaseArgs, {"owner": "test", "repo": "test"})
 
     assert is_target_test_file("services/test_chat_with_agent.py", base_args)
@@ -60,7 +60,7 @@ def test_is_target_test_file_with_non_schedule_title():
         {
             "owner": "test",
             "repo": "test",
-            "issue_title": "Fix bug in payment processing",
+            "pr_title": "Fix bug in payment processing",
         },
     )
 
@@ -73,7 +73,7 @@ def test_is_target_test_file_blocks_config_files():
         {
             "owner": "test",
             "repo": "test",
-            "issue_title": "Schedule: Add unit tests to src/utils/shouldSkipQuestion.ts",
+            "pr_title": "Schedule: Add unit tests to src/utils/shouldSkipQuestion.ts",
         },
     )
 

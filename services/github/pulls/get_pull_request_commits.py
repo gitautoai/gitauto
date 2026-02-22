@@ -9,8 +9,8 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_pull_request_commits(owner: str, repo: str, pull_number: int, token: str):
-    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pull_number}/commits"
+def get_pull_request_commits(owner: str, repo: str, pr_number: int, token: str):
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}/commits"
     headers = create_headers(token=token)
     commits: list[PullRequestCommit] = []
     page = 1
