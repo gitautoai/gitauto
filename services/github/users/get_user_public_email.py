@@ -30,9 +30,11 @@ def get_user_public_info(username: str, token: str):
     )
     response.raise_for_status()
     user_data: dict[str, str | None] = response.json()
+    email = user_data.get("email")
+
     name: str = user_data.get("name") or ""
     # Title-case if all lowercase or all uppercase (e.g., "wes nishio" -> "Wes Nishio", "HIROSHI" -> "Hiroshi")
     # Cross-ref: website/app/api/auth/[...nextauth]/route.ts
     if name == name.lower() or name == name.upper():
         name = name.title()
-    return UserPublicInfo(email=user_data.get("email"), display_name=name)
+    return UserPublicInfo(email=email, display_name=name)

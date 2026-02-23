@@ -48,6 +48,7 @@ from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_r
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
 from services.claude.tools.tools import TOOLS_FOR_PRS
 from services.slack.slack_notify import slack_notify
+from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
 from services.supabase.check_suites.insert_check_suite import insert_check_suite
 from services.supabase.codecov_tokens.get_codecov_token import get_codecov_token
@@ -173,6 +174,10 @@ async def handle_check_suite(
     sender_id = payload["sender"]["id"]
     sender_name = payload["sender"]["login"]
     sender_info = get_user_public_info(username=sender_name, token=token)
+    if not sender_info.email:
+        sender_info.email = get_email_from_commits(
+            owner=owner_name, repo=repo_name, username=sender_name, token=token
+        )
 
     # Extract PR related variables and return if no PR is associated with this check suite
     pull_requests = check_suite["pull_requests"]

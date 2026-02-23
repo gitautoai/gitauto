@@ -32,6 +32,7 @@ from services.github.files.get_local_file_content import get_local_file_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
 from services.github.trees.get_local_file_tree import get_local_file_tree
 from services.github.types.github_types import ReviewBaseArgs
@@ -107,6 +108,10 @@ async def handle_review_run(
     installation_id: int = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
     sender_info = get_user_public_info(username=sender_name, token=token)
+    if not sender_info.email:
+        sender_info.email = get_email_from_commits(
+            owner=owner_name, repo=repo_name, username=sender_name, token=token
+        )
 
     # Get all comments in the review thread
     thread_comments = get_review_thread_comments(

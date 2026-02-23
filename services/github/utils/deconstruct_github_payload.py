@@ -6,6 +6,7 @@ from config import GITHUB_APP_USER_ID
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.types.github_types import BaseArgs, PrLabeledPayload
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
 from services.supabase.repositories.get_repository import get_repository
 from utils.error.handle_exceptions import handle_exceptions
@@ -77,6 +78,10 @@ def deconstruct_github_payload(
     github_urls, other_urls = extract_urls(text=pr_body)
     sender_info = get_user_public_info(username=sender_name, token=token)
     sender_email = sender_info.email
+    if not sender_email:
+        sender_email = get_email_from_commits(
+            owner=owner_name, repo=repo_name, username=sender_name, token=token
+        )
     sender_display_name = sender_info.display_name
 
     base_args: BaseArgs = {
