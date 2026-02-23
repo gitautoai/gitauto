@@ -1,5 +1,6 @@
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.github_types import InstallationPayload
+from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
 from services.supabase.credits.check_grant_exists import check_grant_exists
 from services.supabase.credits.insert_credit import insert_credit
@@ -27,6 +28,14 @@ async def handle_installation_created(payload: InstallationPayload):
     sender_name = payload["sender"]["login"]
     token = get_installation_access_token(installation_id=installation_id)
     user_info = get_user_public_info(username=sender_name, token=token)
+    if not user_info.email and repositories:
+        for repo in repositories:
+            email = get_email_from_commits(
+                owner=owner_name, repo=repo["name"], username=sender_name, token=token
+            )
+            if email:
+                user_info.email = email
+                break
 
     if not check_owner_exists(owner_id=owner_id):
         customer_id = create_stripe_customer(

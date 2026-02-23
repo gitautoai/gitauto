@@ -11,6 +11,7 @@ import pytest
 
 # Local imports
 from services.github.types.github_types import InstallationRepositoriesPayload
+from services.github.users.get_user_public_email import UserPublicInfo
 from services.webhook.handle_installation_repos_added import (
     handle_installation_repos_added,
 )
@@ -62,6 +63,35 @@ def mock_get_installation_access_token():
     with patch(
         "services.webhook.handle_installation_repos_added.get_installation_access_token"
     ) as mock:
+        yield mock
+
+
+@pytest.fixture(autouse=True)
+def mock_get_user_public_info():
+    """Mock get_user_public_info function."""
+    with patch(
+        "services.webhook.handle_installation_repos_added.get_user_public_info"
+    ) as mock:
+        mock.return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
+        yield mock
+
+
+@pytest.fixture(autouse=True)
+def mock_get_email_from_commits():
+    """Mock get_email_from_commits function."""
+    with patch(
+        "services.webhook.handle_installation_repos_added.get_email_from_commits"
+    ) as mock:
+        mock.return_value = None
+        yield mock
+
+
+@pytest.fixture(autouse=True)
+def mock_upsert_user():
+    """Mock upsert_user function."""
+    with patch("services.webhook.handle_installation_repos_added.upsert_user") as mock:
         yield mock
 
 

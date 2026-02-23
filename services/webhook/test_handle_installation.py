@@ -64,6 +64,14 @@ def mock_get_user_public_info():
 
 
 @pytest.fixture
+def mock_get_email_from_commits():
+    """Mock get_email_from_commits function."""
+    with patch("services.webhook.handle_installation.get_email_from_commits") as mock:
+        mock.return_value = None
+        yield mock
+
+
+@pytest.fixture
 def mock_check_owner_exists():
     """Mock check_owner_exists function."""
     with patch("services.webhook.handle_installation.check_owner_exists") as mock:
@@ -126,6 +134,7 @@ def mock_process_repositories():
 def all_mocks(
     mock_get_installation_access_token,
     mock_get_user_public_info,
+    mock_get_email_from_commits,
     mock_check_owner_exists,
     mock_create_stripe_customer,
     mock_insert_owner,
@@ -139,6 +148,7 @@ def all_mocks(
     return {
         "get_installation_access_token": mock_get_installation_access_token,
         "get_user_public_info": mock_get_user_public_info,
+        "get_email_from_commits": mock_get_email_from_commits,
         "check_owner_exists": mock_check_owner_exists,
         "create_stripe_customer": mock_create_stripe_customer,
         "insert_owner": mock_insert_owner,

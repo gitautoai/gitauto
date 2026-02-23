@@ -47,7 +47,10 @@ def test_get_user_public_info_successful_request(
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result.email == "test@example.com"
         assert result.display_name == "Test User"
 
@@ -56,7 +59,8 @@ def test_get_user_public_info_bot_user_skips_api_call(sample_token):
     """Test that bot usernames skip the API call (bots have name=null, email=null)."""
     with patch("services.github.users.get_user_public_email.requests.get") as mock_get:
         result = get_user_public_info(
-            username="github-actions[bot]", token=sample_token
+            username="github-actions[bot]",
+            token=sample_token,
         )
         assert result == DEFAULT_RETURN
         mock_get.assert_not_called()
@@ -71,7 +75,10 @@ def test_get_user_public_info_calls_correct_api_endpoint(sample_username, sample
         }
         mock_get.return_value.raise_for_status.return_value = None
 
-        get_user_public_info(username=sample_username, token=sample_token)
+        get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
 
         expected_url = f"{GITHUB_API_URL}/users/{sample_username}"
         mock_get.assert_called_once()
@@ -94,7 +101,10 @@ def test_get_user_public_info_uses_correct_headers(sample_username, sample_token
         }
         mock_get.return_value.raise_for_status.return_value = None
 
-        get_user_public_info(username=sample_username, token=sample_token)
+        get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
 
         mock_create_headers.assert_called_once_with(token=sample_token)
         mock_get.assert_called_once()
@@ -111,7 +121,10 @@ def test_get_user_public_info_uses_correct_timeout(sample_username, sample_token
         }
         mock_get.return_value.raise_for_status.return_value = None
 
-        get_user_public_info(username=sample_username, token=sample_token)
+        get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
 
         mock_get.assert_called_once()
         _, kwargs = mock_get.call_args
@@ -126,7 +139,10 @@ def test_get_user_public_info_calls_raise_for_status(
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        get_user_public_info(username=sample_username, token=sample_token)
+        get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         mock_response.raise_for_status.assert_called_once()
 
 
@@ -147,7 +163,10 @@ def test_get_user_public_info_extracts_email_and_name_from_response(
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result.email == expected_email
         assert result.display_name == "Some User"
 
@@ -173,7 +192,10 @@ def test_get_user_public_info_with_different_usernames():
             "services.github.users.get_user_public_email.requests.get",
             return_value=mock_response,
         ):
-            result = get_user_public_info(username=username, token="test-token")
+            result = get_user_public_info(
+                username=username,
+                token="test-token",
+            )
             assert result.email == expected_email
             assert result.display_name == expected_name
 
@@ -223,7 +245,10 @@ def test_get_user_public_info_http_error_returns_default(sample_username, sample
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result == DEFAULT_RETURN
 
 
@@ -235,7 +260,10 @@ def test_get_user_public_info_request_exception_returns_default(
         "services.github.users.get_user_public_email.requests.get",
         side_effect=RequestException("Network error"),
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result == DEFAULT_RETURN
 
 
@@ -245,7 +273,10 @@ def test_get_user_public_info_timeout_returns_default(sample_username, sample_to
         "services.github.users.get_user_public_email.requests.get",
         side_effect=Timeout("Request timed out"),
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result == DEFAULT_RETURN
 
 
@@ -261,7 +292,10 @@ def test_get_user_public_info_json_decode_error_returns_default(
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result == DEFAULT_RETURN
 
 
@@ -280,7 +314,10 @@ def test_get_user_public_info_missing_email_key_returns_none_email(
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result.email is None
         assert result.display_name == "Test User"
 
@@ -301,7 +338,10 @@ def test_get_user_public_info_null_email_value_returns_none_email(
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result.email is None
         assert result.display_name == "Test User"
 
@@ -321,7 +361,10 @@ def test_get_user_public_info_missing_name_key_returns_empty_display_name(
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result.email == "test@example.com"
         assert result.display_name == ""
 
@@ -339,7 +382,10 @@ def test_get_user_public_info_title_cases_lowercase_name(sample_username, sample
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result.display_name == "Wes Nishio"
 
 
@@ -356,7 +402,10 @@ def test_get_user_public_info_title_cases_uppercase_name(sample_username, sample
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result.display_name == "Hiroshi"
 
 
@@ -373,7 +422,10 @@ def test_get_user_public_info_preserves_mixed_case_name(sample_username, sample_
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result.display_name == "Wes Nishio"
 
 
@@ -392,7 +444,10 @@ def test_get_user_public_info_empty_name_returns_empty_display_name(
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result.display_name == ""
 
 
@@ -411,5 +466,8 @@ def test_get_user_public_info_null_name_returns_empty_display_name(
         "services.github.users.get_user_public_email.requests.get",
         return_value=mock_response,
     ):
-        result = get_user_public_info(username=sample_username, token=sample_token)
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
         assert result.display_name == ""
