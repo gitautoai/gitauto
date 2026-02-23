@@ -185,9 +185,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     )
 
     # Get open PRs once before the loop
-    open_prs = get_open_pull_requests(
-        owner=owner_name, repo=repo_name, target_branch=target_branch, token=token
-    )
+    open_prs = get_open_pull_requests(owner=owner_name, repo=repo_name, token=token)
 
     # Find the first suitable file from sorted list
     target_item = None
@@ -284,8 +282,16 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             continue
 
         # Skip files that have open PRs (temporary, don't exclude)
-        if any(item_path in pr.get("title", "") for pr in open_prs):
-            logger.info("Skipping %s: has open PR", item_path)
+        matching_pr = next(
+            (pr for pr in open_prs if item_path in pr.get("title", "")), None
+        )
+        if matching_pr:
+            logger.info(
+                "Skipping %s: has open PR #%s (%s)",
+                item_path,
+                matching_pr.get("number"),
+                matching_pr.get("base", {}).get("ref"),
+            )
             continue
 
         # Final check: Use Claude AI to determine if this file should be tested (expensive, so run last)

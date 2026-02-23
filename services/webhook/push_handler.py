@@ -39,9 +39,7 @@ def handle_push(payload: PushWebhookPayload):
 
     token = get_installation_access_token(installation_id=installation_id)
 
-    open_prs = get_open_pull_requests(
-        owner=owner_name, repo=repo_name, target_branch=target_branch, token=token
-    )
+    open_prs = get_open_pull_requests(owner=owner_name, repo=repo_name, token=token)
 
     if not open_prs:
         # No GitAuto PRs targeting this branch

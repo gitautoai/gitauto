@@ -5,7 +5,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_open_pull_requests(owner: str, repo: str, target_branch: str, token: str):
+def get_open_pull_requests(owner: str, repo: str, token: str):
     """https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests"""
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls"
     headers = create_headers(token=token)
@@ -13,8 +13,7 @@ def get_open_pull_requests(owner: str, repo: str, target_branch: str, token: str
     page = 1
 
     while True:
-        params = {
-            "base": target_branch,
+        params: dict[str, str | int] = {
             "state": "open",
             "per_page": PER_PAGE,
             "page": page,
