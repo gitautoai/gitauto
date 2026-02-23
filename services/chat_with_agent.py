@@ -73,6 +73,7 @@ async def chat_with_agent(
                 tools=tools,
                 model_id=current_model,
                 usage_id=usage_id,
+                created_by=f"{base_args['sender_id']}:{base_args['sender_name']}",
             )
             break
 

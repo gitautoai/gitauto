@@ -14,6 +14,7 @@ def insert_usage(
     repo_name: str,
     pr_number: int,
     user_id: int,
+    user_name: str,
     installation_id: int,
     source: str,
     trigger: Trigger,
@@ -21,6 +22,7 @@ def insert_usage(
     lambda_log_stream: str | None = None,
     lambda_request_id: str | None = None,
 ):
+    created_by = f"{user_id}:{user_name}"
     result = (
         supabase.table(table_name="usage")
         .insert(
@@ -38,6 +40,7 @@ def insert_usage(
                 "pr_number": pr_number,
                 "is_test_passed": False,
                 "is_merged": False,
+                "created_by": created_by,
                 "lambda_log_group": lambda_log_group,
                 "lambda_log_stream": lambda_log_stream,
                 "lambda_request_id": lambda_request_id,

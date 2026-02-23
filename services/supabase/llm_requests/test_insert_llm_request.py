@@ -71,6 +71,7 @@ def test_insert_llm_request_database_error(mock_supabase):
         input_tokens=10,
         output_message={"role": "assistant", "content": "response"},
         output_tokens=5,
+        created_by="4:test-user",
     )
 
     assert result is None

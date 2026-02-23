@@ -14,7 +14,7 @@ def upsert_user(user_id: int, user_name: str, email: str | None):
             "user_id": user_id,
             "user_name": user_name,
             **({"email": email} if email else {}),
-            "created_by": str(user_id),  # Because created_by is text
+            "created_by": f"{user_id}:{user_name}",
         },
         on_conflict="user_id",
     ).execute()

@@ -27,7 +27,7 @@ def clear_old_content(retention_days: int = 14):
             ids = [row["id"] for row in batch.data]
 
             supabase.table("llm_requests").update(
-                {"input_content": "", "output_content": ""}
+                {"input_content": "", "output_content": "", "updated_by": "system"}
             ).in_("id", ids).execute()
 
             total_cleared += len(ids)

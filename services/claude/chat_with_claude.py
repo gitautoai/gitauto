@@ -37,6 +37,7 @@ def chat_with_claude(
     tools: list[ToolUnionParam],
     model_id: ClaudeModelId,
     usage_id: int,
+    created_by: str,
 ):
     # https://docs.anthropic.com/en/api/client-sdks
     # Apply message optimization functions to save tokens
@@ -131,6 +132,7 @@ def chat_with_claude(
         output_message=assistant_message,
         output_tokens=token_output,
         response_time_ms=response_time_ms,
+        created_by=created_by,
     )
 
     return (

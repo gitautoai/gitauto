@@ -36,6 +36,8 @@ def valid_installation_data():
         "owner_id": TEST_OWNER_ID,
         "owner_type": TEST_OWNER_TYPE,
         "owner_name": TEST_OWNER_NAME,
+        "user_id": 11111,
+        "user_name": "test-sender",
     }
 
 
@@ -70,6 +72,8 @@ def test_insert_installation_with_minimal_data(mock_supabase_client):
         "owner_id": 67890,
         "owner_type": "User",
         "owner_name": "test-user",
+        "user_id": 11111,
+        "user_name": "test-sender",
     }
 
     result = insert_installation(**minimal_data)
@@ -94,6 +98,8 @@ def test_insert_installation_with_organization_owner(mock_supabase_client):
         "owner_id": 11111,
         "owner_type": "Organization",
         "owner_name": "test-org",
+        "user_id": 22222,
+        "user_name": "test-sender",
     }
 
     result = insert_installation(**org_data)
@@ -125,6 +131,8 @@ def test_insert_installation_with_various_data_types(
         owner_id=owner_id,
         owner_type=owner_type,
         owner_name=owner_name,
+        user_id=11111,
+        user_name="test-sender",
     )
 
     assert result is None
@@ -145,6 +153,8 @@ def test_insert_installation_supabase_chain_calls(mock_supabase_client):
         owner_id=TEST_OWNER_ID,
         owner_type=TEST_OWNER_TYPE,
         owner_name=TEST_OWNER_NAME,
+        user_id=11111,
+        user_name="test-sender",
     )
 
     # Verify the method chain: supabase.table().insert().execute()
@@ -168,8 +178,15 @@ def test_insert_installation_function_signature():
     sig = inspect.signature(insert_installation)
 
     # Assert parameter count and names
-    assert len(sig.parameters) == 4
-    expected_params = ["installation_id", "owner_id", "owner_type", "owner_name"]
+    assert len(sig.parameters) == 6
+    expected_params = [
+        "installation_id",
+        "owner_id",
+        "owner_type",
+        "owner_name",
+        "user_id",
+        "user_name",
+    ]
     for param in expected_params:
         assert param in sig.parameters
 
@@ -178,6 +195,8 @@ def test_insert_installation_function_signature():
     assert sig.parameters["owner_id"].annotation is int
     assert sig.parameters["owner_type"].annotation is str
     assert sig.parameters["owner_name"].annotation is str
+    assert sig.parameters["user_id"].annotation is int
+    assert sig.parameters["user_name"].annotation is str
 
 
 def test_insert_installation_with_supabase_exception():
@@ -197,6 +216,8 @@ def test_insert_installation_with_supabase_exception():
                 owner_id=TEST_OWNER_ID,
                 owner_type=TEST_OWNER_TYPE,
                 owner_name=TEST_OWNER_NAME,
+                user_id=11111,
+                user_name="test-sender",
             )
 
 
@@ -225,6 +246,8 @@ def test_insert_installation_with_http_error():
                 owner_id=TEST_OWNER_ID,
                 owner_type=TEST_OWNER_TYPE,
                 owner_name=TEST_OWNER_NAME,
+                user_id=11111,
+                user_name="test-sender",
             )
 
 
@@ -246,6 +269,8 @@ def test_insert_installation_with_special_characters_in_owner_name(
             owner_id=TEST_OWNER_ID,
             owner_type=TEST_OWNER_TYPE,
             owner_name=owner_name,
+            user_id=11111,
+            user_name="test-sender",
         )
 
         # Verify the special characters are preserved
@@ -267,6 +292,8 @@ def test_insert_installation_with_large_ids(mock_supabase_client):
         owner_id=large_owner_id,
         owner_type=TEST_OWNER_TYPE,
         owner_name=TEST_OWNER_NAME,
+        user_id=11111,
+        user_name="test-sender",
     )
 
     insert_call_args = mock_supabase_client.table.return_value.insert.call_args
@@ -288,6 +315,8 @@ def test_insert_installation_with_empty_owner_name(mock_supabase_client):
         owner_id=TEST_OWNER_ID,
         owner_type=TEST_OWNER_TYPE,
         owner_name="",
+        user_id=11111,
+        user_name="test-sender",
     )
 
     insert_call_args = mock_supabase_client.table.return_value.insert.call_args
@@ -306,6 +335,8 @@ def test_insert_installation_with_different_owner_types(mock_supabase_client):
             owner_id=TEST_OWNER_ID,
             owner_type=owner_type,
             owner_name=TEST_OWNER_NAME,
+            user_id=11111,
+            user_name="test-sender",
         )
 
         insert_call_args = mock_supabase_client.table.return_value.insert.call_args

@@ -50,7 +50,7 @@ def test_upsert_user_with_valid_email(mock_supabase, mock_check_email_is_valid):
             "user_id": user_id,
             "user_name": user_name,
             "email": email,
-            "created_by": str(user_id),
+            "created_by": f"{user_id}:{user_name}",
         },
         on_conflict="user_id",
     )
@@ -75,7 +75,7 @@ def test_upsert_user_with_invalid_email(mock_supabase, mock_check_email_is_valid
         json={
             "user_id": user_id,
             "user_name": user_name,
-            "created_by": str(user_id),
+            "created_by": f"{user_id}:{user_name}",
         },
         on_conflict="user_id",
     )
@@ -100,7 +100,7 @@ def test_upsert_user_with_none_email(mock_supabase, mock_check_email_is_valid):
         json={
             "user_id": user_id,
             "user_name": user_name,
-            "created_by": str(user_id),
+            "created_by": f"{user_id}:{user_name}",
         },
         on_conflict="user_id",
     )

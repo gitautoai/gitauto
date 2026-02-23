@@ -139,6 +139,7 @@ async def setup_handler(
         repo_name=repo_name,
         pr_number=pr_number,
         user_id=0,
+        user_name=sender_name,
         installation_id=installation_id,
         source="setup_handler",
         trigger="setup",

@@ -204,6 +204,8 @@ class TestHandleInstallationCreated:
             owner_id=67890,
             owner_type="Organization",
             owner_name="test-owner",
+            user_id=11111,
+            user_name="test-sender",
         )
 
         # Verify user upsert
@@ -258,6 +260,8 @@ class TestHandleInstallationCreated:
             owner_id=67890,
             owner_type="Organization",
             owner_name="test-owner",
+            user_id=11111,
+            user_name="test-sender",
         )
 
         # Verify user upsert still happens
@@ -367,6 +371,8 @@ class TestHandleInstallationCreated:
             owner_id=67890,
             owner_type="User",
             owner_name="test-owner",
+            user_id=11111,
+            user_name="test-sender",
         )
 
     async def test_handle_installation_created_with_none_email(

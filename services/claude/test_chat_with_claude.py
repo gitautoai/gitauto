@@ -28,6 +28,7 @@ def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
         tools=tools,
         model_id=ClaudeModelId.SONNET_4_6,
         usage_id=123,
+        created_by="4:test-user",
     )
 
     assistant_message, tool_calls, token_input, token_output = result
@@ -84,6 +85,7 @@ def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
         tools=tools,
         model_id=ClaudeModelId.SONNET_4_6,
         usage_id=456,
+        created_by="4:test-user",
     )
 
     _, tool_calls, _, _ = result
@@ -111,6 +113,7 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
         tools=[],
         model_id=ClaudeModelId.SONNET_4_6,
         usage_id=789,
+        created_by="4:test-user",
     )
 
     _, _, _, token_output = result
@@ -145,6 +148,7 @@ def test_chat_with_claude_calls_optimization_functions(
         tools=[],
         model_id=ClaudeModelId.SONNET_4_6,
         usage_id=101,
+        created_by="4:test-user",
     )
 
     mock_remove_outdated_apply_diff_to_file_attempts_and_results.assert_called_once()

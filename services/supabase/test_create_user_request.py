@@ -60,6 +60,7 @@ class TestCreateUserRequest:
             repo_name="test_repo",
             pr_number=123,
             user_id=12345,
+            user_name="test_user",
             installation_id=67890,
             source="github",
             trigger="dashboard",

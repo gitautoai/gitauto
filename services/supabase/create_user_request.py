@@ -33,6 +33,7 @@ def create_user_request(
         repo_name=repo_name,
         pr_number=pr_number,
         user_id=user_id,
+        user_name=user_name,
         installation_id=installation_id,
         source=source,
         trigger=trigger,
