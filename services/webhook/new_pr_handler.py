@@ -130,6 +130,7 @@ async def handle_new_pr(
     new_branch_name = base_args["new_branch"]
     sender_id = base_args["sender_id"]
     sender_email = base_args["sender_email"]
+    sender_display_name = base_args["sender_display_name"]
     github_urls = base_args["github_urls"]
     # other_urls = base_args["other_urls"]
     is_automation = base_args["is_automation"]
@@ -230,6 +231,7 @@ async def handle_new_pr(
         source="github",
         trigger=trigger,
         email=sender_email,
+        display_name=sender_display_name,
         lambda_info=lambda_info,
     )
 

@@ -602,6 +602,7 @@ class Users(TypedDict):
     created_at: datetime.datetime
     created_by: str | None
     user_rules: str
+    display_name: str
 
 
 class UsersInsert(TypedDict):
@@ -610,6 +611,7 @@ class UsersInsert(TypedDict):
     email: NotRequired[str | None]
     created_by: NotRequired[str | None]
     user_rules: str
+    display_name: str
 
 
 class WebhookDeliveries(TypedDict):

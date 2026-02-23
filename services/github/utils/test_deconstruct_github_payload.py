@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 from config import GITHUB_APP_USER_ID
 from services.github.types.github_types import PrLabeledPayload
+from services.github.users.get_user_public_email import UserPublicInfo
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
 
 
@@ -64,9 +65,9 @@ def create_mock_payload(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_basic_functionality(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -78,7 +79,9 @@ def test_deconstruct_github_payload_basic_functionality(
     mock_get_repository.return_value = {"target_branch": None}
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = (["https://github.com"], ["https://example.com"])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Create test payload
     payload = create_mock_payload(pr_body="Test PR body")
@@ -106,6 +109,7 @@ def test_deconstruct_github_payload_basic_functionality(
     assert base_args["sender_id"] == 12345
     assert base_args["sender_name"] == "test-sender"
     assert base_args["sender_email"] == "test@example.com"
+    assert base_args["sender_display_name"] == "Test Sender"
     assert base_args["is_automation"] is False
     assert set(base_args["reviewers"]) == {"test-sender", "test-creator"}
     assert base_args["github_urls"] == ["https://github.com"]
@@ -140,9 +144,9 @@ def test_deconstruct_github_payload_no_token_raises_error(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_with_empty_pr_body(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -154,7 +158,9 @@ def test_deconstruct_github_payload_with_empty_pr_body(
     mock_get_repository.return_value = {"target_branch": None}
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Create test payload with None PR body
     payload = create_mock_payload(pr_body=None)
@@ -170,9 +176,9 @@ def test_deconstruct_github_payload_with_empty_pr_body(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_with_fork_repository(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -184,7 +190,9 @@ def test_deconstruct_github_payload_with_fork_repository(
     mock_get_repository.return_value = {"target_branch": None}
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Create test payload with fork=True
     payload = create_mock_payload(fork=True)
@@ -200,9 +208,9 @@ def test_deconstruct_github_payload_with_fork_repository(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_with_bot_users(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -214,7 +222,9 @@ def test_deconstruct_github_payload_with_bot_users(
     mock_get_repository.return_value = {"target_branch": None}
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Create test payload with bot users
     payload = create_mock_payload(
@@ -232,9 +242,9 @@ def test_deconstruct_github_payload_with_bot_users(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_with_target_branch_exists(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -246,7 +256,9 @@ def test_deconstruct_github_payload_with_target_branch_exists(
     mock_get_repository.return_value = {"target_branch": "develop"}
     mock_check_branch_exists.return_value = True  # Target branch exists
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Create test payload
     payload = create_mock_payload()
@@ -262,9 +274,9 @@ def test_deconstruct_github_payload_with_target_branch_exists(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_with_target_branch_not_exists(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -276,7 +288,9 @@ def test_deconstruct_github_payload_with_target_branch_not_exists(
     mock_get_repository.return_value = {"target_branch": "develop"}
     mock_check_branch_exists.return_value = False  # Target branch doesn't exist
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Create test payload
     payload = create_mock_payload()
@@ -292,9 +306,9 @@ def test_deconstruct_github_payload_with_target_branch_not_exists(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_with_automation_user(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -306,7 +320,9 @@ def test_deconstruct_github_payload_with_automation_user(
     mock_get_repository.return_value = {"target_branch": None}
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Create test payload with automation user (using GITHUB_APP_USER_ID from config)
     payload = create_mock_payload(sender_id=GITHUB_APP_USER_ID)
@@ -322,9 +338,9 @@ def test_deconstruct_github_payload_with_automation_user(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_no__(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -336,7 +352,9 @@ def test_deconstruct_github_payload_no__(
     mock_get_repository.return_value = None  # No repo settings
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Create test payload
     payload = create_mock_payload()
@@ -353,9 +371,9 @@ def test_deconstruct_github_payload_no__(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_no_target_branch_in_settings(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -367,7 +385,9 @@ def test_deconstruct_github_payload_no_target_branch_in_settings(
     mock_get_repository.return_value = {"target_branch": None}
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Create test payload
     payload = create_mock_payload()
@@ -385,9 +405,9 @@ def test_deconstruct_github_payload_no_target_branch_in_settings(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_duplicate_reviewers(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -399,7 +419,9 @@ def test_deconstruct_github_payload_duplicate_reviewers(
     mock_get_repository.return_value = {"target_branch": None}
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Create test payload where sender and PR creator are the same
     payload = create_mock_payload(pr_creator_name="same-user", sender_name="same-user")
@@ -415,9 +437,9 @@ def test_deconstruct_github_payload_duplicate_reviewers(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_missing_fork_key(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -429,7 +451,9 @@ def test_deconstruct_github_payload_missing_fork_key(
     mock_get_repository.return_value = {"target_branch": None}
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     payload: Any = create_mock_payload()
     del payload["repository"]["fork"]
@@ -444,9 +468,9 @@ def test_deconstruct_github_payload_missing_fork_key(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_target_branch_used(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -458,7 +482,9 @@ def test_deconstruct_github_payload_target_branch_used(
     mock_get_repository.return_value = {"target_branch": "develop"}
     mock_check_branch_exists.return_value = True  # Target branch exists
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Create test payload
     payload = create_mock_payload()
@@ -474,9 +500,9 @@ def test_deconstruct_github_payload_target_branch_used(
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_schedule_trigger_uses_assignees_as_reviewers(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -488,7 +514,9 @@ def test_deconstruct_github_payload_schedule_trigger_uses_assignees_as_reviewers
     mock_get_repository.return_value = {"target_branch": None}
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     # Schedule trigger: both sender and PR creator are bots, but PR has a human assignee
     payload = create_mock_payload(
@@ -507,9 +535,9 @@ def test_deconstruct_github_payload_schedule_trigger_uses_assignees_as_reviewers
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
 @patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_email")
+@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
 def test_deconstruct_github_payload_branch_from_pr_head(
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_extract_urls,
     mock_check_branch_exists,
     mock_get_repository,
@@ -521,7 +549,9 @@ def test_deconstruct_github_payload_branch_from_pr_head(
     mock_get_repository.return_value = {"target_branch": None}
     mock_check_branch_exists.return_value = False
     mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_email.return_value = "test@example.com"
+    mock_get_user_public_info.return_value = UserPublicInfo(
+        email="test@example.com", display_name="Test Sender"
+    )
 
     expected_branch = "gitauto/schedule-456-20241225-143000-XYZW"
     payload = create_mock_payload(pr_number=456, branch_name=expected_branch)

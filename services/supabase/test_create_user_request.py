@@ -26,6 +26,7 @@ class TestCreateUserRequest:
             "source": "github",
             "trigger": "dashboard",
             "email": "test@example.com",
+            "display_name": "Test User",
         }
 
     @pytest.fixture
@@ -73,6 +74,7 @@ class TestCreateUserRequest:
             user_id=12345,
             user_name="test_user",
             email="test@example.com",
+            display_name="Test User",
         )
 
     def test_create_user_request_without_pr_number(
@@ -100,6 +102,7 @@ class TestCreateUserRequest:
             user_id=12345,
             user_name="test_user",
             email=None,
+            display_name="Test User",
         )
 
     def test_create_user_request_different_trigger_types(
