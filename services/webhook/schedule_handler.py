@@ -404,6 +404,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             repo_id=repo_id,
             file_path=target_path,
             github_issue_url=pr_url,
+            updated_by=user_name,
         )
 
     msg = f"created PR for {target_path}: {pr_url}"

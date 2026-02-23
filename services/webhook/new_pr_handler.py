@@ -162,7 +162,8 @@ async def handle_new_pr(
             user_name=sender_name if sender_name else "unknown",
         )
         if stripe_customer_id:
-            update_stripe_customer_id(owner_id, stripe_customer_id)
+            updated_by = f"{sender_id}:{sender_name}" if sender_id else "system"
+            update_stripe_customer_id(owner_id, stripe_customer_id, updated_by)
 
     # Now check availability (stripe_customer_id will exist or be None if creation failed)
     availability_status = check_availability(

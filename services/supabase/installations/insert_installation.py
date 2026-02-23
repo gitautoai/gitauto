@@ -8,6 +8,8 @@ def insert_installation(
     owner_id: int,
     owner_type: str,
     owner_name: str,
+    user_id: int,
+    user_name: str,
 ):
     supabase.table(table_name="installations").insert(
         json={
@@ -15,5 +17,6 @@ def insert_installation(
             "owner_id": owner_id,
             "owner_type": owner_type,
             "owner_name": owner_name,
+            "created_by": f"{user_id}:{user_name}",
         }
     ).execute()

@@ -24,7 +24,7 @@ async def test_chat_with_agent_passes_usage_id_to_claude(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     await chat_with_agent(
         messages=[{"role": "user", "content": "test"}],
@@ -55,7 +55,7 @@ async def test_chat_with_agent_returns_token_counts(
         15,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     result = await chat_with_agent(
         messages=[{"role": "user", "content": "test"}],
@@ -103,7 +103,7 @@ async def test_get_local_file_content_start_line_end_line_logging(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(return_value="file content")
@@ -163,7 +163,7 @@ async def test_delete_file_logging(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(
@@ -230,7 +230,7 @@ async def test_move_file_logging(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(
@@ -295,7 +295,7 @@ async def test_replace_remote_file_content_handles_new_content_arg_name(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_function = Mock(return_value="Content replaced successfully")
@@ -344,11 +344,7 @@ async def test_unavailable_tool_sends_slack_notification(
         10,
     )
 
-    base_args = Mock()
-    base_args.get.side_effect = lambda key, default=None: {
-        "owner": "test-owner",
-        "repo": "test-repo",
-    }.get(key, default)
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user", "owner": "test-owner", "repo": "test-repo"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = False
@@ -408,7 +404,7 @@ async def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
@@ -465,6 +461,8 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
             "repo": "test-repo",
             "pr_number": 123,
             "token": "test-token",
+            "sender_id": 1,
+            "sender_name": "test-user",
         },
     )
 
@@ -519,6 +517,8 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
             "repo": "test-repo",
             "pr_number": 123,
             "token": "test-token",
+            "sender_id": 1,
+            "sender_name": "test-user",
         },
     )
 
@@ -569,7 +569,7 @@ async def test_regular_tool_returns_is_completed_false(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(return_value="file content")
@@ -604,7 +604,7 @@ async def test_no_tool_call_returns_is_completed_false(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     result = await chat_with_agent(
         messages=[{"role": "user", "content": "test"}],
@@ -652,7 +652,7 @@ async def test_file_write_result_success_includes_formatted_content(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
@@ -718,7 +718,7 @@ async def test_file_write_result_failure_returns_message_only(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
@@ -784,7 +784,7 @@ async def test_file_move_result_returns_message(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
@@ -847,7 +847,7 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(
@@ -908,7 +908,7 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(
@@ -980,7 +980,7 @@ async def test_multiple_parallel_tool_calls(
         10,
     )
 
-    base_args = Mock()
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         call_count = 0

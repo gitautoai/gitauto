@@ -53,6 +53,8 @@ async def handle_installation_created(payload: InstallationPayload):
         owner_id=owner_id,
         owner_type=owner_type,
         owner_name=owner_name,
+        user_id=user_id,
+        user_name=sender_name,
     )
 
     upsert_user(user_id=user_id, user_name=sender_name, email=email)

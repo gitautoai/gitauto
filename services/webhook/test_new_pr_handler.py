@@ -180,7 +180,7 @@ async def test_stripe_customer_id_update(
         trigger="dashboard",
     )
 
-    mock_update_stripe.assert_called_once_with(456, "cus_new123")
+    mock_update_stripe.assert_called_once_with(456, "cus_new123", "888:test_sender")
 
 
 @pytest.mark.asyncio

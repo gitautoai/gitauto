@@ -16,9 +16,9 @@ def insert_llm_request(
     input_tokens: int,
     output_message: MessageParam,
     output_tokens: int,
+    created_by: str,
     response_time_ms: int | None = None,
     error_message: str | None = None,
-    created_by: str | None = None,
 ):
     # Convert messages to JSON strings
     input_content = json.dumps(input_messages, ensure_ascii=False)

@@ -56,12 +56,13 @@ class TestUpdateIssueUrl:
             repo_id=repo_id,
             file_path=file_path,
             github_issue_url=github_issue_url,
+            updated_by="system",
         )
 
         # Assert
         mock_supabase.table.assert_called_once_with("coverages")
         mock_table.update.assert_called_once_with(
-            {"github_issue_url": github_issue_url}
+            {"github_issue_url": github_issue_url, "updated_by": "system"}
         )
         mock_table.eq.assert_any_call("repo_id", repo_id)
         mock_table.eq.assert_any_call("full_path", file_path)
@@ -82,12 +83,13 @@ class TestUpdateIssueUrl:
             repo_id=repo_id,
             file_path=file_path,
             github_issue_url=github_issue_url,
+            updated_by="system",
         )
 
         # Assert
         mock_supabase.table.assert_called_once_with("coverages")
         mock_table.update.assert_called_once_with(
-            {"github_issue_url": github_issue_url}
+            {"github_issue_url": github_issue_url, "updated_by": "system"}
         )
         mock_table.eq.assert_any_call("repo_id", repo_id)
         mock_table.eq.assert_any_call("full_path", file_path)
@@ -108,6 +110,7 @@ class TestUpdateIssueUrl:
             repo_id=repo_id,
             file_path=file_path,
             github_issue_url=github_issue_url,
+            updated_by="system",
         )
 
         # Assert
@@ -128,6 +131,7 @@ class TestUpdateIssueUrl:
             repo_id=repo_id,
             file_path=file_path,
             github_issue_url=github_issue_url,
+            updated_by="system",
         )
 
         # Assert
@@ -148,6 +152,7 @@ class TestUpdateIssueUrl:
             repo_id=repo_id,
             file_path=file_path,
             github_issue_url=github_issue_url,
+            updated_by="system",
         )
 
         # Assert
@@ -168,10 +173,13 @@ class TestUpdateIssueUrl:
             repo_id=repo_id,
             file_path=file_path,
             github_issue_url=github_issue_url,
+            updated_by="system",
         )
 
         # Assert
-        mock_table.update.assert_called_once_with({"github_issue_url": ""})
+        mock_table.update.assert_called_once_with(
+            {"github_issue_url": "", "updated_by": "system"}
+        )
         assert result == [
             {"id": 1, "github_issue_url": "https://github.com/owner/repo/issues/123"}
         ]
@@ -190,6 +198,7 @@ class TestUpdateIssueUrl:
             repo_id=repo_id,
             file_path=file_path,
             github_issue_url=github_issue_url,
+            updated_by="system",
         )
 
         # Assert
@@ -212,6 +221,7 @@ class TestUpdateIssueUrl:
             repo_id=repo_id,
             file_path=file_path,
             github_issue_url=github_issue_url,
+            updated_by="system",
         )
 
         # Assert
@@ -232,6 +242,7 @@ class TestUpdateIssueUrl:
             repo_id=repo_id,
             file_path=file_path,
             github_issue_url=github_issue_url,
+            updated_by="system",
         )
 
         # Assert
@@ -252,6 +263,7 @@ class TestUpdateIssueUrl:
                 repo_id=123456,
                 file_path="src/main.py",
                 github_issue_url="https://github.com/owner/repo/issues/123",
+                updated_by="system",
             )
 
             # Assert - The handle_exceptions decorator should return None on error
@@ -268,6 +280,7 @@ class TestUpdateIssueUrl:
             repo_id=123456,
             file_path="src/main.py",
             github_issue_url="https://github.com/owner/repo/issues/123",
+            updated_by="system",
         )
 
         # Assert - Verify the method chaining sequence
