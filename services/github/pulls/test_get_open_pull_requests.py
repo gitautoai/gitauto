@@ -35,7 +35,6 @@ def test_get_open_pull_requests_success():
         result = get_open_pull_requests(
             owner="test-owner",
             repo="test-repo",
-            target_branch="main",
             token="test-token",
         )
 
@@ -75,7 +74,6 @@ def test_get_open_pull_requests_pagination():
         result = get_open_pull_requests(
             owner="test-owner",
             repo="test-repo",
-            target_branch="develop",
             token="test-token",
         )
 
@@ -92,7 +90,6 @@ def test_get_open_pull_requests_empty():
         result = get_open_pull_requests(
             owner="test-owner",
             repo="test-repo",
-            target_branch="main",
             token="test-token",
         )
 
@@ -104,7 +101,6 @@ def test_get_open_pull_requests_error():
         result = get_open_pull_requests(
             owner="test-owner",
             repo="test-repo",
-            target_branch="main",
             token="test-token",
         )
 
@@ -151,7 +147,6 @@ def test_get_open_pull_requests_filters_non_gitauto_prs():
         result = get_open_pull_requests(
             owner="test-owner",
             repo="test-repo",
-            target_branch="main",
             token="test-token",
         )
 
@@ -193,7 +188,6 @@ def test_get_open_pull_requests_no_gitauto_prs():
         result = get_open_pull_requests(
             owner="test-owner",
             repo="test-repo",
-            target_branch="main",
             token="test-token",
         )
 

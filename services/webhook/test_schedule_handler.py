@@ -465,6 +465,180 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
 
 
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
+@patch("services.webhook.schedule_handler.should_skip_test")
+@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.check_availability")
+@patch("services.webhook.schedule_handler.get_default_branch")
+@patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_all_coverages")
+@patch("services.webhook.schedule_handler.get_raw_content")
+def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
+    mock_get_raw_content,
+    mock_get_all_coverages,
+    mock_get_file_tree,
+    mock_get_default_branch,
+    mock_check_availability,
+    mock_get_repository,
+    mock_get_token,
+    mock_is_paused,
+    mock_should_skip_test,
+    mock_get_open_pull_requests,
+    mock_event,
+):
+    mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = False
+    mock_get_repository.return_value = {
+        "trigger_on_schedule": True,
+        "target_branch": "master",
+    }
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "exception",
+        "requests_left": None,
+        "credit_balance_usd": 0,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Exception owner - unlimited access.",
+    }
+    mock_get_default_branch.return_value = ("master", None)
+    mock_get_file_tree.return_value = [
+        {"path": "src/app.php", "type": "blob", "size": 100},
+    ]
+    mock_get_all_coverages.return_value = [
+        {
+            "id": 1,
+            "full_path": "src/app.php",
+            "owner_id": 123,
+            "repo_id": 456,
+            "branch_name": "master",
+            "created_by": "test-user",
+            "updated_by": "test-user",
+            "level": "file",
+            "file_size": 100,
+            "statement_coverage": 10.0,
+            "function_coverage": 50.0,
+            "branch_coverage": 100.0,
+            "line_coverage": 10.0,
+            "package_name": None,
+            "language": "php",
+            "uncovered_lines": None,
+            "uncovered_functions": None,
+            "uncovered_branches": None,
+            "created_at": "2024-01-01",
+            "updated_at": "2024-01-01",
+            "github_issue_url": None,
+            "is_excluded_from_testing": False,
+        },
+    ]
+    mock_get_raw_content.return_value = "<?php function test() { return 1; }"
+    mock_should_skip_test.return_value = False
+    # Open PR targeting a DIFFERENT branch but for the same file
+    mock_get_open_pull_requests.return_value = [
+        {
+            "number": 100,
+            "title": "Schedule: Add unit tests to src/app.php",
+            "base": {"ref": "release/20260311"},
+            "user": {"login": "gitauto-ai[bot]"},
+        },
+    ]
+
+    result = schedule_handler(mock_event)
+
+    assert result["status"] == "skipped"
+    assert "No suitable file found" in result["message"]
+
+
+@patch("services.webhook.schedule_handler.get_open_pull_requests")
+@patch("services.webhook.schedule_handler.should_skip_test")
+@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.check_availability")
+@patch("services.webhook.schedule_handler.get_default_branch")
+@patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_all_coverages")
+@patch("services.webhook.schedule_handler.get_raw_content")
+def test_schedule_handler_skips_file_with_open_pr_different_title_format(
+    mock_get_raw_content,
+    mock_get_all_coverages,
+    mock_get_file_tree,
+    mock_get_default_branch,
+    mock_check_availability,
+    mock_get_repository,
+    mock_get_token,
+    mock_is_paused,
+    mock_should_skip_test,
+    mock_get_open_pull_requests,
+    mock_event,
+):
+    """Dedup works even when the existing PR uses an old title format, because the
+    check is a file-path substring match, not an exact title match."""
+    mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = False
+    mock_get_repository.return_value = {
+        "trigger_on_schedule": True,
+        "target_branch": "master",
+    }
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "exception",
+        "requests_left": None,
+        "credit_balance_usd": 0,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Exception owner - unlimited access.",
+    }
+    mock_get_default_branch.return_value = ("master", None)
+    mock_get_file_tree.return_value = [
+        {"path": "src/app.php", "type": "blob", "size": 100},
+    ]
+    mock_get_all_coverages.return_value = [
+        {
+            "id": 1,
+            "full_path": "src/app.php",
+            "owner_id": 123,
+            "repo_id": 456,
+            "branch_name": "master",
+            "created_by": "test-user",
+            "updated_by": "test-user",
+            "level": "file",
+            "file_size": 100,
+            "statement_coverage": 10.0,
+            "function_coverage": 50.0,
+            "branch_coverage": 100.0,
+            "line_coverage": 10.0,
+            "package_name": None,
+            "language": "php",
+            "uncovered_lines": None,
+            "uncovered_functions": None,
+            "uncovered_branches": None,
+            "created_at": "2024-01-01",
+            "updated_at": "2024-01-01",
+            "github_issue_url": None,
+            "is_excluded_from_testing": False,
+        },
+    ]
+    mock_get_raw_content.return_value = "<?php function test() { return 1; }"
+    mock_should_skip_test.return_value = False
+    # Old title format ("for uncovered code in") differs from current ("to"/"Achieve 100%")
+    mock_get_open_pull_requests.return_value = [
+        {
+            "number": 100,
+            "title": "Schedule: Add unit tests for uncovered code in src/app.php",
+            "base": {"ref": "release/20260311"},
+            "user": {"login": "gitauto-ai[bot]"},
+        },
+    ]
+
+    result = schedule_handler(mock_event)
+
+    assert result["status"] == "skipped"
+    assert "No suitable file found" in result["message"]
+
+
+@patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.evaluate_condition")
 @patch("services.webhook.schedule_handler.should_skip_test")
 @patch("services.webhook.schedule_handler.is_schedule_paused")

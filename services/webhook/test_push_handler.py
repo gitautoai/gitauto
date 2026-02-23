@@ -170,7 +170,7 @@ def test_handle_push_no_open_prs_returns_early(
     mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
-        owner="test-owner", repo="test-repo", target_branch="main", token="test-token"
+        owner="test-owner", repo="test-repo", token="test-token"
     )
     mock_update_pr.assert_not_called()
     mock_logger.info.assert_not_called()
@@ -212,7 +212,7 @@ def test_handle_push_local_main_to_remote_main_handled(
     mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
-        owner="test-owner", repo="test-repo", target_branch="main", token="test-token"
+        owner="test-owner", repo="test-repo", token="test-token"
     )
     assert mock_update_pr.call_count == 2
     mock_update_pr.assert_any_call(
@@ -257,7 +257,7 @@ def test_handle_push_remote_feature_to_remote_main_handled(
     mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
-        owner="test-owner", repo="test-repo", target_branch="main", token="test-token"
+        owner="test-owner", repo="test-repo", token="test-token"
     )
     mock_update_pr.assert_called_once_with(
         owner="test-owner", repo="test-repo", pr_number=5, token="test-token"
@@ -390,7 +390,7 @@ def test_handle_push_no_gitauto_prs_returns_early(
     mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
-        owner="test-owner", repo="test-repo", target_branch="main", token="test-token"
+        owner="test-owner", repo="test-repo", token="test-token"
     )
     mock_update_pr.assert_not_called()
     mock_logger.info.assert_not_called()
