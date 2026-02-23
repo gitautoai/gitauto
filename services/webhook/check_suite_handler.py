@@ -48,6 +48,7 @@ from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_r
 from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
 from services.claude.tools.tools import TOOLS_FOR_PRS
 from services.slack.slack_notify import slack_notify
+from services.github.users.get_user_public_email import get_user_public_info
 from services.supabase.check_suites.insert_check_suite import insert_check_suite
 from services.supabase.codecov_tokens.get_codecov_token import get_codecov_token
 from services.supabase.create_user_request import create_user_request
@@ -171,6 +172,7 @@ async def handle_check_suite(
     # Extract sender related variables
     sender_id = payload["sender"]["id"]
     sender_name = payload["sender"]["login"]
+    sender_info = get_user_public_info(username=sender_name, token=token)
 
     # Extract PR related variables and return if no PR is associated with this check suite
     pull_requests = check_suite["pull_requests"]
@@ -218,7 +220,8 @@ async def handle_check_suite(
         "token": token,
         "sender_id": sender_id,
         "sender_name": sender_name,
-        "sender_email": f"{sender_name}@users.noreply.github.com",
+        "sender_email": sender_info.email,
+        "sender_display_name": sender_info.display_name,
         "is_automation": True,
         "reviewers": [],
         "github_urls": [],
@@ -315,7 +318,8 @@ async def handle_check_suite(
         pr_number=pr_number,
         source="github",
         trigger="test_failure",
-        email=None,
+        email=sender_info.email,
+        display_name=sender_info.display_name,
         lambda_info=lambda_info,
     )
 

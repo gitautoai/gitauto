@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 # Local imports
+from services.github.users.get_user_public_email import UserPublicInfo
 from services.webhook.handle_installation import handle_installation_created
 
 pytestmark = pytest.mark.asyncio
@@ -56,9 +57,9 @@ def mock_get_installation_access_token():
 
 
 @pytest.fixture
-def mock_get_user_public_email():
-    """Mock get_user_public_email function."""
-    with patch("services.webhook.handle_installation.get_user_public_email") as mock:
+def mock_get_user_public_info():
+    """Mock get_user_public_info function."""
+    with patch("services.webhook.handle_installation.get_user_public_info") as mock:
         yield mock
 
 
@@ -124,7 +125,7 @@ def mock_process_repositories():
 @pytest.fixture
 def all_mocks(
     mock_get_installation_access_token,
-    mock_get_user_public_email,
+    mock_get_user_public_info,
     mock_check_owner_exists,
     mock_create_stripe_customer,
     mock_insert_owner,
@@ -137,7 +138,7 @@ def all_mocks(
     """Fixture providing all mocked dependencies."""
     return {
         "get_installation_access_token": mock_get_installation_access_token,
-        "get_user_public_email": mock_get_user_public_email,
+        "get_user_public_info": mock_get_user_public_info,
         "check_owner_exists": mock_check_owner_exists,
         "create_stripe_customer": mock_create_stripe_customer,
         "insert_owner": mock_insert_owner,
@@ -158,7 +159,9 @@ class TestHandleInstallationCreated:
         """Test successful handling of installation created for new owner with grant."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False  # New owner
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False  # No existing grant
@@ -170,7 +173,7 @@ class TestHandleInstallationCreated:
         all_mocks["get_installation_access_token"].assert_called_once_with(
             installation_id=12345
         )
-        all_mocks["get_user_public_email"].assert_called_once_with(
+        all_mocks["get_user_public_info"].assert_called_once_with(
             username="test-sender", token="ghs_test_token"
         )
 
@@ -210,7 +213,10 @@ class TestHandleInstallationCreated:
 
         # Verify user upsert
         all_mocks["upsert_user"].assert_called_once_with(
-            user_id=11111, user_name="test-sender", email="test@example.com"
+            user_id=11111,
+            user_name="test-sender",
+            email="test@example.com",
+            display_name="Test Sender",
         )
 
         # Verify repository processing
@@ -230,7 +236,9 @@ class TestHandleInstallationCreated:
         """Test handling of installation created for existing owner with existing grant."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = True  # Existing owner
         all_mocks["check_grant_exists"].return_value = True  # Existing grant
 
@@ -241,7 +249,7 @@ class TestHandleInstallationCreated:
         all_mocks["get_installation_access_token"].assert_called_once_with(
             installation_id=12345
         )
-        all_mocks["get_user_public_email"].assert_called_once_with(
+        all_mocks["get_user_public_info"].assert_called_once_with(
             username="test-sender", token="ghs_test_token"
         )
 
@@ -266,7 +274,10 @@ class TestHandleInstallationCreated:
 
         # Verify user upsert still happens
         all_mocks["upsert_user"].assert_called_once_with(
-            user_id=11111, user_name="test-sender", email="test@example.com"
+            user_id=11111,
+            user_name="test-sender",
+            email="test@example.com",
+            display_name="Test Sender",
         )
 
         # Verify repository processing still happens
@@ -286,7 +297,9 @@ class TestHandleInstallationCreated:
         """Test handling of installation created for new owner with existing grant."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False  # New owner
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = True  # Existing grant
@@ -322,7 +335,9 @@ class TestHandleInstallationCreated:
         """Test handling of installation created for existing owner with new grant."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = True  # Existing owner
         all_mocks["check_grant_exists"].return_value = False  # No existing grant
 
@@ -347,7 +362,9 @@ class TestHandleInstallationCreated:
         # Setup
         mock_installation_payload["installation"]["account"]["type"] = "User"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -381,7 +398,9 @@ class TestHandleInstallationCreated:
         """Test handling when user email is None."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = None
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email=None, display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -391,7 +410,10 @@ class TestHandleInstallationCreated:
 
         # Verify user upsert with None email
         all_mocks["upsert_user"].assert_called_once_with(
-            user_id=11111, user_name="test-sender", email=None
+            user_id=11111,
+            user_name="test-sender",
+            email=None,
+            display_name="Test Sender",
         )
 
     async def test_handle_installation_created_with_empty_email(
@@ -400,7 +422,9 @@ class TestHandleInstallationCreated:
         """Test handling when user email is empty string."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = ""
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -410,7 +434,7 @@ class TestHandleInstallationCreated:
 
         # Verify user upsert with empty email
         all_mocks["upsert_user"].assert_called_once_with(
-            user_id=11111, user_name="test-sender", email=""
+            user_id=11111, user_name="test-sender", email="", display_name="Test Sender"
         )
 
     async def test_handle_installation_created_with_token_error(
@@ -428,7 +452,7 @@ class TestHandleInstallationCreated:
 
         # Verify - should return early when token retrieval fails
         all_mocks["get_installation_access_token"].assert_called_once()
-        all_mocks["get_user_public_email"].assert_not_called()
+        all_mocks["get_user_public_info"].assert_not_called()
         all_mocks["process_repositories"].assert_not_called()
 
     async def test_handle_installation_created_with_empty_repositories(
@@ -438,7 +462,9 @@ class TestHandleInstallationCreated:
         # Setup
         mock_installation_payload["repositories"] = []
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -465,7 +491,9 @@ class TestHandleInstallationCreated:
         single_repo = [{"id": 333, "name": "single-repo"}]
         mock_installation_payload["repositories"] = single_repo
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -500,15 +528,15 @@ class TestHandleInstallationCreated:
         all_mocks["get_installation_access_token"].assert_called_once_with(
             installation_id=12345
         )
-        all_mocks["get_user_public_email"].assert_not_called()
+        all_mocks["get_user_public_info"].assert_not_called()
 
     async def test_handle_installation_created_with_exception_in_get_email(
         self, mock_installation_payload, all_mocks
     ):
-        """Test handling when get_user_public_email raises exception."""
+        """Test handling when get_user_public_info raises exception."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].side_effect = Exception("Email error")
+        all_mocks["get_user_public_info"].side_effect = Exception("Email error")
 
         # Execute - exception is re-raised due to raise_on_error=True
         with pytest.raises(Exception, match="Email error"):
@@ -517,7 +545,7 @@ class TestHandleInstallationCreated:
         all_mocks["get_installation_access_token"].assert_called_once_with(
             installation_id=12345
         )
-        all_mocks["get_user_public_email"].assert_called_once_with(
+        all_mocks["get_user_public_info"].assert_called_once_with(
             username="test-sender", token="ghs_test_token"
         )
         all_mocks["check_owner_exists"].assert_not_called()
@@ -528,7 +556,9 @@ class TestHandleInstallationCreated:
         """Test handling when check_owner_exists raises exception."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].side_effect = Exception("Database error")
 
         # Execute - exception is re-raised due to raise_on_error=True
@@ -544,7 +574,9 @@ class TestHandleInstallationCreated:
         """Test handling when create_stripe_customer raises exception."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].side_effect = Exception("Stripe error")
 
@@ -561,7 +593,9 @@ class TestHandleInstallationCreated:
         """Test handling when insert_owner raises exception."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["insert_owner"].side_effect = Exception("Insert error")
@@ -579,7 +613,9 @@ class TestHandleInstallationCreated:
         """Test handling when check_grant_exists raises exception."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = True  # Skip owner creation
         all_mocks["check_grant_exists"].side_effect = Exception("Grant check error")
 
@@ -596,7 +632,9 @@ class TestHandleInstallationCreated:
         """Test handling when insert_credit raises exception."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = True  # Skip owner creation
         all_mocks["check_grant_exists"].return_value = False
         all_mocks["insert_credit"].side_effect = Exception("Credit insert error")
@@ -614,7 +652,9 @@ class TestHandleInstallationCreated:
         """Test handling when insert_installation raises exception."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = True  # Skip owner creation
         all_mocks["check_grant_exists"].return_value = True  # Skip grant creation
         all_mocks["insert_installation"].side_effect = Exception(
@@ -634,7 +674,9 @@ class TestHandleInstallationCreated:
         """Test handling when upsert_user raises exception."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = True  # Skip owner creation
         all_mocks["check_grant_exists"].return_value = True  # Skip grant creation
         all_mocks["upsert_user"].side_effect = Exception("User upsert error")
@@ -652,7 +694,9 @@ class TestHandleInstallationCreated:
         """Test handling when process_repositories raises exception."""
         # Setup
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = True  # Skip owner creation
         all_mocks["check_grant_exists"].return_value = True  # Skip grant creation
         all_mocks["process_repositories"].side_effect = Exception(
@@ -674,7 +718,9 @@ class TestHandleInstallationCreated:
         mock_installation_payload["installation"]["account"]["id"] = "67890"
         mock_installation_payload["sender"]["id"] = "11111"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -703,7 +749,9 @@ class TestHandleInstallationCreated:
         mock_installation_payload["installation"]["account"]["login"] = "tëst-öwnér"
         mock_installation_payload["sender"]["login"] = "tëst-sëndér"
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "tëst@ëxämplë.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="tëst@ëxämplë.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -712,7 +760,7 @@ class TestHandleInstallationCreated:
         await handle_installation_created(mock_installation_payload)
 
         # Verify calls with unicode names
-        all_mocks["get_user_public_email"].assert_called_once_with(
+        all_mocks["get_user_public_info"].assert_called_once_with(
             username="tëst-sëndér", token="ghs_test_token"
         )
         all_mocks["create_stripe_customer"].assert_called_once_with(
@@ -723,7 +771,10 @@ class TestHandleInstallationCreated:
             user_name="tëst-sëndér",
         )
         all_mocks["upsert_user"].assert_called_once_with(
-            user_id=11111, user_name="tëst-sëndér", email="tëst@ëxämplë.com"
+            user_id=11111,
+            user_name="tëst-sëndér",
+            email="tëst@ëxämplë.com",
+            display_name="Test Sender",
         )
 
     async def test_handle_installation_created_with_zero_ids(
@@ -735,7 +786,9 @@ class TestHandleInstallationCreated:
         mock_installation_payload["installation"]["account"]["id"] = 0
         mock_installation_payload["sender"]["id"] = 0
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -765,7 +818,9 @@ class TestHandleInstallationCreated:
         mock_installation_payload["installation"]["account"]["id"] = -2
         mock_installation_payload["sender"]["id"] = -3
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -794,7 +849,9 @@ class TestHandleInstallationCreated:
         large_repo_list = [{"id": i, "name": f"repo-{i}"} for i in range(100)]
         mock_installation_payload["repositories"] = large_repo_list
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -820,7 +877,9 @@ class TestHandleInstallationCreated:
         # Setup
         mock_installation_payload["repositories"] = None
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -868,7 +927,9 @@ class TestHandleInstallationCreated:
         ]
         mock_installation_payload["repositories"] = complex_repos
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -897,7 +958,9 @@ class TestHandleInstallationCreated:
         mock_installation_payload["installation"]["account"]["login"] = special_owner
         mock_installation_payload["sender"]["login"] = special_sender
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -906,7 +969,7 @@ class TestHandleInstallationCreated:
         await handle_installation_created(mock_installation_payload)
 
         # Verify calls with special characters
-        all_mocks["get_user_public_email"].assert_called_once_with(
+        all_mocks["get_user_public_info"].assert_called_once_with(
             username=special_sender, token="ghs_test_token"
         )
         all_mocks["create_stripe_customer"].assert_called_once_with(
@@ -926,7 +989,9 @@ class TestHandleInstallationCreated:
         mock_installation_payload["installation"]["account"]["login"] = long_name
         mock_installation_payload["sender"]["login"] = long_name
         all_mocks["get_installation_access_token"].return_value = "ghs_test_token"
-        all_mocks["get_user_public_email"].return_value = "test@example.com"
+        all_mocks["get_user_public_info"].return_value = UserPublicInfo(
+            email="test@example.com", display_name="Test Sender"
+        )
         all_mocks["check_owner_exists"].return_value = False
         all_mocks["create_stripe_customer"].return_value = "cus_test123"
         all_mocks["check_grant_exists"].return_value = False
@@ -935,7 +1000,7 @@ class TestHandleInstallationCreated:
         await handle_installation_created(mock_installation_payload)
 
         # Verify calls with long names
-        all_mocks["get_user_public_email"].assert_called_once_with(
+        all_mocks["get_user_public_info"].assert_called_once_with(
             username=long_name, token="ghs_test_token"
         )
         all_mocks["create_stripe_customer"].assert_called_once_with(

@@ -40,7 +40,9 @@ def test_upsert_user_with_valid_email(mock_supabase, mock_check_email_is_valid):
     mock_check_email_is_valid.return_value = True
 
     # Execute
-    upsert_user(user_id=user_id, user_name=user_name, email=email)
+    upsert_user(
+        user_id=user_id, user_name=user_name, email=email, display_name="Test User"
+    )
 
     # Assert
     mock_check_email_is_valid.assert_called_once_with(email=email)
@@ -49,6 +51,7 @@ def test_upsert_user_with_valid_email(mock_supabase, mock_check_email_is_valid):
         json={
             "user_id": user_id,
             "user_name": user_name,
+            "display_name": "Test User",
             "email": email,
             "created_by": f"{user_id}:{user_name}",
         },
@@ -66,7 +69,9 @@ def test_upsert_user_with_invalid_email(mock_supabase, mock_check_email_is_valid
     mock_check_email_is_valid.return_value = False
 
     # Execute
-    upsert_user(user_id=user_id, user_name=user_name, email=email)
+    upsert_user(
+        user_id=user_id, user_name=user_name, email=email, display_name="Test User"
+    )
 
     # Assert
     mock_check_email_is_valid.assert_called_once_with(email=email)
@@ -75,6 +80,7 @@ def test_upsert_user_with_invalid_email(mock_supabase, mock_check_email_is_valid
         json={
             "user_id": user_id,
             "user_name": user_name,
+            "display_name": "Test User",
             "created_by": f"{user_id}:{user_name}",
         },
         on_conflict="user_id",
@@ -91,7 +97,9 @@ def test_upsert_user_with_none_email(mock_supabase, mock_check_email_is_valid):
     mock_check_email_is_valid.return_value = False
 
     # Execute
-    upsert_user(user_id=user_id, user_name=user_name, email=email)
+    upsert_user(
+        user_id=user_id, user_name=user_name, email=email, display_name="Test User"
+    )
 
     # Assert
     mock_check_email_is_valid.assert_called_once_with(email=email)
@@ -100,6 +108,7 @@ def test_upsert_user_with_none_email(mock_supabase, mock_check_email_is_valid):
         json={
             "user_id": user_id,
             "user_name": user_name,
+            "display_name": "Test User",
             "created_by": f"{user_id}:{user_name}",
         },
         on_conflict="user_id",
@@ -117,7 +126,9 @@ def test_upsert_user_exception_handling(mock_supabase, mock_check_email_is_valid
     mock_supabase.table.side_effect = Exception("Database error")
 
     # Execute - should not raise an exception due to handle_exceptions decorator
-    result = upsert_user(user_id=user_id, user_name=user_name, email=email)
+    result = upsert_user(
+        user_id=user_id, user_name=user_name, email=email, display_name="Test User"
+    )
 
     # Assert
     assert result is None  # Default return value from handle_exceptions

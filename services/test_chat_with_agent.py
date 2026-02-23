@@ -344,7 +344,15 @@ async def test_unavailable_tool_sends_slack_notification(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user", "owner": "test-owner", "repo": "test-repo"})
+    base_args = cast(
+        BaseArgs,
+        {
+            "sender_id": 1,
+            "sender_name": "test-user",
+            "owner": "test-owner",
+            "repo": "test-repo",
+        },
+    )
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = False

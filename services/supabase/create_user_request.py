@@ -18,6 +18,7 @@ def create_user_request(
     source: str,
     trigger: Trigger,
     email: str | None,
+    display_name: str,
     lambda_info: dict[str, str | None] | None = None,
 ):
     # Extract Lambda context info if provided
@@ -42,5 +43,7 @@ def create_user_request(
         lambda_request_id=lambda_request_id,
     )
 
-    upsert_user(user_id=user_id, user_name=user_name, email=email)
+    upsert_user(
+        user_id=user_id, user_name=user_name, email=email, display_name=display_name
+    )
     return usage_id

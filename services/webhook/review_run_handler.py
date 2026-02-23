@@ -32,6 +32,7 @@ from services.github.files.get_local_file_content import get_local_file_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.users.get_user_public_email import get_user_public_info
 from services.github.trees.get_local_file_tree import get_local_file_tree
 from services.github.types.github_types import ReviewBaseArgs
 from services.claude.tools.tools import TOOLS_FOR_PRS
@@ -105,6 +106,7 @@ async def handle_review_run(
     # Extract other information
     installation_id: int = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
+    sender_info = get_user_public_info(username=sender_name, token=token)
 
     # Get all comments in the review thread
     thread_comments = get_review_thread_comments(
@@ -146,7 +148,8 @@ async def handle_review_run(
         "token": token,
         "sender_id": sender_id,
         "sender_name": sender_name,
-        "sender_email": f"{sender_name}@users.noreply.github.com",
+        "sender_email": sender_info.email,
+        "sender_display_name": sender_info.display_name,
         "is_automation": False,
         "reviewers": [],
         "github_urls": [],
@@ -201,7 +204,8 @@ async def handle_review_run(
         pr_number=pr_number,
         source="github",
         trigger="review_comment",
-        email=None,
+        email=sender_info.email,
+        display_name=sender_info.display_name,
         lambda_info=lambda_info,
     )
 
