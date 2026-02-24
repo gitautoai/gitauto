@@ -102,6 +102,14 @@ def mock_handle_push():
         yield mock
 
 
+@pytest.fixture
+def mock_handle_installation_deleted_or_suspended():
+    with patch(
+        "services.webhook.webhook_handler.handle_installation_deleted_or_suspended"
+    ) as mock:
+        yield mock
+
+
 class TestHandleWebhookEvent:
     @pytest.mark.asyncio
     async def test_handle_webhook_event_no_action(self):
@@ -147,7 +155,7 @@ class TestHandleWebhookEvent:
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_installation_deleted(
-        self, mock_slack_notify, mock_delete_installation
+        self, mock_handle_installation_deleted_or_suspended
     ):
         """Test handling of installation deleted event."""
         payload = {
@@ -161,18 +169,13 @@ class TestHandleWebhookEvent:
 
         await handle_webhook_event(event_name="installation", payload=payload)
 
-        mock_slack_notify.assert_called_once_with(
-            ":skull: Installation deleted by `test-sender` for `test-owner`"
-        )
-        mock_delete_installation.assert_called_once_with(
-            installation_id=12345,
-            user_id=67890,
-            user_name="test-sender",
+        mock_handle_installation_deleted_or_suspended.assert_called_once_with(
+            payload=payload, action="deleted"
         )
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_installation_suspended(
-        self, mock_slack_notify, mock_delete_installation
+        self, mock_handle_installation_deleted_or_suspended
     ):
         """Test handling of installation suspended event."""
         payload = {
@@ -186,13 +189,8 @@ class TestHandleWebhookEvent:
 
         await handle_webhook_event(event_name="installation", payload=payload)
 
-        mock_slack_notify.assert_called_once_with(
-            ":skull: Installation suspended by `test-sender` for `test-owner`"
-        )
-        mock_delete_installation.assert_called_once_with(
-            installation_id=12345,
-            user_id=67890,
-            user_name="test-sender",
+        mock_handle_installation_deleted_or_suspended.assert_called_once_with(
+            payload=payload, action="suspend"
         )
 
     @pytest.mark.asyncio

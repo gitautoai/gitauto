@@ -11,8 +11,6 @@ from constants.triggers import Trigger
 from payloads.github.pull_request_review_comment.types import (
     PullRequestReviewCommentPayload,
 )
-from services.aws.delete_scheduler import delete_scheduler
-from services.aws.get_schedulers import get_schedulers_by_owner_id
 from services.github.types.github_types import (
     CheckSuiteCompletedPayload,
     InstallationPayload,
@@ -21,21 +19,18 @@ from services.github.types.github_types import (
     PrLabeledPayload,
 )
 from services.github.types.webhook.push import PushWebhookPayload
-from services.resend.get_first_name import get_first_name
-from services.resend.send_email import send_email
-from services.resend.text.suspend_email import get_suspend_email_text
-from services.resend.text.uninstall_email import get_uninstall_email_text
 from services.slack.slack_notify import slack_notify
-from services.supabase.installations.delete_installation import delete_installation
 from services.supabase.installations.unsuspend_installation import (
     unsuspend_installation,
 )
 from services.supabase.usage.get_usage_by_pr import get_usage_by_pr
 from services.supabase.usage.update_usage import update_usage
-from services.supabase.users.get_user import get_user
 from services.webhook.check_suite_handler import handle_check_suite
 from services.webhook.handle_coverage_report import handle_coverage_report
 from services.webhook.handle_installation import handle_installation_created
+from services.webhook.handle_installation_deleted_or_suspended import (
+    handle_installation_deleted_or_suspended,
+)
 from services.webhook.handle_installation_repos_added import (
     handle_installation_repos_added,
 )
@@ -97,65 +92,10 @@ async def handle_webhook_event(
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=deleted#installation
-    if event_name == "installation" and action in ("deleted"):
-        typed_payload = cast(InstallationPayload, payload)
-        owner_id = typed_payload["installation"]["account"]["id"]
-        owner_name = typed_payload["installation"]["account"]["login"]
-        sender_name = typed_payload["sender"]["login"]
-        msg = f":skull: Installation deleted by `{sender_name}` for `{owner_name}`"
-        slack_notify(msg)
-
-        delete_installation(
-            installation_id=typed_payload["installation"]["id"],
-            user_id=typed_payload["sender"]["id"],
-            user_name=typed_payload["sender"]["login"],
-        )
-
-        # Send uninstall email
-        user = get_user(typed_payload["sender"]["id"])
-        email = user.get("email") if user else None
-        user_name = user.get("user_name", "") if user else ""
-        if email:
-            first_name = get_first_name(user_name)
-            subject, text = get_uninstall_email_text(first_name)
-            send_email(to=email, subject=subject, text=text)
-
-        # Delete AWS schedulers for this owner
-        schedulers_to_delete = get_schedulers_by_owner_id(owner_id)
-        for schedule_name in schedulers_to_delete:
-            delete_scheduler(schedule_name)
-
-        return
-
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=suspend#installation
-    if event_name == "installation" and action in ("suspend"):
+    if event_name == "installation" and action in ("deleted", "suspend"):
         typed_payload = cast(InstallationPayload, payload)
-        owner_id = typed_payload["installation"]["account"]["id"]
-        owner_name = typed_payload["installation"]["account"]["login"]
-        sender_name = typed_payload["sender"]["login"]
-        msg = f":skull: Installation suspended by `{sender_name}` for `{owner_name}`"
-        slack_notify(msg)
-
-        delete_installation(
-            installation_id=typed_payload["installation"]["id"],
-            user_id=typed_payload["sender"]["id"],
-            user_name=typed_payload["sender"]["login"],
-        )
-
-        # Send suspend email
-        user = get_user(typed_payload["sender"]["id"])
-        email = user.get("email") if user else None
-        user_name = user.get("user_name", "") if user else ""
-        if email:
-            first_name = get_first_name(user_name)
-            subject, text = get_suspend_email_text(first_name)
-            send_email(to=email, subject=subject, text=text)
-
-        # Delete AWS schedulers for this owner
-        schedulers_to_delete = get_schedulers_by_owner_id(owner_id)
-        for schedule_name in schedulers_to_delete:
-            delete_scheduler(schedule_name)
-
+        handle_installation_deleted_or_suspended(payload=typed_payload, action=action)
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=unsuspend#installation

@@ -43,6 +43,8 @@ from services.resend.send_email import send_email
 from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
 from services.slack.slack_notify import slack_notify
 from services.supabase.create_user_request import create_user_request
+from services.supabase.email_sends.insert_email_send import insert_email_send
+from services.supabase.email_sends.update_email_send import update_email_send
 from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.owners.get_owner import get_owner
 from services.supabase.owners.get_stripe_customer_id import get_stripe_customer_id
@@ -622,15 +624,25 @@ async def handle_new_pr(
             total_seconds=int(end_time - current_time),
         )
 
-    # Check if user just ran out of credits and send casual notification
+    # Check if user just ran out of credits and send casual notification (deduplicated per owner)
     if billing_type == "credit":
         owner = get_owner(owner_id=owner_id)
         if owner and owner["credit_balance_usd"] <= 0 and sender_id:
-            user = get_user(user_id=sender_id)
-            email = user.get("email") if user else None
-            if email:
-                subject, text = get_credits_depleted_email_text(sender_name)
-                send_email(to=email, subject=subject, text=text)
+            is_new = insert_email_send(
+                owner_id=owner_id, owner_name=owner_name, email_type="credits_depleted"
+            )
+            if is_new is not False:
+                user = get_user(user_id=sender_id)
+                email = user.get("email") if user else None
+                if email:
+                    subject, text = get_credits_depleted_email_text(sender_name)
+                    result = send_email(to=email, subject=subject, text=text)
+                    if result and result.get("id"):
+                        update_email_send(
+                            owner_id=owner_id,
+                            email_type="credits_depleted",
+                            resend_email_id=result["id"],
+                        )
 
     # End notification
     end_msg = "Completed" if is_completed else "@channel Failed"
