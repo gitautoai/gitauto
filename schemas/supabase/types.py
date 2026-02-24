@@ -197,35 +197,6 @@ class InstallationsInsert(TypedDict):
     uninstalled_by: NotRequired[str | None]
 
 
-class JiraGithubLinks(TypedDict):
-    id: int
-    jira_site_id: str
-    jira_site_name: str
-    jira_project_id: int
-    jira_project_name: str
-    github_owner_id: int
-    github_owner_name: str
-    github_repo_id: int
-    github_repo_name: str
-    created_at: datetime.datetime | None
-    updated_at: datetime.datetime | None
-    created_by: int
-    updated_by: int | None
-
-
-class JiraGithubLinksInsert(TypedDict):
-    jira_site_id: str
-    jira_site_name: str
-    jira_project_id: int
-    jira_project_name: str
-    github_owner_id: int
-    github_owner_name: str
-    github_repo_id: int
-    github_repo_name: str
-    created_by: int
-    updated_by: NotRequired[int | None]
-
-
 class LlmRequests(TypedDict):
     id: int
     usage_id: int | None
@@ -282,31 +253,6 @@ class NpmTokensInsert(TypedDict):
     token: str
     created_by: str
     updated_by: str
-
-
-class OauthTokens(TypedDict):
-    id: int
-    user_id: int
-    service_name: str
-    access_token: str
-    refresh_token: str | None
-    scope: str
-    expires_at: datetime.datetime
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
-    created_by: int
-    updated_by: int | None
-
-
-class OauthTokensInsert(TypedDict):
-    user_id: int
-    service_name: str
-    access_token: str
-    refresh_token: NotRequired[str | None]
-    scope: str
-    expires_at: datetime.datetime
-    created_by: int
-    updated_by: NotRequired[int | None]
 
 
 class Owners(TypedDict):
@@ -603,6 +549,7 @@ class Users(TypedDict):
     created_by: str | None
     user_rules: str
     display_name: str
+    deleted_at: datetime.datetime | None
 
 
 class UsersInsert(TypedDict):
@@ -612,6 +559,7 @@ class UsersInsert(TypedDict):
     created_by: NotRequired[str | None]
     user_rules: str
     display_name: str
+    deleted_at: NotRequired[datetime.datetime | None]
 
 
 class WebhookDeliveries(TypedDict):
