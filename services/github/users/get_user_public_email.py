@@ -1,3 +1,4 @@
+import unicodedata
 from dataclasses import dataclass
 
 import requests
@@ -33,8 +34,7 @@ def get_user_public_info(username: str, token: str):
     email = user_data.get("email")
 
     name: str = user_data.get("name") or ""
-    # Title-case if all lowercase or all uppercase (e.g., "wes nishio" -> "Wes Nishio", "HIROSHI" -> "Hiroshi")
-    # Cross-ref: website/app/api/auth/[...nextauth]/route.ts
-    if name == name.lower() or name == name.upper():
-        name = name.title()
+    # Normalize: strip Unicode fancy chars + title-case every word
+    # Cross-ref: website/utils/normalize-display-name.ts
+    name = unicodedata.normalize("NFKC", name).replace(".", " ").title()
     return UserPublicInfo(email=email, display_name=name)
