@@ -8,6 +8,7 @@ from utils.text.text_copy import (
     UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
 )
 from config import EMAIL_LINK, PRODUCT_ID
+from constants.urls import SETTINGS_TRIGGERS_URL
 from constants.messages import COMPLETED_PR
 from constants.urls import DASHBOARD_CREDITS_URL
 
@@ -107,7 +108,7 @@ def test_pull_request_completed_automation_true():
 
     result = pull_request_completed(pr_creator, sender_name, is_automation)
 
-    expected = f"@{pr_creator} {COMPLETED_PR}\n\nNote: I automatically create a pull request once a day at 00:00 UTC, as long as you have remaining automation usage. Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+    expected = f"@{pr_creator} {COMPLETED_PR}\n\nNote: I automatically create pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
@@ -257,7 +258,7 @@ def test_pull_request_completed_automation_bot_creator_bot_sender():
 
     result = pull_request_completed(pr_creator, sender_name, is_automation)
 
-    expected = f"{COMPLETED_PR}\n\nNote: I automatically create a pull request once a day at 00:00 UTC, as long as you have remaining automation usage. Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+    expected = f"{COMPLETED_PR}\n\nNote: I automatically create pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
@@ -269,7 +270,7 @@ def test_pull_request_completed_automation_different_users():
 
     result = pull_request_completed(pr_creator, sender_name, is_automation)
 
-    expected = f"@{pr_creator} @{sender_name} {COMPLETED_PR}\n\nNote: I automatically create a pull request once a day at 00:00 UTC, as long as you have remaining automation usage. Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+    expected = f"@{pr_creator} @{sender_name} {COMPLETED_PR}\n\nNote: I automatically create pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
