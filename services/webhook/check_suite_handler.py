@@ -65,6 +65,7 @@ from services.supabase.usage.check_older_active_test_failure import (
 )
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.should_bail import should_bail
+from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.logs.clean_logs import clean_logs
@@ -576,6 +577,13 @@ async def handle_check_suite(
         owner_id=owner_id, repo_id=repo_id, pr_number=pr_number, pairs=existing_pairs
     )
 
+    # Build allowed_to_edit_files from PR changed files, validation errors, and impl file
+    allowed_to_edit_files = set(validation_result.files_with_errors)
+    for file_change in changed_files:
+        allowed_to_edit_files.add(file_change["filename"])
+    impl_file_path = get_impl_file_from_pr_title(pr_title)
+    allowed_to_edit_files.add(impl_file_path)
+
     p += 5
     add_log_message("Checked out the error log from the workflow run.", log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
@@ -666,7 +674,7 @@ async def handle_check_suite(
             log_messages=log_messages,
             usage_id=usage_id,
             tools=TOOLS_FOR_PRS,
-            allowed_to_edit_files=set(),
+            allowed_to_edit_files=allowed_to_edit_files,
             model_id=None,
         )
         messages = result.messages
