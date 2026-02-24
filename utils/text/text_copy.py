@@ -3,7 +3,7 @@ from datetime import datetime
 # Local imports
 from config import EMAIL_LINK, PRODUCT_ID
 from constants.messages import COMPLETED_PR
-from constants.urls import DASHBOARD_CREDITS_URL
+from constants.urls import DASHBOARD_CREDITS_URL, SETTINGS_TRIGGERS_URL
 
 
 # Keep in sync with website: app/api/github/create-coverage-issues/route.ts gitCommand()
@@ -44,7 +44,7 @@ def pull_request_completed(
         return f"{user_part}{COMPLETED_PR}\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     # For automation triggers
-    return f"{user_part}{COMPLETED_PR}\n\nNote: I automatically create a pull request once a day at 00:00 UTC, as long as you have remaining automation usage. Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+    return f"{user_part}{COMPLETED_PR}\n\nNote: I automatically create pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
 
 def request_pr_comment(

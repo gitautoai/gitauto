@@ -1,7 +1,6 @@
 # Standard imports
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import cast
 
 # Local imports
 from config import PRODUCT_ID
@@ -17,10 +16,13 @@ from services.github.commits.get_latest_remote_commit_sha import (
 )
 from services.github.files.get_raw_content import get_raw_content
 from services.github.labels.add_labels import add_labels
+from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.pulls.get_open_pull_requests import get_open_pull_requests
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.trees.get_file_tree import get_file_tree
+from services.github.users.get_email_from_commits import get_email_from_commits
+from services.github.users.get_user_public_email import get_user_public_info
 from services.github.types.github_types import BaseArgs
 from services.supabase.coverages.exclude_from_testing import exclude_from_testing
 from services.supabase.coverages.get_all_coverages import get_all_coverages
@@ -48,12 +50,12 @@ from utils.prompts.should_test_file import SHOULD_TEST_FILE_PROMPT
 def schedule_handler(event: EventBridgeSchedulerEvent):
     set_trigger("schedule")
     # Extract details from the event payload
-    owner_id = event.get("ownerId")
-    owner_name = event.get("ownerName")
-    repo_id = event.get("repoId")
-    repo_name = event.get("repoName")
-    user_name = event.get("userName")
-    installation_id = event.get("installationId")
+    owner_id = event["ownerId"]
+    owner_name = event["ownerName"]
+    repo_id = event["repoId"]
+    repo_name = event["repoName"]
+    user_name = event["userName"]
+    installation_id = event["installationId"]
 
     # Get installation access token - simplified since we already have installation_id
     token = get_installation_access_token(installation_id=installation_id)
@@ -185,9 +187,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     files_needing_tests.sort(
         key=lambda x: (
             1 if (x["statement_coverage"] or 0) > 0 else 0,
-            cast(int, x["file_size"]),
+            x["file_size"] or 0,
             x["statement_coverage"] or 0,
-            cast(str, x["full_path"]),
+            x["full_path"],
         )
     )
 
@@ -197,7 +199,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     # Find the first suitable file from sorted list
     target_item = None
     for item in files_needing_tests:
-        item_path = cast(str, item["full_path"])
+        item_path = item["full_path"]
         logger.info(
             "Evaluating %s (stmt=%s, func=%s, branch=%s)",
             item_path,
@@ -347,20 +349,44 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         uncovered_branches=target_item["uncovered_branches"],
     )
 
+    # Look up sender info from GitHub
+    sender_info = get_user_public_info(username=user_name, token=token)
+    sender_email = sender_info.email
+    if not sender_email:
+        sender_email = get_email_from_commits(
+            owner=owner_name, repo=repo_name, username=user_name, token=token
+        )
+
     # Create a PR
     new_branch = generate_branch_name(trigger="schedule")
     clone_url = f"https://github.com/{owner_name}/{repo_name}.git"
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": owner_name,
-            "repo": repo_name,
-            "base_branch": target_branch,
-            "new_branch": new_branch,
-            "token": token,
-            "clone_url": clone_url,
-        },
-    )
+    base_args: BaseArgs = {
+        "owner_type": event["ownerType"],
+        "owner_id": owner_id,
+        "owner": owner_name,
+        "repo_id": repo_id,
+        "repo": repo_name,
+        "clone_url": clone_url,
+        "is_fork": is_repo_forked(owner=owner_name, repo=repo_name, token=token),
+        "base_branch": target_branch,
+        "new_branch": new_branch,
+        "installation_id": installation_id,
+        "token": token,
+        "sender_id": event["userId"],
+        "sender_name": user_name,
+        "sender_email": sender_email,
+        "sender_display_name": sender_info.display_name,
+        "is_automation": True,
+        "reviewers": [user_name],
+        "github_urls": [],
+        "other_urls": [],
+        "clone_dir": "",  # Rebuilt by deconstruct_github_payload when labeled webhook fires
+        "pr_number": 0,  # Set after create_pull_request below
+        "pr_title": "",  # Set after create_pull_request below
+        "pr_body": "",  # Set after create_pull_request below
+        "pr_comments": [],
+        "pr_creator": user_name,
+    }
     latest_sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
     create_remote_branch(sha=latest_sha, base_args=base_args)
     create_empty_commit(
@@ -370,6 +396,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     pr_url, pr_number = create_pull_request(
         body=pr_body, title=title, base_args=base_args
     )
+    base_args["pr_number"] = pr_number
+    base_args["pr_title"] = title
+    base_args["pr_body"] = pr_body
 
     # Add gitauto label to trigger issues.labeled webhook, which runs the agent
     add_labels(
