@@ -582,7 +582,8 @@ async def handle_check_suite(
     for file_change in changed_files:
         allowed_to_edit_files.add(file_change["filename"])
     impl_file_path = get_impl_file_from_pr_title(pr_title)
-    allowed_to_edit_files.add(impl_file_path)
+    if impl_file_path:
+        allowed_to_edit_files.add(impl_file_path)
 
     p += 5
     add_log_message("Checked out the error log from the workflow run.", log_messages)

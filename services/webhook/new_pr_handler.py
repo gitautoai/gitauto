@@ -305,6 +305,9 @@ async def handle_new_pr(
 
     # Extract target implementation file
     impl_file_path = get_impl_file_from_pr_title(pr_title)
+    if not impl_file_path:
+        raise ValueError(f"No file path found in PR title: {pr_title}")
+
     if pr_title.startswith(SCHEDULE_PREFIX_INCREASE):
         base_args["impl_file_to_collect_coverage_from"] = impl_file_path
     test_dir_prefixes = repo_settings["test_dir_prefixes"] if repo_settings else []

@@ -1,5 +1,3 @@
-import pytest
-
 from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title
 
 
@@ -15,13 +13,11 @@ def test_achieve_coverage_prefix():
 
 def test_non_matching_title():
     title = "Fix bug in authentication"
-    with pytest.raises(ValueError):
-        get_impl_file_from_pr_title(title)
+    assert get_impl_file_from_pr_title(title) is None
 
 
 def test_empty_title():
-    with pytest.raises(ValueError):
-        get_impl_file_from_pr_title("")
+    assert get_impl_file_from_pr_title("") is None
 
 
 def test_file_at_root():
@@ -31,5 +27,4 @@ def test_file_at_root():
 
 def test_no_file_extension():
     title = "Fix the Makefile"
-    with pytest.raises(ValueError):
-        get_impl_file_from_pr_title(title)
+    assert get_impl_file_from_pr_title(title) is None
