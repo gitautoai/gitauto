@@ -14,20 +14,58 @@ if not db_password:
     print("Error: SUPABASE_DB_PASSWORD_DEV environment variable not set")
     sys.exit(1)
 
+PSQL_ARGS = [
+    "psql",
+    "-h",
+    "aws-0-us-west-1.pooler.supabase.com",
+    "-U",
+    "postgres.dkrxtcbaqzrodvsagwwn",
+    "-d",
+    "postgres",
+    "-p",
+    "6543",
+    "-t",
+]
+PSQL_ENV = {**os.environ, "PGPASSWORD": db_password}
+
 print("Generating TypedDict schemas from PostgreSQL...")
 
+# Step 1: Query enum types and their values
+enum_result = subprocess.run(
+    [
+        *PSQL_ARGS,
+        "-c",
+        """
+        SELECT t.typname, e.enumlabel
+        FROM pg_type t
+        JOIN pg_enum e ON t.oid = e.enumtypid
+        ORDER BY t.typname, e.enumsortorder;
+        """,
+    ],
+    env=PSQL_ENV,
+    capture_output=True,
+    text=True,
+    check=False,
+)
+
+# Build enum_name -> Literal type string mapping
+enum_types: dict[str, str] = {}
+enum_values: dict[str, list[str]] = defaultdict(list)
+for line in enum_result.stdout.split("\n"):
+    if line.strip():
+        parts = [p.strip() for p in line.split("|")]
+        if len(parts) == 2:
+            enum_name, enum_label = parts
+            enum_values[enum_name].append(enum_label)
+
+for enum_name, labels in enum_values.items():
+    literal_values = ", ".join(f'"{label}"' for label in labels)
+    enum_types[enum_name] = f"Literal[{literal_values}]"
+
+# Step 2: Query table columns
 result = subprocess.run(
     [
-        "psql",
-        "-h",
-        "aws-0-us-west-1.pooler.supabase.com",
-        "-U",
-        "postgres.dkrxtcbaqzrodvsagwwn",
-        "-d",
-        "postgres",
-        "-p",
-        "6543",
-        "-t",
+        *PSQL_ARGS,
         "-c",
         """
         SELECT table_name, column_name, data_type, is_nullable, udt_name
@@ -36,7 +74,7 @@ result = subprocess.run(
         ORDER BY table_name, ordinal_position;
         """,
     ],
-    env={**os.environ, "PGPASSWORD": db_password},
+    env=PSQL_ENV,
     capture_output=True,
     text=True,
     check=False,
@@ -82,7 +120,9 @@ for line in result.stdout.split("\n"):
                 "_jsonb": "dict[str, Any]",
             }
 
-            if data_type == "ARRAY":
+            if data_type == "USER-DEFINED" and udt_name in enum_types:
+                PYTHON_TYPE = enum_types[udt_name]
+            elif data_type == "ARRAY":
                 element_type = array_element_mapping.get(udt_name, "Any")
                 PYTHON_TYPE = f"list[{element_type}]"
             else:
@@ -101,7 +141,7 @@ for line in result.stdout.split("\n"):
 output_path = Path(__file__).parent / "types.py"
 with open(output_path, "w", encoding="utf-8") as f:
     f.write("import datetime\n")
-    f.write("from typing import Any\n")
+    f.write("from typing import Any, Literal\n")
     f.write("from typing_extensions import TypedDict, NotRequired\n")
     f.write("\n\n")
 
