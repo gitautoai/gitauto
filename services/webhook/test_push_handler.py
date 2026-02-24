@@ -1,5 +1,8 @@
+# pyright: reportUnusedVariable=false
 from typing import cast
 from unittest.mock import patch
+
+from services.github.branches.get_required_status_checks import StatusChecksResult
 from services.github.types.webhook.push import PushWebhookPayload
 from services.webhook.push_handler import handle_push
 
@@ -24,6 +27,7 @@ def test_handle_push_tag_push_returns_early(
         },
         "installation": {"id": 789},
         "ref": "refs/tags/v1.0.0",
+        "commits": [],
     }
 
     result = handle_push(cast(PushWebhookPayload, payload))
@@ -56,6 +60,7 @@ def test_handle_push_repository_not_found_returns_early(
         },
         "installation": {"id": 789},
         "ref": "refs/heads/main",
+        "commits": [],
     }
 
     mock_get_repository.return_value = None
@@ -90,6 +95,7 @@ def test_handle_push_local_feature_to_remote_feature_not_handled(
         },
         "installation": {"id": 789},
         "ref": "refs/heads/feature-branch",
+        "commits": [],
     }
 
     mock_get_repository.return_value = {"target_branch": "main"}
@@ -124,6 +130,7 @@ def test_handle_push_remote_feature_to_remote_staging_not_handled(
         },
         "installation": {"id": 789},
         "ref": "refs/heads/staging",
+        "commits": [],
     }
 
     mock_get_repository.return_value = {"target_branch": "main"}
@@ -158,6 +165,7 @@ def test_handle_push_no_open_prs_returns_early(
         },
         "installation": {"id": 789},
         "ref": "refs/heads/main",
+        "commits": [],
     }
 
     mock_get_repository.return_value = {"target_branch": "main"}
@@ -196,6 +204,7 @@ def test_handle_push_local_main_to_remote_main_handled(
         },
         "installation": {"id": 789},
         "ref": "refs/heads/main",
+        "commits": [{"added": ["src/app.py"], "modified": [], "removed": []}],
     }
 
     mock_get_repository.return_value = {"target_branch": "main"}
@@ -244,6 +253,7 @@ def test_handle_push_remote_feature_to_remote_main_handled(
         },
         "installation": {"id": 789},
         "ref": "refs/heads/main",
+        "commits": [{"added": ["src/app.py"], "modified": [], "removed": []}],
     }
 
     mock_get_repository.return_value = {"target_branch": "main"}
@@ -285,6 +295,7 @@ def test_handle_push_with_failed_updates(
         },
         "installation": {"id": 789},
         "ref": "refs/heads/main",
+        "commits": [{"added": ["src/app.py"], "modified": [], "removed": []}],
     }
 
     mock_get_repository.return_value = {"target_branch": "main"}
@@ -330,6 +341,7 @@ def test_handle_push_with_merge_conflicts(
         },
         "installation": {"id": 789},
         "ref": "refs/heads/main",
+        "commits": [{"added": ["src/app.py"], "modified": [], "removed": []}],
     }
 
     mock_get_repository.return_value = {"target_branch": "main"}
@@ -378,6 +390,7 @@ def test_handle_push_no_gitauto_prs_returns_early(
         },
         "installation": {"id": 789},
         "ref": "refs/heads/main",
+        "commits": [],
     }
 
     mock_get_repository.return_value = {"target_branch": "main"}
@@ -394,3 +407,181 @@ def test_handle_push_no_gitauto_prs_returns_early(
     )
     mock_update_pr.assert_not_called()
     mock_logger.info.assert_not_called()
+
+
+# --- Test-only push filtering tests ---
+
+
+@patch("services.webhook.push_handler.logger")
+@patch("services.webhook.push_handler.get_required_status_checks")
+@patch("services.webhook.push_handler.update_pull_request_branch")
+@patch("services.webhook.push_handler.get_open_pull_requests")
+@patch("services.webhook.push_handler.get_installation_access_token")
+@patch("services.webhook.push_handler.get_repository")
+def test_handle_push_test_only_strict_false_skips_updates(
+    mock_get_repository,
+    mock_get_token,
+    mock_get_open_prs,
+    mock_update_pr,
+    mock_get_status_checks,
+    mock_logger,
+):
+    payload = {
+        "repository": {
+            "owner": {"id": 123, "login": "test-owner"},
+            "id": 456,
+            "name": "test-repo",
+        },
+        "installation": {"id": 789},
+        "ref": "refs/heads/main",
+        "commits": [
+            {"added": ["tests/test_utils.py"], "modified": [], "removed": []},
+            {"added": [], "modified": ["src/test_app.py"], "removed": []},
+        ],
+    }
+
+    mock_get_repository.return_value = {"target_branch": "main"}
+    mock_get_token.return_value = "test-token"
+    mock_get_status_checks.return_value = StatusChecksResult(
+        status_code=200, checks=["ci/test"], strict=False
+    )
+
+    result = handle_push(cast(PushWebhookPayload, payload))
+
+    assert result is None
+    mock_get_status_checks.assert_called_once_with(
+        owner="test-owner", repo="test-repo", branch="main", token="test-token"
+    )
+    mock_get_open_prs.assert_not_called()
+    mock_update_pr.assert_not_called()
+    mock_logger.info.assert_called_once()
+    assert "test-only push" in mock_logger.info.call_args[0][0]
+
+
+@patch("services.webhook.push_handler.logger")
+@patch("services.webhook.push_handler.get_required_status_checks")
+@patch("services.webhook.push_handler.update_pull_request_branch")
+@patch("services.webhook.push_handler.get_open_pull_requests")
+@patch("services.webhook.push_handler.get_installation_access_token")
+@patch("services.webhook.push_handler.get_repository")
+def test_handle_push_test_only_strict_true_proceeds(
+    mock_get_repository,
+    mock_get_token,
+    mock_get_open_prs,
+    mock_update_pr,
+    mock_get_status_checks,
+    _mock_logger,
+):
+    payload = {
+        "repository": {
+            "owner": {"id": 123, "login": "test-owner"},
+            "id": 456,
+            "name": "test-repo",
+        },
+        "installation": {"id": 789},
+        "ref": "refs/heads/main",
+        "commits": [
+            {"added": ["tests/test_utils.py"], "modified": [], "removed": []},
+        ],
+    }
+
+    mock_get_repository.return_value = {"target_branch": "main"}
+    mock_get_token.return_value = "test-token"
+    mock_get_status_checks.return_value = StatusChecksResult(
+        status_code=200, checks=["ci/test"], strict=True
+    )
+    mock_get_open_prs.return_value = [{"number": 1, "title": "PR 1"}]
+    mock_update_pr.return_value = ("updated", None)
+
+    result = handle_push(cast(PushWebhookPayload, payload))
+
+    assert result is None
+    mock_get_status_checks.assert_called_once_with(
+        owner="test-owner", repo="test-repo", branch="main", token="test-token"
+    )
+    mock_get_open_prs.assert_called_once()
+    mock_update_pr.assert_called_once_with(
+        owner="test-owner", repo="test-repo", pr_number=1, token="test-token"
+    )
+
+
+@patch("services.webhook.push_handler.logger")
+@patch("services.webhook.push_handler.get_required_status_checks")
+@patch("services.webhook.push_handler.update_pull_request_branch")
+@patch("services.webhook.push_handler.get_open_pull_requests")
+@patch("services.webhook.push_handler.get_installation_access_token")
+@patch("services.webhook.push_handler.get_repository")
+def test_handle_push_mixed_files_proceeds_regardless(
+    mock_get_repository,
+    mock_get_token,
+    mock_get_open_prs,
+    mock_update_pr,
+    mock_get_status_checks,
+    _mock_logger,
+):
+    payload = {
+        "repository": {
+            "owner": {"id": 123, "login": "test-owner"},
+            "id": 456,
+            "name": "test-repo",
+        },
+        "installation": {"id": 789},
+        "ref": "refs/heads/main",
+        "commits": [
+            {
+                "added": ["tests/test_utils.py"],
+                "modified": ["src/app.py"],
+                "removed": [],
+            },
+        ],
+    }
+
+    mock_get_repository.return_value = {"target_branch": "main"}
+    mock_get_token.return_value = "test-token"
+    mock_get_open_prs.return_value = [{"number": 1, "title": "PR 1"}]
+    mock_update_pr.return_value = ("updated", None)
+
+    result = handle_push(cast(PushWebhookPayload, payload))
+
+    assert result is None
+    mock_get_status_checks.assert_not_called()
+    mock_get_open_prs.assert_called_once()
+    mock_update_pr.assert_called_once()
+
+
+@patch("services.webhook.push_handler.logger")
+@patch("services.webhook.push_handler.get_required_status_checks")
+@patch("services.webhook.push_handler.update_pull_request_branch")
+@patch("services.webhook.push_handler.get_open_pull_requests")
+@patch("services.webhook.push_handler.get_installation_access_token")
+@patch("services.webhook.push_handler.get_repository")
+def test_handle_push_empty_commits_proceeds(
+    mock_get_repository,
+    mock_get_token,
+    mock_get_open_prs,
+    mock_update_pr,
+    mock_get_status_checks,
+    _mock_logger,
+):
+    payload = {
+        "repository": {
+            "owner": {"id": 123, "login": "test-owner"},
+            "id": 456,
+            "name": "test-repo",
+        },
+        "installation": {"id": 789},
+        "ref": "refs/heads/main",
+        "commits": [],
+    }
+
+    mock_get_repository.return_value = {"target_branch": "main"}
+    mock_get_token.return_value = "test-token"
+    mock_get_open_prs.return_value = [{"number": 1, "title": "PR 1"}]
+    mock_update_pr.return_value = ("updated", None)
+
+    result = handle_push(cast(PushWebhookPayload, payload))
+
+    assert result is None
+    mock_get_status_checks.assert_not_called()
+    mock_get_open_prs.assert_called_once()
+    mock_update_pr.assert_called_once()
