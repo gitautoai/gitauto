@@ -69,6 +69,7 @@ from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.logs.clean_logs import clean_logs
+from utils.memory.gc_collect_and_log import gc_collect_and_log
 from utils.logs.detect_infra_failure import detect_infra_failure
 from utils.progress_bar.progress_bar import create_progress_bar
 
@@ -689,6 +690,9 @@ async def handle_check_suite(
                 "Agent signaled completion via verify_task_is_complete, breaking loop"
             )
             break
+
+        # Force GC between rounds to free temporary objects (messages, diffs) and reduce Lambda OOM risk
+        gc_collect_and_log()
 
     # Log if loop exhausted without completion and force verification
     if not is_completed:

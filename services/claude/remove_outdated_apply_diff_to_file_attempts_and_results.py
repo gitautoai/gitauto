@@ -1,6 +1,3 @@
-# Standard imports
-from copy import deepcopy
-
 # Third party imports
 from anthropic.types import MessageParam
 
@@ -14,9 +11,6 @@ def remove_outdated_apply_diff_to_file_attempts_and_results(
 ):
     if not messages:
         return messages
-
-    # Make a deep copy to avoid modifying the original
-    result = deepcopy(messages)
 
     # Track latest diff results by filename - store position and type (failed/successful/input)
     file_latest_positions = {}
@@ -189,6 +183,6 @@ def remove_outdated_apply_diff_to_file_attempts_and_results(
             new_content.append(new_item)
 
         if new_content != msg["content"]:
-            result[i]["content"] = new_content
+            messages[i]["content"] = new_content
 
-    return result
+    return messages

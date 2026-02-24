@@ -122,7 +122,7 @@ def chat_with_claude(
 
     # Combine system message with user messages for logging
     system_msg: MessageParam = {"role": "user", "content": system_content}
-    full_messages = [system_msg] + list(messages)
+    full_messages = [system_msg, *messages]
     insert_llm_request(
         usage_id=usage_id,
         provider="claude",

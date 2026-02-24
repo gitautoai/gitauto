@@ -1161,13 +1161,16 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_interleaved_fil
 
 
 def test_handles_exception_gracefully():
-    # Test by mocking deepcopy to raise an exception
+    # Test by mocking enumerate to raise an exception during first pass
 
     messages: list[MessageParam] = cast(
         list[MessageParam], [{"role": "user", "content": []}]
     )
 
-    with patch("copy.deepcopy", side_effect=RuntimeError("Simulated failure")):
+    with patch(
+        "services.claude.remove_outdated_apply_diff_to_file_attempts_and_results.enumerate",
+        side_effect=RuntimeError("Simulated failure"),
+    ):
         result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
         # Should return original messages unchanged when exception occurs
         assert result == messages
