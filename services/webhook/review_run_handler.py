@@ -110,9 +110,11 @@ async def handle_review_run(
     token = get_installation_access_token(installation_id=installation_id)
     sender_info = get_user_public_info(username=sender_name, token=token)
     if not sender_info.email:
-        sender_info.email = get_email_from_commits(
+        email = get_email_from_commits(
             owner=owner_name, repo=repo_name, username=sender_name, token=token
         )
+        if email:
+            sender_info.email = email
 
     # Get all comments in the review thread
     thread_comments = get_review_thread_comments(
