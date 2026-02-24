@@ -1439,6 +1439,8 @@ async def test_test_file_header_merge_no_change(
     mock_replace_remote.assert_not_called()
 
 
+@patch("services.webhook.new_pr_handler.update_email_send")
+@patch("services.webhook.new_pr_handler.insert_email_send", return_value=True)
 @patch("services.webhook.new_pr_handler.send_email")
 @pytest.mark.asyncio
 @patch("services.webhook.new_pr_handler.get_credits_depleted_email_text")
@@ -1493,6 +1495,8 @@ async def test_credits_depleted_email_sent(
     mock_get_user,
     mock_get_email_text,
     mock_send_email,
+    _mock_insert_email_send,
+    _mock_update_email_send,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
