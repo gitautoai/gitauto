@@ -46,8 +46,21 @@ def should_skip_python(content: str) -> bool:
                     in_triple_quote_string = True
                     continue
                 # Handle module-level docstrings (standalone triple-quoted strings)
-                if line.strip() in ['"""', "'''"]:
-                    triple_quote_type = line.strip()
+                # Single-line docstring: """text""" or '''text'''
+                for tq in ['"""', "'''"]:
+                    if (
+                        line.startswith(tq)
+                        and line.endswith(tq)
+                        and len(line) > len(tq)
+                    ):
+                        break
+                else:
+                    tq = None
+                if tq:
+                    continue
+                # Multi-line docstring opening: bare """ or '''
+                if line in ['"""', "'''"]:
+                    triple_quote_type = line
                     in_triple_quote_string = True
                     continue
         else:

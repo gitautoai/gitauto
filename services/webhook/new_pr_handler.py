@@ -32,6 +32,7 @@ from services.github.files.get_remote_file_content_by_url import (
     get_remote_file_content_by_url,
 )
 from services.github.markdown.render_text import render_text
+from services.github.pulls.close_pull_request import close_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.trees.get_local_file_tree import get_local_file_tree
 from services.github.types.github_types import PrLabeledPayload
@@ -62,6 +63,7 @@ from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title
 from utils.pr_templates.schedule import SCHEDULE_PREFIX_INCREASE
 from utils.files.find_test_files import find_test_files
 from utils.files.is_config_file import is_config_file
+from utils.files.should_skip_test import should_skip_test
 from utils.files.read_local_file import read_local_file
 from utils.files.is_test_file import is_test_file
 from utils.files.merge_test_file_headers import merge_test_file_headers
@@ -324,6 +326,18 @@ async def handle_new_pr(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)),
         base_args=base_args,
     )
+
+    # Skip files with no testable code (e.g. __init__.py with only a docstring)
+    if should_skip_test(impl_file_path, impl_file_content):
+        msg = f"Closing PR: `{impl_file_path}` has no testable code (only docstrings, imports, constants, or type definitions)."
+        logger.info(msg)
+        add_log_message(msg, log_messages)
+        update_comment(
+            body=create_progress_bar(p=100, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
+        close_pull_request(pr_number=base_args["pr_number"], base_args=base_args)
+        return
 
     # Check if uncovered code is untestable (for schedule-triggered coverage issues)
     untestable_code_info: EvaluationResult | None = None
