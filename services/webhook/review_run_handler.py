@@ -44,6 +44,7 @@ from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.should_bail import should_bail
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
+from utils.memory.gc_collect_and_log import gc_collect_and_log
 from utils.progress_bar.progress_bar import create_progress_bar
 
 
@@ -335,6 +336,9 @@ async def handle_review_run(
                 "Agent signaled completion via verify_task_is_complete, breaking loop"
             )
             break
+
+        # Force GC between rounds to free temporary objects (messages, diffs) and reduce Lambda OOM risk
+        gc_collect_and_log()
 
     # Log if loop exhausted without completion and force verification
     if not is_completed:
