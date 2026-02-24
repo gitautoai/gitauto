@@ -25,9 +25,13 @@ def get_email_from_commits(owner: str, repo: str, username: str, token: str):
     response.raise_for_status()
     commits: list[dict[str, dict[str, dict[str, str]]]] = response.json()
     for commit in commits:
-        commit_obj = commit.get("commit", {})
-        author = commit_obj.get("author", {})
-        email = author.get("email", "")
+        commit_obj = commit.get("commit")
+        if not commit_obj:
+            continue
+        author = commit_obj.get("author")
+        if not author:
+            continue
+        email = author.get("email")
         if email and not email.endswith(NOREPLY_SUFFIX):
             return email
     return None
