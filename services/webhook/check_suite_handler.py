@@ -177,9 +177,11 @@ async def handle_check_suite(
     sender_name = payload["sender"]["login"]
     sender_info = get_user_public_info(username=sender_name, token=token)
     if not sender_info.email:
-        sender_info.email = get_email_from_commits(
+        email = get_email_from_commits(
             owner=owner_name, repo=repo_name, username=sender_name, token=token
         )
+        if email:
+            sender_info.email = email
 
     # Extract PR related variables and return if no PR is associated with this check suite
     pull_requests = check_suite["pull_requests"]
