@@ -60,7 +60,7 @@ def mock_check_run_payload(test_owner, test_repo):
 def mock_pr_data():
     """Fixture providing mock PR data."""
     return {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -140,7 +140,7 @@ async def test_handle_check_suite_skips_when_trigger_disabled(
         }
     ]
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -195,7 +195,7 @@ async def test_handle_check_suite_skips_when_comment_exists(
         }
     ]
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -288,7 +288,7 @@ async def test_handle_check_suite_race_condition_prevention(
     mock_create_user_request.return_value = 12345
     mock_cancel_workflows.return_value = None
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -402,7 +402,7 @@ async def test_handle_check_suite_full_workflow(
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -521,7 +521,7 @@ async def test_handle_check_suite_with_404_logs(
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -611,7 +611,7 @@ async def test_handle_check_suite_with_none_logs(
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -705,7 +705,7 @@ async def test_handle_check_suite_with_existing_retry_pair(
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -815,7 +815,7 @@ async def test_handle_check_suite_with_closed_pr(
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -913,7 +913,7 @@ async def test_handle_check_suite_with_deleted_branch(
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -1013,7 +1013,7 @@ async def test_check_run_handler_token_accumulation(
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = 888
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -1134,7 +1134,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
     mock_slack_notify.return_value = "thread-123"
     mock_create_user_request.return_value = 999
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -1257,7 +1257,7 @@ async def test_handle_check_suite_codecov_failure(
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -1385,7 +1385,7 @@ async def test_handle_check_suite_codecov_no_token(
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
@@ -1496,7 +1496,7 @@ async def test_handle_check_suite_max_iterations_forces_verification(
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
-        "title": "Test PR",
+        "title": "Low Test Coverage: src/main.py",
         "body": "Test PR description",
         "user": {"login": "test-user"},
         "base": {"ref": "main"},
