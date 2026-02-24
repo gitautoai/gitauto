@@ -164,8 +164,14 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             func,
             branch,
         )
-        # None means "not measured" by the coverage tool (e.g. PHP doesn't report branch data)
-        all_complete = all(v is None or v == 100.0 for v in (stmt, func, branch))
+        # None means "not measured" by the coverage tool (e.g. PHP doesn't report branch data).
+        # If ALL three are None, the file was never measured at all — treat as uncovered.
+        # E.g. finishp.php: stmt=None, func=None, branch=None → candidate
+        # If only some are None, those metrics are N/A for the language — ignore them.
+        # E.g. some PHP file: stmt=100, func=100, branch=None → skip (fully covered)
+        metrics = (stmt, func, branch)
+        all_none = all(v is None for v in metrics)
+        all_complete = not all_none and all(v is None or v == 100.0 for v in metrics)
         if all_complete:
             logger.info("Skipping %s: all 3 metrics at 100%%", item["full_path"])
         elif item.get("is_excluded_from_testing"):
@@ -175,11 +181,12 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             files_needing_tests.append(item)
 
     # Sort: prioritize untouched files (0% coverage) first, then by file_size, coverage, path
+    # None (unmeasured) is treated as 0 for sorting purposes
     files_needing_tests.sort(
         key=lambda x: (
-            1 if cast(float, x["statement_coverage"]) > 0 else 0,
+            1 if (x["statement_coverage"] or 0) > 0 else 0,
             cast(int, x["file_size"]),
-            cast(float, x["statement_coverage"]),
+            x["statement_coverage"] or 0,
             cast(str, x["full_path"]),
         )
     )

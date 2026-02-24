@@ -409,8 +409,10 @@ def test_get_user_public_info_title_cases_uppercase_name(sample_username, sample
         assert result.display_name == "Hiroshi"
 
 
-def test_get_user_public_info_preserves_mixed_case_name(sample_username, sample_token):
-    """Test that mixed-case names are preserved (e.g., 'Wes Nishio' stays 'Wes Nishio')."""
+def test_get_user_public_info_title_cases_already_correct_name(
+    sample_username, sample_token
+):
+    """Test that already title-cased names stay the same (e.g., 'Wes Nishio' stays 'Wes Nishio')."""
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_response.json.return_value = {
@@ -427,6 +429,108 @@ def test_get_user_public_info_preserves_mixed_case_name(sample_username, sample_
             token=sample_token,
         )
         assert result.display_name == "Wes Nishio"
+
+
+def test_get_user_public_info_title_cases_mixed_case_name(
+    sample_username, sample_token
+):
+    """Test that mixed-case names like 'Naman joshi' are title-cased to 'Naman Joshi'."""
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {
+        "email": "naman@example.com",
+        "name": "Naman joshi",
+    }
+
+    with patch(
+        "services.github.users.get_user_public_email.requests.get",
+        return_value=mock_response,
+    ):
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
+        assert result.display_name == "Naman Joshi"
+
+
+def test_get_user_public_info_strips_unicode_bold(sample_username, sample_token):
+    """Test that Unicode bold characters are normalized to plain ASCII and title-cased."""
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {
+        "email": "one@example.com",
+        "name": "\U0001d40e\U0001d427\U0001d41e \U0001d405\U0001d422\U0001d427\U0001d41e \U0001d412\U0001d42d\U0001d41a\U0001d42b\U0001d42c\U0001d42d\U0001d42e\U0001d41f\U0001d41f",
+    }
+
+    with patch(
+        "services.github.users.get_user_public_email.requests.get",
+        return_value=mock_response,
+    ):
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
+        assert result.display_name == "One Fine Starstuff"
+
+
+def test_get_user_public_info_replaces_dots_with_spaces(sample_username, sample_token):
+    """Test that dots are replaced with spaces (e.g., 'Yang.qu' -> 'Yang Qu')."""
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {
+        "email": "yang@example.com",
+        "name": "Yang.qu",
+    }
+
+    with patch(
+        "services.github.users.get_user_public_email.requests.get",
+        return_value=mock_response,
+    ):
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
+        assert result.display_name == "Yang Qu"
+
+
+def test_get_user_public_info_preserves_accented_latin(sample_username, sample_token):
+    """Test that accented Latin characters are preserved and title-cased."""
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {
+        "email": "andre@example.com",
+        "name": "andré goulart",
+    }
+
+    with patch(
+        "services.github.users.get_user_public_email.requests.get",
+        return_value=mock_response,
+    ):
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
+        assert result.display_name == "André Goulart"
+
+
+def test_get_user_public_info_preserves_cjk_characters(sample_username, sample_token):
+    """Test that CJK characters pass through unchanged."""
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {
+        "email": "user@example.com",
+        "name": "高森松太郎",
+    }
+
+    with patch(
+        "services.github.users.get_user_public_email.requests.get",
+        return_value=mock_response,
+    ):
+        result = get_user_public_info(
+            username=sample_username,
+            token=sample_token,
+        )
+        assert result.display_name == "高森松太郎"
 
 
 def test_get_user_public_info_empty_name_returns_empty_display_name(

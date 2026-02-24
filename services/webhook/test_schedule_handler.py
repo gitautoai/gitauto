@@ -719,3 +719,105 @@ def test_schedule_handler_skips_none_coverage_as_fully_covered(
 
     # All files skipped (100% stmt + 100% func + None branch = fully covered), no PR created
     assert result["status"] == "skipped"
+
+
+@patch("services.webhook.schedule_handler.add_labels")
+@patch("services.webhook.schedule_handler.create_pull_request")
+@patch("services.webhook.schedule_handler.create_empty_commit")
+@patch("services.webhook.schedule_handler.create_remote_branch")
+@patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
+@patch("services.webhook.schedule_handler.generate_branch_name")
+@patch("services.webhook.schedule_handler.get_open_pull_requests")
+@patch("services.webhook.schedule_handler.evaluate_condition")
+@patch("services.webhook.schedule_handler.should_skip_test")
+@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.check_availability")
+@patch("services.webhook.schedule_handler.get_default_branch")
+@patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_all_coverages")
+@patch("services.webhook.schedule_handler.get_raw_content")
+def test_schedule_handler_all_none_coverage_treated_as_candidate(
+    mock_get_raw_content,
+    mock_get_all_coverages,
+    mock_get_file_tree,
+    mock_get_default_branch,
+    mock_check_availability,
+    mock_get_repository,
+    mock_get_token,
+    mock_is_paused,
+    mock_should_skip_test,
+    mock_evaluate_condition,
+    mock_get_open_pull_requests,
+    mock_generate_branch_name,
+    mock_get_latest_sha,
+    mock_create_remote_branch,
+    mock_create_empty_commit,
+    mock_create_pr,
+    mock_add_labels,
+    mock_event,
+):
+    """Files with all three coverage metrics as None (never measured) should be
+    treated as candidates, not skipped as fully covered.
+    E.g. web/pickup/finishp.php: stmt=None, func=None, branch=None."""
+    mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = False
+    mock_get_repository.return_value = {"trigger_on_schedule": True}
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "exception",
+        "requests_left": None,
+        "credit_balance_usd": 0,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Exception owner - unlimited access.",
+    }
+    mock_get_default_branch.return_value = ("main", None)
+    mock_get_file_tree.return_value = [
+        {"path": "web/pickup/finishp.php", "type": "blob", "size": 500},
+    ]
+    mock_get_all_coverages.return_value = [
+        {
+            "id": 1,
+            "full_path": "web/pickup/finishp.php",
+            "owner_id": 123,
+            "repo_id": 456,
+            "branch_name": "main",
+            "created_by": "test-user",
+            "updated_by": "test-user",
+            "level": "file",
+            "file_size": 500,
+            "statement_coverage": None,
+            "function_coverage": None,
+            "branch_coverage": None,
+            "line_coverage": None,
+            "package_name": None,
+            "language": "php",
+            "uncovered_lines": None,
+            "uncovered_functions": None,
+            "uncovered_branches": None,
+            "created_at": "2024-01-01",
+            "updated_at": "2024-01-01",
+            "github_issue_url": None,
+            "is_excluded_from_testing": False,
+        },
+    ]
+    mock_get_raw_content.return_value = (
+        "<?php session_start(); $ctrl = new Controller(); $ret = $ctrl->execute();"
+    )
+    mock_should_skip_test.return_value = False
+    mock_evaluate_condition.return_value = EvaluationResult(True, "has testable logic")
+    mock_get_open_pull_requests.return_value = []
+    mock_generate_branch_name.return_value = "gitauto/schedule-20240101-120000-ABCD"
+    mock_get_latest_sha.return_value = "abc123"
+    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
+
+    with patch("services.webhook.schedule_handler.insert_coverages"):
+        result = schedule_handler(mock_event)
+
+    # File with all-None coverage should become a candidate and get a PR created
+    assert result["status"] == "success"
+    mock_create_pr.assert_called_once()
+    call_kwargs = mock_create_pr.call_args.kwargs
+    assert "web/pickup/finishp.php" in call_kwargs["title"]
