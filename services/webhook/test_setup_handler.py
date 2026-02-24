@@ -8,7 +8,10 @@ import pytest
 from anthropic.types import MessageParam
 
 from services.chat_with_agent import AgentResult
+from services.github.users.get_user_public_email import UserPublicInfo
 from services.webhook.setup_handler import setup_handler
+
+SENDER_INFO = UserPublicInfo(email="test@example.com", display_name="Test User")
 
 
 def _make_agent_result(is_completed=False):
@@ -41,21 +44,27 @@ INSTALLATION = {"owner_id": 1, "installation_id": 123, "owner_type": "Organizati
 @patch(f"{MODULE}.create_empty_commit")
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.get_email_from_commits", return_value=None)
+@patch(f"{MODULE}.get_user_public_info", return_value=SENDER_INFO)
 @patch(f"{MODULE}.chat_with_agent")
 async def test_not_completed_closes_pr_and_deletes_branch(
     mock_agent: MagicMock,
+    mock_user_info,
+    mock_email_from_commits,
     mock_installation,
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
     mock_clone_to_efs,
     mock_clone_url,
+    mock_is_fork,
     mock_sha,
     mock_create_branch,
     mock_empty_commit,
@@ -75,6 +84,7 @@ async def test_not_completed_closes_pr_and_deletes_branch(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_id=123,
         sender_name="test-user",
     )
 
@@ -95,21 +105,27 @@ async def test_not_completed_closes_pr_and_deletes_branch(
 @patch(f"{MODULE}.create_empty_commit")
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.get_email_from_commits", return_value=None)
+@patch(f"{MODULE}.get_user_public_info", return_value=SENDER_INFO)
 @patch(f"{MODULE}.chat_with_agent")
 async def test_completed_keeps_pr(
     mock_agent: MagicMock,
+    mock_user_info,
+    mock_email_from_commits,
     mock_installation,
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
     mock_clone_to_efs,
     mock_clone_url,
+    mock_is_fork,
     mock_sha,
     mock_create_branch,
     mock_empty_commit,
@@ -129,6 +145,7 @@ async def test_completed_keeps_pr(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_id=123,
         sender_name="test-user",
     )
 
@@ -148,6 +165,7 @@ async def test_completed_keeps_pr(
 @patch(f"{MODULE}.create_empty_commit")
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
@@ -157,15 +175,20 @@ async def test_completed_keeps_pr(
     return_value={"target_branch": "develop", "repo_id": 456},
 )
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.get_email_from_commits", return_value=None)
+@patch(f"{MODULE}.get_user_public_info", return_value=SENDER_INFO)
 @patch(f"{MODULE}.chat_with_agent")
 async def test_uses_target_branch_when_set(
     mock_agent: MagicMock,
+    mock_user_info,
+    mock_email_from_commits,
     mock_installation,
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
     mock_clone_to_efs,
     mock_clone_url,
+    mock_is_fork,
     mock_sha,
     mock_create_branch,
     mock_empty_commit,
@@ -185,6 +208,7 @@ async def test_uses_target_branch_when_set(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_id=123,
         sender_name="test-user",
     )
 
@@ -208,21 +232,27 @@ async def test_uses_target_branch_when_set(
 @patch(f"{MODULE}.create_empty_commit")
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.get_email_from_commits", return_value=None)
+@patch(f"{MODULE}.get_user_public_info", return_value=SENDER_INFO)
 @patch(f"{MODULE}.chat_with_agent")
 async def test_passes_existing_workflows_to_claude(
     mock_agent: MagicMock,
+    mock_user_info,
+    mock_email_from_commits,
     mock_installation,
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
     mock_clone_to_efs,
     mock_clone_url,
+    mock_is_fork,
     mock_sha,
     mock_create_branch,
     mock_empty_commit,
@@ -249,6 +279,7 @@ async def test_passes_existing_workflows_to_claude(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_id=123,
         sender_name="test-user",
     )
 
@@ -270,21 +301,27 @@ async def test_passes_existing_workflows_to_claude(
 @patch(f"{MODULE}.create_empty_commit")
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.get_email_from_commits", return_value=None)
+@patch(f"{MODULE}.get_user_public_info", return_value=SENDER_INFO)
 @patch(f"{MODULE}.chat_with_agent")
 async def test_clones_repo_when_efs_dir_missing(
     mock_agent: MagicMock,
+    mock_user_info,
+    mock_email_from_commits,
     mock_installation,
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
     mock_clone_to_efs,
     mock_clone_url,
+    mock_is_fork,
     mock_sha,
     mock_create_branch,
     mock_empty_commit,
@@ -310,6 +347,7 @@ async def test_clones_repo_when_efs_dir_missing(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_id=123,
         sender_name="test-user",
     )
 
@@ -329,6 +367,7 @@ async def test_no_installation_skips(mock_installation):
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_id=123,
         sender_name="test-user",
     )
 
@@ -344,6 +383,7 @@ async def test_empty_repo_skips(mock_installation, mock_repo, mock_default_branc
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_id=123,
         sender_name="test-user",
     )
 
@@ -361,21 +401,27 @@ async def test_empty_repo_skips(mock_installation, mock_repo, mock_default_branc
 @patch(f"{MODULE}.create_empty_commit")
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.get_email_from_commits", return_value=None)
+@patch(f"{MODULE}.get_user_public_info", return_value=SENDER_INFO)
 @patch(f"{MODULE}.chat_with_agent")
 async def test_system_message_mentions_coverage(
     mock_agent: MagicMock,
+    mock_user_info,
+    mock_email_from_commits,
     mock_installation,
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
     mock_clone_to_efs,
     mock_clone_url,
+    mock_is_fork,
     mock_sha,
     mock_create_branch,
     mock_empty_commit,
@@ -395,6 +441,7 @@ async def test_system_message_mentions_coverage(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_id=123,
         sender_name="test-user",
     )
 
@@ -414,21 +461,27 @@ async def test_system_message_mentions_coverage(
 @patch(f"{MODULE}.create_empty_commit")
 @patch(f"{MODULE}.create_remote_branch")
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
+@patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value=("main", False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
+@patch(f"{MODULE}.get_email_from_commits", return_value=None)
+@patch(f"{MODULE}.get_user_public_info", return_value=SENDER_INFO)
 @patch(f"{MODULE}.chat_with_agent")
 async def test_sets_pr_number_in_base_args(
     mock_agent: MagicMock,
+    mock_user_info,
+    mock_email_from_commits,
     mock_installation,
     mock_repo,
     mock_default_branch,
     mock_efs_dir,
     mock_clone_to_efs,
     mock_clone_url,
+    mock_is_fork,
     mock_sha,
     mock_create_branch,
     mock_empty_commit,
@@ -448,6 +501,7 @@ async def test_sets_pr_number_in_base_args(
         owner_name="test-owner",
         repo_name="test-repo",
         token="test-token",
+        sender_id=123,
         sender_name="test-user",
     )
 

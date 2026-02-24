@@ -203,6 +203,7 @@ async def setup_coverage_workflow(
     repo: str,
     token: str = Header(..., alias="X-GitHub-Token"),
     api_key: str = Header(..., alias="X-API-Key"),
+    sender_id: int = Header(0, alias="X-Sender-Id"),
     sender_name: str = Header("", alias="X-Sender-Name"),
 ):
     verify_api_key(api_key)
@@ -210,5 +211,6 @@ async def setup_coverage_workflow(
         owner_name=owner,
         repo_name=repo,
         token=token,
+        sender_id=sender_id,
         sender_name=sender_name,
     )

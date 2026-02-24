@@ -1,6 +1,4 @@
 import os
-from typing import cast
-
 from anthropic.types import MessageParam
 
 from constants.agent import MAX_ITERATIONS
@@ -24,7 +22,10 @@ from services.claude.tools.tools import TOOLS_FOR_SETUP
 from services.github.pulls.close_pull_request import close_pull_request
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
+from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.types.github_types import BaseArgs
+from services.github.users.get_email_from_commits import get_email_from_commits
+from services.github.users.get_user_public_email import get_user_public_info
 from services.slack.slack_notify import slack_notify
 from services.supabase.usage.insert_usage import insert_usage
 from services.supabase.usage.update_usage import update_usage
@@ -54,6 +55,7 @@ async def setup_handler(
     owner_name: str,
     repo_name: str,
     token: str,
+    sender_id: int,
     sender_name: str,
 ):
     set_owner_repo(owner_name, repo_name)
@@ -97,25 +99,44 @@ async def setup_handler(
         f for f in os.listdir(efs_dir) if os.path.isfile(os.path.join(efs_dir, f))
     ]
 
+    # Look up sender info from GitHub
+    sender_info = get_user_public_info(username=sender_name, token=token)
+    sender_email = sender_info.email
+    if not sender_email:
+        sender_email = get_email_from_commits(
+            owner=owner_name, repo=repo_name, username=sender_name, token=token
+        )
+
     # Create a branch for the coverage workflow PR
     new_branch = generate_branch_name(trigger="setup")
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": owner_name,
-            "owner_id": owner_id,
-            "owner_type": owner_type,
-            "repo": repo_name,
-            "repo_id": repo_id,
-            "clone_url": clone_url,
-            "token": token,
-            "installation_id": installation_id,
-            "base_branch": target_branch,
-            "new_branch": new_branch,
-            "clone_dir": efs_dir,
-            "reviewers": [sender_name] if sender_name else [],
-        },
-    )
+    title = "Set up test coverage workflow"
+    base_args: BaseArgs = {
+        "owner": owner_name,
+        "owner_id": owner_id,
+        "owner_type": owner_type,
+        "repo": repo_name,
+        "repo_id": repo_id,
+        "clone_url": clone_url,
+        "token": token,
+        "installation_id": installation_id,
+        "base_branch": target_branch,
+        "new_branch": new_branch,
+        "clone_dir": efs_dir,
+        "is_fork": is_repo_forked(owner=owner_name, repo=repo_name, token=token),
+        "sender_id": sender_id,
+        "sender_name": sender_name,
+        "sender_email": sender_email,
+        "sender_display_name": sender_info.display_name,
+        "is_automation": False,
+        "reviewers": [sender_name] if sender_name else [],
+        "github_urls": [],
+        "other_urls": [],
+        "pr_number": 0,  # Set after create_pull_request below
+        "pr_title": title,
+        "pr_body": SETUP_PR_BODY,
+        "pr_comments": [],
+        "pr_creator": sender_name,
+    }
 
     sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
     create_remote_branch(sha=sha, base_args=base_args)
@@ -124,7 +145,7 @@ async def setup_handler(
     )
     pr_url, pr_number = create_pull_request(
         body=SETUP_PR_BODY,
-        title="Set up test coverage workflow",
+        title=title,
         base_args=base_args,
     )
     base_args["pr_number"] = pr_number
@@ -138,7 +159,7 @@ async def setup_handler(
         repo_id=repo_id,
         repo_name=repo_name,
         pr_number=pr_number,
-        user_id=0,
+        user_id=sender_id,
         user_name=sender_name,
         installation_id=installation_id,
         source="setup_handler",

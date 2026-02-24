@@ -1,5 +1,5 @@
 import datetime
-from typing import Any
+from typing import Any, Literal
 from typing_extensions import TypedDict, NotRequired
 
 
@@ -181,7 +181,7 @@ class Installations(TypedDict):
     installation_id: int
     owner_name: str
     uninstalled_at: datetime.datetime | None
-    owner_type: str
+    owner_type: Literal["User", "Organization"]
     owner_id: int
     created_by: str | None
     uninstalled_by: str | None
@@ -191,7 +191,7 @@ class InstallationsInsert(TypedDict):
     installation_id: int
     owner_name: str
     uninstalled_at: NotRequired[datetime.datetime | None]
-    owner_type: str
+    owner_type: Literal["User", "Organization"]
     owner_id: int
     created_by: NotRequired[str | None]
     uninstalled_by: NotRequired[str | None]
@@ -262,7 +262,7 @@ class Owners(TypedDict):
     created_by: str | None
     owner_name: str
     org_rules: str
-    owner_type: str
+    owner_type: Literal["User", "Organization"]
     updated_by: str | None
     updated_at: datetime.datetime
     credit_balance_usd: int
@@ -278,7 +278,7 @@ class OwnersInsert(TypedDict):
     created_by: NotRequired[str | None]
     owner_name: str
     org_rules: str
-    owner_type: str
+    owner_type: Literal["User", "Organization"]
     updated_by: NotRequired[str | None]
     credit_balance_usd: int
     auto_reload_enabled: bool
@@ -495,7 +495,7 @@ class Usage(TypedDict):
     created_by: str | None
     total_seconds: int | None
     owner_id: int
-    owner_type: str
+    owner_type: Literal["User", "Organization"]
     owner_name: str
     repo_id: int
     repo_name: str
@@ -522,7 +522,7 @@ class UsageInsert(TypedDict):
     created_by: NotRequired[str | None]
     total_seconds: NotRequired[int | None]
     owner_id: int
-    owner_type: str
+    owner_type: Literal["User", "Organization"]
     owner_name: str
     repo_id: int
     repo_name: str
