@@ -119,27 +119,27 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         logger.error(msg)
         raise RuntimeError(msg)
 
-    status_code, required_checks = get_required_status_checks(
+    protection = get_required_status_checks(
         owner=owner_name, repo=repo_name, branch=base_branch, token=token
     )
 
-    if required_checks:
-        logger.info("Using required status checks: %s", required_checks)
+    if protection.checks:
+        logger.info("Using required status checks: %s", protection.checks)
         for suite in all_suites:
             app_name = suite["app"]["name"]
             status = suite["status"]
-            if app_name in required_checks and status != "completed":
+            if app_name in protection.checks and status != "completed":
                 logger.info(
                     "Required check '%s' not completed: status=%s", app_name, status
                 )
                 return
         logger.info("All required checks completed")
     else:
-        if required_checks is None:
+        if protection.checks is None:
             logger.info(
                 "Could not read branch protection (status=%s), "
                 "waiting for all check suites to complete",
-                status_code,
+                protection.status_code,
             )
         else:
             logger.info(

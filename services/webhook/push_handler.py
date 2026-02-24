@@ -1,9 +1,13 @@
+from services.github.branches.get_required_status_checks import (
+    get_required_status_checks,
+)
 from services.github.pulls.get_open_pull_requests import get_open_pull_requests
 from services.github.pulls.update_pull_request_branch import update_pull_request_branch
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.webhook.push import PushWebhookPayload
 from services.supabase.repositories.get_repository import get_repository
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.is_test_file import is_test_file
 from utils.logging.logging_config import logger, set_trigger
 
 
@@ -38,6 +42,25 @@ def handle_push(payload: PushWebhookPayload):
         return None
 
     token = get_installation_access_token(installation_id=installation_id)
+
+    # Check if this is a test-only push and the repo doesn't require up-to-date branches
+    commits = payload.get("commits", [])
+    if commits:
+        all_files: set[str] = set()
+        for commit in commits:
+            all_files.update(commit.get("added", []))
+            all_files.update(commit.get("modified", []))
+            all_files.update(commit.get("removed", []))
+        if all_files and all(is_test_file(f) for f in all_files):
+            protection = get_required_status_checks(
+                owner=owner_name, repo=repo_name, branch=target_branch, token=token
+            )
+            if not protection.strict:
+                logger.info(
+                    "Skipping PR branch updates: test-only push to %s and strict=False",
+                    target_branch,
+                )
+                return None
 
     open_prs = get_open_pull_requests(owner=owner_name, repo=repo_name, token=token)
 

@@ -1,4 +1,5 @@
 # Standard imports
+from dataclasses import dataclass
 from typing import cast
 
 # Third party imports
@@ -12,7 +13,14 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
 
-@handle_exceptions(default_return_value=(201, None), raise_on_error=False)
+@dataclass
+class StatusChecksResult:
+    status_code: int = 201
+    checks: list[str] | None = None
+    strict: bool = True
+
+
+@handle_exceptions(default_return_value=StatusChecksResult(), raise_on_error=False)
 def get_required_status_checks(owner: str, repo: str, branch: str, token: str):
     """https://docs.github.com/en/rest/branches/branch-protection#get-branch-protection"""
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/branches/{branch}/protection"
@@ -21,16 +29,26 @@ def get_required_status_checks(owner: str, repo: str, branch: str, token: str):
 
     # NOTE: 403 happens when GitHub App lacks "Administration: Read" permission
     if response.status_code == 403:
+        strict = True
         logger.warning(
-            "No permission to read branch protection for %s/%s/%s", owner, repo, branch
+            "No permission to read branch protection for %s/%s/%s, assuming strict=%s",
+            owner,
+            repo,
+            branch,
+            strict,
         )
-        return 403, None
+        return StatusChecksResult(status_code=403, checks=None, strict=strict)
 
     if response.status_code == 404:
+        strict = False
         logger.warning(
-            "No branch protection configured for %s/%s/%s", owner, repo, branch
+            "No branch protection configured for %s/%s/%s, assuming strict=%s",
+            owner,
+            repo,
+            branch,
+            strict,
         )
-        return 404, []
+        return StatusChecksResult(status_code=404, checks=[], strict=strict)
 
     response.raise_for_status()
     protection = cast(BranchProtection, response.json())
@@ -43,11 +61,14 @@ def get_required_status_checks(owner: str, repo: str, branch: str, token: str):
             repo,
             branch,
         )
-        return 200, []
+        return StatusChecksResult(status_code=200, checks=[], strict=False)
 
+    strict = required_status_checks.get("strict", False)
     contexts = set(required_status_checks.get("contexts", []))
     checks = {
         check.get("context") for check in required_status_checks.get("checks", [])
     }
 
-    return 200, list(contexts | checks)
+    return StatusChecksResult(
+        status_code=200, checks=list(contexts | checks), strict=strict
+    )

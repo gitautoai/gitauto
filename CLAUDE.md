@@ -270,6 +270,23 @@ def test_function_accumulates_tokens():
 
 **Remember**: Tests should provide confidence that the code works, not just that it compiles.
 
+## CRITICAL: NEVER Dismiss Test Failures When Fixing PRs
+
+**NEVER say "this test is not part of this PR" or "our PR's test passed fine" or "this is a pre-existing issue on the base branch".**
+
+This is the WORST possible response. CI failed. The PR is blocked. Fix it.
+
+- Do NOT distinguish between "our test" and "other tests" - ALL failing tests are your problem
+- Do NOT blame the base branch, other developers, or previous PRs
+- Do NOT report which tests "passed fine" as if that's relevant when CI is red
+- When reporting root cause and fix, focus on WHAT failed and HOW you fixed it - not on whose fault it is or which PR introduced it
+
+**BAD (will make user angry):**
+- "The failing test ApplicationTest::test_getByApplicationNo is not part of this PR - it's a pre-existing test in the base branch. Our PR's test AnnotationElectricalOutletSpotModelTest passed fine."
+
+**GOOD:**
+- "ApplicationTest::test_getByApplicationNo failed because line 351 was missing `application_no` in the factory call. Fixed by adding the missing parameter."
+
 ## Proactive Code Fixes
 
 When refactoring or replacing old systems, always be PROACTIVE and think comprehensively. Don't wait for the user to point out every piece of old code that needs to fix.

@@ -39,7 +39,7 @@ def test_get_required_status_checks_success(
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        status_code, result = get_required_status_checks(
+        result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
@@ -48,14 +48,15 @@ def test_get_required_status_checks_success(
             headers={"Authorization": "Bearer test_token"},
             timeout=120,
         )
-        assert status_code == 200
-        assert result is not None
-        assert set(result) == {
+        assert result.status_code == 200
+        assert result.checks is not None
+        assert set(result.checks) == {
             "ci/circleci: test",
             "Codecov",
             "CircleCI Checks",
             "Aikido Security",
         }
+        assert result.strict is True
 
 
 def test_get_required_status_checks_403_no_permission(
@@ -71,12 +72,13 @@ def test_get_required_status_checks_403_no_permission(
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        status_code, result = get_required_status_checks(
+        result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
-        assert status_code == 403
-        assert result is None
+        assert result.status_code == 403
+        assert result.checks is None
+        assert result.strict is True
 
 
 def test_get_required_status_checks_404_no_protection(
@@ -92,12 +94,13 @@ def test_get_required_status_checks_404_no_protection(
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        status_code, result = get_required_status_checks(
+        result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
-        assert status_code == 404
-        assert not result
+        assert result.status_code == 404
+        assert not result.checks
+        assert result.strict is False
 
 
 def test_get_required_status_checks_no_required_checks(
@@ -114,12 +117,13 @@ def test_get_required_status_checks_no_required_checks(
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        status_code, result = get_required_status_checks(
+        result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
-        assert status_code == 200
-        assert not result
+        assert result.status_code == 200
+        assert not result.checks
+        assert result.strict is False
 
 
 def test_get_required_status_checks_only_contexts(test_owner, test_repo, test_token):
@@ -140,12 +144,13 @@ def test_get_required_status_checks_only_contexts(test_owner, test_repo, test_to
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        status_code, result = get_required_status_checks(
+        result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
-        assert status_code == 200
-        assert result == ["ci/circleci: test"]
+        assert result.status_code == 200
+        assert result.checks == ["ci/circleci: test"]
+        assert result.strict is True
 
 
 def test_get_required_status_checks_only_checks(test_owner, test_repo, test_token):
@@ -166,12 +171,13 @@ def test_get_required_status_checks_only_checks(test_owner, test_repo, test_toke
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        status_code, result = get_required_status_checks(
+        result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
-        assert status_code == 200
-        assert result == ["CircleCI Checks"]
+        assert result.status_code == 200
+        assert result.checks == ["CircleCI Checks"]
+        assert result.strict is False
 
 
 def test_get_required_status_checks_http_error_500(test_owner, test_repo, test_token):
@@ -188,12 +194,13 @@ def test_get_required_status_checks_http_error_500(test_owner, test_repo, test_t
         mock_get.return_value = mock_response
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        status_code, result = get_required_status_checks(
+        result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
-        assert status_code == 201
-        assert result is None
+        assert result.status_code == 201
+        assert result.checks is None
+        assert result.strict is True
 
 
 def test_get_required_status_checks_network_error(test_owner, test_repo, test_token):
@@ -205,9 +212,10 @@ def test_get_required_status_checks_network_error(test_owner, test_repo, test_to
         mock_get.side_effect = requests.exceptions.ConnectionError("Network error")
         mock_headers.return_value = {"Authorization": "Bearer test_token"}
 
-        status_code, result = get_required_status_checks(
+        result = get_required_status_checks(
             owner=test_owner, repo=test_repo, branch="main", token=test_token
         )
 
-        assert status_code == 201
-        assert result is None
+        assert result.status_code == 201
+        assert result.checks is None
+        assert result.strict is True
