@@ -49,6 +49,13 @@ def test_returns_none_when_no_commits(mock_get: MagicMock):
 
 
 @patch("services.github.users.get_email_from_commits.requests.get")
+def test_returns_none_when_repo_is_empty(mock_get: MagicMock):
+    mock_get.return_value.status_code = 409
+    result = get_email_from_commits(owner="o", repo="r", username="u", token="t")
+    assert result is None
+
+
+@patch("services.github.users.get_email_from_commits.requests.get")
 def test_returns_none_on_api_error(mock_get: MagicMock):
     mock_get.side_effect = Exception("API error")
     result = get_email_from_commits(owner="o", repo="r", username="u", token="t")

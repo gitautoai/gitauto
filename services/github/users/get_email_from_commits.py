@@ -3,6 +3,7 @@ import requests
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 NOREPLY_SUFFIX = "@users.noreply.github.com"
 
@@ -17,6 +18,10 @@ def get_email_from_commits(owner: str, repo: str, username: str, token: str):
         params={"author": username, "per_page": 5},
         timeout=TIMEOUT,
     )
+    if response.status_code == 409:
+        logger.info("Repository %s/%s is empty, skipping email lookup", owner, repo)
+        return None
+
     response.raise_for_status()
     commits: list[dict[str, dict[str, dict[str, str]]]] = response.json()
     for commit in commits:
