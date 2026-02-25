@@ -64,6 +64,10 @@ async def git_clone_to_efs(efs_dir: str, clone_url: str, branch: str):
             await run_subprocess_async(
                 ["git", "reset", "--hard", "FETCH_HEAD"], efs_dir
             )
+            # Update HEAD to point to the correct branch (reset doesn't change it)
+            await run_subprocess_async(
+                ["git", "checkout", "-B", branch, "FETCH_HEAD"], efs_dir
+            )
         return efs_dir
 
     # Always use init + fetch + checkout instead of clone

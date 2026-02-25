@@ -140,8 +140,8 @@ async def test_git_clone_updates_origin_url_before_fetch(mock_os_makedirs):
                 result = await git_clone_to_efs("/mnt/efs/repo", fresh_url, "main")
 
             assert result == "/mnt/efs/repo"
-            # safe.directory + get-url + set-url + fetch + reset
-            assert mock_run.call_count == 5
+            # safe.directory + get-url + set-url + fetch + reset + checkout -B
+            assert mock_run.call_count == 6
             calls = [call[0][0] for call in mock_run.call_args_list]
             assert calls[0] == [
                 "git",
@@ -155,6 +155,7 @@ async def test_git_clone_updates_origin_url_before_fetch(mock_os_makedirs):
             assert calls[2] == ["git", "remote", "set-url", "origin", fresh_url]
             assert calls[3] == ["git", "fetch", "--depth", "1", "origin", "main"]
             assert calls[4] == ["git", "reset", "--hard", "FETCH_HEAD"]
+            assert calls[5] == ["git", "checkout", "-B", "main", "FETCH_HEAD"]
 
 
 @pytest.mark.asyncio
@@ -166,10 +167,11 @@ async def test_git_clone_adds_origin_when_missing(mock_os_makedirs):
         with patch(
             "services.git.git_clone_to_efs.run_subprocess_async", new_callable=AsyncMock
         ) as mock_run:
-            # safe.directory succeeds, get-url fails (no origin), add succeeds, fetch succeeds, reset succeeds
+            # safe.directory succeeds, get-url fails (no origin), add succeeds, fetch succeeds, reset succeeds, checkout succeeds
             mock_run.side_effect = [
                 (0, ""),
                 (1, "error: No such remote 'origin'"),
+                (0, ""),
                 (0, ""),
                 (0, ""),
                 (0, ""),
@@ -180,8 +182,8 @@ async def test_git_clone_adds_origin_when_missing(mock_os_makedirs):
                 result = await git_clone_to_efs("/mnt/efs/repo", clone_url, "main")
 
             assert result == "/mnt/efs/repo"
-            # safe.directory + get-url + add + fetch + reset
-            assert mock_run.call_count == 5
+            # safe.directory + get-url + add + fetch + reset + checkout -B
+            assert mock_run.call_count == 6
             calls = [call[0][0] for call in mock_run.call_args_list]
             assert calls[0] == [
                 "git",
@@ -195,3 +197,4 @@ async def test_git_clone_adds_origin_when_missing(mock_os_makedirs):
             assert calls[2] == ["git", "remote", "add", "origin", clone_url]
             assert calls[3] == ["git", "fetch", "--depth", "1", "origin", "main"]
             assert calls[4] == ["git", "reset", "--hard", "FETCH_HEAD"]
+            assert calls[5] == ["git", "checkout", "-B", "main", "FETCH_HEAD"]
