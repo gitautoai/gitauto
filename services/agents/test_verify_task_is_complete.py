@@ -10,6 +10,7 @@ from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.eslint.run_eslint_fix import ESLintResult
 from services.github.types.github_types import BaseArgs
 from services.jest.run_jest_test import JestResult
+from services.phpunit.run_phpunit_test import PhpunitResult
 from services.prettier.run_prettier_fix import PrettierResult
 from services.tsc.run_tsc_check import TscResult
 
@@ -47,6 +48,17 @@ def mock_jest_test():
             runner_name="",
             updated_snapshots=set(),
         ),
+    ):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def mock_phpunit_test():
+    """Auto-mock run_phpunit_test for all tests to prevent actual test execution."""
+    with patch(
+        "services.agents.verify_task_is_complete.run_phpunit_test",
+        new_callable=AsyncMock,
+        return_value=PhpunitResult(success=True, errors=[], error_files=set()),
     ):
         yield
 

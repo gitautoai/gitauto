@@ -39,13 +39,14 @@ async def test_clone_and_install_no_installation(
 
     result = await clone_and_install("nonexistent-owner", "test-repo")
 
-    assert result["status"] == "error"
-    assert "No installation found" in result["message"]
+    assert result.status == "error"
+    assert "No installation found" in result.message
 
 
 @pytest.mark.asyncio
 @patch("services.efs.clone_and_install.set_trigger")
 @patch("services.efs.clone_and_install.set_owner_repo")
+@patch("services.efs.clone_and_install.ensure_php_packages", new_callable=AsyncMock)
 @patch("services.efs.clone_and_install.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.efs.clone_and_install.git_clone_to_efs", new_callable=AsyncMock)
 @patch("services.efs.clone_and_install.get_clone_url")
@@ -60,7 +61,8 @@ async def test_clone_and_install_with_target_branch(
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_clone,
-    mock_install_packages,
+    mock_install_node,
+    mock_install_php,
     _mock_set_owner_repo,
     _mock_set_trigger,
     mock_installation,
@@ -71,13 +73,15 @@ async def test_clone_and_install_with_target_branch(
     mock_get_repo.return_value = mock_repository
     mock_get_efs_dir.return_value = "/mnt/efs/test-owner/test-repo"
     mock_get_clone_url.return_value = "https://github.com/test-owner/test-repo.git"
-    mock_install_packages.return_value = True
+    mock_install_node.return_value = True
+    mock_install_php.return_value = False
 
     result = await clone_and_install("test-owner", "test-repo")
 
-    assert result["status"] == "success"
-    assert result["efs_dir"] == "/mnt/efs/test-owner/test-repo"
-    assert result["installed"] is True
+    assert result.status == "success"
+    assert result.efs_dir == "/mnt/efs/test-owner/test-repo"
+    assert result.node_installed is True
+    assert result.php_installed is False
 
     mock_git_clone.assert_called_once_with(
         "/mnt/efs/test-owner/test-repo",
@@ -89,6 +93,7 @@ async def test_clone_and_install_with_target_branch(
 @pytest.mark.asyncio
 @patch("services.efs.clone_and_install.set_trigger")
 @patch("services.efs.clone_and_install.set_owner_repo")
+@patch("services.efs.clone_and_install.ensure_php_packages", new_callable=AsyncMock)
 @patch("services.efs.clone_and_install.ensure_node_packages", new_callable=AsyncMock)
 @patch("services.efs.clone_and_install.git_clone_to_efs", new_callable=AsyncMock)
 @patch("services.efs.clone_and_install.get_clone_url")
@@ -105,7 +110,8 @@ async def test_clone_and_install_with_default_branch(
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_clone,
-    mock_install_packages,
+    mock_install_node,
+    mock_install_php,
     _mock_set_owner_repo,
     _mock_set_trigger,
     mock_installation,
@@ -116,11 +122,12 @@ async def test_clone_and_install_with_default_branch(
     mock_get_default_branch.return_value = ("main", False)
     mock_get_efs_dir.return_value = "/mnt/efs/test-owner/test-repo"
     mock_get_clone_url.return_value = "https://github.com/test-owner/test-repo.git"
-    mock_install_packages.return_value = True
+    mock_install_node.return_value = True
+    mock_install_php.return_value = False
 
     result = await clone_and_install("test-owner", "test-repo")
 
-    assert result["status"] == "success"
+    assert result.status == "success"
     mock_get_default_branch.assert_called_once_with(
         owner="test-owner", repo="test-repo", token="test-token"
     )
@@ -154,5 +161,5 @@ async def test_clone_and_install_empty_repository(
 
     result = await clone_and_install("test-owner", "test-repo")
 
-    assert result["status"] == "error"
-    assert "Repository is empty" in result["message"]
+    assert result.status == "error"
+    assert "Repository is empty" in result.message

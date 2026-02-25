@@ -1,10 +1,12 @@
 from dataclasses import dataclass, field
 
+from constants.files import PHP_TEST_FILE_EXTENSIONS
 from services.eslint.run_eslint_fix import run_eslint_fix
 from services.github.commits.replace_remote_file import replace_remote_file_content
 from services.github.files.get_raw_content import get_raw_content
 from services.github.types.github_types import BaseArgs
 from services.jest.run_jest_test import run_jest_test
+from services.phpunit.run_phpunit_test import run_phpunit_test
 from services.prettier.run_prettier_fix import run_prettier_fix
 from services.tsc.run_tsc_check import run_tsc_check
 from utils.error.handle_exceptions import handle_exceptions
@@ -29,9 +31,10 @@ async def verify_task_is_ready(
     *,
     base_args: BaseArgs,
     file_paths: list[str],
-    run_tsc: bool = False,
-    run_jest: bool = False,
-) -> VerifyTaskIsReadyResult:
+    run_tsc: bool,
+    run_jest: bool,
+    run_phpunit: bool,
+):
     owner = base_args.get("owner", "")
     repo = base_args.get("repo", "")
     token = base_args.get("token", "")
@@ -127,6 +130,18 @@ async def verify_task_is_ready(
             for err in jest_result.errors:
                 errors.append(f"- {jest_result.runner_name}: {err}")
             files_with_errors.update(jest_result.error_files)
+
+    # Run PHPUnit tests if requested
+    if run_phpunit:
+        php_test_files = [f for f in file_paths if f.endswith(PHP_TEST_FILE_EXTENSIONS)]
+        phpunit_result = await run_phpunit_test(
+            base_args=base_args,
+            test_file_paths=php_test_files,
+        )
+        if phpunit_result.errors:
+            for err in phpunit_result.errors:
+                errors.append(f"- phpunit: {err}")
+            files_with_errors.update(phpunit_result.error_files)
 
     if errors:
         return VerifyTaskIsReadyResult(

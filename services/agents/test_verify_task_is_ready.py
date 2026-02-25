@@ -36,7 +36,11 @@ async def test_valid_file_returns_success(
         },
     )
     result = await verify_task_is_ready(
-        base_args=base_args, file_paths=["src/index.ts"]
+        base_args=base_args,
+        file_paths=["src/index.ts"],
+        run_tsc=False,
+        run_jest=False,
+        run_phpunit=False,
     )
     assert result.success is True
     assert result.errors == []
@@ -70,7 +74,11 @@ async def test_prettier_fails_returns_errors(
         },
     )
     result = await verify_task_is_ready(
-        base_args=base_args, file_paths=["src/broken.ts"]
+        base_args=base_args,
+        file_paths=["src/broken.ts"],
+        run_tsc=False,
+        run_jest=False,
+        run_phpunit=False,
     )
     assert result.success is False
     assert len(result.errors) == 1
@@ -105,7 +113,11 @@ async def test_eslint_fails_returns_errors(
         },
     )
     result = await verify_task_is_ready(
-        base_args=base_args, file_paths=["src/broken.ts"]
+        base_args=base_args,
+        file_paths=["src/broken.ts"],
+        run_tsc=False,
+        run_jest=False,
+        run_phpunit=False,
     )
     assert result.success is False
     assert len(result.errors) == 1
@@ -127,7 +139,11 @@ async def test_non_js_files_skipped(mock_get_raw_content):
         },
     )
     result = await verify_task_is_ready(
-        base_args=base_args, file_paths=["README.md", "config.json"]
+        base_args=base_args,
+        file_paths=["README.md", "config.json"],
+        run_tsc=False,
+        run_jest=False,
+        run_phpunit=False,
     )
     assert result.success is True
     assert result.errors == []
@@ -147,7 +163,13 @@ async def test_empty_file_list():
             "base_branch": "main",
         },
     )
-    result = await verify_task_is_ready(base_args=base_args, file_paths=[])
+    result = await verify_task_is_ready(
+        base_args=base_args,
+        file_paths=[],
+        run_tsc=False,
+        run_jest=False,
+        run_phpunit=False,
+    )
     assert result.success is True
     assert result.errors == []
     assert result.fixes_applied == []
@@ -173,7 +195,11 @@ async def test_file_not_found_skipped(
         },
     )
     result = await verify_task_is_ready(
-        base_args=base_args, file_paths=["src/missing.ts"]
+        base_args=base_args,
+        file_paths=["src/missing.ts"],
+        run_tsc=False,
+        run_jest=False,
+        run_phpunit=False,
     )
     assert result.success is True
     assert result.errors == []
@@ -208,7 +234,11 @@ async def test_fixes_applied_and_pushed(
         },
     )
     result = await verify_task_is_ready(
-        base_args=base_args, file_paths=["src/index.ts"]
+        base_args=base_args,
+        file_paths=["src/index.ts"],
+        run_tsc=False,
+        run_jest=False,
+        run_phpunit=False,
     )
     assert result.success is True
     assert result.errors == []
@@ -245,7 +275,11 @@ async def test_eslint_partial_fix_pushes_and_reports_errors(
         },
     )
     result = await verify_task_is_ready(
-        base_args=base_args, file_paths=["src/index.ts"]
+        base_args=base_args,
+        file_paths=["src/index.ts"],
+        run_tsc=False,
+        run_jest=False,
+        run_phpunit=False,
     )
     # Lint-only errors (no-unused-vars) are ignored by verify_task_is_ready
     # Only coverage-relevant errors cause failure
@@ -284,7 +318,11 @@ async def test_no_explicit_any_ignored(
         },
     )
     result = await verify_task_is_ready(
-        base_args=base_args, file_paths=["src/utils/auth0.ts"]
+        base_args=base_args,
+        file_paths=["src/utils/auth0.ts"],
+        run_tsc=False,
+        run_jest=False,
+        run_phpunit=False,
     )
     # no-explicit-any is a lint-only error, not coverage-relevant
     # Previously this caused the agent to loop for 900s trying to fix unfixable errors
@@ -327,7 +365,11 @@ async def test_run_tsc_reports_type_errors(
         },
     )
     result = await verify_task_is_ready(
-        base_args=base_args, file_paths=["src/index.ts"], run_tsc=True
+        base_args=base_args,
+        file_paths=["src/index.ts"],
+        run_tsc=True,
+        run_jest=False,
+        run_phpunit=False,
     )
     assert result.success is False
     assert len(result.errors) == 1
@@ -372,7 +414,11 @@ async def test_run_jest_reports_test_failures(
         },
     )
     result = await verify_task_is_ready(
-        base_args=base_args, file_paths=["src/index.test.ts"], run_jest=True
+        base_args=base_args,
+        file_paths=["src/index.test.ts"],
+        run_tsc=False,
+        run_jest=True,
+        run_phpunit=False,
     )
     assert result.success is False
     assert len(result.errors) == 2

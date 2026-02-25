@@ -1,7 +1,11 @@
 import os
 from dataclasses import dataclass, field
 
-from constants.files import JS_TEST_FILE_EXTENSIONS, TS_TEST_FILE_EXTENSIONS
+from constants.files import (
+    JS_TEST_FILE_EXTENSIONS,
+    PHP_TEST_FILE_EXTENSIONS,
+    TS_TEST_FILE_EXTENSIONS,
+)
 from services.eslint.ensure_eslint_relaxed_for_tests import (
     ensure_eslint_relaxed_for_tests,
 )
@@ -20,6 +24,7 @@ from services.node.ensure_jest_uses_tsconfig_for_tests import (
 from services.node.ensure_tsconfig_relaxed_for_tests import (
     ensure_tsconfig_relaxed_for_tests,
 )
+from services.phpunit.run_phpunit_test import run_phpunit_test
 from services.prettier.run_prettier_fix import run_prettier_fix
 from services.tsc.create_tsc_issue import create_tsc_issue
 from services.tsc.run_tsc_check import run_tsc_check
@@ -231,6 +236,21 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
             commit_message=f"Update snapshot {snap_path}",
         )
         formatting_applied.append(f"- {snap_path}: Snapshot updated")
+
+    # Run PHPUnit tests on PHP test files
+    php_test_files = [
+        f["filename"]
+        for f in pr_files
+        if f["filename"].endswith(PHP_TEST_FILE_EXTENSIONS) and f["status"] != "removed"
+    ]
+    phpunit_result = await run_phpunit_test(
+        base_args=base_args,
+        test_file_paths=php_test_files,
+    )
+    if phpunit_result.errors:
+        for err in phpunit_result.errors:
+            remaining_errors.append(f"- phpunit: {err}")
+        error_files.update(phpunit_result.error_files)
 
     if remaining_errors:
         error_msg = "\n".join(remaining_errors)

@@ -30,16 +30,10 @@ These words mean you are GUESSING, not providing facts.
 
 ## Development Commands
 
-### Environment Setup
+### Running Locally
 
 ```bash
-# Start development environment (recommended)
 ./start.sh
-
-# Manual setup if needed
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
 ```
 
 ### Code Quality

@@ -21,6 +21,7 @@ from services.chat_with_agent import chat_with_agent
 from services.efs.get_efs_dir import get_efs_dir
 from services.node.ensure_node_packages import ensure_node_packages
 from services.node.set_npm_token_env import set_npm_token_env
+from services.php.ensure_php_packages import ensure_php_packages
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
@@ -199,6 +200,11 @@ async def handle_review_run(
     )
     logger.info("node: ready=%s", node_ready)
 
+    php_ready = await ensure_php_packages(
+        owner_name, owner_id, repo_name, base_branch, token, efs_dir
+    )
+    logger.info("php: ready=%s", php_ready)
+
     # Create a usage record
     usage_id = create_user_request(
         user_id=sender_id,
@@ -245,7 +251,11 @@ async def handle_review_run(
     # Validate files for syntax issues before editing
     files_to_validate = [f["filename"] for f in pr_files if f["status"] != "removed"]
     validation_result = await verify_task_is_ready(
-        base_args=base_args, file_paths=files_to_validate, run_tsc=True, run_jest=True
+        base_args=base_args,
+        file_paths=files_to_validate,
+        run_tsc=True,
+        run_jest=True,
+        run_phpunit=True,
     )
     base_args["baseline_tsc_errors"] = set(validation_result.tsc_errors)
     pre_existing_errors = ""

@@ -1,27 +1,6 @@
 # GitAuto AI
 
-## 1. What is GitAuto
-
-[GitAuto](https://gitauto.ai) is a GitHub coding agent that opens pull requests from backlog tickets for software engineering managers to complete more bug fixes and feature requests. Assign tasks to GitAuto first, and have people work on more complex tickets.
-
-- Want to give GitAuto a try? Go to [GitAuto installation](https://github.com/apps/gitauto-ai).
-- Want to see demo videos? Go to [GitAuto YouTube](https://www.youtube.com/@gitauto).
-- Want to know more about GitAuto? Go to [GitAuto homepage](https://gitauto.ai).
-- Want to chat about your use case? Feel free to contact us at [email](mailto:info@gitauto.ai), [admin](https://github.com/hiroshinishio), [X](https://x.com/gitautoai), or [LinkedIn](https://www.linkedin.com/company/gitauto/).
-
-## 2. How to use GitAuto
-
-1. Install GitAuto to your repositories from [GitHub Marketplace](https://github.com/apps/gitauto-ai).
-   1. Choose the repositories where you want to use GitAuto.
-   2. You can change the repositories later.
-2. Trigger GitAuto in one of these ways:
-   - **Dashboard**: Go to the [GitAuto dashboard](https://gitauto.ai/dashboard/coverage) to select files with low test coverage and create PRs.
-   - **Schedule**: Enable daily automation on the dashboard. GitAuto creates PRs automatically once a day at 00:00 UTC for files with low test coverage.
-3. GitAuto creates a PR and works on the changes. You will get a notification once GitAuto completes.
-4. Review the PR and merge it if it looks good.
-5. If changes are needed, leave a review comment on the PR. GitAuto responds to review comments and updates the code.
-
-## 3. How to run GitAuto locally
+## How to run GitAuto locally
 
 ### 3-1. Create your GitHub app for local development
 
