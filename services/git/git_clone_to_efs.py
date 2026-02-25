@@ -4,6 +4,7 @@ import os
 from services.git.resolve_git_locks import resolve_git_locks
 from utils.command.run_subprocess_async import run_subprocess_async
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
 
 # clone_tasks example:
@@ -55,15 +56,21 @@ async def git_clone_to_efs(efs_dir: str, clone_url: str, branch: str):
             ["git", "fetch", "--depth", "1", "origin", branch], efs_dir
         )
         if returncode == 0:
-            fetch_head = os.path.join(efs_git_dir, "FETCH_HEAD")
-            if os.path.exists(fetch_head):
-                with open(fetch_head, encoding="utf-8") as f:
-                    logger.info("FETCH_HEAD: %s", f.read().strip())
+            fetch_head_content = read_local_file("FETCH_HEAD", efs_git_dir)
+            if fetch_head_content:
+                logger.info("FETCH_HEAD: %s", fetch_head_content.strip())
             else:
                 logger.warning("FETCH_HEAD missing despite fetch success")
             await run_subprocess_async(
                 ["git", "reset", "--hard", "FETCH_HEAD"], efs_dir
             )
+            # Switch HEAD to the correct branch if it changed (e.g. master → release/20260408)
+            head_content = read_local_file("HEAD", efs_git_dir)
+            current_ref = head_content.strip() if head_content else ""
+            if current_ref != f"ref: refs/heads/{branch}":
+                await run_subprocess_async(
+                    ["git", "checkout", "-B", branch, "FETCH_HEAD"], efs_dir
+                )
         return efs_dir
 
     # Always use init + fetch + checkout instead of clone

@@ -1,6 +1,6 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -136,11 +136,19 @@ async def test_git_clone_updates_origin_url_before_fetch(mock_os_makedirs):
             mock_run.return_value = (0, "")
 
             fresh_url = "https://x-access-token:fresh_token@github.com/owner/repo.git"
-            with patch("builtins.open", create=True):
+            # FETCH_HEAD exists, HEAD already on main → checkout -B skipped
+            with patch(
+                "services.git.git_clone_to_efs.read_local_file",
+                side_effect=lambda f, _d: (
+                    "abc123\tbranch 'main'"
+                    if f == "FETCH_HEAD"
+                    else "ref: refs/heads/main"
+                ),
+            ):
                 result = await git_clone_to_efs("/mnt/efs/repo", fresh_url, "main")
 
             assert result == "/mnt/efs/repo"
-            # safe.directory + get-url + set-url + fetch + reset
+            # safe.directory + get-url + set-url + fetch + reset (no checkout -B, branch unchanged)
             assert mock_run.call_count == 5
             calls = [call[0][0] for call in mock_run.call_args_list]
             assert calls[0] == [
@@ -155,6 +163,45 @@ async def test_git_clone_updates_origin_url_before_fetch(mock_os_makedirs):
             assert calls[2] == ["git", "remote", "set-url", "origin", fresh_url]
             assert calls[3] == ["git", "fetch", "--depth", "1", "origin", "main"]
             assert calls[4] == ["git", "reset", "--hard", "FETCH_HEAD"]
+
+
+@pytest.mark.asyncio
+async def test_git_clone_switches_branch_when_target_changes(mock_os_makedirs):
+    """When target branch changed (e.g. master → release/20260408), checkout -B updates HEAD."""
+    with patch("services.git.git_clone_to_efs.os.path.exists") as mock_exists:
+        mock_exists.return_value = True
+
+        with patch(
+            "services.git.git_clone_to_efs.run_subprocess_async", new_callable=AsyncMock
+        ) as mock_run:
+            mock_run.return_value = (0, "")
+
+            clone_url = "https://github.com/owner/repo.git"
+            # HEAD on master, but fetching release/20260408 → checkout -B runs
+            with patch(
+                "services.git.git_clone_to_efs.read_local_file",
+                side_effect=lambda f, _d: (
+                    "abc123\tbranch 'release/20260408'"
+                    if f == "FETCH_HEAD"
+                    else "ref: refs/heads/master"
+                ),
+            ):
+                result = await git_clone_to_efs(
+                    "/mnt/efs/repo", clone_url, "release/20260408"
+                )
+
+            assert result == "/mnt/efs/repo"
+            # safe.directory + get-url + set-url + fetch + reset + checkout -B
+            assert mock_run.call_count == 6
+            calls = [call[0][0] for call in mock_run.call_args_list]
+            assert calls[4] == ["git", "reset", "--hard", "FETCH_HEAD"]
+            assert calls[5] == [
+                "git",
+                "checkout",
+                "-B",
+                "release/20260408",
+                "FETCH_HEAD",
+            ]
 
 
 @pytest.mark.asyncio
@@ -176,21 +223,21 @@ async def test_git_clone_adds_origin_when_missing(mock_os_makedirs):
             ]
 
             clone_url = "https://github.com/owner/repo.git"
-            with patch("builtins.open", create=True):
+            # HEAD already on main → checkout -B skipped
+            with patch(
+                "services.git.git_clone_to_efs.read_local_file",
+                side_effect=lambda f, _d: (
+                    "abc123\tbranch 'main'"
+                    if f == "FETCH_HEAD"
+                    else "ref: refs/heads/main"
+                ),
+            ):
                 result = await git_clone_to_efs("/mnt/efs/repo", clone_url, "main")
 
             assert result == "/mnt/efs/repo"
-            # safe.directory + get-url + add + fetch + reset
+            # safe.directory + get-url + add + fetch + reset (no checkout -B, branch unchanged)
             assert mock_run.call_count == 5
             calls = [call[0][0] for call in mock_run.call_args_list]
-            assert calls[0] == [
-                "git",
-                "config",
-                "--global",
-                "--add",
-                "safe.directory",
-                "/mnt/efs/repo",
-            ]
             assert calls[1] == ["git", "remote", "get-url", "origin"]
             assert calls[2] == ["git", "remote", "add", "origin", clone_url]
             assert calls[3] == ["git", "fetch", "--depth", "1", "origin", "main"]
