@@ -1,134 +1,37 @@
-from unittest.mock import MagicMock, mock_open, patch
+# pylint: disable=redefined-outer-name
+import os
+from unittest.mock import patch
 
 import pytest
 
-from services.node.ensure_node_packages import (
-    _can_reuse_packages,
-    ensure_node_packages,
-)
+from config import UTF8
+from services.node.ensure_node_packages import ensure_node_packages
 
 
-def test_can_reuse_packages_returns_false_when_no_node_modules():
-    with patch("services.node.ensure_node_packages.os.path.exists") as mock_exists:
-        mock_exists.return_value = False
-
-        result = _can_reuse_packages("/mnt/efs/owner/repo", "{}")
-
-        assert result is False
+@pytest.fixture
+def efs_dir(tmp_path):
+    return str(tmp_path)
 
 
-def test_can_reuse_packages_returns_true_when_content_matches():
-    def exists_side_effect(path):
-        if "node_modules" in path or "package.json" in path or ".bin" in path:
-            return True
-        if ".npmrc" in path:
-            return False
-        return False
-
-    with patch("services.node.ensure_node_packages.os.path.exists") as mock_exists:
-        mock_exists.side_effect = exists_side_effect
-        with patch(
-            "services.node.ensure_node_packages.os.listdir", return_value=["eslint"]
-        ):
-            with patch("builtins.open", mock_open(read_data='{"name": "test"}')):
-                result = _can_reuse_packages(
-                    "/mnt/efs/owner/repo",
-                    '{"name": "test"}',
-                )
-
-                assert result is True
-
-
-def test_can_reuse_packages_returns_false_when_content_differs():
-    with patch("services.node.ensure_node_packages.os.path.exists") as mock_exists:
-        mock_exists.return_value = True
-        with patch(
-            "services.node.ensure_node_packages.os.listdir", return_value=["eslint"]
-        ):
-            with patch("builtins.open", mock_open(read_data='{"name": "old"}')):
-                result = _can_reuse_packages(
-                    "/mnt/efs/owner/repo",
-                    '{"name": "new"}',
-                )
-
-                assert result is False
-
-
-def test_can_reuse_packages_returns_true_when_npmrc_matches():
-    file_contents = {
-        "package.json": '{"name": "test"}',
-        ".npmrc": "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
-    }
-
-    def open_side_effect(path, *_args, **_kwargs):
-        for filename, content in file_contents.items():
-            if filename in path:
-                return mock_open(read_data=content)()
-        return mock_open(read_data="")()
-
-    with patch("services.node.ensure_node_packages.os.path.exists", return_value=True):
-        with patch(
-            "services.node.ensure_node_packages.os.listdir", return_value=["eslint"]
-        ):
-            with patch("builtins.open", side_effect=open_side_effect):
-                result = _can_reuse_packages(
-                    "/mnt/efs/owner/repo",
-                    '{"name": "test"}',
-                    "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
-                )
-
-                assert result is True
-
-
-def test_can_reuse_packages_returns_false_when_npmrc_differs():
-    file_contents = {
-        "package.json": '{"name": "test"}',
-        ".npmrc": "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
-    }
-
-    def open_side_effect(path, *_args, **_kwargs):
-        for filename, content in file_contents.items():
-            if filename in path:
-                return mock_open(read_data=content)()
-        return mock_open(read_data="")()
-
-    with patch("services.node.ensure_node_packages.os.path.exists", return_value=True):
-        with patch(
-            "services.node.ensure_node_packages.os.listdir", return_value=["eslint"]
-        ):
-            with patch("builtins.open", side_effect=open_side_effect):
-                result = _can_reuse_packages(
-                    "/mnt/efs/owner/repo",
-                    '{"name": "test"}',
-                    "//different-registry.npmjs.org/:_authToken=${NPM_TOKEN}",
-                )
-
-                assert result is False
-
-
-def test_can_reuse_packages_returns_false_when_npmrc_missing_on_efs():
-    def exists_side_effect(path):
-        if ".npmrc" in path:
-            return False
-        return True
-
-    with patch("services.node.ensure_node_packages.os.path.exists") as mock_exists:
-        mock_exists.side_effect = exists_side_effect
-        with patch(
-            "services.node.ensure_node_packages.os.listdir", return_value=["eslint"]
-        ):
-            with patch("builtins.open", mock_open(read_data='{"name": "test"}')):
-                result = _can_reuse_packages(
-                    "/mnt/efs/owner/repo",
-                    '{"name": "test"}',
-                    "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
-                )
-
-                assert result is False
+def _setup_node_modules(
+    efs_dir, package_json='{"name": "test"}', npmrc=None, binaries=None
+):
+    """Set up a fake node_modules directory with .bin, package.json, and optional .npmrc."""
+    nm = os.path.join(efs_dir, "node_modules")
+    bin_dir = os.path.join(nm, ".bin")
+    os.makedirs(bin_dir)
+    for b in binaries or ["eslint"]:
+        with open(os.path.join(bin_dir, b), "w", encoding=UTF8) as f:
+            f.write("")
+    with open(os.path.join(efs_dir, "package.json"), "w", encoding=UTF8) as f:
+        f.write(package_json)
+    if npmrc is not None:
+        with open(os.path.join(efs_dir, ".npmrc"), "w", encoding=UTF8) as f:
+            f.write(npmrc)
 
 
 @pytest.mark.asyncio
-async def test_ensure_node_packages_returns_false_when_no_package_json():
+async def test_returns_false_when_no_package_json():
     with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
         mock_get.return_value = None
 
@@ -145,235 +48,249 @@ async def test_ensure_node_packages_returns_false_when_no_package_json():
 
 
 @pytest.mark.asyncio
-async def test_ensure_node_packages_reuses_existing_packages():
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
-        with patch("services.node.ensure_node_packages.os.makedirs"):
-            with patch(
-                "services.node.ensure_node_packages._can_reuse_packages"
-            ) as mock_reuse:
-                mock_get.return_value = '{"name": "test"}'
-                mock_reuse.return_value = True
+async def test_reuses_when_content_matches(efs_dir):
+    _setup_node_modules(efs_dir)
 
+    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+        with patch(
+            "services.node.ensure_node_packages.detect_package_manager",
+            return_value=("npm", None, None),
+        ):
+            mock_get.side_effect = ['{"name": "test"}', None]
+            with patch("services.node.ensure_node_packages.fcntl.flock"):
                 result = await ensure_node_packages(
                     owner="owner",
                     owner_id=123,
                     repo="repo",
                     branch="main",
                     token="token",
-                    efs_dir="/mnt/efs/owner/repo",
+                    efs_dir=efs_dir,
                 )
 
                 assert result is True
 
 
 @pytest.mark.asyncio
-async def test_ensure_node_packages_triggers_ssm_install():
-    mock_lock_file = MagicMock()
-    mock_lock_file.fileno.return_value = 1
-
+async def test_triggers_codebuild_when_no_node_modules(efs_dir):
     with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
-        with patch("services.node.ensure_node_packages.os.makedirs"):
-            with patch(
-                "services.node.ensure_node_packages._can_reuse_packages",
-                return_value=False,
-            ):
-                with patch("builtins.open", return_value=mock_lock_file):
-                    with patch("services.node.ensure_node_packages.fcntl.flock"):
-                        with patch(
-                            "services.node.ensure_node_packages.run_install_via_codebuild"
-                        ) as mock_ssm:
-                            mock_get.return_value = '{"name": "test"}'
-                            mock_ssm.return_value = "cmd-123"
-
-                            result = await ensure_node_packages(
-                                owner="owner",
-                                owner_id=123,
-                                repo="repo",
-                                branch="main",
-                                token="token",
-                                efs_dir="/mnt/efs/owner/repo",
-                            )
-
-                            mock_ssm.assert_called_once()
-                            # Returns False because packages are installing in background
-                            assert result is False
-
-
-def test_can_reuse_packages_returns_false_when_no_package_json_file():
-    def exists_side_effect(path):
-        if "package.json" in path:
-            return False
-        return True
-
-    with patch("services.node.ensure_node_packages.os.path.exists") as mock_exists:
-        mock_exists.side_effect = exists_side_effect
         with patch(
-            "services.node.ensure_node_packages.os.listdir", return_value=["eslint"]
+            "services.node.ensure_node_packages.detect_package_manager",
+            return_value=("npm", None, None),
         ):
-            result = _can_reuse_packages(
-                "/mnt/efs/owner/repo",
+            mock_get.side_effect = ['{"name": "test"}', None]
+            with patch("services.node.ensure_node_packages.fcntl.flock"):
+                with patch(
+                    "services.node.ensure_node_packages.run_install_via_codebuild"
+                ) as mock_codebuild:
+                    result = await ensure_node_packages(
+                        owner="owner",
+                        owner_id=123,
+                        repo="repo",
+                        branch="main",
+                        token="token",
+                        efs_dir=efs_dir,
+                    )
+
+                    mock_codebuild.assert_called_once()
+                    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_triggers_codebuild_when_content_differs(efs_dir):
+    _setup_node_modules(efs_dir, package_json='{"name": "old"}')
+
+    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+        with patch(
+            "services.node.ensure_node_packages.detect_package_manager",
+            return_value=("npm", None, None),
+        ):
+            mock_get.side_effect = ['{"name": "new"}', None]
+            with patch("services.node.ensure_node_packages.fcntl.flock"):
+                with patch(
+                    "services.node.ensure_node_packages.run_install_via_codebuild"
+                ) as mock_codebuild:
+                    result = await ensure_node_packages(
+                        owner="owner",
+                        owner_id=123,
+                        repo="repo",
+                        branch="main",
+                        token="token",
+                        efs_dir=efs_dir,
+                    )
+
+                    mock_codebuild.assert_called_once()
+                    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_triggers_codebuild_when_bin_missing(efs_dir):
+    # node_modules exists but no .bin
+    os.makedirs(os.path.join(efs_dir, "node_modules"))
+    with open(os.path.join(efs_dir, "package.json"), "w", encoding=UTF8) as f:
+        f.write('{"name": "test"}')
+
+    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+        with patch(
+            "services.node.ensure_node_packages.detect_package_manager",
+            return_value=("npm", None, None),
+        ):
+            mock_get.side_effect = ['{"name": "test"}', None]
+            with patch("services.node.ensure_node_packages.fcntl.flock"):
+                with patch(
+                    "services.node.ensure_node_packages.run_install_via_codebuild"
+                ) as mock_codebuild:
+                    result = await ensure_node_packages(
+                        owner="owner",
+                        owner_id=123,
+                        repo="repo",
+                        branch="main",
+                        token="token",
+                        efs_dir=efs_dir,
+                    )
+
+                    mock_codebuild.assert_called_once()
+                    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_triggers_codebuild_when_bin_empty(efs_dir):
+    os.makedirs(os.path.join(efs_dir, "node_modules", ".bin"))
+    with open(os.path.join(efs_dir, "package.json"), "w", encoding=UTF8) as f:
+        f.write('{"name": "test"}')
+
+    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+        with patch(
+            "services.node.ensure_node_packages.detect_package_manager",
+            return_value=("npm", None, None),
+        ):
+            mock_get.side_effect = ['{"name": "test"}', None]
+            with patch("services.node.ensure_node_packages.fcntl.flock"):
+                with patch(
+                    "services.node.ensure_node_packages.run_install_via_codebuild"
+                ) as mock_codebuild:
+                    result = await ensure_node_packages(
+                        owner="owner",
+                        owner_id=123,
+                        repo="repo",
+                        branch="main",
+                        token="token",
+                        efs_dir=efs_dir,
+                    )
+
+                    mock_codebuild.assert_called_once()
+                    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_reuses_when_npmrc_matches(efs_dir):
+    _setup_node_modules(efs_dir, npmrc="//registry.npmjs.org/:_authToken=${NPM_TOKEN}")
+
+    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+        with patch(
+            "services.node.ensure_node_packages.detect_package_manager",
+            return_value=("npm", None, None),
+        ):
+            mock_get.side_effect = [
                 '{"name": "test"}',
-            )
+                "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
+            ]
+            with patch("services.node.ensure_node_packages.fcntl.flock"):
+                result = await ensure_node_packages(
+                    owner="owner",
+                    owner_id=123,
+                    repo="repo",
+                    branch="main",
+                    token="token",
+                    efs_dir=efs_dir,
+                )
 
-            assert result is False
-
-
-def test_can_reuse_packages_returns_false_when_bin_directory_missing():
-    def exists_side_effect(path):
-        if ".bin" in path:
-            return False
-        return True
-
-    with patch("services.node.ensure_node_packages.os.path.exists") as mock_exists:
-        mock_exists.side_effect = exists_side_effect
-
-        result = _can_reuse_packages(
-            "/mnt/efs/owner/repo",
-            '{"name": "test"}',
-        )
-
-        assert result is False
+                assert result is True
 
 
-def test_can_reuse_packages_returns_false_when_bin_directory_empty():
-    with patch("services.node.ensure_node_packages.os.path.exists", return_value=True):
-        with patch("services.node.ensure_node_packages.os.listdir", return_value=[]):
-            result = _can_reuse_packages(
-                "/mnt/efs/owner/repo",
+@pytest.mark.asyncio
+async def test_triggers_codebuild_when_npmrc_differs(efs_dir):
+    _setup_node_modules(efs_dir, npmrc="//registry.npmjs.org/:_authToken=${NPM_TOKEN}")
+
+    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+        with patch(
+            "services.node.ensure_node_packages.detect_package_manager",
+            return_value=("npm", None, None),
+        ):
+            mock_get.side_effect = [
                 '{"name": "test"}',
-            )
+                "//different-registry.npmjs.org/:_authToken=${NPM_TOKEN}",
+            ]
+            with patch("services.node.ensure_node_packages.fcntl.flock"):
+                with patch(
+                    "services.node.ensure_node_packages.run_install_via_codebuild"
+                ) as mock_codebuild:
+                    result = await ensure_node_packages(
+                        owner="owner",
+                        owner_id=123,
+                        repo="repo",
+                        branch="main",
+                        token="token",
+                        efs_dir=efs_dir,
+                    )
 
-            assert result is False
-
-
-@pytest.mark.asyncio
-async def test_ensure_node_packages_reuses_after_lock():
-    mock_lock_file = MagicMock()
-    mock_lock_file.fileno.return_value = 1
-
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
-        with patch("services.node.ensure_node_packages.os.makedirs"):
-            with patch(
-                "services.node.ensure_node_packages._can_reuse_packages"
-            ) as mock_reuse:
-                mock_reuse.side_effect = [False, True]
-                with patch("builtins.open", return_value=mock_lock_file):
-                    with patch("services.node.ensure_node_packages.fcntl.flock"):
-                        mock_get.return_value = '{"name": "test"}'
-
-                        result = await ensure_node_packages(
-                            owner="owner",
-                            owner_id=123,
-                            repo="repo",
-                            branch="main",
-                            token="token",
-                            efs_dir="/mnt/efs/owner/repo",
-                        )
-
-                        assert result is True
-                        assert mock_reuse.call_count == 2
+                    mock_codebuild.assert_called_once()
+                    assert result is False
 
 
 @pytest.mark.asyncio
-async def test_ensure_node_packages_sanitizes_http_to_https_in_npmrc():
-    mock_lock_file = MagicMock()
-    mock_lock_file.fileno.return_value = 1
-
-    written_content = {}
-
-    def mock_open_side_effect(path, *_args, **_kwargs):
-        mock_file = MagicMock()
-        mock_file.fileno.return_value = 1
-        mock_file.__enter__ = MagicMock(return_value=mock_file)
-        mock_file.__exit__ = MagicMock(return_value=False)
-
-        def write_side_effect(content):
-            written_content[path] = content
-
-        mock_file.write = MagicMock(side_effect=write_side_effect)
-        return mock_file
-
+async def test_sanitizes_http_to_https_in_npmrc(efs_dir):
     with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
-        with patch("services.node.ensure_node_packages.os.makedirs"):
-            with patch(
-                "services.node.ensure_node_packages._can_reuse_packages",
-                return_value=False,
-            ):
-                with patch("builtins.open", side_effect=mock_open_side_effect):
-                    with patch("services.node.ensure_node_packages.fcntl.flock"):
-                        with patch(
-                            "services.node.ensure_node_packages.run_install_via_codebuild"
-                        ):
-                            mock_get.side_effect = [
-                                '{"name": "test"}',
-                                "registry=http://registry.npmjs.org/",
-                                None,
-                                None,
-                            ]
+        with patch(
+            "services.node.ensure_node_packages.detect_package_manager",
+            return_value=("npm", None, None),
+        ):
+            mock_get.side_effect = [
+                '{"name": "test"}',
+                "registry=http://registry.npmjs.org/",
+            ]
+            with patch("services.node.ensure_node_packages.fcntl.flock"):
+                with patch(
+                    "services.node.ensure_node_packages.run_install_via_codebuild"
+                ):
+                    await ensure_node_packages(
+                        owner="owner",
+                        owner_id=123,
+                        repo="repo",
+                        branch="main",
+                        token="token",
+                        efs_dir=efs_dir,
+                    )
 
-                            await ensure_node_packages(
-                                owner="owner",
-                                owner_id=123,
-                                repo="repo",
-                                branch="main",
-                                token="token",
-                                efs_dir="/mnt/efs/owner/repo",
-                            )
-
-                            npmrc_path = "/mnt/efs/owner/repo/.npmrc"
-                            assert npmrc_path in written_content
-                            assert (
-                                written_content[npmrc_path]
-                                == "registry=https://registry.npmjs.org/"
-                            )
+                    npmrc_path = os.path.join(efs_dir, ".npmrc")
+                    assert os.path.exists(npmrc_path)
+                    with open(npmrc_path, encoding=UTF8) as f:
+                        assert f.read() == "registry=https://registry.npmjs.org/"
 
 
 @pytest.mark.asyncio
-async def test_ensure_node_packages_preserves_https_in_npmrc():
-    written_content = {}
-
-    def mock_open_side_effect(path, *_args, **_kwargs):
-        mock_file = MagicMock()
-        mock_file.fileno.return_value = 1
-        mock_file.__enter__ = MagicMock(return_value=mock_file)
-        mock_file.__exit__ = MagicMock(return_value=False)
-
-        def write_side_effect(content):
-            written_content[path] = content
-
-        mock_file.write = MagicMock(side_effect=write_side_effect)
-        return mock_file
-
+async def test_preserves_https_in_npmrc(efs_dir):
     with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
-        with patch("services.node.ensure_node_packages.os.makedirs"):
-            with patch(
-                "services.node.ensure_node_packages._can_reuse_packages",
-                return_value=False,
-            ):
-                with patch("builtins.open", side_effect=mock_open_side_effect):
-                    with patch("services.node.ensure_node_packages.fcntl.flock"):
-                        with patch(
-                            "services.node.ensure_node_packages.run_install_via_codebuild"
-                        ):
-                            mock_get.side_effect = [
-                                '{"name": "test"}',
-                                "registry=https://registry.npmjs.org/",
-                                None,
-                                None,
-                            ]
+        with patch(
+            "services.node.ensure_node_packages.detect_package_manager",
+            return_value=("npm", None, None),
+        ):
+            mock_get.side_effect = [
+                '{"name": "test"}',
+                "registry=https://registry.npmjs.org/",
+            ]
+            with patch("services.node.ensure_node_packages.fcntl.flock"):
+                with patch(
+                    "services.node.ensure_node_packages.run_install_via_codebuild"
+                ):
+                    await ensure_node_packages(
+                        owner="owner",
+                        owner_id=123,
+                        repo="repo",
+                        branch="main",
+                        token="token",
+                        efs_dir=efs_dir,
+                    )
 
-                            await ensure_node_packages(
-                                owner="owner",
-                                owner_id=123,
-                                repo="repo",
-                                branch="main",
-                                token="token",
-                                efs_dir="/mnt/efs/owner/repo",
-                            )
-
-                            npmrc_path = "/mnt/efs/owner/repo/.npmrc"
-                            assert npmrc_path in written_content
-                            assert (
-                                written_content[npmrc_path]
-                                == "registry=https://registry.npmjs.org/"
-                            )
+                    npmrc_path = os.path.join(efs_dir, ".npmrc")
+                    with open(npmrc_path, encoding=UTF8) as f:
+                        assert f.read() == "registry=https://registry.npmjs.org/"

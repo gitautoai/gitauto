@@ -4,9 +4,11 @@ import shutil
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
-# node_modules.tar.gz: extracted separately by extract_dependencies
+# node_modules.tar.gz, vendor.tar.gz: extracted separately by extract_dependencies
 # index.lock: stale git lock from concurrent EFS operations
-IGNORE_EFS_FILES = shutil.ignore_patterns("node_modules.tar.gz", "index.lock")
+IGNORE_EFS_FILES = shutil.ignore_patterns(
+    "node_modules.tar.gz", "vendor.tar.gz", "index.lock"
+)
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

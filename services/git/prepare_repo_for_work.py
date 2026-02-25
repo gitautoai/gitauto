@@ -1,6 +1,7 @@
 from services.efs.copy_repo_from_efs_to_tmp import copy_repo_from_efs_to_tmp
-from services.efs.get_efs_dir import get_efs_dir
 from services.efs.extract_dependencies import extract_dependencies
+from services.efs.get_efs_dir import get_efs_dir
+from services.git.copy_config_templates import copy_config_templates
 from services.git.get_clone_url import get_clone_url
 from services.git.git_checkout import git_checkout
 from services.git.git_clone_to_efs import clone_tasks
@@ -34,7 +35,10 @@ async def prepare_repo_for_work(
     # Step 3: Extract dependencies from EFS tarball to clone_dir
     extract_dependencies(efs_dir, clone_dir)
 
-    # Step 4: Fetch, checkout, and reset PR branch
+    # Step 4: Copy config templates (e.g., .env.example → .env, preference.inc.default → preference.inc)
+    copy_config_templates(clone_dir)
+
+    # Step 5: Fetch, checkout, and reset PR branch
     fetch_ok = await git_fetch(clone_dir, clone_url, pr_branch)
     if fetch_ok:
         await git_checkout(clone_dir, pr_branch)

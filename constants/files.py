@@ -1,5 +1,7 @@
 JS_TS_FILE_EXTENSIONS = (".js", ".jsx", ".ts", ".tsx")
 
+PHP_TEST_FILE_EXTENSIONS = ("Test.php",)
+
 TS_TEST_FILE_EXTENSIONS = (
     ".test.ts",
     ".test.tsx",

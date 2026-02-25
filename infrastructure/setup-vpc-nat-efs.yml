@@ -419,17 +419,28 @@ Resources:
                 - echo "Installing packages in $EFS_DIR using $PKG_MANAGER"
                 - LOCAL_DIR="/tmp$EFS_DIR"
                 - mkdir -p "$LOCAL_DIR"
-                - tar -cf - -C "$EFS_DIR" --exclude node_modules . | tar -xf - -C "$LOCAL_DIR"
-                - cd "$LOCAL_DIR"
                 - |
-                  if [ -n "$NPM_TOKEN" ]; then
-                    export NPM_TOKEN="$NPM_TOKEN"
+                  if [ "$PKG_MANAGER" = "composer" ]; then
+                    tar -cf - -C "$EFS_DIR" --exclude vendor . | tar -xf - -C "$LOCAL_DIR"
+                    cd "$LOCAL_DIR"
+                    # Same PHP packages as Dockerfile - see comments there for details
+                    yum install -y php-cli php-json php-mbstring php-xml php-pdo
+                    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+                    composer install --no-interaction --no-dev
+                    rm -f "$EFS_DIR/vendor.tar.gz"
+                    tar -czf "$EFS_DIR/vendor.tar.gz" -C "$LOCAL_DIR" vendor
+                  else
+                    tar -cf - -C "$EFS_DIR" --exclude node_modules . | tar -xf - -C "$LOCAL_DIR"
+                    cd "$LOCAL_DIR"
+                    if [ -n "$NPM_TOKEN" ]; then
+                      export NPM_TOKEN="$NPM_TOKEN"
+                    fi
+                    $PKG_MANAGER install
+                    rm -f "$EFS_DIR/node_modules.tar.gz"
+                    tar -czf "$EFS_DIR/node_modules.tar.gz" -C "$LOCAL_DIR" node_modules
                   fi
-                - $PKG_MANAGER install
-                - rm -f "$EFS_DIR/node_modules.tar.gz"
-                - tar -czf "$EFS_DIR/node_modules.tar.gz" -C "$LOCAL_DIR" node_modules
                 - rm -rf "$LOCAL_DIR"
-                - echo "Package install complete - tarball at $EFS_DIR/node_modules.tar.gz"
+                - echo "Package install complete for $PKG_MANAGER in $EFS_DIR"
       TimeoutInMinutes: 60
       VpcConfig:
         VpcId: !Ref VPC

@@ -2,65 +2,12 @@ import fcntl
 import os
 
 from config import UTF8
+from services.aws.run_install_via_codebuild import run_install_via_codebuild
 from services.git.git_clone_to_efs import clone_tasks
 from services.node.detect_package_manager import detect_package_manager
 from services.node.read_file_content import read_file_content
-from services.aws.run_install_via_codebuild import run_install_via_codebuild
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
-
-
-def _file_matches(efs_path: str, source_content: str | None):
-    # Checks if EFS file matches source file from GitHub
-    if source_content:
-        if not os.path.exists(efs_path):
-            return False
-        with open(efs_path, "r", encoding=UTF8) as f:
-            return f.read() == source_content
-    return not os.path.exists(efs_path)
-
-
-def _can_reuse_packages(
-    efs_dir: str,
-    package_json_content: str,
-    npmrc_content: str | None = None,
-    lock_file_name: str | None = None,
-    lock_file_content: str | None = None,
-):
-    node_modules_path = os.path.join(efs_dir, "node_modules")
-    if not os.path.exists(node_modules_path):
-        return False
-
-    # Check if .bin directory exists and has binaries (indicates complete install)
-    bin_path = os.path.join(node_modules_path, ".bin")
-    if not os.path.exists(bin_path):
-        logger.info(
-            "node: Incomplete install detected - .bin directory missing at %s", bin_path
-        )
-        return False
-
-    bin_contents = os.listdir(bin_path)
-    if not bin_contents:
-        logger.info(
-            "node: Incomplete install detected - .bin directory empty at %s", bin_path
-        )
-        return False
-
-    if not _file_matches(os.path.join(efs_dir, "package.json"), package_json_content):
-        return False
-    if not _file_matches(os.path.join(efs_dir, ".npmrc"), npmrc_content):
-        return False
-    if lock_file_name and not _file_matches(
-        os.path.join(efs_dir, lock_file_name), lock_file_content
-    ):
-        return False
-
-    logger.info(
-        "node: Reusing existing packages on EFS at %s (%d binaries in .bin)",
-        efs_dir,
-        len(bin_contents),
-    )
-    return True
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
@@ -111,16 +58,6 @@ async def ensure_node_packages(
     os.makedirs(efs_dir, exist_ok=True)
 
     install_lock_path = os.path.join(efs_dir, ".install.lock")
-    package_json_path = os.path.join(efs_dir, "package.json")
-
-    if _can_reuse_packages(
-        efs_dir,
-        package_json_content,
-        npmrc_content,
-        lock_file_name,
-        lock_file_content,
-    ):
-        return True
 
     with open(install_lock_path, "w", encoding=UTF8) as lock_file:
         try:
@@ -128,13 +65,65 @@ async def ensure_node_packages(
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
             logger.info("node: Lock acquired for %s", efs_dir)
 
-            if _can_reuse_packages(
-                efs_dir,
-                package_json_content,
-                npmrc_content,
-                lock_file_name,
-                lock_file_content,
-            ):
+            # Check if existing packages can be reused
+            node_modules_path = os.path.join(efs_dir, "node_modules")
+            bin_path = os.path.join(node_modules_path, ".bin")
+            package_json_path = os.path.join(efs_dir, "package.json")
+            can_reuse = os.path.exists(node_modules_path)
+
+            if can_reuse:
+                if not os.path.exists(bin_path):
+                    logger.info(
+                        "node: Incomplete install - .bin directory missing at %s",
+                        bin_path,
+                    )
+                    can_reuse = False
+                else:
+                    bin_contents = os.listdir(bin_path)
+                    if not bin_contents:
+                        logger.info(
+                            "node: Incomplete install - .bin directory empty at %s",
+                            bin_path,
+                        )
+                        can_reuse = False
+
+            if can_reuse:
+                # Verify package.json matches
+                if os.path.exists(package_json_path):
+                    with open(package_json_path, "r", encoding=UTF8) as f:
+                        can_reuse = f.read() == package_json_content
+                else:
+                    can_reuse = False
+
+            if can_reuse and npmrc_content:
+                npmrc_path = os.path.join(efs_dir, ".npmrc")
+                if os.path.exists(npmrc_path):
+                    with open(npmrc_path, "r", encoding=UTF8) as f:
+                        can_reuse = f.read() == npmrc_content
+                else:
+                    can_reuse = False
+
+            if can_reuse and npmrc_content is None:
+                # No .npmrc in repo, but if one exists on EFS, it's stale
+                npmrc_path = os.path.join(efs_dir, ".npmrc")
+                if os.path.exists(npmrc_path):
+                    can_reuse = False
+
+            if can_reuse and lock_file_name:
+                lock_path = os.path.join(efs_dir, lock_file_name)
+                if lock_file_content:
+                    if os.path.exists(lock_path):
+                        with open(lock_path, "r", encoding=UTF8) as f:
+                            can_reuse = f.read() == lock_file_content
+                    else:
+                        can_reuse = False
+
+            if can_reuse:
+                logger.info(
+                    "node: Reusing existing packages on EFS at %s (%d binaries in .bin)",
+                    efs_dir,
+                    len(os.listdir(bin_path)),
+                )
                 return True
 
             # Copy to EFS because install runs in EFS to cache node_modules across Lambda invocations
