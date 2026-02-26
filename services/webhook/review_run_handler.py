@@ -9,7 +9,7 @@ import time
 from anthropic.types import MessageParam
 
 # Local imports
-from config import GITHUB_APP_USER_NAME
+from config import GITHUB_APP_USER_NAME, PRODUCT_ID
 from constants.agent import MAX_ITERATIONS
 from constants.triggers import ReviewTrigger
 from payloads.github.pull_request_review_comment.types import (
@@ -71,6 +71,7 @@ async def handle_review_run(
     comment_author = review["user"]
     comment_author_type = comment_author["type"]
     if comment_author_type == "Bot":
+        logger.info("Ignoring review comment from bot: %s", comment_author["login"])
         return
 
     # Extract repository related variables
@@ -97,13 +98,17 @@ async def handle_review_run(
     head_branch = pull_request["head"]["ref"]  # gitauto/dashboard-20250101-155924-Ab1C
     base_branch = pull_request["base"]["ref"]  # main, master, etc.
     pr_creator = pull_request["user"]["login"]
-    if pr_creator != GITHUB_APP_USER_NAME:
+    if not head_branch.startswith(PRODUCT_ID + "/"):
+        logger.info(
+            "Ignoring review comment on non-GitAuto PR (branch: %s)", head_branch
+        )
         return
 
     # Extract sender related variables and return if sender is GitAuto itself
     sender_id: int = payload["sender"]["id"]
     sender_name: str = payload["sender"]["login"]
     if sender_name == GITHUB_APP_USER_NAME:
+        logger.info("Ignoring review comment from GitAuto itself")
         return
 
     # Extract other information
