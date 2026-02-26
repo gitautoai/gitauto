@@ -40,9 +40,17 @@ def handle_installation_deleted_or_suspended(payload: InstallationPayload, actio
     if is_new is not False:
         user = get_user(sender_id)
         email = user.get("email") if user else None
-        user_name = user.get("user_name", "") if user else ""
+        display_name = (
+            (
+                user.get("display_name_override")
+                or user.get("display_name")
+                or user.get("user_name", "")
+            )
+            if user
+            else ""
+        )
         if email:
-            first_name = get_first_name(user_name)
+            first_name = get_first_name(display_name)
             subject, text = get_email_text(first_name)
             result = send_email(to=email, subject=subject, text=text)
             if result and result.get("id"):
