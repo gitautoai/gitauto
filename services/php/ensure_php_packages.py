@@ -4,18 +4,14 @@ import os
 from config import UTF8
 from services.aws.run_install_via_codebuild import run_install_via_codebuild
 from services.git.git_clone_to_efs import clone_tasks
-from services.node.read_file_content import read_file_content
+from utils.files.read_local_file import read_local_file
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 async def ensure_php_packages(
-    owner: str,
     owner_id: int,
-    repo: str,
-    branch: str,
-    token: str,
     efs_dir: str,
 ):
     # Wait for clone to complete before installing
@@ -28,26 +24,12 @@ async def ensure_php_packages(
         else:
             logger.warning("php: Clone task failed: %s", efs_dir)
 
-    composer_json_content = read_file_content(
-        "composer.json",
-        local_dir=efs_dir,
-        owner=owner,
-        repo=repo,
-        branch=branch,
-        token=token,
-    )
+    composer_json_content = read_local_file("composer.json", base_dir=efs_dir)
     if not composer_json_content:
         logger.info("php: No composer.json found, skipping installation")
         return False
 
-    composer_lock_content = read_file_content(
-        "composer.lock",
-        local_dir=efs_dir,
-        owner=owner,
-        repo=repo,
-        branch=branch,
-        token=token,
-    )
+    composer_lock_content = read_local_file("composer.lock", base_dir=efs_dir)
 
     os.makedirs(efs_dir, exist_ok=True)
 

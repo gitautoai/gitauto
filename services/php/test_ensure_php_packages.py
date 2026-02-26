@@ -15,15 +15,11 @@ def efs_dir(tmp_path):
 
 @pytest.mark.asyncio
 async def test_returns_false_when_no_composer_json():
-    with patch("services.php.ensure_php_packages.read_file_content") as mock_get:
+    with patch("services.php.ensure_php_packages.read_local_file") as mock_get:
         mock_get.return_value = None
 
         result = await ensure_php_packages(
-            owner="owner",
             owner_id=123,
-            repo="repo",
-            branch="main",
-            token="token",
             efs_dir="/mnt/efs/owner/repo",
         )
 
@@ -46,16 +42,12 @@ async def test_reuses_when_vendor_and_content_match(efs_dir):
         return None
 
     with patch(
-        "services.php.ensure_php_packages.read_file_content",
+        "services.php.ensure_php_packages.read_local_file",
         side_effect=read_side_effect,
     ):
         with patch("services.php.ensure_php_packages.fcntl.flock"):
             result = await ensure_php_packages(
-                owner="owner",
                 owner_id=123,
-                repo="repo",
-                branch="main",
-                token="token",
                 efs_dir=efs_dir,
             )
 
@@ -64,18 +56,14 @@ async def test_reuses_when_vendor_and_content_match(efs_dir):
 
 @pytest.mark.asyncio
 async def test_triggers_codebuild_when_no_vendor(efs_dir):
-    with patch("services.php.ensure_php_packages.read_file_content") as mock_get:
+    with patch("services.php.ensure_php_packages.read_local_file") as mock_get:
         mock_get.return_value = '{"require": {}}'
         with patch("services.php.ensure_php_packages.fcntl.flock"):
             with patch(
                 "services.php.ensure_php_packages.run_install_via_codebuild"
             ) as mock_codebuild:
                 result = await ensure_php_packages(
-                    owner="owner",
                     owner_id=123,
-                    repo="repo",
-                    branch="main",
-                    token="token",
                     efs_dir=efs_dir,
                 )
 
@@ -93,18 +81,14 @@ async def test_triggers_codebuild_when_content_differs(efs_dir):
     with open(os.path.join(efs_dir, "composer.json"), "w", encoding=UTF8) as f:
         f.write('{"require": {"old": "1.0"}}')
 
-    with patch("services.php.ensure_php_packages.read_file_content") as mock_get:
+    with patch("services.php.ensure_php_packages.read_local_file") as mock_get:
         mock_get.return_value = '{"require": {"new": "2.0"}}'
         with patch("services.php.ensure_php_packages.fcntl.flock"):
             with patch(
                 "services.php.ensure_php_packages.run_install_via_codebuild"
             ) as mock_codebuild:
                 result = await ensure_php_packages(
-                    owner="owner",
                     owner_id=123,
-                    repo="repo",
-                    branch="main",
-                    token="token",
                     efs_dir=efs_dir,
                 )
 
@@ -117,18 +101,14 @@ async def test_triggers_codebuild_when_autoload_missing(efs_dir):
     # vendor exists but autoload.php missing
     os.makedirs(os.path.join(efs_dir, "vendor"))
 
-    with patch("services.php.ensure_php_packages.read_file_content") as mock_get:
+    with patch("services.php.ensure_php_packages.read_local_file") as mock_get:
         mock_get.return_value = '{"require": {}}'
         with patch("services.php.ensure_php_packages.fcntl.flock"):
             with patch(
                 "services.php.ensure_php_packages.run_install_via_codebuild"
             ) as mock_codebuild:
                 result = await ensure_php_packages(
-                    owner="owner",
                     owner_id=123,
-                    repo="repo",
-                    branch="main",
-                    token="token",
                     efs_dir=efs_dir,
                 )
 
@@ -156,7 +136,7 @@ async def test_triggers_codebuild_when_lock_differs(efs_dir):
         return None
 
     with patch(
-        "services.php.ensure_php_packages.read_file_content",
+        "services.php.ensure_php_packages.read_local_file",
         side_effect=read_side_effect,
     ):
         with patch("services.php.ensure_php_packages.fcntl.flock"):
@@ -164,11 +144,7 @@ async def test_triggers_codebuild_when_lock_differs(efs_dir):
                 "services.php.ensure_php_packages.run_install_via_codebuild"
             ) as mock_codebuild:
                 result = await ensure_php_packages(
-                    owner="owner",
                     owner_id=123,
-                    repo="repo",
-                    branch="main",
-                    token="token",
                     efs_dir=efs_dir,
                 )
 

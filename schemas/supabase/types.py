@@ -238,6 +238,70 @@ class LlmRequestsInsert(TypedDict):
     updated_by: NotRequired[str | None]
 
 
+class MarketingCoverage(TypedDict):
+    id: int
+    owner_id: int
+    owner_name: str
+    repo_id: int
+    repo_name: str
+    source: str
+    line_coverage: float | None
+    lines: int | None
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+
+class MarketingCoverageInsert(TypedDict):
+    owner_id: int
+    owner_name: str
+    repo_id: int
+    repo_name: str
+    source: str
+    line_coverage: NotRequired[float | None]
+    lines: NotRequired[int | None]
+
+
+class MarketingSearchHistory(TypedDict):
+    id: int
+    owner_id: int
+    owner_name: str
+    created_at: datetime.datetime
+
+
+class MarketingSearchHistoryInsert(TypedDict):
+    owner_id: int
+    owner_name: str
+
+
+class MarketingUsers(TypedDict):
+    id: int
+    owner_id: int
+    owner_name: str
+    repo_id: int
+    repo_name: str
+    user_id: int
+    username: str
+    first_name: str | None
+    last_name: str | None
+    email: str
+    email_source: str
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+
+class MarketingUsersInsert(TypedDict):
+    owner_id: int
+    owner_name: str
+    repo_id: int
+    repo_name: str
+    user_id: int
+    username: str
+    first_name: NotRequired[str | None]
+    last_name: NotRequired[str | None]
+    email: str
+    email_source: str
+
+
 class NpmTokens(TypedDict):
     id: str
     owner_id: int
@@ -550,6 +614,8 @@ class Users(TypedDict):
     user_rules: str
     display_name: str
     deleted_at: datetime.datetime | None
+    display_name_override: str | None
+    skip_drip_emails: bool
 
 
 class UsersInsert(TypedDict):
@@ -560,6 +626,8 @@ class UsersInsert(TypedDict):
     user_rules: str
     display_name: str
     deleted_at: NotRequired[datetime.datetime | None]
+    display_name_override: NotRequired[str | None]
+    skip_drip_emails: bool
 
 
 class WebhookDeliveries(TypedDict):

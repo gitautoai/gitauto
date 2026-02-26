@@ -257,14 +257,10 @@ async def handle_check_suite(
     clone_tasks[efs_dir] = asyncio.create_task(
         git_clone_to_efs(efs_dir, clone_url, target_branch)
     )
-    node_ready = await ensure_node_packages(
-        owner_name, owner_id, repo_name, target_branch, token, efs_dir
-    )
+    node_ready = await ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("node: ready=%s", node_ready)
 
-    php_ready = await ensure_php_packages(
-        owner_name, owner_id, repo_name, target_branch, token, efs_dir
-    )
+    php_ready = await ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("php: ready=%s", php_ready)
 
     # Check if permission comment or stumbled comment already exists

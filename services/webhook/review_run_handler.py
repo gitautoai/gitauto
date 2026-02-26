@@ -195,14 +195,10 @@ async def handle_review_run(
     clone_tasks[efs_dir] = asyncio.create_task(
         git_clone_to_efs(efs_dir, clone_url, base_branch)
     )
-    node_ready = await ensure_node_packages(
-        owner_name, owner_id, repo_name, base_branch, token, efs_dir
-    )
+    node_ready = await ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("node: ready=%s", node_ready)
 
-    php_ready = await ensure_php_packages(
-        owner_name, owner_id, repo_name, base_branch, token, efs_dir
-    )
+    php_ready = await ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("php: ready=%s", php_ready)
 
     # Create a usage record
