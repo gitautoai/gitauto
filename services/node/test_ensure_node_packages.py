@@ -32,15 +32,11 @@ def _setup_node_modules(
 
 @pytest.mark.asyncio
 async def test_returns_false_when_no_package_json():
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+    with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         mock_get.return_value = None
 
         result = await ensure_node_packages(
-            owner="owner",
             owner_id=123,
-            repo="repo",
-            branch="main",
-            token="token",
             efs_dir="/mnt/efs/owner/repo",
         )
 
@@ -51,7 +47,7 @@ async def test_returns_false_when_no_package_json():
 async def test_reuses_when_content_matches(efs_dir):
     _setup_node_modules(efs_dir)
 
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+    with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
             return_value=("npm", None, None),
@@ -59,11 +55,7 @@ async def test_reuses_when_content_matches(efs_dir):
             mock_get.side_effect = ['{"name": "test"}', None]
             with patch("services.node.ensure_node_packages.fcntl.flock"):
                 result = await ensure_node_packages(
-                    owner="owner",
                     owner_id=123,
-                    repo="repo",
-                    branch="main",
-                    token="token",
                     efs_dir=efs_dir,
                 )
 
@@ -72,7 +64,7 @@ async def test_reuses_when_content_matches(efs_dir):
 
 @pytest.mark.asyncio
 async def test_triggers_codebuild_when_no_node_modules(efs_dir):
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+    with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
             return_value=("npm", None, None),
@@ -83,11 +75,7 @@ async def test_triggers_codebuild_when_no_node_modules(efs_dir):
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ) as mock_codebuild:
                     result = await ensure_node_packages(
-                        owner="owner",
                         owner_id=123,
-                        repo="repo",
-                        branch="main",
-                        token="token",
                         efs_dir=efs_dir,
                     )
 
@@ -99,7 +87,7 @@ async def test_triggers_codebuild_when_no_node_modules(efs_dir):
 async def test_triggers_codebuild_when_content_differs(efs_dir):
     _setup_node_modules(efs_dir, package_json='{"name": "old"}')
 
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+    with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
             return_value=("npm", None, None),
@@ -110,11 +98,7 @@ async def test_triggers_codebuild_when_content_differs(efs_dir):
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ) as mock_codebuild:
                     result = await ensure_node_packages(
-                        owner="owner",
                         owner_id=123,
-                        repo="repo",
-                        branch="main",
-                        token="token",
                         efs_dir=efs_dir,
                     )
 
@@ -129,7 +113,7 @@ async def test_triggers_codebuild_when_bin_missing(efs_dir):
     with open(os.path.join(efs_dir, "package.json"), "w", encoding=UTF8) as f:
         f.write('{"name": "test"}')
 
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+    with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
             return_value=("npm", None, None),
@@ -140,11 +124,7 @@ async def test_triggers_codebuild_when_bin_missing(efs_dir):
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ) as mock_codebuild:
                     result = await ensure_node_packages(
-                        owner="owner",
                         owner_id=123,
-                        repo="repo",
-                        branch="main",
-                        token="token",
                         efs_dir=efs_dir,
                     )
 
@@ -158,7 +138,7 @@ async def test_triggers_codebuild_when_bin_empty(efs_dir):
     with open(os.path.join(efs_dir, "package.json"), "w", encoding=UTF8) as f:
         f.write('{"name": "test"}')
 
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+    with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
             return_value=("npm", None, None),
@@ -169,11 +149,7 @@ async def test_triggers_codebuild_when_bin_empty(efs_dir):
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ) as mock_codebuild:
                     result = await ensure_node_packages(
-                        owner="owner",
                         owner_id=123,
-                        repo="repo",
-                        branch="main",
-                        token="token",
                         efs_dir=efs_dir,
                     )
 
@@ -185,7 +161,7 @@ async def test_triggers_codebuild_when_bin_empty(efs_dir):
 async def test_reuses_when_npmrc_matches(efs_dir):
     _setup_node_modules(efs_dir, npmrc="//registry.npmjs.org/:_authToken=${NPM_TOKEN}")
 
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+    with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
             return_value=("npm", None, None),
@@ -196,11 +172,7 @@ async def test_reuses_when_npmrc_matches(efs_dir):
             ]
             with patch("services.node.ensure_node_packages.fcntl.flock"):
                 result = await ensure_node_packages(
-                    owner="owner",
                     owner_id=123,
-                    repo="repo",
-                    branch="main",
-                    token="token",
                     efs_dir=efs_dir,
                 )
 
@@ -211,7 +183,7 @@ async def test_reuses_when_npmrc_matches(efs_dir):
 async def test_triggers_codebuild_when_npmrc_differs(efs_dir):
     _setup_node_modules(efs_dir, npmrc="//registry.npmjs.org/:_authToken=${NPM_TOKEN}")
 
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+    with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
             return_value=("npm", None, None),
@@ -225,11 +197,7 @@ async def test_triggers_codebuild_when_npmrc_differs(efs_dir):
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ) as mock_codebuild:
                     result = await ensure_node_packages(
-                        owner="owner",
                         owner_id=123,
-                        repo="repo",
-                        branch="main",
-                        token="token",
                         efs_dir=efs_dir,
                     )
 
@@ -239,7 +207,7 @@ async def test_triggers_codebuild_when_npmrc_differs(efs_dir):
 
 @pytest.mark.asyncio
 async def test_sanitizes_http_to_https_in_npmrc(efs_dir):
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+    with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
             return_value=("npm", None, None),
@@ -253,11 +221,7 @@ async def test_sanitizes_http_to_https_in_npmrc(efs_dir):
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ):
                     await ensure_node_packages(
-                        owner="owner",
                         owner_id=123,
-                        repo="repo",
-                        branch="main",
-                        token="token",
                         efs_dir=efs_dir,
                     )
 
@@ -269,7 +233,7 @@ async def test_sanitizes_http_to_https_in_npmrc(efs_dir):
 
 @pytest.mark.asyncio
 async def test_preserves_https_in_npmrc(efs_dir):
-    with patch("services.node.ensure_node_packages.read_file_content") as mock_get:
+    with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
             return_value=("npm", None, None),
@@ -283,11 +247,7 @@ async def test_preserves_https_in_npmrc(efs_dir):
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ):
                     await ensure_node_packages(
-                        owner="owner",
                         owner_id=123,
-                        repo="repo",
-                        branch="main",
-                        token="token",
                         efs_dir=efs_dir,
                     )
 

@@ -92,9 +92,7 @@ async def process_repositories(
             await git_clone_to_efs(efs_dir, clone_url, default_branch)
 
         # Start package install via CodeBuild (fire-and-forget) for Node projects
-        pkg_manager, lock_file, _ = detect_package_manager(
-            efs_dir, owner_name, repo_name, default_branch, token
-        )
+        pkg_manager, lock_file, _ = detect_package_manager(efs_dir)
         if lock_file:
             run_install_via_codebuild(efs_dir, owner_id, pkg_manager)
 

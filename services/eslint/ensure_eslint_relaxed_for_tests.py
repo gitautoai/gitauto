@@ -4,7 +4,7 @@ import jsonc
 
 from services.github.commits.replace_remote_file import replace_remote_file_content
 from services.github.types.github_types import BaseArgs
-from services.node.read_file_content import read_file_content
+from utils.files.read_local_file import read_local_file
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
@@ -82,14 +82,7 @@ def ensure_eslint_relaxed_for_tests(eslint_config: dict[str, str], base_args: Ba
 
     # For package.json, wrap back in eslintConfig key
     if is_package_json:
-        full_package = read_file_content(
-            "package.json",
-            local_dir=base_args["clone_dir"],
-            owner=base_args["owner"],
-            repo=base_args["repo"],
-            branch=base_args["base_branch"],
-            token=base_args["token"],
-        )
+        full_package = read_local_file("package.json", base_dir=base_args["clone_dir"])
         if full_package:
             try:
                 pkg: dict = json.loads(full_package)

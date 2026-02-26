@@ -1,111 +1,83 @@
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
 from services.node.detect_package_manager import detect_package_manager
 
 
-def test_detect_yarn_from_clone_dir():
-    with patch("services.node.detect_package_manager.os.path.exists") as mock_exists:
-        mock_exists.side_effect = lambda p: "yarn.lock" in p
-        with patch("builtins.open", mock_open(read_data="yarn lock content")):
-            pm, lock_file, content = detect_package_manager(
-                local_dir="/tmp/repo",
-                owner="owner",
-                repo="repo",
-                branch="main",
-                token="token",
-            )
+def test_detect_yarn():
+    def read_side_effect(file_path, **_kwargs):
+        if file_path == "yarn.lock":
+            return "yarn lock content"
+        return None
 
-            assert pm == "yarn"
-            assert lock_file == "yarn.lock"
-            assert content == "yarn lock content"
+    with patch(
+        "services.node.detect_package_manager.read_local_file",
+        side_effect=read_side_effect,
+    ):
+        pm, lock_file, content = detect_package_manager(local_dir="/tmp/repo")
 
-
-def test_detect_pnpm_from_clone_dir():
-    with patch("services.node.detect_package_manager.os.path.exists") as mock_exists:
-        mock_exists.side_effect = lambda p: "pnpm-lock.yaml" in p
-        with patch("builtins.open", mock_open(read_data="pnpm lock content")):
-            pm, lock_file, content = detect_package_manager(
-                local_dir="/tmp/repo",
-                owner="owner",
-                repo="repo",
-                branch="main",
-                token="token",
-            )
-
-            assert pm == "pnpm"
-            assert lock_file == "pnpm-lock.yaml"
-            assert content == "pnpm lock content"
+        assert pm == "yarn"
+        assert lock_file == "yarn.lock"
+        assert content == "yarn lock content"
 
 
-def test_detect_bun_from_clone_dir():
-    with patch("services.node.detect_package_manager.os.path.exists") as mock_exists:
-        mock_exists.side_effect = lambda p: "bun.lockb" in p
-        with patch("builtins.open", mock_open(read_data="bun lock content")):
-            pm, lock_file, content = detect_package_manager(
-                local_dir="/tmp/repo",
-                owner="owner",
-                repo="repo",
-                branch="main",
-                token="token",
-            )
+def test_detect_pnpm():
+    def read_side_effect(file_path, **_kwargs):
+        if file_path == "pnpm-lock.yaml":
+            return "pnpm lock content"
+        return None
 
-            assert pm == "bun"
-            assert lock_file == "bun.lockb"
-            assert content == "bun lock content"
+    with patch(
+        "services.node.detect_package_manager.read_local_file",
+        side_effect=read_side_effect,
+    ):
+        pm, lock_file, content = detect_package_manager(local_dir="/tmp/repo")
 
-
-def test_detect_npm_from_clone_dir():
-    with patch("services.node.detect_package_manager.os.path.exists") as mock_exists:
-        mock_exists.side_effect = lambda p: "package-lock.json" in p
-        with patch("builtins.open", mock_open(read_data="npm lock content")):
-            pm, lock_file, content = detect_package_manager(
-                local_dir="/tmp/repo",
-                owner="owner",
-                repo="repo",
-                branch="main",
-                token="token",
-            )
-
-            assert pm == "npm"
-            assert lock_file == "package-lock.json"
-            assert content == "npm lock content"
+        assert pm == "pnpm"
+        assert lock_file == "pnpm-lock.yaml"
+        assert content == "pnpm lock content"
 
 
-def test_detect_yarn_from_github_api():
-    with patch("services.node.detect_package_manager.os.path.exists") as mock_exists:
-        with patch("services.node.detect_package_manager.get_raw_content") as mock_get:
-            mock_exists.return_value = False
-            mock_get.side_effect = lambda **kwargs: (
-                "yarn api content" if kwargs["file_path"] == "yarn.lock" else None
-            )
+def test_detect_bun():
+    def read_side_effect(file_path, **_kwargs):
+        if file_path == "bun.lockb":
+            return "bun lock content"
+        return None
 
-            pm, lock_file, content = detect_package_manager(
-                local_dir="/tmp/repo",
-                owner="owner",
-                repo="repo",
-                branch="main",
-                token="token",
-            )
+    with patch(
+        "services.node.detect_package_manager.read_local_file",
+        side_effect=read_side_effect,
+    ):
+        pm, lock_file, content = detect_package_manager(local_dir="/tmp/repo")
 
-            assert pm == "yarn"
-            assert lock_file == "yarn.lock"
-            assert content == "yarn api content"
+        assert pm == "bun"
+        assert lock_file == "bun.lockb"
+        assert content == "bun lock content"
+
+
+def test_detect_npm():
+    def read_side_effect(file_path, **_kwargs):
+        if file_path == "package-lock.json":
+            return "npm lock content"
+        return None
+
+    with patch(
+        "services.node.detect_package_manager.read_local_file",
+        side_effect=read_side_effect,
+    ):
+        pm, lock_file, content = detect_package_manager(local_dir="/tmp/repo")
+
+        assert pm == "npm"
+        assert lock_file == "package-lock.json"
+        assert content == "npm lock content"
 
 
 def test_default_to_npm_when_no_lock_file():
-    with patch("services.node.detect_package_manager.os.path.exists") as mock_exists:
-        with patch("services.node.detect_package_manager.get_raw_content") as mock_get:
-            mock_exists.return_value = False
-            mock_get.return_value = None
+    with patch(
+        "services.node.detect_package_manager.read_local_file",
+        return_value=None,
+    ):
+        pm, lock_file, content = detect_package_manager(local_dir="/tmp/repo")
 
-            pm, lock_file, content = detect_package_manager(
-                local_dir="/tmp/repo",
-                owner="owner",
-                repo="repo",
-                branch="main",
-                token="token",
-            )
-
-            assert pm == "npm"
-            assert lock_file is None
-            assert content is None
+        assert pm == "npm"
+        assert lock_file is None
+        assert content is None

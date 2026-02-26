@@ -64,11 +64,7 @@ async def run_jest_test(
     repo = base_args["repo"]
     test_script_name = get_test_script_name(clone_dir)
     if test_script_name:
-        branch = base_args.get("new_branch", "")
-        token = base_args.get("token", "")
-        pkg_manager, _, _ = detect_package_manager(
-            clone_dir, owner, repo, branch, token
-        )
+        pkg_manager, _, _ = detect_package_manager(clone_dir)
         base_cmd = [pkg_manager, "run", test_script_name, "--"]
     else:
         base_cmd = [vitest_bin if runner_name == "vitest" else jest_bin]

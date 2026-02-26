@@ -218,14 +218,10 @@ async def handle_new_pr(
     clone_tasks[efs_dir] = asyncio.create_task(
         git_clone_to_efs(efs_dir, clone_url, base_branch)
     )
-    node_ready = await ensure_node_packages(
-        owner_name, owner_id, repo_name, base_branch, token, efs_dir
-    )
+    node_ready = await ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("node: ready=%s", node_ready)
 
-    php_ready = await ensure_php_packages(
-        owner_name, owner_id, repo_name, base_branch, token, efs_dir
-    )
+    php_ready = await ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("php: ready=%s", php_ready)
 
     # Create a usage record
@@ -295,8 +291,7 @@ async def handle_new_pr(
         create_comment(body=description, base_args=base_args)
 
     # Check out the URLs in the PR body
-    reference_file_paths: set[str] = set()
-    reference_contents: list[str] = []
+    reference_files: dict[str, str] = {}
     for url in github_urls:
         comment_body = "Also checking out the URLs in the PR body."
         p += 5
@@ -307,8 +302,7 @@ async def handle_new_pr(
         )
         file_path, content = get_remote_file_content_by_url(url=url, token=token)
         logger.info("```%s\n%s```\n", url, content)
-        reference_file_paths.add(file_path)
-        reference_contents.append(content)
+        reference_files[file_path] = content
 
     today = datetime.now().strftime("%Y-%m-%d")
 
@@ -321,25 +315,33 @@ async def handle_new_pr(
         base_args["impl_file_to_collect_coverage_from"] = impl_file_path
     test_dir_prefixes = repo_settings["test_dir_prefixes"] if repo_settings else []
 
-    # Skip fetching impl_file if already in reference_contents (avoids duplicate)
-    impl_file_content = ""
-    if impl_file_path not in reference_file_paths:
-        impl_file_content = get_raw_content(
-            owner=owner_name,
-            repo=repo_name,
-            file_path=impl_file_path,
-            ref=base_branch,
-            token=token,
-        )
     test_files: dict[str, str] = {}
+    parent = str(Path(impl_file_path).parent)
+    target_dir = parent if parent != "." else None
+
+    set_pr_number(pr_number)
+
+    # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
+    clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
+    base_args["clone_dir"] = clone_dir
+    await prepare_repo_for_work(
+        owner=owner_name,
+        repo=repo_name,
+        pr_branch=new_branch_name,
+        token=token,
+        clone_dir=clone_dir,
+    )
+
+    # Read impl file from local clone and skip if no testable code
+    impl_file_content = (
+        read_local_file(file_path=impl_file_path, base_dir=clone_dir) or ""
+    )
     p += 5
     add_log_message(f"Read target file: `{impl_file_path}`", log_messages)
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)),
         base_args=base_args,
     )
-
-    # Skip files with no testable code (e.g. __init__.py with only a docstring)
     if should_skip_test(impl_file_path, impl_file_content):
         msg = f"Closing PR: `{impl_file_path}` has no testable code (only docstrings, imports, constants, or type definitions)."
         logger.info(msg)
@@ -380,47 +382,8 @@ async def handle_new_pr(
                     base_args=base_args,
                 )
 
-    parent = str(Path(impl_file_path).parent)
-    target_dir = parent if parent != "." else None
-
-    user_input_obj: dict[str, object] = {
-        "today": today,
-        "owner": owner_name,
-        "repo": repo_name,
-        "pr_title": pr_title,
-        "pr_body": pr_body,
-        "impl_file_path": impl_file_path,
-    }
-
-    # Only include non-empty values to reduce token usage
-    if pr_comments:
-        user_input_obj["pr_comments"] = pr_comments
-    if target_dir:
-        user_input_obj["target_dir"] = target_dir
-    if test_dir_prefixes:
-        user_input_obj["test_dir_prefixes"] = test_dir_prefixes
-
-    set_pr_number(pr_number)
-
-    # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
-    clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
-    base_args["clone_dir"] = clone_dir
-    await prepare_repo_for_work(
-        owner=owner_name,
-        repo=repo_name,
-        pr_branch=new_branch_name,
-        token=token,
-        clone_dir=clone_dir,
-    )
-
     # List file tree from local clone (now that clone_dir is available)
     root_files = get_local_file_tree(base_args=base_args, dir_path="")
-    if root_files:
-        user_input_obj["root_files"] = root_files
-    if target_dir:
-        target_dir_files = get_local_file_tree(base_args=base_args, dir_path=target_dir)
-        if target_dir_files:
-            user_input_obj["target_dir_files"] = target_dir_files
 
     # Search for test files in the local clone (/tmp, fast)
     test_file_paths = find_test_files(
@@ -454,7 +417,28 @@ async def handle_new_pr(
 
     logger.info("Test files found: %s", test_file_paths)
 
-    # Build test_files into user_input
+    # Build user input for the agent
+    user_input_obj: dict[str, object] = {
+        "today": today,
+        "owner": owner_name,
+        "repo": repo_name,
+        "pr_title": pr_title,
+        "pr_body": pr_body,
+        "impl_file_path": impl_file_path,
+    }
+    # Only include non-empty values to reduce token usage
+    if pr_comments:
+        user_input_obj["pr_comments"] = pr_comments
+    if target_dir:
+        user_input_obj["target_dir"] = target_dir
+    if test_dir_prefixes:
+        user_input_obj["test_dir_prefixes"] = test_dir_prefixes
+    if root_files:
+        user_input_obj["root_files"] = root_files
+    if target_dir:
+        target_dir_files = get_local_file_tree(base_args=base_args, dir_path=target_dir)
+        if target_dir_files:
+            user_input_obj["target_dir_files"] = target_dir_files
     if include_contents and test_files:
         user_input_obj["test_files"] = test_files
     elif test_file_paths:
@@ -465,17 +449,21 @@ async def handle_new_pr(
             "A test file may exist elsewhere in the repo. Search for it before creating a new one."
         )
 
-    # Create messages for the agent
     user_input = dumps(user_input_obj)
     messages: list[MessageParam] = [{"role": "user", "content": user_input}]
     if impl_file_content:
-        messages.append({"role": "user", "content": impl_file_content})
-    for c in reference_contents:
+        formatted_impl = format_content_with_line_numbers(
+            file_path=impl_file_path, content=impl_file_content
+        )
+        messages.append({"role": "user", "content": formatted_impl})
+    for path, c in reference_files.items():
+        if path == impl_file_path:
+            continue
         messages.append({"role": "user", "content": c})
 
     # Validate files for syntax issues before editing
     files_to_validate = list(
-        {impl_file_path, *reference_file_paths, *test_files.keys()}
+        {impl_file_path, *reference_files.keys(), *test_files.keys()}
     )
     validation_result = await verify_task_is_ready(
         base_args=base_args,

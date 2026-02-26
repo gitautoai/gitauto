@@ -463,6 +463,7 @@ async def test_image_base64_fetch_failed(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -506,6 +507,7 @@ async def test_timeout_approaching_breaks_loop(
     mock_create_empty_commit,
     mock_chat_with_agent,
     mock_get_pr_files,
+    _mock_read_local_file,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -539,6 +541,7 @@ async def test_timeout_approaching_breaks_loop(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -582,6 +585,7 @@ async def test_branch_deleted_breaks_loop(
     mock_create_empty_commit,
     mock_chat_with_agent,
     mock_get_pr_files,
+    _mock_read_local_file,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -615,6 +619,7 @@ async def test_branch_deleted_breaks_loop(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.MAX_ITERATIONS", 10)
 @patch("services.webhook.new_pr_handler.verify_task_is_complete")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
@@ -661,6 +666,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_verify_task_is_complete,
+    _mock_read_local_file,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -790,6 +796,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.MAX_ITERATIONS", 9)
 @patch("services.webhook.new_pr_handler.verify_task_is_complete")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
@@ -836,6 +843,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_verify_task_is_complete,
+    _mock_read_local_file,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -956,6 +964,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -999,6 +1008,7 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_create_empty_commit,
     mock_chat_with_agent,
     mock_get_pr_files,
+    _mock_read_local_file,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -1060,6 +1070,7 @@ async def test_retry_counter_reset_on_successful_loop(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.is_test_file")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
@@ -1105,6 +1116,7 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_is_test_file,
+    _mock_read_local_file,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -1147,6 +1159,7 @@ async def test_non_test_file_skipped_in_header_merge(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.replace_remote_file_content")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
 @patch("services.webhook.new_pr_handler.get_raw_content")
@@ -1198,6 +1211,7 @@ async def test_test_file_header_merge(
     mock_get_raw_content,
     mock_merge_headers,
     mock_replace_remote,
+    _mock_read_local_file,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -1245,6 +1259,7 @@ async def test_test_file_header_merge(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.replace_remote_file_content")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
 @patch("services.webhook.new_pr_handler.get_raw_content")
@@ -1296,6 +1311,7 @@ async def test_test_file_header_merge_no_content(
     mock_get_raw_content,
     mock_merge_headers,
     mock_replace_remote,
+    _mock_read_local_file,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -1342,6 +1358,7 @@ async def test_test_file_header_merge_no_content(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.replace_remote_file_content")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
 @patch("services.webhook.new_pr_handler.get_raw_content")
@@ -1393,6 +1410,7 @@ async def test_test_file_header_merge_no_change(
     mock_get_raw_content,
     mock_merge_headers,
     mock_replace_remote,
+    _mock_read_local_file,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -1443,6 +1461,7 @@ async def test_test_file_header_merge_no_change(
 @patch("services.webhook.new_pr_handler.insert_email_send", return_value=True)
 @patch("services.webhook.new_pr_handler.send_email")
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.get_credits_depleted_email_text")
 @patch("services.webhook.new_pr_handler.get_user")
 @patch("services.webhook.new_pr_handler.get_owner")
@@ -1494,6 +1513,7 @@ async def test_credits_depleted_email_sent(
     mock_get_owner,
     mock_get_user,
     mock_get_email_text,
+    _mock_read_local_file,
     mock_send_email,
     _mock_insert_email_send,
     _mock_update_email_send,
@@ -1547,6 +1567,7 @@ async def test_credits_depleted_email_sent(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.insert_credit")
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -1586,6 +1607,7 @@ async def test_new_pr_handler_token_accumulation(
     mock_create_empty_commit,
     mock_should_bail,
     mock_insert_credit,
+    _mock_read_local_file,
 ):
     """Test that PR handler accumulates tokens correctly and calls update_usage"""
     mock_get_pull_request_files.return_value = []
@@ -1720,6 +1742,7 @@ async def test_new_pr_handler_token_accumulation(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
 @patch("services.webhook.new_pr_handler.insert_credit")
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -1761,6 +1784,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_create_empty_commit,
     mock_should_bail,
     mock_insert_credit,
+    _mock_read_local_file,
 ):
     mock_deconstruct_github_payload.return_value = (
         {
@@ -1964,7 +1988,7 @@ async def test_few_test_files_include_contents_in_prompt(
         "tests/logger.spec.ts",
         "tests/logger.test.ts",
     ]
-    mock_read_local_file.return_value = "const x = 1;"
+    mock_read_local_file.return_value = "function log(msg: string) { console.log(msg); }"
 
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],
@@ -2108,7 +2132,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
 
     # Return 7 test files (>5 threshold)
     mock_find_test_files.return_value = [f"tests/test_logger_{i}.ts" for i in range(7)]
-    mock_read_local_file.return_value = "const x = 1;"
+    mock_read_local_file.return_value = "function log(msg: string) { console.log(msg); }"
 
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],
@@ -2161,5 +2185,5 @@ async def test_many_test_files_include_paths_only_in_prompt(
     assert "test_file_paths" in user_input
     assert "test_files" not in user_input
     assert len(user_input["test_file_paths"]) == 7
-    # Verify read_local_file was NOT called (no contents loaded)
-    mock_read_local_file.assert_not_called()
+    # Verify read_local_file was called only once (for impl file, not for test files)
+    mock_read_local_file.assert_called_once()
