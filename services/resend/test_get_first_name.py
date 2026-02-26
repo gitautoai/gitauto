@@ -3,92 +3,269 @@ import pytest
 from services.resend.get_first_name import get_first_name
 
 
-def test_get_first_name_with_empty_string():
-    """Test that empty string returns 'there'."""
-    result = get_first_name("")
-    assert result == "there"
-
-
-def test_get_first_name_with_single_name():
-    """Test that single name returns the name itself."""
-    result = get_first_name("John")
-    assert result == "John"
-
-
-def test_get_first_name_with_full_name():
-    """Test that full name returns only the first name."""
-    result = get_first_name("John Doe")
-    assert result == "John"
-
-
-def test_get_first_name_with_multiple_names():
-    """Test that multiple names returns only the first name."""
-    result = get_first_name("John Michael Doe")
-    assert result == "John"
-
-
-def test_get_first_name_with_leading_whitespace():
-    """Test that leading whitespace is stripped before processing."""
-    result = get_first_name("  John Doe")
-    assert result == "John"
-
-
-def test_get_first_name_with_trailing_whitespace():
-    """Test that trailing whitespace is stripped before processing."""
-    result = get_first_name("John Doe  ")
-    assert result == "John"
-
-
-def test_get_first_name_with_surrounding_whitespace():
-    """Test that surrounding whitespace is stripped before processing."""
-    result = get_first_name("  John Doe  ")
-    assert result == "John"
-
-
-def test_get_first_name_with_multiple_spaces_between_names():
-    """Test that multiple spaces between names are handled correctly."""
-    result = get_first_name("John    Doe")
-    assert result == "John"
-
-
-def test_get_first_name_with_only_whitespace():
-    """Test that string with only whitespace returns 'there'."""
-    result = get_first_name("   ")
-    assert result == "there"
-
-
-def test_get_first_name_with_tabs_and_newlines():
-    """Test that tabs and newlines are treated as whitespace."""
-    result = get_first_name("\t\nJohn\t\nDoe\t\n")
-    assert result == "John"
-
-
-def test_get_first_name_with_special_characters():
-    """Test that names with special characters are handled correctly."""
-    result = get_first_name("Jean-Pierre Dupont")
-    assert result == "Jean-Pierre"
-
-
 @pytest.mark.parametrize(
     "input_name,expected",
     [
+        # Falsy inputs
         ("", "there"),
         (None, "there"),
         ("   ", "there"),
-        ("Alice", "Alice"),
-        ("Alice Bob", "Alice"),
-        ("Alice Bob Charlie", "Alice"),
-        ("  Alice  Bob  ", "Alice"),
-        ("Mary-Jane Watson", "Mary-Jane"),
+        ("()", "there"),
+        ("  (test)  ", "there"),
+        # Real display names from production
+        ("Ringo De Smet", "Ringo"),
+        ("Narek Gevorgyan", "Narek"),
+        ("Eduardo Gonzalez", "Eduardo"),
+        ("Noah Zoschke", "Noah"),
+        ("Jameson Nash", "Jameson"),
+        ("Dan Haber", "Dan"),
+        ("Hai Rao", "Hai"),
+        ("Alex Chaplinsky", "Alex"),
+        ("Alexander Shapiotko", "Alexander"),
+        ("Tadeu Maia", "Tadeu"),
+        ("Lacy Morrow", "Lacy"),
+        ("Andrew Coven", "Andrew"),
+        ("Nirdesh Dwa", "Nirdesh"),
+        ("Almaz Murzabekov", "Almaz"),
+        ("Misha Druzhinin", "Misha"),
+        ("Chad Pritchett", "Chad"),
+        ("Ariel Kanterewicz", "Ariel"),
+        ("Ronak Bansal", "Ronak"),
+        ("Atouch Mohamed", "Atouch"),
+        ("Masahiro Nakahashi", "Masahiro"),
+        ("Ankit Tolia", "Ankit"),
+        ("Eling Pramuatmaja", "Eling"),
+        ("Josh VanAllen", "Josh"),
+        ("Shlomy Sheps", "Shlomy"),
+        ("Marco Fernandez", "Marco"),
+        ("Tatsuya Nakamura", "Tatsuya"),
+        ("Vladimir de Turckheim", "Vladimir"),
+        ("Peter Somerville", "Peter"),
+        ("Camila Macedo", "Camila"),
+        ("Shinya Takada", "Shinya"),
+        ("Alexander Shcherbakov", "Alexander"),
+        ("Greg Harris", "Greg"),
+        ("Alexey Kuznetsov", "Alexey"),
+        ("Siddhant Badola", "Siddhant"),
+        ("Matt Healy", "Matt"),
+        ("Mayuresh Jakhotia", "Mayuresh"),
+        ("Sushnata Sarkar", "Sushnata"),
+        ("Pierre Collinet", "Pierre"),
+        ("Aleksandr Smyshliaev", "Aleksandr"),
+        ("Ryutaro Sugiyama", "Ryutaro"),
+        ("Aran Leite", "Aran"),
+        ("Brandon Hosley", "Brandon"),
+        ("Mohammad Hossine Rezazadeh", "Mohammad"),
+        ("Zhipeng Luo", "Zhipeng"),
+        ("Adit Chawdhary", "Adit"),
+        ("Thomas Bouffard", "Thomas"),
+        ("Hiroki Tashima", "Hiroki"),
+        ("Satyam Singh Niranjan", "Satyam"),
+        ("Eder Ramos", "Eder"),
+        ("Oersted Brion", "Oersted"),
+        ("Xavier Defrang", "Xavier"),
+        ("Nemoto Masaya", "Nemoto"),
+        ("Matas Mat", "Matas"),
+        ("Arturo Navarro", "Arturo"),
+        ("Marek Küthe", "Marek"),
+        ("Klaudijus Mackonis", "Klaudijus"),
+        ("Pedro Henrique Diniz", "Pedro"),
+        ("Ryo Kobashiri", "Ryo"),
+        ("Sagi Faumi", "Sagi"),
+        ("Keita Katahira", "Keita"),
+        ("Albert Pangilinan", "Albert"),
+        ("Batuhan Celasun", "Batuhan"),
+        ("Sunil Kumar HS", "Sunil"),
+        ("Ohira Shunpei", "Ohira"),
+        ("Chaker Ben Said", "Chaker"),
+        ("David Brochero", "David"),
+        ("Suraj Bhattarai", "Suraj"),
+        ("Nikita Malinovsky", "Nikita"),
+        ("Isaac Kearse", "Isaac"),
+        ("Webster Alk", "Webster"),
+        ("Rohit Mane", "Rohit"),
+        ("Mitsuhiko Yamamoto", "Mitsuhiko"),
+        ("Michael Yao", "Michael"),
+        ("Tai Dang", "Tai"),
+        ("Eita Nawaji", "Eita"),
+        ("Hoàng Phi Hùng", "Hoàng"),
+        ("Ammar Ahmed Butt", "Ammar"),
+        ("Omkar Hankare", "Omkar"),
+        ("Satyam Raj", "Satyam"),
+        ("Marco Kazama", "Marco"),
+        ("Davi Souza", "Davi"),
+        ("Naman Joshi", "Naman"),
+        ("Soo Kim", "Soo"),
+        ("Erick Bueno", "Erick"),
+        ("Ryan Mudryk", "Ryan"),
+        ("Takumi Sasada", "Takumi"),
+        ("Yang Qu", "Yang"),
+        ("Honda Jun", "Honda"),
+        ("Robin Junior Rodriguez Henao", "Robin"),
+        ("Joshua Chennault", "Joshua"),
+        ("Yuma Nunoya", "Yuma"),
+        ("Jeko Paul", "Jeko"),
+        ("Hamza Rebb", "Hamza"),
+        ("Ryan Townsend", "Ryan"),
+        ("Jakhangir Esanov", "Jakhangir"),
+        ("Shuhei Hikosaka", "Shuhei"),
+        ("Mike Harrison", "Mike"),
+        ("Yuya Takemasa", "Yuya"),
+        ("Takahiro Nakagawa", "Takahiro"),
+        ("Matan Coiffman", "Matan"),
+        ("Taichi Masakazu", "Taichi"),
+        ("Masakiyo Nishikawa", "Masakiyo"),
+        ("Akshay Nair A", "Akshay"),
+        ("Girma  Wakeyo", "Girma"),
+        ("Yoshiharu Hirose", "Yoshiharu"),
+        ("Ashley Casey", "Ashley"),
+        ("Kawata Hiroki", "Kawata"),
+        ("Hideaki Shiina", "Hideaki"),
+        ("Oladoye Heritage", "Oladoye"),
+        ("Anadi Mishra", "Anadi"),
+        ("Andrew Li", "Andrew"),
+        ("Diksha Wagh", "Diksha"),
+        ("Calvin Fernandes", "Calvin"),
+        ("Pamela Ardana", "Pamela"),
+        ("Manuel Carter", "Manuel"),
+        ("Débora Lutz", "Débora"),
+        ("Artem Filin", "Artem"),
+        ("Richard Kindler", "Richard"),
+        ("Mirza Asadullah", "Mirza"),
+        ("David Burns", "David"),
+        ("Alex Scott", "Alex"),
+        ("Muhammad Anas", "Muhammad"),
+        ("Mohammad Al Amin Sheikh", "Mohammad"),
+        ("David Chen", "David"),
+        ("Fre Dy", "Fre"),
+        ("Alexis Placencia - the schizo", "Alexis"),
+        # Single display names
+        ("Memory", "Memory"),
+        ("Glow", "Glow"),
+        ("Yumenosuke", "Yumenosuke"),
+        ("Holden", "Holden"),
+        ("Roman", "Roman"),
+        ("Yaovi", "Yaovi"),
+        ("Nils", "Nils"),
+        ("David", "David"),
+        ("Lg", "Lg"),
+        ("Sam", "Sam"),
+        ("Samzong", "Samzong"),
+        ("Daemon", "Daemon"),
+        ("Yuns", "Yuns"),
+        ("Flasic", "Flasic"),
+        ("Miguel", "Miguel"),
+        ("Specs", "Specs"),
+        ("Azit", "Azit"),
+        ("Vandy", "Vandy"),
+        ("Armand", "Armand"),
+        ("Young", "Young"),
+        ("Abhi", "Abhi"),
+        ("Brandon", "Brandon"),
+        ("Kazumi", "Kazumi"),
+        ("Kit", "Kit"),
+        ("Mathis", "Mathis"),
+        ("Corazon", "Corazon"),
+        ("Death", "Death"),
+        ("Eric", "Eric"),
+        ("Yuta", "Yuta"),
+        ("Jenny", "Jenny"),
+        ("Cody", "Cody"),
+        ("Victor", "Victor"),
+        ("Mat", "Mat"),
+        ("Oriya", "Oriya"),
+        # CJK and unicode names
+        ("嘤嘤", "嘤嘤"),
+        ("何鑫", "何鑫"),
+        ("纯粹", "纯粹"),
+        ("高森松太郎", "高森松太郎"),
+        ("André Goulart Nogueira", "André"),
         ("José María García", "José"),
-        ("李小明 李", "李小明"),
+        ("Müller Schmidt", "Müller"),
+        ("Nendō", "Nendō"),
+        # Parentheses
+        ("Hiroshi (Wes) Nishio", "Hiroshi"),
+        ("(Mr.) Noah Zoschke", "Noah"),
+        ("Dan Haber (Jr.)", "Dan"),
+        ("(Nickname)", "there"),
+        # Title/initial prefix skipping
+        ("Dr. John Doe", "John"),
+        ("L. Dayrit", "Dayrit"),
+        ("Milind A. Joshi", "Milind"),
+        # Dot-separated handles
+        ("Frater.nul", "Frater"),
+        ("M.Rama Karthik", "Rama"),
+        # Handle-style display names
+        ("Homero CA", "Homero"),
+        ("AdamN", "AdamN"),
+        ("BlackbriX", "BlackbriX"),
+        # Usernames (no display name) — title-cased
+        ("fourcolors", "Fourcolors"),
+        ("sree", "Sree"),
+        ("Carsaig", "Carsaig"),
+        ("Efreak", "Efreak"),
+        ("Hexaf", "Hexaf"),
+        ("scherenhaenden", "Scherenhaenden"),
+        ("atriede", "Atriede"),
+        ("keeeener", "Keeeener"),
+        ("Jellebels", "Jellebels"),
+        ("lordmage", "Lordmage"),
+        ("seigot", "Seigot"),
+        ("koheitech", "Koheitech"),
+        ("mozzaru", "Mozzaru"),
+        # Hyphenated usernames — take first segment
+        ("cuong-tran", "Cuong"),
+        ("toshimasa-sekine", "Toshimasa"),
+        ("kana-shii", "Kana"),
+        ("hazem-hosny", "Hazem"),
+        ("matthew-heartful", "Matthew"),
+        ("ken-shiozawa", "Ken"),
+        ("airi-nakamura", "Airi"),
+        ("kawaguchi-ryosuke", "Kawaguchi"),
+        ("Three-summers", "Three"),
+        # Multi-token hyphenated names — keep hyphen
+        ("Kaelig Deloumeau-Prigent", "Kaelig"),
+        ("Mary-Jane Watson", "Mary-Jane"),
+        ("Jean-Pierre Dupont", "Jean-Pierre"),
         ("O'Connor Smith", "O'Connor"),
-        ("van der Berg", "van"),
-        ("123 456", "123"),
-        ("@username display", "@username"),
+        # Usernames with digits — return "there"
+        ("afc163", "there"),
+        ("apis3445", "there"),
+        ("parthi2929", "there"),
+        ("w7989363", "there"),
+        ("tbowman01", "there"),
+        ("Dark25", "there"),
+        ("broli95", "there"),
+        ("St119848", "there"),
+        ("RyoFuji619", "there"),
+        ("Khan285", "there"),
+        ("Guts98", "there"),
+        ("Itz4Blitz", "there"),
+        ("Gugan22", "there"),
+        ("Coldtrigon66", "there"),
+        ("ONE223", "there"),
+        ("niraj876", "there"),
+        ("Mr2Cool", "there"),
+        ("Elegy233", "there"),
+        ("93Pd9s8Jt", "there"),
+        ("AhJi26", "there"),
+        ("NoFace33", "there"),
+        ("curry798", "there"),
+        ("Sket1374@Gmail.Com", "there"),
+        ("Coolguy1211", "there"),
+        ("Toyro967", "there"),
+        ("devils6669", "there"),
+        ("R4fa3l2008", "there"),
+        ("Mehandsome9", "there"),
+        ("psluca911", "there"),
+        ("Esequiel122", "there"),
+        ("Da3m0N0", "there"),
+        ("MilosKerkez123", "there"),
+        ("2025ss", "there"),
+        ("Lamed12", "there"),
+        ("alzaem3000", "there"),
     ],
 )
-def test_get_first_name_parametrized(input_name, expected):
-    """Test various input scenarios with parametrized test cases."""
+def test_get_first_name(input_name, expected):
     result = get_first_name(input_name)
     assert result == expected
