@@ -173,7 +173,7 @@ def test_appends_to_existing_overrides(mock_replace: MagicMock):
     assert updated["overrides"][1]["files"] == TEST_FILE_GLOBS
 
 
-@patch("services.eslint.ensure_eslint_relaxed_for_tests.read_file_content")
+@patch("services.eslint.ensure_eslint_relaxed_for_tests.read_local_file")
 @patch("services.eslint.ensure_eslint_relaxed_for_tests.replace_remote_file_content")
 def test_wraps_in_package_json(mock_replace: MagicMock, mock_read: MagicMock):
     eslint_config_content = {"rules": {"semi": "error"}}
