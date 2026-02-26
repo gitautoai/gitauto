@@ -463,7 +463,10 @@ async def test_image_base64_fetch_failed(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -541,7 +544,10 @@ async def test_timeout_approaching_breaks_loop(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -619,7 +625,10 @@ async def test_branch_deleted_breaks_loop(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.MAX_ITERATIONS", 10)
 @patch("services.webhook.new_pr_handler.verify_task_is_complete")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
@@ -796,7 +805,10 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.MAX_ITERATIONS", 9)
 @patch("services.webhook.new_pr_handler.verify_task_is_complete")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
@@ -964,7 +976,10 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -1070,7 +1085,10 @@ async def test_retry_counter_reset_on_successful_loop(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.is_test_file")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
@@ -1159,7 +1177,10 @@ async def test_non_test_file_skipped_in_header_merge(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.replace_remote_file_content")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
 @patch("services.webhook.new_pr_handler.get_raw_content")
@@ -1259,7 +1280,10 @@ async def test_test_file_header_merge(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.replace_remote_file_content")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
 @patch("services.webhook.new_pr_handler.get_raw_content")
@@ -1358,7 +1382,10 @@ async def test_test_file_header_merge_no_content(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.replace_remote_file_content")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
 @patch("services.webhook.new_pr_handler.get_raw_content")
@@ -1461,7 +1488,10 @@ async def test_test_file_header_merge_no_change(
 @patch("services.webhook.new_pr_handler.insert_email_send", return_value=True)
 @patch("services.webhook.new_pr_handler.send_email")
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.get_credits_depleted_email_text")
 @patch("services.webhook.new_pr_handler.get_user")
 @patch("services.webhook.new_pr_handler.get_owner")
@@ -1567,7 +1597,10 @@ async def test_credits_depleted_email_sent(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.insert_credit")
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -1742,7 +1775,10 @@ async def test_new_pr_handler_token_accumulation(
 
 
 @pytest.mark.asyncio
-@patch("services.webhook.new_pr_handler.read_local_file", return_value="def calculate():\n    return 1 + 2\n")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
 @patch("services.webhook.new_pr_handler.insert_credit")
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -1988,7 +2024,9 @@ async def test_few_test_files_include_contents_in_prompt(
         "tests/logger.spec.ts",
         "tests/logger.test.ts",
     ]
-    mock_read_local_file.return_value = "function log(msg: string) { console.log(msg); }"
+    mock_read_local_file.return_value = (
+        "function log(msg: string) { console.log(msg); }"
+    )
 
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],
@@ -2132,7 +2170,9 @@ async def test_many_test_files_include_paths_only_in_prompt(
 
     # Return 7 test files (>5 threshold)
     mock_find_test_files.return_value = [f"tests/test_logger_{i}.ts" for i in range(7)]
-    mock_read_local_file.return_value = "function log(msg: string) { console.log(msg); }"
+    mock_read_local_file.return_value = (
+        "function log(msg: string) { console.log(msg); }"
+    )
 
     mock_chat_with_agent.return_value = AgentResult(
         messages=[],

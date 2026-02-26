@@ -66,9 +66,7 @@ def base_args():
 
 
 def test_get_eslint_config_finds_eslintrc_json(base_args):
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == ".eslintrc.json":
@@ -92,9 +90,7 @@ def test_get_eslint_config_finds_eslintrc_js(base_args):
   }
 };"""
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == ".eslintrc.js":
@@ -115,9 +111,7 @@ def test_get_eslint_config_finds_eslintrc_yml(base_args):
 rules:
   no-console: warn"""
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == ".eslintrc.yml":
@@ -138,9 +132,7 @@ def test_get_eslint_config_finds_eslintrc_yaml(base_args):
 rules:
   no-console: error"""
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == ".eslintrc.yaml":
@@ -157,9 +149,7 @@ rules:
 
 
 def test_get_eslint_config_finds_eslintrc(base_args):
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == ".eslintrc":
@@ -187,9 +177,7 @@ def test_get_eslint_config_finds_eslint_config_js(base_args):
   }
 };"""
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "eslint.config.js":
@@ -213,9 +201,7 @@ def test_get_eslint_config_finds_eslint_config_mjs(base_args):
   }
 };"""
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "eslint.config.mjs":
@@ -239,9 +225,7 @@ def test_get_eslint_config_finds_eslint_config_cjs(base_args):
   }
 };"""
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "eslint.config.cjs":
@@ -268,9 +252,7 @@ def test_get_eslint_config_finds_in_package_json(base_args):
   }
 }"""
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "package.json":
@@ -297,9 +279,7 @@ def test_get_eslint_config_package_json_without_eslint_config(base_args):
   }
 }"""
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "package.json":
@@ -314,9 +294,7 @@ def test_get_eslint_config_package_json_without_eslint_config(base_args):
 
 
 def test_get_eslint_config_not_found(base_args):
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
         mock_read.return_value = None
 
         result = get_eslint_config(base_args)
@@ -325,9 +303,7 @@ def test_get_eslint_config_not_found(base_args):
 
 
 def test_get_eslint_config_priority_order(base_args):
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == ".eslintrc.js":
@@ -345,9 +321,7 @@ def test_get_eslint_config_priority_order(base_args):
 
 
 def test_get_eslint_config_tries_all_config_files(base_args):
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
         mock_read.return_value = None
 
         result = get_eslint_config(base_args)
@@ -359,9 +333,7 @@ def test_get_eslint_config_tries_all_config_files(base_args):
 def test_get_eslint_config_with_empty_package_json(base_args):
     package_json_content = "{}"
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "package.json":
@@ -396,9 +368,7 @@ def test_get_eslint_config_with_complex_eslint_config_in_package_json(base_args)
   }
 }"""
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "package.json":
@@ -420,9 +390,7 @@ def test_get_eslint_config_with_complex_eslint_config_in_package_json(base_args)
 
 
 def test_get_eslint_config_handles_exception_gracefully(base_args):
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
         mock_read.side_effect = Exception("Network error")
 
         result = get_eslint_config(base_args)
@@ -433,9 +401,7 @@ def test_get_eslint_config_handles_exception_gracefully(base_args):
 def test_get_eslint_config_handles_json_decode_error(base_args):
     invalid_json = "{ invalid json content"
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "package.json":
@@ -451,9 +417,7 @@ def test_get_eslint_config_handles_json_decode_error(base_args):
 
 def test_get_eslint_config_first_found_wins(base_args):
     """Test that flat configs are checked before legacy configs."""
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "eslint.config.mjs":
@@ -483,9 +447,7 @@ def test_get_eslint_config_skips_to_package_json_when_no_config_files(base_args)
   }
 }"""
 
-    with patch(
-        "services.github.files.get_eslint_config.read_local_file"
-    ) as mock_read:
+    with patch("services.github.files.get_eslint_config.read_local_file") as mock_read:
         call_count = 0
 
         def side_effect(file_name, **kwargs):
