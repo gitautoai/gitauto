@@ -5,7 +5,6 @@ from services.github.users.get_user_public_email import get_user_public_info
 from services.supabase.installations.is_installation_valid import is_installation_valid
 from services.supabase.users.upsert_user import upsert_user
 from services.webhook.process_repositories import process_repositories
-from services.webhook.setup_handler import setup_handler
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import set_trigger
 
@@ -58,12 +57,4 @@ async def handle_installation_repos_added(
         user_name=sender_name,
     )
 
-    # Auto-create coverage workflow PR when a single repo is added
-    if repositories and len(repositories) == 1:
-        await setup_handler(
-            owner_name=owner_name,
-            repo_name=repositories[0]["name"],
-            token=token,
-            sender_id=sender_id,
-            sender_name=sender_name,
-        )
+    # Don't auto-trigger setup_handler here. When users add many repos at once, GitHub sends a separate webhook per repo, each with len(repositories_added)==1, which would create coverage PRs for every repo. Users can trigger setup from the website button instead.
