@@ -656,6 +656,12 @@ async def handle_check_suite(
         ):
             break
 
+        # Re-check trigger_on_test_failure in case it was disabled during execution
+        refreshed_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+        if not refreshed_settings or not refreshed_settings.get("trigger_on_test_failure"):
+            logger.info("trigger_on_test_failure disabled during execution, stopping")
+            break
+
         # Safety check: Stop if older active request exists (race condition prevention)
         older_active_request = (
             check_older_active_test_failure_request(
