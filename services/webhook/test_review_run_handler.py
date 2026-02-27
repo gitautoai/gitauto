@@ -34,7 +34,10 @@ def mock_review_comment_payload():
             "body": "This PR adds a new feature to the codebase",
             "url": "https://api.github.com/repos/test-owner/test-repo/pulls/123",
             "user": {"login": "gitauto-ai[bot]"},
-            "head": {"ref": f"{PRODUCT_ID}/dashboard-20250101-155924-Ab1C", "sha": "abc123def456"},
+            "head": {
+                "ref": f"{PRODUCT_ID}/dashboard-20250101-155924-Ab1C",
+                "sha": "abc123def456",
+            },
             "base": {"ref": "main"},
         },
         "repository": {

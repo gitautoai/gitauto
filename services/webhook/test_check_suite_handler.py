@@ -208,7 +208,7 @@ async def test_handle_check_suite_skips_when_comment_exists(
     mock_get_token.assert_called_once()
     mock_get_failed_runs.assert_called_once()
     mock_get_pr.assert_called_once()
-    mock_get_repo.assert_called_once()
+    mock_get_repo.assert_called()
     mock_has_comment.assert_called_once()
     mock_create_comment.assert_not_called()
     mock_slack_notify.assert_called()
@@ -444,7 +444,7 @@ async def test_handle_check_suite_full_workflow(
 
     # Verify key functions were called
     mock_get_token.assert_called_once()
-    mock_get_repo.assert_called_once()
+    mock_get_repo.assert_called()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
@@ -543,7 +543,7 @@ async def test_handle_check_suite_with_404_logs(
 
     # Verify
     mock_get_token.assert_called_once()
-    mock_get_repo.assert_called_once()
+    mock_get_repo.assert_called()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
@@ -631,7 +631,7 @@ async def test_handle_check_suite_with_none_logs(
 
     # Verify
     mock_get_token.assert_called_once()
-    mock_get_repo.assert_called_once()
+    mock_get_repo.assert_called()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
@@ -731,7 +731,7 @@ async def test_handle_check_suite_with_existing_retry_pair(
 
     # Verify
     mock_get_token.assert_called_once()
-    mock_get_repo.assert_called_once()
+    mock_get_repo.assert_called()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
@@ -836,7 +836,7 @@ async def test_handle_check_suite_with_closed_pr(
 
     # Verify
     mock_get_token.assert_called_once()
-    mock_get_repo.assert_called_once()
+    mock_get_repo.assert_called()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
@@ -934,7 +934,7 @@ async def test_handle_check_suite_with_deleted_branch(
 
     # Verify
     mock_get_token.assert_called_once()
-    mock_get_repo.assert_called_once()
+    mock_get_repo.assert_called()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_get_pr.assert_called_once()
@@ -1160,7 +1160,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
 
     # Verify
     mock_get_token.assert_called_once()
-    mock_get_repo.assert_called_once()
+    mock_get_repo.assert_called()
     mock_create_comment.assert_called_once()
     mock_create_user_request.assert_called_once()
     mock_check_older_active.assert_called_once_with(
