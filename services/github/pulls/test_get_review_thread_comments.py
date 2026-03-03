@@ -4,7 +4,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 from gql.transport.exceptions import TransportQueryError
-from services.github.pulls.get_review_thread_comments import get_review_thread_comments
+from services.github.pulls.get_review_thread_comments import (
+    get_review_thread_comments,
+)
 
 
 @pytest.fixture
@@ -39,6 +41,7 @@ def sample_review_threads_response():
                 "reviewThreads": {
                     "nodes": [
                         {
+                            "isResolved": False,
                             "comments": {
                                 "nodes": [
                                     {
@@ -54,9 +57,10 @@ def sample_review_threads_response():
                                         "createdAt": "2023-01-01T11:00:00Z",
                                     },
                                 ]
-                            }
+                            },
                         },
                         {
+                            "isResolved": False,
                             "comments": {
                                 "nodes": [
                                     {
@@ -66,7 +70,7 @@ def sample_review_threads_response():
                                         "createdAt": "2023-01-01T12:00:00Z",
                                     }
                                 ]
-                            }
+                            },
                         },
                     ]
                 }
@@ -100,7 +104,7 @@ def test_get_review_thread_comments_success_finds_matching_comment(
             "createdAt": "2023-01-01T11:00:00Z",
         },
     ]
-    assert result == expected_comments
+    assert result.comments == expected_comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -116,7 +120,7 @@ def test_get_review_thread_comments_comment_not_found_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert not result
+    assert not result.comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -132,7 +136,7 @@ def test_get_review_thread_comments_no_review_threads_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert not result
+    assert not result.comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -152,7 +156,7 @@ def test_get_review_thread_comments_empty_thread_comments_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert not result
+    assert not result.comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -168,7 +172,7 @@ def test_get_review_thread_comments_repository_not_found_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert not result
+    assert not result.comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -184,7 +188,7 @@ def test_get_review_thread_comments_pull_request_not_found_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert not result
+    assert not result.comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -199,7 +203,7 @@ def test_get_review_thread_comments_empty_response_returns_empty_list(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert not result
+    assert not result.comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -265,7 +269,7 @@ def test_get_review_thread_comments_handles_graphql_exception_returns_empty_list
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert not result
+        assert not result.comments
 
 
 def test_get_review_thread_comments_handles_client_execute_exception_returns_empty_list(
@@ -283,7 +287,7 @@ def test_get_review_thread_comments_handles_client_execute_exception_returns_emp
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert not result
+        assert not result.comments
 
 
 def test_get_review_thread_comments_with_different_parameters(mock_graphql_client):
@@ -331,7 +335,7 @@ def test_get_review_thread_comments_with_different_parameters(mock_graphql_clien
             "createdAt": "2023-12-01T15:30:00Z",
         }
     ]
-    assert result == expected_comments
+    assert result.comments == expected_comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -356,7 +360,7 @@ def test_get_review_thread_comments_malformed_response_structure(
 
         result = get_review_thread_comments(**sample_params)
 
-        assert not result
+        assert not result.comments
         mock_graphql_client.execute.assert_called_once()
 
 
@@ -405,7 +409,7 @@ def test_get_review_thread_comments_missing_comment_fields(
             "createdAt": None,
         },
     ]
-    assert result == expected_comments
+    assert result.comments == expected_comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -495,7 +499,7 @@ def test_get_review_thread_comments_multiple_threads_finds_correct_one(
             "createdAt": "2023-01-01T12:00:00Z",
         },
     ]
-    assert result == expected_comments
+    assert result.comments == expected_comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -523,7 +527,7 @@ def test_get_review_thread_comments_thread_with_missing_comments_structure(
     result = get_review_thread_comments(**sample_params)
 
     # Assert
-    assert not result
+    assert not result.comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -545,7 +549,7 @@ def test_get_review_thread_comments_non_dict_result_from_client(
 
         result = get_review_thread_comments(**sample_params)
 
-        assert not result
+        assert not result.comments
         mock_graphql_client.execute.assert_called_once()
 
 
@@ -590,7 +594,7 @@ def test_get_review_thread_comments_non_dict_threads_in_nodes(
             "createdAt": "2023-01-01T10:00:00Z",
         }
     ]
-    assert result == expected_comments
+    assert result.comments == expected_comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -635,7 +639,7 @@ def test_get_review_thread_comments_non_dict_comments_in_nodes(
             "createdAt": "2023-01-01T10:00:00Z",
         }
     ]
-    assert result == expected_comments
+    assert result.comments == expected_comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -670,7 +674,7 @@ def test_get_review_thread_comments_comment_without_id_field(
     result = get_review_thread_comments(**sample_params)
 
     # Should return empty list since no comment matches the target comment_node_id
-    assert not result
+    assert not result.comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -715,7 +719,7 @@ def test_get_review_thread_comments_mixed_valid_invalid_threads(
             "createdAt": "2023-01-01T10:00:00Z",
         }
     ]
-    assert result == expected_comments
+    assert result.comments == expected_comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -769,7 +773,7 @@ def test_get_review_thread_comments_empty_string_comment_id(
             "createdAt": "2023-01-01T11:00:00Z",
         },
     ]
-    assert result == expected_comments
+    assert result.comments == expected_comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -824,7 +828,7 @@ def test_get_review_thread_comments_first_thread_matches(
             "createdAt": "2023-01-01T10:00:00Z",
         }
     ]
-    assert result == expected_comments
+    assert result.comments == expected_comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -848,7 +852,7 @@ def test_get_review_thread_comments_parameter_validation():
             token="ghp_very_long_token_string_with_special_characters_123456789",
         )
 
-        assert not result
+        assert not result.comments
         mock_get_client.assert_called_once_with(
             "ghp_very_long_token_string_with_special_characters_123456789"
         )
@@ -869,7 +873,7 @@ def test_get_review_thread_comments_handles_attribute_error_returns_empty_list(
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert not result
+        assert not result.comments
 
 
 def test_get_review_thread_comments_handles_key_error_returns_empty_list(
@@ -887,7 +891,7 @@ def test_get_review_thread_comments_handles_key_error_returns_empty_list(
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert not result
+        assert not result.comments
 
 
 def test_get_review_thread_comments_handles_type_error_returns_empty_list(
@@ -905,7 +909,7 @@ def test_get_review_thread_comments_handles_type_error_returns_empty_list(
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert not result
+        assert not result.comments
 
 
 def test_get_review_thread_comments_handles_json_decode_error_returns_empty_list(
@@ -927,7 +931,7 @@ def test_get_review_thread_comments_handles_json_decode_error_returns_empty_list
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert not result
+        assert not result.comments
 
 
 def test_get_review_thread_comments_handles_http_error_returns_empty_list(
@@ -953,7 +957,7 @@ def test_get_review_thread_comments_handles_http_error_returns_empty_list(
         result = get_review_thread_comments(**sample_params)
 
         # Assert
-        assert not result
+        assert not result.comments
 
 
 def test_get_review_thread_comments_with_none_comment_node_id(
@@ -968,7 +972,7 @@ def test_get_review_thread_comments_with_none_comment_node_id(
     result = get_review_thread_comments(**sample_params)
 
     # Assert - should return empty list since None won't match any comment id
-    assert not result
+    assert not result.comments
     mock_graphql_client.execute.assert_called_once()
 
 
@@ -1014,5 +1018,54 @@ def test_get_review_thread_comments_with_empty_comment_node_id(
             "createdAt": "2023-01-01T10:00:00Z",
         }
     ]
-    assert result == expected_comments
+    assert result.comments == expected_comments
+    mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_returns_is_resolved_true(
+    mock_graphql_client, sample_params
+):
+    """Test that is_resolved=True is returned when the thread is resolved."""
+    response = {
+        "repository": {
+            "pullRequest": {
+                "reviewThreads": {
+                    "nodes": [
+                        {
+                            "isResolved": True,
+                            "comments": {
+                                "nodes": [
+                                    {
+                                        "id": "MDEyOklzc3VlQ29tbWVudDEyMzQ1Njc4OQ==",
+                                        "author": {"login": "user1"},
+                                        "body": "This is resolved",
+                                        "createdAt": "2023-01-01T10:00:00Z",
+                                    }
+                                ]
+                            },
+                        }
+                    ]
+                }
+            }
+        }
+    }
+    mock_graphql_client.execute.return_value = response
+
+    result = get_review_thread_comments(**sample_params)
+
+    assert result.is_resolved is True
+    assert len(result.comments) == 1
+    mock_graphql_client.execute.assert_called_once()
+
+
+def test_get_review_thread_comments_returns_is_resolved_false(
+    mock_graphql_client, sample_params, sample_review_threads_response
+):
+    """Test that is_resolved=False is returned when the thread is not resolved."""
+    mock_graphql_client.execute.return_value = sample_review_threads_response
+
+    result = get_review_thread_comments(**sample_params)
+
+    assert result.is_resolved is False
+    assert len(result.comments) == 2
     mock_graphql_client.execute.assert_called_once()

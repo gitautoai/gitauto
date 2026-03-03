@@ -120,13 +120,19 @@ async def handle_review_run(
             sender_info.email = email
 
     # Get all comments in the review thread
-    thread_comments = get_review_thread_comments(
+    thread_result = get_review_thread_comments(
         owner=owner_name,
         repo=repo_name,
         pr_number=pr_number,
         comment_node_id=review_node_id,
         token=token,
     )
+    thread_comments = thread_result.comments
+
+    # Skip if the review thread is already resolved
+    if thread_result.is_resolved:
+        logger.info("Ignoring review comment on already-resolved thread")
+        return
 
     # If a bot posted this comment AND GitAuto already replied in the same thread, skip to prevent infinite bot-to-bot loops. But if GitAuto hasn't replied yet, process it (e.g. Devin's first review comment is valuable feedback).
     if comment_author_is_bot and thread_comments:
@@ -341,6 +347,18 @@ async def handle_review_run(
         ):
             break
 
+        # Check if the review thread was resolved while we were working
+        thread_check = get_review_thread_comments(
+            owner=owner_name,
+            repo=repo_name,
+            pr_number=pr_number,
+            comment_node_id=review_node_id,
+            token=token,
+        )
+        if thread_check.is_resolved:
+            logger.info("Review thread was resolved during execution, stopping")
+            break
+
         # Call the agent to explore the codebase and commit changes
         result = await chat_with_agent(
             messages=messages,
@@ -386,20 +404,12 @@ async def handle_review_run(
         )
     create_empty_commit(base_args=base_args)
 
-    # Use the agent's own explanation as the final reply instead of canned text
+    # Use the agent's own explanation as the final reply
     if completion_reason:
-        final_reply = completion_reason
-    elif is_completed:
-        final_reply = "Resolved the feedback."
-    else:
-        final_reply = "I tried to address the feedback but verification still shows errors. Please review the changes."
-
-    if comment_author_is_bot:
-        # For bots: post a single reply (no prior comment was created)
-        reply_to_comment(base_args=base_args, body=final_reply)
-    else:
-        # For humans: update the existing progress comment with the final reply
-        update_comment(body=final_reply, base_args=base_args)
+        if comment_author_is_bot:
+            reply_to_comment(base_args=base_args, body=completion_reason)
+        else:
+            update_comment(body=completion_reason, base_args=base_args)
 
     # Update usage record
     end_time = time.time()
