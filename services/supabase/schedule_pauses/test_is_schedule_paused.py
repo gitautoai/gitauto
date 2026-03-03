@@ -98,21 +98,29 @@ class TestIsSchedulePausedIntegration:
         pause_start = (now - timedelta(hours=1)).isoformat()
         pause_end = (now + timedelta(hours=1)).isoformat()
 
-        row = supabase.table("schedule_pauses").insert({
-            "owner_id": owner_id,
-            "repo_id": repo_id,
-            "pause_start": pause_start,
-            "pause_end": pause_end,
-            "reason": "integration test",
-            "created_by": "0:test",
-            "updated_by": "0:test",
-        }).execute()
+        row = (
+            supabase.table("schedule_pauses")
+            .insert(
+                {
+                    "owner_id": owner_id,
+                    "repo_id": repo_id,
+                    "pause_start": pause_start,
+                    "pause_end": pause_end,
+                    "reason": "integration test",
+                    "created_by": "0:test",
+                    "updated_by": "0:test",
+                }
+            )
+            .execute()
+        )
 
         try:
             result = is_schedule_paused(owner_id=owner_id, repo_id=repo_id)
             assert result is True
         finally:
-            supabase.table("schedule_pauses").delete().eq("id", row.data[0]["id"]).execute()
+            supabase.table("schedule_pauses").delete().eq(
+                "id", row.data[0]["id"]
+            ).execute()
 
     def test_returns_false_for_nonexistent_owner(self):
         result = is_schedule_paused(owner_id=999999999, repo_id=999999999)

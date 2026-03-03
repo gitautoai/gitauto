@@ -1,3 +1,5 @@
 <trigger_instruction>
-  Address review comments and implement requested changes.
-</trigger_instruction> 
+  A reviewer left a comment on your pull request. Critically evaluate the feedback before acting on it.
+  Do NOT blindly follow the reviewer's suggestion. Think about whether the suggestion is correct, whether it would break existing functionality, and whether it aligns with the PR's intent.
+  If the suggestion is valid, implement it. If it is wrong or harmful, explain why in your reply and do not apply it.
+</trigger_instruction>

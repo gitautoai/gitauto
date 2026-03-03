@@ -144,7 +144,16 @@ class Credits(TypedDict):
     id: int
     owner_id: int
     amount_usd: int
-    transaction_type: Literal["purchase", "usage", "expiration", "refund", "auto_reload", "trial", "grant", "salvage"]
+    transaction_type: Literal[
+        "purchase",
+        "usage",
+        "expiration",
+        "refund",
+        "auto_reload",
+        "trial",
+        "grant",
+        "salvage",
+    ]
     stripe_payment_intent_id: str | None
     usage_id: int | None
     expires_at: datetime.datetime | None
@@ -154,7 +163,16 @@ class Credits(TypedDict):
 class CreditsInsert(TypedDict):
     owner_id: int
     amount_usd: int
-    transaction_type: Literal["purchase", "usage", "expiration", "refund", "auto_reload", "trial", "grant", "salvage"]
+    transaction_type: Literal[
+        "purchase",
+        "usage",
+        "expiration",
+        "refund",
+        "auto_reload",
+        "trial",
+        "grant",
+        "salvage",
+    ]
     stripe_payment_intent_id: NotRequired[str | None]
     usage_id: NotRequired[int | None]
     expires_at: NotRequired[datetime.datetime | None]
@@ -167,6 +185,8 @@ class EmailSends(TypedDict):
     email_type: str
     resend_email_id: str | None
     created_at: datetime.datetime
+    replied_at: datetime.datetime | None
+    updated_at: datetime.datetime | None
 
 
 class EmailSendsInsert(TypedDict):
@@ -174,6 +194,7 @@ class EmailSendsInsert(TypedDict):
     owner_name: str
     email_type: str
     resend_email_id: NotRequired[str | None]
+    replied_at: NotRequired[datetime.datetime | None]
 
 
 class Installations(TypedDict):
@@ -261,16 +282,48 @@ class MarketingCoverageInsert(TypedDict):
     lines: NotRequired[int | None]
 
 
-class MarketingSearchHistory(TypedDict):
+class MarketingEmailQueue(TypedDict):
+    id: int
+    to_email: str
+    subject: str
+    owner_name: str
+    repo_name: str
+    scheduled_at: datetime.datetime
+    sent_at: datetime.datetime | None
+    created_at: datetime.datetime
+    draft_id: str
+    slack_thread_ts: str | None
+
+
+class MarketingEmailQueueInsert(TypedDict):
+    to_email: str
+    subject: str
+    owner_name: str
+    repo_name: str
+    scheduled_at: datetime.datetime
+    sent_at: NotRequired[datetime.datetime | None]
+    draft_id: str
+    slack_thread_ts: NotRequired[str | None]
+
+
+class MarketingRepoSearchHistory(TypedDict):
     id: int
     owner_id: int
     owner_name: str
+    repo_id: int
+    repo_name: str
     created_at: datetime.datetime
+    status: str
+    stars: int | None
 
 
-class MarketingSearchHistoryInsert(TypedDict):
+class MarketingRepoSearchHistoryInsert(TypedDict):
     owner_id: int
     owner_name: str
+    repo_id: int
+    repo_name: str
+    status: str
+    stars: NotRequired[int | None]
 
 
 class MarketingUsers(TypedDict):
