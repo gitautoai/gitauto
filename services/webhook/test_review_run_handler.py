@@ -11,6 +11,7 @@ from config import PRODUCT_ID
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
 from services.chat_with_agent import AgentResult
+from services.github.pulls.get_review_thread_comments import ReviewThreadResult
 from services.webhook.review_run_handler import handle_review_run
 
 
@@ -107,13 +108,15 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     mock_get_token.return_value = "ghs_test_token"
     mock_get_repo.return_value = {"id": 98765}
     mock_create_user_request.return_value = 777  # This is the usage_id
-    mock_get_thread_comments.return_value = [
-        {
-            "author": {"login": "test-reviewer"},
-            "body": "This function could be optimized. Consider using a more efficient algorithm.",
-            "createdAt": "2025-09-17T12:00:00Z",
-        }
-    ]
+    mock_get_thread_comments.return_value = ReviewThreadResult(
+        comments=[
+            {
+                "author": {"login": "test-reviewer"},
+                "body": "This function could be optimized. Consider using a more efficient algorithm.",
+                "createdAt": "2025-09-17T12:00:00Z",
+            }
+        ]
+    )
     mock_reply_to_comment.return_value = "http://comment-url"
     mock_get_file_content.return_value = (
         "def main():\n    # File content here\n    pass"
@@ -220,13 +223,15 @@ async def test_review_run_handler_max_iterations_forces_verification(
     mock_get_token.return_value = "ghs_test_token"
     mock_get_repo.return_value = {"id": 98765}
     mock_create_user_request.return_value = 777
-    mock_get_thread_comments.return_value = [
-        {
-            "author": {"login": "test-reviewer"},
-            "body": "This function could be optimized.",
-            "createdAt": "2025-09-17T12:00:00Z",
-        }
-    ]
+    mock_get_thread_comments.return_value = ReviewThreadResult(
+        comments=[
+            {
+                "author": {"login": "test-reviewer"},
+                "body": "This function could be optimized.",
+                "createdAt": "2025-09-17T12:00:00Z",
+            }
+        ]
+    )
     mock_reply_to_comment.return_value = "http://comment-url"
     mock_get_file_content.return_value = "def main():\n    pass"
     mock_get_pr_files.return_value = [
@@ -344,6 +349,92 @@ def mock_bot_review_comment_payload():
 )
 @patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
 @pytest.mark.asyncio
+async def test_thread_resolved_during_loop_stops_agent(
+    _mock_verify_task_is_ready,
+    _mock_ensure_php,
+    _mock_prepare_repo,
+    _mock_git_clone_to_efs,
+    _mock_ensure_node,
+    _mock_update_usage,
+    _mock_create_empty_commit,
+    mock_chat_with_agent,
+    _mock_should_bail,
+    _mock_update_comment,
+    mock_get_pr_files,
+    mock_get_file_content,
+    mock_reply_to_comment,
+    mock_get_thread_comments,
+    mock_create_user_request,
+    mock_get_repo,
+    mock_get_user_public_info,
+    mock_get_token,
+    _mock_set_npm_token_env,
+    _mock_get_local_file_tree,
+    mock_review_comment_payload,
+):
+    """Thread resolved while agent is working should stop the loop before chat_with_agent."""
+    mock_get_token.return_value = "ghs_test_token"
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
+    )()
+    mock_get_repo.return_value = {"id": 98765}
+    mock_create_user_request.return_value = 777
+    mock_reply_to_comment.return_value = "http://comment-url"
+    mock_get_file_content.return_value = "def main():\n    pass"
+    mock_get_pr_files.return_value = [{"filename": "src/main.py", "status": "modified"}]
+    _mock_verify_task_is_ready.return_value = VerifyTaskIsReadyResult()
+    # 1st call (pre-loop): not resolved, proceed
+    # 2nd call (in-loop): resolved, stop before chat_with_agent
+    mock_get_thread_comments.side_effect = [
+        ReviewThreadResult(
+            comments=[
+                {
+                    "author": {"login": "test-reviewer"},
+                    "body": "Please fix this.",
+                    "createdAt": "2025-09-17T12:00:00Z",
+                }
+            ],
+            is_resolved=False,
+        ),
+        ReviewThreadResult(comments=[], is_resolved=True),
+    ]
+
+    await handle_review_run(mock_review_comment_payload, trigger="review_comment")
+
+    # chat_with_agent should NOT be called because thread was resolved before it ran
+    mock_chat_with_agent.assert_not_called()
+
+
+@patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
+@patch("services.webhook.review_run_handler.set_npm_token_env")
+@patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
+@patch("services.webhook.review_run_handler.get_repository")
+@patch("services.webhook.review_run_handler.create_user_request")
+@patch("services.webhook.review_run_handler.get_review_thread_comments")
+@patch("services.webhook.review_run_handler.reply_to_comment")
+@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch("services.webhook.review_run_handler.get_pull_request_files")
+@patch("services.webhook.review_run_handler.update_comment")
+@patch("services.webhook.review_run_handler.should_bail", return_value=False)
+@patch("services.webhook.review_run_handler.chat_with_agent")
+@patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.update_usage")
+@patch(
+    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
+)
+@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch(
+    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
+)
+@patch(
+    "services.webhook.review_run_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
+    "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
+)
+@patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
+@pytest.mark.asyncio
 async def test_bot_first_review_comment_is_processed(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
@@ -378,13 +469,15 @@ async def test_bot_first_review_comment_is_processed(
     mock_get_file_content.return_value = "def main():\n    pass"
     mock_get_pr_files.return_value = [{"filename": "src/main.py", "status": "modified"}]
     # Thread has only the bot's comment, no GitAuto reply yet
-    mock_get_thread_comments.return_value = [
-        {
-            "author": {"login": "devin-ai[bot]"},
-            "body": "This variable is unused and should be removed.",
-            "createdAt": "2025-09-17T12:00:00Z",
-        }
-    ]
+    mock_get_thread_comments.return_value = ReviewThreadResult(
+        comments=[
+            {
+                "author": {"login": "devin-ai[bot]"},
+                "body": "This variable is unused and should be removed.",
+                "createdAt": "2025-09-17T12:00:00Z",
+            }
+        ]
+    )
 
     _mock_verify_task_is_ready.return_value = VerifyTaskIsReadyResult()
     mock_chat_with_agent.return_value = AgentResult(
@@ -392,7 +485,7 @@ async def test_bot_first_review_comment_is_processed(
         token_input=100,
         token_output=50,
         is_completed=True,
-        completion_reason="",
+        completion_reason="Removed the unused variable as suggested.",
         p=40,
         is_planned=False,
     )
@@ -401,6 +494,47 @@ async def test_bot_first_review_comment_is_processed(
 
     # chat_with_agent was called → handler processed the bot review
     mock_chat_with_agent.assert_called_once()
+    # Bot gets a single reply (no progress updates) with the agent's explanation
+    mock_reply_to_comment.assert_called()
+    reply_body = mock_reply_to_comment.call_args_list[-1].kwargs.get("body", "")
+    assert "Removed the unused variable" in reply_body
+
+
+@patch("services.webhook.review_run_handler.set_npm_token_env")
+@patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
+@patch("services.webhook.review_run_handler.get_review_thread_comments")
+@patch("services.webhook.review_run_handler.chat_with_agent")
+@patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
+@pytest.mark.asyncio
+async def test_resolved_thread_is_skipped(
+    mock_chat_with_agent,
+    mock_get_thread_comments,
+    mock_get_user_public_info,
+    mock_get_token,
+    _mock_set_npm_token_env,
+    mock_review_comment_payload,
+):
+    """Review comment on an already-resolved thread should be skipped entirely."""
+    mock_get_token.return_value = "ghs_test_token"
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
+    )()
+    mock_get_thread_comments.return_value = ReviewThreadResult(
+        comments=[
+            {
+                "author": {"login": "devin-ai[bot]"},
+                "body": "This variable is unused.",
+                "createdAt": "2025-09-17T12:00:00Z",
+            },
+        ],
+        is_resolved=True,
+    )
+
+    await handle_review_run(mock_review_comment_payload, trigger="review_comment")
+
+    # chat_with_agent should NOT be called → handler skipped the resolved thread
+    mock_chat_with_agent.assert_not_called()
 
 
 @patch("services.webhook.review_run_handler.set_npm_token_env")
@@ -424,23 +558,25 @@ async def test_bot_reply_after_gitauto_replied_is_skipped(
         "UserPublicInfo", (), {"email": "bot@test.com", "display_name": "Devin"}
     )()
     # Thread already has a GitAuto reply → this bot comment is a back-and-forth
-    mock_get_thread_comments.return_value = [
-        {
-            "author": {"login": "devin-ai[bot]"},
-            "body": "This variable is unused.",
-            "createdAt": "2025-09-17T12:00:00Z",
-        },
-        {
-            "author": {"login": "gitauto-ai[bot]"},
-            "body": "Thanks for the review! I'm on it.",
-            "createdAt": "2025-09-17T12:01:00Z",
-        },
-        {
-            "author": {"login": "devin-ai[bot]"},
-            "body": "Actually you also missed another issue.",
-            "createdAt": "2025-09-17T12:02:00Z",
-        },
-    ]
+    mock_get_thread_comments.return_value = ReviewThreadResult(
+        comments=[
+            {
+                "author": {"login": "devin-ai[bot]"},
+                "body": "This variable is unused.",
+                "createdAt": "2025-09-17T12:00:00Z",
+            },
+            {
+                "author": {"login": "gitauto-ai[bot]"},
+                "body": "Thanks for the review! I'm on it.",
+                "createdAt": "2025-09-17T12:01:00Z",
+            },
+            {
+                "author": {"login": "devin-ai[bot]"},
+                "body": "Actually you also missed another issue.",
+                "createdAt": "2025-09-17T12:02:00Z",
+            },
+        ]
+    )
 
     await handle_review_run(mock_bot_review_comment_payload, trigger="review_comment")
 
@@ -513,30 +649,32 @@ async def test_human_review_comment_always_processed(
     mock_get_pr_files.return_value = [{"filename": "src/main.py", "status": "modified"}]
     _mock_verify_task_is_ready.return_value = VerifyTaskIsReadyResult()
     # Thread has a prior GitAuto reply, but commenter is human → always process
-    mock_get_thread_comments.return_value = [
-        {
-            "author": {"login": "test-reviewer"},
-            "body": "First comment",
-            "createdAt": "2025-09-17T12:00:00Z",
-        },
-        {
-            "author": {"login": "gitauto-ai[bot]"},
-            "body": "Fixed!",
-            "createdAt": "2025-09-17T12:01:00Z",
-        },
-        {
-            "author": {"login": "test-reviewer"},
-            "body": "No, this is still wrong.",
-            "createdAt": "2025-09-17T12:02:00Z",
-        },
-    ]
+    mock_get_thread_comments.return_value = ReviewThreadResult(
+        comments=[
+            {
+                "author": {"login": "test-reviewer"},
+                "body": "First comment",
+                "createdAt": "2025-09-17T12:00:00Z",
+            },
+            {
+                "author": {"login": "gitauto-ai[bot]"},
+                "body": "Fixed!",
+                "createdAt": "2025-09-17T12:01:00Z",
+            },
+            {
+                "author": {"login": "test-reviewer"},
+                "body": "No, this is still wrong.",
+                "createdAt": "2025-09-17T12:02:00Z",
+            },
+        ]
+    )
 
     mock_chat_with_agent.return_value = AgentResult(
         messages=[{"role": "user", "content": "review"}],
         token_input=100,
         token_output=50,
         is_completed=True,
-        completion_reason="",
+        completion_reason="Fixed the logic as requested.",
         p=40,
         is_planned=False,
     )
@@ -545,3 +683,6 @@ async def test_human_review_comment_always_processed(
 
     # Human comment is always processed regardless of prior GitAuto replies
     mock_chat_with_agent.assert_called_once()
+    # Human gets the agent's explanation via update_comment
+    final_update_body = _mock_update_comment.call_args_list[-1].kwargs.get("body", "")
+    assert "Fixed the logic" in final_update_body
