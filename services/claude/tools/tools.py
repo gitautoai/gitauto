@@ -8,6 +8,10 @@ from anthropic.types import ToolUnionParam
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.env.set_env import SET_ENV, set_env
 from services.github.comments.create_comment import CREATE_COMMENT, create_comment
+from services.github.comments.reply_to_comment import (
+    REPLY_TO_REVIEW_COMMENT,
+    reply_to_comment,
+)
 from services.github.commits.apply_diff_to_file import apply_diff_to_file
 from services.github.commits.replace_remote_file import (
     REPLACE_REMOTE_FILE_CONTENT,
@@ -132,6 +136,11 @@ TOOLS_FOR_PRS: list[ToolUnionParam] = _TOOLS_BASE + [
     SET_ENV,
 ]
 
+# Review comment handler adds reply capability
+TOOLS_FOR_REVIEW_COMMENTS: list[ToolUnionParam] = TOOLS_FOR_PRS + [
+    REPLY_TO_REVIEW_COMMENT,
+]
+
 # Setup handler reads project files to detect language/framework, then creates workflow files
 TOOLS_FOR_SETUP: list[ToolUnionParam] = _TOOLS_BASE + [
     GET_LOCAL_FILE_CONTENT,
@@ -155,6 +164,7 @@ tools_to_call: dict[str, Any] = {
     "get_local_file_tree": get_local_file_tree,
     "move_file": move_file,
     "replace_remote_file_content": replace_remote_file_content,
+    "reply_to_review_comment": reply_to_comment,
     "search_local_file_contents": search_local_file_contents,
     "set_env": set_env,
     "verify_task_is_complete": verify_task_is_complete,

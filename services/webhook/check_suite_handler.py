@@ -658,7 +658,9 @@ async def handle_check_suite(
 
         # Re-check trigger_on_test_failure in case it was disabled during execution
         refreshed_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
-        if not refreshed_settings or not refreshed_settings.get("trigger_on_test_failure"):
+        if not refreshed_settings or not refreshed_settings.get(
+            "trigger_on_test_failure"
+        ):
             logger.info("trigger_on_test_failure disabled during execution, stopping")
             break
 

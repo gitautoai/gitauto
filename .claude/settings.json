@@ -5,6 +5,8 @@
       "Bash(/Users/rwest/Repositories/gitauto/scripts/foxquilt_yarn.sh:*)",
       "Bash(/Users/rwest/Repositories/gitauto/scripts/git/get_master_version.sh:*)",
       "Bash(/Users/rwest/Repositories/gitauto/scripts/supabase/query.sh:*)",
+      "Bash(aws ce get-cost-and-usage:*)",
+      "Bash(aws cloudwatch get-metric-statistics:*)",
       "Bash(aws iam get-policy-version:*)",
       "Bash(aws iam list-attached-role-policies:*)",
       "Bash(aws iam list-role-policies:*)",

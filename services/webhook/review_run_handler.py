@@ -37,7 +37,7 @@ from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
 from services.github.trees.get_local_file_tree import get_local_file_tree
 from services.github.types.github_types import ReviewBaseArgs
-from services.claude.tools.tools import TOOLS_FOR_PRS
+from services.claude.tools.tools import TOOLS_FOR_REVIEW_COMMENTS
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
@@ -69,10 +69,7 @@ async def handle_review_run(
     review_body = review["body"]
 
     comment_author = review["user"]
-    comment_author_type = comment_author["type"]
-    if comment_author_type == "Bot":
-        logger.info("Ignoring review comment from bot: %s", comment_author["login"])
-        return
+    comment_author_is_bot = comment_author["type"] == "Bot"
 
     # Extract repository related variables
     repo = payload["repository"]
@@ -130,6 +127,18 @@ async def handle_review_run(
         comment_node_id=review_node_id,
         token=token,
     )
+
+    # If a bot posted this comment AND GitAuto already replied in the same thread, skip to prevent infinite bot-to-bot loops. But if GitAuto hasn't replied yet, process it (e.g. Devin's first review comment is valuable feedback).
+    if comment_author_is_bot and thread_comments:
+        gitauto_already_replied = any(
+            c["author"]["login"] == GITHUB_APP_USER_NAME for c in thread_comments
+        )
+        if gitauto_already_replied:
+            logger.info(
+                "Ignoring bot review comment from %s - GitAuto already replied in this thread",
+                comment_author["login"],
+            )
+            return
 
     # Combine all comments in chronological order for context
     review_comment = f"## Review thread on {review_path} Line: {review_line}\n"
@@ -224,30 +233,35 @@ async def handle_review_run(
         lambda_info=lambda_info,
     )
 
-    # Greeting
+    # Greeting and progress tracking (skip for bots to avoid triggering bot-to-bot noise)
     p = 0
-    log_messages = []
-    msg = "Thanks for the review! I'm on it."
-    add_log_message(msg, log_messages)
-    comment_body = create_progress_bar(p=0, msg="\n".join(log_messages))
-    comment_url = reply_to_comment(base_args=base_args, body=comment_body)
-    base_args["comment_url"] = comment_url
+    log_messages: list[str] = []
+    if not comment_author_is_bot:
+        msg = "Thanks for the review! I'm on it."
+        add_log_message(msg, log_messages)
+        comment_body = create_progress_bar(p=0, msg="\n".join(log_messages))
+        comment_url = reply_to_comment(base_args=base_args, body=comment_body)
+        base_args["comment_url"] = comment_url
 
     # Get a review commented file
     review_file = get_local_file_content(file_path=review_path, base_args=base_args)
-    p += 5
-    add_log_message(f"Read the file `{review_path}` you commented on.", log_messages)
-    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    update_comment(body=comment_body, base_args=base_args)
+    if not comment_author_is_bot:
+        p += 5
+        add_log_message(
+            f"Read the file `{review_path}` you commented on.", log_messages
+        )
+        comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
+        update_comment(body=comment_body, base_args=base_args)
 
     # Get list of changed files in the PR (filenames only, not contents)
     pr_files = get_pull_request_files(
         owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
-    p += 5
-    add_log_message(f"Found {len(pr_files)} changed files in the PR.", log_messages)
-    comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-    update_comment(body=comment_body, base_args=base_args)
+    if not comment_author_is_bot:
+        p += 5
+        add_log_message(f"Found {len(pr_files)} changed files in the PR.", log_messages)
+        comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
+        update_comment(body=comment_body, base_args=base_args)
 
     # Validate files for syntax issues before editing
     files_to_validate = [f["filename"] for f in pr_files if f["status"] != "removed"]
@@ -314,6 +328,7 @@ async def handle_review_run(
     total_token_input = 0
     total_token_output = 0
     is_completed = False
+    completion_reason = ""
 
     system_message = create_system_message(trigger=trigger, repo_settings=repo_settings)
 
@@ -334,12 +349,13 @@ async def handle_review_run(
             p=p,
             log_messages=log_messages,
             usage_id=usage_id,
-            tools=TOOLS_FOR_PRS,
+            tools=TOOLS_FOR_REVIEW_COMMENTS,
             allowed_to_edit_files=allowed_to_edit_files,
             model_id=None,
         )
         messages = result.messages
         is_completed = result.is_completed
+        completion_reason = result.completion_reason
         p = result.p
         total_token_input += result.token_input
         total_token_output += result.token_output
@@ -363,16 +379,27 @@ async def handle_review_run(
         is_completed = final_result.success
 
     # Trigger final test workflows with an empty commit
-    body = "Creating final empty commit to trigger workflows..."
-    update_comment(body=body, base_args=base_args)
+    if not comment_author_is_bot:
+        update_comment(
+            body="Creating final empty commit to trigger workflows...",
+            base_args=base_args,
+        )
     create_empty_commit(base_args=base_args)
 
-    # Create final message based on verification result
-    if is_completed:
-        msg = "Resolved your feedback! Looks good?"
+    # Use the agent's own explanation as the final reply instead of canned text
+    if completion_reason:
+        final_reply = completion_reason
+    elif is_completed:
+        final_reply = "Resolved the feedback."
     else:
-        msg = "I tried to address your feedback but verification still shows errors. Please review the changes."
-    update_comment(body=msg, base_args=base_args)
+        final_reply = "I tried to address the feedback but verification still shows errors. Please review the changes."
+
+    if comment_author_is_bot:
+        # For bots: post a single reply (no prior comment was created)
+        reply_to_comment(base_args=base_args, body=final_reply)
+    else:
+        # For humans: update the existing progress comment with the final reply
+        update_comment(body=final_reply, base_args=base_args)
 
     # Update usage record
     end_time = time.time()
