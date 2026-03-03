@@ -63,6 +63,7 @@ def mock_review_comment_payload():
     }
 
 
+@patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_installation_access_token")
 @patch("services.webhook.review_run_handler.get_repository")
 @patch("services.webhook.review_run_handler.create_user_request")
@@ -100,6 +101,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     mock_create_user_request,
     mock_get_repo,
     mock_get_token,
+    _mock_slack_notify,
     mock_review_comment_payload,
 ):
     """Test that review run handler accumulates tokens from multiple chat_with_agent calls."""
@@ -176,6 +178,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     mock_get_repo.assert_called_once_with(owner_id=11111, repo_id=98765)
 
 
+@patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.verify_task_is_complete")
 @patch("services.webhook.review_run_handler.get_installation_access_token")
 @patch("services.webhook.review_run_handler.get_repository")
@@ -216,6 +219,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
     mock_get_repo,
     mock_get_token,
     mock_verify_task_is_complete,
+    _mock_slack_notify,
     mock_review_comment_payload,
 ):
     """Test that review run handler forces verify_task_is_complete when MAX_ITERATIONS is reached."""
@@ -319,6 +323,7 @@ def mock_bot_review_comment_payload():
     }
 
 
+@patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
 @patch("services.webhook.review_run_handler.set_npm_token_env")
 @patch("services.webhook.review_run_handler.get_installation_access_token")
@@ -370,6 +375,7 @@ async def test_thread_resolved_during_loop_stops_agent(
     mock_get_token,
     _mock_set_npm_token_env,
     _mock_get_local_file_tree,
+    _mock_slack_notify,
     mock_review_comment_payload,
 ):
     """Thread resolved while agent is working should stop the loop before chat_with_agent."""
@@ -405,6 +411,7 @@ async def test_thread_resolved_during_loop_stops_agent(
     mock_chat_with_agent.assert_not_called()
 
 
+@patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
 @patch("services.webhook.review_run_handler.set_npm_token_env")
 @patch("services.webhook.review_run_handler.get_installation_access_token")
@@ -456,6 +463,7 @@ async def test_bot_first_review_comment_is_processed(
     mock_get_token,
     _mock_set_npm_token_env,
     _mock_get_local_file_tree,
+    _mock_slack_notify,
     mock_bot_review_comment_payload,
 ):
     """Bot's first review comment (no GitAuto reply in thread yet) should be processed."""
@@ -584,6 +592,7 @@ async def test_bot_reply_after_gitauto_replied_is_skipped(
     mock_chat_with_agent.assert_not_called()
 
 
+@patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
 @patch("services.webhook.review_run_handler.set_npm_token_env")
 @patch("services.webhook.review_run_handler.get_installation_access_token")
@@ -635,6 +644,7 @@ async def test_human_review_comment_always_processed(
     mock_get_token,
     _mock_set_npm_token_env,
     _mock_get_local_file_tree,
+    _mock_slack_notify,
     mock_review_comment_payload,
 ):
     """Human review comment should always be processed, even if GitAuto already replied."""

@@ -27,6 +27,7 @@ from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.github.comments.reply_to_comment import reply_to_comment
+from services.slack.slack_notify import slack_notify
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.files.get_local_file_content import get_local_file_content
@@ -157,6 +158,10 @@ async def handle_review_run(
     else:
         # Fallback to single comment if thread fetch fails
         review_comment += f"{review_body}"
+
+    # Start notification
+    start_msg = f"Review handler started: `{trigger}` by `{sender_name}` for `{pr_number}:{pr_title}` in `{owner_name}/{repo_name}`"
+    thread_ts = slack_notify(start_msg)
 
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args: ReviewBaseArgs = {
@@ -343,7 +348,7 @@ async def handle_review_run(
             current_time=current_time,
             phase="execution",
             base_args=base_args,
-            slack_thread_ts=None,
+            slack_thread_ts=thread_ts,
         ):
             break
 
@@ -422,4 +427,8 @@ async def handle_review_run(
             pr_number=pr_number,
             is_completed=True,
         )
+
+    # End notification
+    end_msg = "Completed" if is_completed else "@channel Failed"
+    slack_notify(end_msg, thread_ts)
     return
