@@ -31,18 +31,18 @@ def is_test_file(filename: str) -> bool:
         r"(^|/)__tests__/",  # __tests__/Button.tsx, src/__tests__/Button.tsx
         r"/tests?/",  # src/tests/Button.tsx, src/test/Button.java
         r"^tests?/",  # tests/constants.py, test/utils.py
-        r"/e2e/",  # e2e/login.spec.ts
+        r"(^|/)e2e/",  # e2e/login.spec.ts, src/e2e/login.spec.ts
         r"(^|/)cypress/",  # cypress/integration/login.js
-        r"/playwright/",  # playwright/tests/login.spec.ts
-        r"/spec/",  # spec/models/user_spec.rb
-        r"/testing/",  # testing/utils.py
+        r"(^|/)playwright/",  # playwright/tests/login.spec.ts
+        r"(^|/)spec/",  # spec/models/user_spec.rb
+        r"(^|/)testing/",  # testing/utils.py, testing/utils/context/getTestSecrets.ts
         # Mock files
-        r"/__mocks__/",  # src/__mocks__/api.js
+        r"(^|/)__mocks__/",  # __mocks__/api.js, src/__mocks__/api.js
         r"\.mock\.",  # api.mock.ts, database.mock.js
         r"mock\.",  # ApiMock.java, DatabaseMock.cs
         r"mocks\.",  # ApiMocks.java, DatabaseMocks.cs
         # Snapshot files (Jest, Vitest, etc.)
-        r"/__snapshots__/",  # __snapshots__/Button.test.tsx.snap
+        r"(^|/)__snapshots__/",  # __snapshots__/Button.test.tsx.snap, src/__snapshots__/
         r"\.snap$",  # any .snap file
         # Test fixtures and data
         r"(^|/)__fixtures__/",  # __fixtures__/user.json
