@@ -2,15 +2,12 @@
 blank_issues_enabled: true
 
 contact_links:
-  - name: GitAuto Support
-    url: https://calendly.com/gitauto/30min
-    about: Contact our support team for help with GitAuto.
-  - name: GitAuto Website
-    url: https://gitauto.ai?utm_source=github&utm_medium=referral
-    about: Visit our website for more information about GitAuto.
-  - name: GitAuto X
-    url: https://x.com/gitautoai
-    about: Follow us on X for feature updates and use cases.
-  - name: GitAuto LinkedIn
-    url: https://www.linkedin.com/company/gitauto/
-    about: Follow us on LinkedIn for feature updates and use cases.
+  - name: GitAuto Setup Guide
+    url: https://gitauto.ai/docs/getting-started/setup?utm_source=github&utm_medium=referral
+    about: 5-step guide to set up CI, coverage, and automated test PR generation.
+  - name: Contact Us
+    url: https://gitauto.ai/contact?utm_source=github&utm_medium=referral
+    about: Get in touch with the GitAuto team.
+  - name: Meet Wes (Founder)
+    url: https://calendar.app.google/Wg48B8gK4G4ggNDFA
+    about: Schedule a meeting with Wes for support or feedback.
