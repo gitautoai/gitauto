@@ -27,8 +27,6 @@ GITHUB_CHECK_RUN_FAILURES = [
     "failure",
     "timed_out",
 ]
-GITHUB_ISSUE_DIR = ".github/ISSUE_TEMPLATE"
-GITHUB_ISSUE_TEMPLATES = ["bug_report.yml", "feature_request.yml"]
 GITHUB_NOREPLY_EMAIL_DOMAIN = "users.noreply.github.com"  # https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-email-preferences/setting-your-commit-email-address
 GITHUB_PRIVATE_KEY_ENCODED = get_env_var(name="GH_PRIVATE_KEY")
 GITHUB_PRIVATE_KEY = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED)
