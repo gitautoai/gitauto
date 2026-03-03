@@ -303,6 +303,22 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             )
             continue
 
+        # Check if a test file already exists for this source file
+        item_stem = Path(item_path).stem.lower()
+        has_tests = any(
+            is_test_file(fp) and item_stem in fp.lower()
+            for fp, _ in all_files_with_sizes
+        )
+
+        # If tests already exist, the file is proven testable - skip AI evaluation
+        if has_tests:
+            logger.info(
+                "Selected %s: existing tests found, skipping AI evaluation",
+                item_path,
+            )
+            target_item = item
+            break
+
         # Final check: Use Claude AI to determine if this file should be tested (expensive, so run last)
         eval_result = evaluate_condition(
             content=f"File path: {item_path}\n\nContent:\n{content}",

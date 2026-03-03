@@ -6,9 +6,9 @@ Return TRUE only if BOTH conditions are met:
 
 Return FALSE if any of these apply:
 - Standalone scripts that execute logic at the top level (not wrapped in functions/classes) and call exit/die/process.exit/sys.exit - these kill the test runner when loaded.
-- Files with top-level require/require_once/import of dependencies that won't exist in the test environment.
 - PHP files that are entry-point scripts (not classes/functions) with top-level session_start(), header(), exit calls.
 - Third-party code, generated files, examples, documentation, scripts, fixtures, etc.
+- Do NOT reject files just because they import internal project dependencies, databases, or external services. These can be mocked in tests. Only reject files that would crash a test runner when imported (e.g. top-level process.exit, side effects on load).
 
 Pay attention to the file path too - it can indicate the file should not be tested.
 

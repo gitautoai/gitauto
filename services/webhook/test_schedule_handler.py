@@ -464,6 +464,118 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
         assert "updated_at" not in coverage_record
 
 
+@patch("services.webhook.schedule_handler.add_labels")
+@patch("services.webhook.schedule_handler.create_pull_request")
+@patch("services.webhook.schedule_handler.create_empty_commit")
+@patch("services.webhook.schedule_handler.create_remote_branch")
+@patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
+@patch("services.webhook.schedule_handler.generate_branch_name")
+@patch("services.webhook.schedule_handler.get_open_pull_requests")
+@patch("services.webhook.schedule_handler.should_skip_test")
+@patch("services.webhook.schedule_handler.evaluate_condition")
+@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.check_availability")
+@patch("services.webhook.schedule_handler.get_default_branch")
+@patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_all_coverages")
+@patch("services.webhook.schedule_handler.get_raw_content")
+def test_schedule_handler_skips_ai_eval_when_tests_exist(
+    mock_get_raw_content,
+    mock_get_all_coverages,
+    mock_get_file_tree,
+    mock_get_default_branch,
+    mock_check_availability,
+    mock_get_repository,
+    mock_get_token,
+    mock_is_paused,
+    mock_evaluate_condition,
+    mock_should_skip_test,
+    mock_get_open_pull_requests,
+    mock_generate_branch_name,
+    mock_get_latest_sha,
+    mock_create_remote_branch,
+    mock_create_empty_commit,
+    mock_create_pr,
+    mock_add_labels,
+    mock_event,
+):
+    """When a file already has existing test files, skip the AI evaluation
+    and select it immediately - it's proven testable."""
+    mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = False
+    mock_get_repository.return_value = {"trigger_on_schedule": True}
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "exception",
+        "requests_left": None,
+        "credit_balance_usd": 0,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Exception owner - unlimited access.",
+    }
+    mock_get_default_branch.return_value = ("main", None)
+    # File tree has both a source file and its test file
+    mock_get_file_tree.return_value = [
+        {"path": "src/services/getPolicyInfo.ts", "type": "blob", "size": 500},
+        {
+            "path": "test/spec/services/getPolicyInfo.test.ts",
+            "type": "blob",
+            "size": 300,
+        },
+    ]
+    mock_get_all_coverages.return_value = [
+        {
+            "id": 1,
+            "full_path": "src/services/getPolicyInfo.ts",
+            "owner_id": 123,
+            "repo_id": 456,
+            "branch_name": "main",
+            "created_by": "test-user",
+            "updated_by": "test-user",
+            "level": "file",
+            "file_size": 500,
+            "statement_coverage": 100.0,
+            "function_coverage": 100.0,
+            "branch_coverage": 93.7,
+            "line_coverage": 100.0,
+            "package_name": None,
+            "language": None,
+            "uncovered_lines": None,
+            "uncovered_functions": None,
+            "uncovered_branches": None,
+            "created_at": "2024-01-01",
+            "updated_at": "2024-01-01",
+            "github_issue_url": None,
+            "is_excluded_from_testing": False,
+        },
+    ]
+    mock_get_raw_content.return_value = (
+        "import { GraphqlContext } from '../context';\n"
+        "const getPolicyInfo = async ({ policyId, context }) => {\n"
+        "  const result = await context.mongoClient.db().collection('Policy').findOne({});\n"
+        "  return result;\n"
+        "};\n"
+        "export default getPolicyInfo;"
+    )
+    mock_should_skip_test.return_value = False
+    mock_get_open_pull_requests.return_value = []
+    mock_generate_branch_name.return_value = "gitauto/schedule-20240101-120000-ABCD"
+    mock_get_latest_sha.return_value = "abc123"
+    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
+
+    with patch("services.webhook.schedule_handler.update_issue_url"):
+        result = schedule_handler(mock_event)
+
+    assert result["status"] == "success"
+    mock_create_pr.assert_called_once()
+    call_kwargs = mock_create_pr.call_args.kwargs
+    assert "src/services/getPolicyInfo.ts" in call_kwargs["title"]
+    # AI evaluation should NOT have been called - existing tests prove testability
+    mock_evaluate_condition.assert_not_called()
+
+
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.should_skip_test")
 @patch("services.webhook.schedule_handler.is_schedule_paused")
