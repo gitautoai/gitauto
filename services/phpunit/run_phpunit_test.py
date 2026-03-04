@@ -1,3 +1,4 @@
+import glob
 import os
 import subprocess
 from dataclasses import dataclass, field
@@ -34,8 +35,14 @@ async def run_phpunit_test(
         logger.warning("phpunit: No clone_dir provided, skipping")
         return PhpunitResult()
 
+    # Standard location first, then bamarni/composer-bin-plugin vendor-bin/*/
     phpunit_bin = os.path.join(clone_dir, "vendor", "bin", "phpunit")
     if not os.path.exists(phpunit_bin):
+        matches = glob.glob(
+            os.path.join(clone_dir, "vendor-bin", "*", "vendor", "bin", "phpunit")
+        )
+        phpunit_bin = matches[0] if matches else None
+    if not phpunit_bin:
         logger.info("phpunit: No phpunit binary found, skipping")
         return PhpunitResult()
 
@@ -52,32 +59,37 @@ async def run_phpunit_test(
         if os.path.exists(autoload):
             base_cmd.extend(["--bootstrap", autoload])
 
+    # Run all test files in a single invocation for speed
+    cmd = base_cmd + php_test_files
+    logger.info("phpunit: Running %s...", ", ".join(php_test_files))
     all_errors: list[str] = []
     error_files: set[str] = set()
-    for test_file in php_test_files:
-        cmd = base_cmd + [test_file]
-        logger.info("phpunit: Running %s...", test_file)
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=EFS_TIMEOUT_SECONDS,
-            check=False,
-            cwd=clone_dir,
-        )
-        if result.returncode != 0:
-            output = result.stdout + result.stderr
-            # PHPUnit prints "OK" when all tests pass, even with non-zero exit (e.g., deprecation warnings)
-            if "OK (" in result.stdout and "FAILURES!" not in result.stdout:
-                logger.warning(
-                    "phpunit: %s exit code %d but all tests OK, treating as success",
-                    test_file,
-                    result.returncode,
-                )
-                continue
-            error_files.add(test_file)
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=EFS_TIMEOUT_SECONDS,
+        check=False,
+        cwd=clone_dir,
+    )
+    if result.returncode != 0:
+        output = result.stdout + result.stderr
+        # PHPUnit prints "OK" when all tests pass, even with non-zero exit (e.g., deprecation warnings)
+        if "OK (" in result.stdout and "FAILURES!" not in result.stdout:
+            logger.warning(
+                "phpunit: exit code %d but all tests OK, treating as success",
+                result.returncode,
+            )
+        else:
+            # Parse which specific files failed from PHPUnit output
+            for test_file in php_test_files:
+                if test_file in output:
+                    error_files.add(test_file)
+            # If no specific files detected, mark all as failed
+            if not error_files:
+                error_files.update(php_test_files)
             all_errors.append(output.strip())
-            logger.warning("phpunit: %s failed:\n%s", test_file, output.strip())
+            logger.warning("phpunit: tests failed:\n%s", output.strip())
 
     if not error_files:
         logger.info("phpunit: All tests passed")

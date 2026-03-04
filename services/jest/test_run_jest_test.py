@@ -138,6 +138,7 @@ async def test_run_jest_test_detects_updated_snapshots(
         returncode=0,
         stdout="src/__snapshots__/Button.test.tsx.snap\ntest/__snapshots__/utils.test.ts.snap\n",
     )
+    # Single jest run + git diff = 2 calls
     mock_subprocess.side_effect = [jest_result, git_diff_result]
 
     base_args = cast(
@@ -170,6 +171,7 @@ async def test_run_jest_test_no_snapshots_updated(
     mock_exists.return_value = True
     jest_result = MagicMock(returncode=0, stdout="", stderr="")
     git_diff_result = MagicMock(returncode=0, stdout="src/index.ts\n")
+    # Single jest run + git diff = 2 calls
     mock_subprocess.side_effect = [jest_result, git_diff_result]
 
     base_args = cast(
@@ -248,22 +250,21 @@ async def test_run_jest_test_spec_files(mock_exists, mock_subprocess, _mock_dist
     )
     assert result.success is True
 
-    # 2 test runs + 1 git diff = 3
-    assert mock_subprocess.call_count == 3
+    # 1 test run (all files together) + 1 git diff = 2
+    assert mock_subprocess.call_count == 2
 
 
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_multiple_failures(
+async def test_run_jest_test_one_of_three_fails(
     mock_exists, mock_subprocess, _mock_distro
 ):
     mock_exists.return_value = True
-    # Both files fail
     mock_subprocess.return_value = MagicMock(
         returncode=1,
-        stdout="Error in test",
+        stdout="PASS src/a.test.ts\nFAIL src/b.test.ts\nPASS src/c.test.ts\nError in b",
         stderr="",
     )
 
@@ -277,12 +278,77 @@ async def test_run_jest_test_multiple_failures(
     )
     result = await run_jest_test(
         base_args=base_args,
-        test_file_paths=["src/a.test.ts", "src/b.test.ts"],
+        test_file_paths=["src/a.test.ts", "src/b.test.ts", "src/c.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
+    assert result.success is False
+    assert "src/a.test.ts" not in result.error_files
+    assert "src/b.test.ts" in result.error_files
+    assert "src/c.test.ts" not in result.error_files
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_two_of_three_fail(
+    mock_exists, mock_subprocess, _mock_distro
+):
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(
+        returncode=1,
+        stdout="FAIL src/a.test.ts\nPASS src/b.test.ts\nFAIL src/c.test.ts\nErrors in a and c",
+        stderr="",
+    )
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/a.test.ts", "src/b.test.ts", "src/c.test.ts"],
+        impl_file_to_collect_coverage_from="",
+    )
+    assert result.success is False
+    assert "src/a.test.ts" in result.error_files
+    assert "src/b.test.ts" not in result.error_files
+    assert "src/c.test.ts" in result.error_files
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_all_three_fail(mock_exists, mock_subprocess, _mock_distro):
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(
+        returncode=1,
+        stdout="FAIL src/a.test.ts\nFAIL src/b.test.ts\nFAIL src/c.test.ts\nError in all",
+        stderr="",
+    )
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/a.test.ts", "src/b.test.ts", "src/c.test.ts"],
         impl_file_to_collect_coverage_from="",
     )
     assert result.success is False
     assert "src/a.test.ts" in result.error_files
     assert "src/b.test.ts" in result.error_files
+    assert "src/c.test.ts" in result.error_files
 
 
 @pytest.mark.asyncio
