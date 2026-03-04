@@ -65,13 +65,49 @@ def test_e2e_subdirectory():
     assert has_test_file_candidate("src/models/Quote.ts", all_files) is True
 
 
-def test_test_file_in_distant_tests_directory():
-    # test/ mirror directory at root should NOT match
+def test_mirror_test_directory():
+    # test/utils/ mirrors src/utils/ — valid match
     all_files = [
         "src/utils/generateId.ts",
         "test/utils/generateId.test.ts",
     ]
-    assert has_test_file_candidate("src/utils/generateId.ts", all_files) is False
+    assert has_test_file_candidate("src/utils/generateId.ts", all_files) is True
+
+
+def test_mirror_test_spec_directory():
+    # test/spec/services/ mirrors src/services/ — Foxquilt pattern
+    all_files = [
+        "src/services/getPolicyInfo.ts",
+        "test/spec/services/getPolicyInfo.test.ts",
+    ]
+    assert has_test_file_candidate("src/services/getPolicyInfo.ts", all_files) is True
+
+
+def test_mirror_tests_directory():
+    # tests/services/ mirrors src/services/
+    all_files = [
+        "src/services/getPolicyInfo.ts",
+        "tests/services/getPolicyInfo.test.ts",
+    ]
+    assert has_test_file_candidate("src/services/getPolicyInfo.ts", all_files) is True
+
+
+def test_mirror_spec_directory():
+    # spec/models/ mirrors app/models/ — Rails pattern
+    all_files = [
+        "app/models/user.rb",
+        "spec/models/user_spec.rb",
+    ]
+    assert has_test_file_candidate("app/models/user.rb", all_files) is True
+
+
+def test_mirror_directory_wrong_subpath_no_match():
+    # test/controllers/ does NOT mirror src/services/
+    all_files = [
+        "src/services/getPolicyInfo.ts",
+        "test/controllers/getPolicyInfo.test.ts",
+    ]
+    assert has_test_file_candidate("src/services/getPolicyInfo.ts", all_files) is False
 
 
 def test_case_insensitive_stem_match():

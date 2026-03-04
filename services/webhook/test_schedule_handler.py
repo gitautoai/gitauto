@@ -516,7 +516,7 @@ def test_schedule_handler_skips_ai_eval_when_tests_exist(
         "log_message": "Exception owner - unlimited access.",
     }
     mock_get_default_branch.return_value = ("main", None)
-    # File tree has both a source file and its test file
+    # File tree has both a source file and its test file (mirror directory)
     mock_get_file_tree.return_value = [
         {"path": "src/services/getPolicyInfo.ts", "type": "blob", "size": 500},
         {
