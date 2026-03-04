@@ -13,6 +13,15 @@ from services.github.types.github_types import BaseArgs
 from utils.files.apply_patch import PatchResult
 
 
+@pytest.fixture(autouse=True)
+def _mock_format_commit_message():
+    with patch(
+        "services.github.commits.apply_diff_to_file.format_commit_message",
+        side_effect=lambda message, base_args: message,
+    ):
+        yield
+
+
 @pytest.fixture
 def sample_base_args(tmp_path):
     """Fixture providing sample BaseArgs for testing."""

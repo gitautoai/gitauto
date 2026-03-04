@@ -11,6 +11,7 @@ import requests
 from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.claude.tools.file_modify_result import FileWriteResult
 from services.claude.tools.properties import FILE_PATH
+from services.github.commits.format_commit_message import format_commit_message
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
@@ -78,6 +79,7 @@ def replace_remote_file_content(
     # Set up the data for the PUT request
     message = commit_message if commit_message else f"Replace content of {file_path}"
     message = f"{message} [skip ci]" if skip_ci else message
+    message = format_commit_message(message=message, base_args=base_args)
     content = base64.b64encode(file_content.encode(UTF8)).decode(UTF8)
     data = {"message": message, "content": content, "branch": new_branch}
 

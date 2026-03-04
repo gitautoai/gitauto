@@ -15,6 +15,15 @@ from services.github.commits.replace_remote_file import (
 from services.github.types.github_types import BaseArgs
 
 
+@pytest.fixture(autouse=True)
+def _mock_format_commit_message():
+    with patch(
+        "services.github.commits.replace_remote_file.format_commit_message",
+        side_effect=lambda message, base_args: message,
+    ):
+        yield
+
+
 @pytest.fixture
 def sample_base_args(tmp_path):
     """Fixture providing sample BaseArgs for testing."""

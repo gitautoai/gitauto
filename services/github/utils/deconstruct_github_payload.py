@@ -25,9 +25,6 @@ def deconstruct_github_payload(
     pr_body = pr["body"] or ""
     pr_creator = pr["user"]["login"]
     new_branch_name = pr["head"]["ref"]
-    assignees = pr.get("assignees", [])
-    assignee_names = [a["login"] for a in assignees]
-
     # Extract repository related variables
     repo = payload["repository"]
     repo_id = repo["id"]
@@ -65,14 +62,12 @@ def deconstruct_github_payload(
     sender_name = payload["sender"]["login"]
     is_automation = sender_id == GITHUB_APP_USER_ID
 
-    # Build reviewers from sender, PR creator, and PR assignees (for schedule triggers where both sender and creator are bots, assignees provide the human reviewer)
-    reviewers = list(
-        set(
-            name
-            for name in (*assignee_names, sender_name, pr_creator)
-            if "[bot]" not in name
-        )
-    )
+    # Use requested reviewers from the PR (already set by add_reviewers or the user)
+    reviewers = [
+        r["login"]
+        for r in pr.get("requested_reviewers", [])
+        if "[bot]" not in r["login"]
+    ]
 
     # Extract other information
     github_urls, other_urls = extract_urls(text=pr_body)

@@ -10,6 +10,15 @@ import requests
 from services.github.files.create_file_with_content import create_file_with_content
 
 
+@pytest.fixture(autouse=True)
+def _mock_format_commit_message():
+    with patch(
+        "services.github.files.create_file_with_content.format_commit_message",
+        side_effect=lambda message, base_args: message,
+    ):
+        yield
+
+
 class TestCreateFileWithContent:
     """Test cases for the create_file_with_content function."""
 

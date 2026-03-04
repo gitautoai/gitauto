@@ -23,6 +23,7 @@ def create_mock_payload(
     branch_name="gitauto/schedule-123-20241225-143000-XYZW",
     html_url="https://github.com/test-owner/test-repo/pull/123",
     assignees=None,
+    requested_reviewers=None,
 ) -> PrLabeledPayload:
     return cast(
         PrLabeledPayload,
@@ -35,6 +36,7 @@ def create_mock_payload(
                 "number": pr_number,
                 "title": pr_title,
                 "assignees": assignees or [],
+                "requested_reviewers": requested_reviewers or [],
                 "head": {"ref": branch_name},
                 "html_url": html_url,
             },
@@ -111,7 +113,7 @@ def test_deconstruct_github_payload_basic_functionality(
     assert base_args["sender_email"] == "test@example.com"
     assert base_args["sender_display_name"] == "Test Sender"
     assert base_args["is_automation"] is False
-    assert set(base_args["reviewers"]) == {"test-sender", "test-creator"}
+    assert base_args["reviewers"] == []
     assert base_args["github_urls"] == ["https://github.com"]
     assert base_args["other_urls"] == ["https://example.com"]
     # Verify _
@@ -429,8 +431,8 @@ def test_deconstruct_github_payload_duplicate_reviewers(
     # Call the function
     base_args, _ = deconstruct_github_payload(payload)
 
-    # Verify duplicate reviewers are handled (set removes duplicates)
-    assert base_args["reviewers"] == ["same-user"]
+    # No requested_reviewers on the PR, so reviewers is empty
+    assert base_args["reviewers"] == []
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
@@ -518,16 +520,16 @@ def test_deconstruct_github_payload_schedule_trigger_uses_assignees_as_reviewers
         email="test@example.com", display_name="Test Sender"
     )
 
-    # Schedule trigger: both sender and PR creator are bots, but PR has a human assignee
+    # Schedule trigger: both sender and PR creator are bots, but PR has a human requested reviewer
     payload = create_mock_payload(
         pr_creator_name="gitauto-ai[bot]",
         sender_name="gitauto-ai[bot]",
-        assignees=[{"login": "takamori-san"}],
+        requested_reviewers=[{"login": "takamori-san"}],
     )
 
     base_args, _ = deconstruct_github_payload(payload)
 
-    # Verify the human assignee becomes a reviewer even though sender/creator are bots
+    # Verify the human requested reviewer is in the reviewers list
     assert base_args["reviewers"] == ["takamori-san"]
 
 
