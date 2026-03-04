@@ -565,7 +565,10 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
     - **Social Media Post sections**: Only include when there are explicit customer benefits or useful dev insights. Skip for internal-only changes (refactoring, logging fixes, test improvements, infrastructure updates) that don't affect customers or teach anything.
     - Always write TWO posts:
       - **GitAuto post**: Product voice. Can mention GitAuto. Explains what changed and why it matters for users.
-      - **Wes post**: Personal voice. Written as Wes (the founder) sharing what he debugged/built. Don't emphasize "GitAuto" — no "GitAuto now does X" pattern. More like telling a friend what you worked on today.
+      - **Wes post**: Personal voice. Pick ONE of these formats:
+        - **Short**: 1 line what you did. Or 1 line sarcastic/witty commentary. Keep it punchy.
+        - **Long**: A real technical insight that teaches the reader something (like Andrej Karpathy's posts). Deep, opinionated, educational. Worth reading even if you don't use GitAuto.
+        - Don't emphasize "GitAuto" — no "GitAuto now does X" pattern. NEVER use the "traced X, found Y, fixed Z" pattern. That's a bug report, not a post.
     - Shared guidelines for both posts:
       - **NEVER use em dashes (—)** in social media posts. Use regular dashes (-) or rewrite the sentence instead.
       - Be concise and fit in a tweet (under 280 characters is ideal)

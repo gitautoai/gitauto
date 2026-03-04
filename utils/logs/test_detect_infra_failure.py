@@ -32,6 +32,62 @@ def test_detect_infra_failure_real_segfault_log():
 @pytest.mark.parametrize(
     "error_log, expected",
     [
+        # Package registry failures
+        (
+            'error An unexpected error occurred: "https://registry.yarnpkg.com/...: '
+            'Request failed "502 Bad Gateway""\n',
+            'Request failed "502 Bad Gateway"',
+        ),
+        (
+            'Request failed "503 Service Unavailable"',
+            'Request failed "503 Service Unavailable"',
+        ),
+        (
+            'Request failed "429 Too Many Requests"',
+            'Request failed "429 Too Many Requests"',
+        ),
+        # Network errors
+        ("npm ERR! code ETIMEDOUT\nnpm ERR! errno ETIMEDOUT", "ETIMEDOUT"),
+        ("npm ERR! code ECONNRESET", "ECONNRESET"),
+        ("npm ERR! code ECONNREFUSED", "ECONNREFUSED"),
+        ("getaddrinfo EAI_AGAIN registry.npmjs.org", "EAI_AGAIN"),
+        # CI timeouts
+        (
+            "Too long with no output (exceeded 10m0s): context deadline exceeded",
+            "Too long with no output",
+        ),
+        ("context deadline exceeded", "context deadline exceeded"),
+        # OOM
+        (
+            "FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory",
+            "out of memory",
+        ),
+        ("bash: line 1: 12345 Killed (exit code 137)", "exit code 137"),
+        ("Cannot allocate memory (errno: ENOMEM)", "ENOMEM"),
+    ],
+    ids=[
+        "yarn_502",
+        "503_service_unavailable",
+        "429_too_many_requests",
+        "etimedout",
+        "econnreset",
+        "econnrefused",
+        "eai_again",
+        "ci_timeout",
+        "context_deadline",
+        "oom_js_heap",
+        "exit_code_137",
+        "enomem",
+    ],
+)
+def test_detect_infra_failure_matches(error_log, expected):
+    result = detect_infra_failure(error_log)
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    "error_log, expected",
+    [
         (NORMAL_TEST_FAILURE_LOG, None),
         ("", None),
     ],
