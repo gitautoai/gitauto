@@ -912,6 +912,48 @@ def test_exported_class_with_constructor():
     assert should_skip_javascript(content) is False
 
 
+def test_tagged_template_literal_graphql():
+    # GraphQL document with gql tagged template should be skipped
+    content = """import gql from 'graphql-tag';
+
+gql`
+  mutation generateId($type: IdType!) {
+    generateId(type: $type)
+  }
+`;
+"""
+    assert should_skip_javascript(content) is True
+
+
+def test_tagged_template_literal_css():
+    # CSS-in-JS styled-components tagged template should be skipped
+    content = """import styled from 'styled-components';
+
+export const Button = styled.button`
+  background: blue;
+  color: white;
+`;
+"""
+    assert should_skip_javascript(content) is True
+
+
+def test_tagged_template_literal_with_logic():
+    # Tagged template alongside function logic should NOT be skipped
+    content = """import gql from 'graphql-tag';
+
+gql`
+  mutation generateId($type: IdType!) {
+    generateId(type: $type)
+  }
+`;
+
+function processResult(data) {
+    return data.generateId;
+}
+"""
+    assert should_skip_javascript(content) is False
+
+
 def test_exported_async_method():
     # export class with async methods should NOT be skipped
     content = """export class ApiClient {

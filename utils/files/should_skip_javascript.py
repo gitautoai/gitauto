@@ -37,9 +37,11 @@ def should_skip_javascript(content: str) -> bool:
             continue
         if line.startswith("//"):
             continue
-        # Handle template literals
-        if not in_template_literal and line.startswith("const ") and "`" in line:
-            if line.count("`") == 1:  # Template literal starts
+        # Handle template literals (both `const x = \`...\`` and tagged templates like `gql\`...\``)
+        if not in_template_literal and "`" in line:
+            if (
+                line.count("`") == 1
+            ):  # Template literal starts (odd backtick = unclosed)
                 in_template_literal = True
                 if line:
                     code_lines.append(line)
@@ -70,6 +72,9 @@ def should_skip_javascript(content: str) -> bool:
             continue
         # Skip standalone object literals that are simple exports
         if re.match(r"^\w+,?$", line):  # Simple property names in objects
+            continue
+        # Skip tagged template literals (e.g. gql`...`, css`...`, html`...`)
+        if re.match(r"^\w+`", line):
             continue
 
         # Handle class closing FIRST before general closing brace handling
