@@ -100,6 +100,17 @@ from utils.files.is_test_file import is_test_file
         # Snapshot patterns
         ("src/services/__snapshots__/getUserPaymentOption.test.ts.snap", True),
         ("test/utils/__snapshots__/calTotalPayable.test.ts.snap", True),
+        # Root-level test directories (the (^|/) pattern bug)
+        ("testing/utils/context/getTestSecrets.ts", True),
+        ("testing/setup.ts", True),
+        ("testing/teardown.ts", True),
+        ("src/testing/helpers.ts", True),
+        ("e2e/login.spec.ts", True),
+        ("e2e/integration/checkout.ts", True),
+        ("playwright/tests/login.spec.ts", True),
+        ("spec/models/user_spec.rb", True),
+        ("__mocks__/api.js", True),
+        ("__snapshots__/Button.test.tsx.snap", True),
         # Should NOT be test files
         ("README.md", False),
         ("main.py", False),
