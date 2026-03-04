@@ -32,6 +32,7 @@ from services.supabase.repositories.get_repository import get_repository
 from services.supabase.schedule_pauses.is_schedule_paused import is_schedule_paused
 from services.stripe.check_availability import check_availability
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.has_test_file_candidate import has_test_file_candidate
 from utils.files.is_code_file import is_code_file
 from utils.files.is_config_file import is_config_file
 from utils.files.is_dependency_file import is_dependency_file
@@ -304,11 +305,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             continue
 
         # Check if a test file already exists for this source file
-        item_stem = Path(item_path).stem.lower()
-        has_tests = any(
-            is_test_file(fp) and item_stem in fp.lower()
-            for fp, _ in all_files_with_sizes
-        )
+        all_file_paths = [fp for fp, _ in all_files_with_sizes]
+        has_tests = has_test_file_candidate(item_path, all_file_paths)
 
         # If tests already exist, the file is proven testable - skip AI evaluation
         if has_tests:
