@@ -127,9 +127,8 @@ Resources:
       PackageType: Image
       Code:
         ImageUri: !Ref ECRImageUri
-      # 2048 MB to prevent OOM (1024 MB hit limit during agent fix loops)
-      # Cost: ~$0.030 per 900s invocation vs $0.015 at 1024 MB
-      MemorySize: 2048
+      # 3072 MB to prevent OOM (2048 MB hit limit during agent fix loops)
+      MemorySize: 3072
       EphemeralStorage:
         Size: 2048
       Timeout: 900
