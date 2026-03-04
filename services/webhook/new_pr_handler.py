@@ -481,11 +481,11 @@ async def handle_new_pr(
 
     # Notify agent of auto-fixes and remaining errors (in timeline order)
     allowed_to_edit_files = set(validation_result.files_with_errors)
+    allowed_to_edit_files.add(impl_file_path)
 
-    # If uncovered code is untestable, allow editing impl file and notify agent
+    # If uncovered code is untestable, notify agent
     if untestable_code_info and untestable_code_info.result:
         untestable_reason = untestable_code_info.reason
-        allowed_to_edit_files.add(impl_file_path)
         untestable_msg = f"Untestable code in `{impl_file_path}`: {untestable_reason}"
         messages.append({"role": "user", "content": untestable_msg})
         logger.info("Added untestable code message for %s", impl_file_path)

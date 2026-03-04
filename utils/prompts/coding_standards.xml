@@ -115,6 +115,21 @@ raise "Data missing" if data.nil?
       </solution>
       <rule>ALWAYS include a reason explaining why the code is untestable</rule>
     </pattern>
+
+    <pattern name="files_with_no_testable_logic">
+      <problem>Some files contain only declarations, type definitions, tagged template literals (e.g., GraphQL gql`...`), configuration objects, or re-exports with no functions, conditionals, or business logic to test. These files are instrumentable by coverage tools but have no meaningful behavior to verify.</problem>
+      <solution>
+        <description>Add a file-level coverage exclusion comment at the top of the file</description>
+        <javascript_typescript><![CDATA[
+/* istanbul ignore file */
+        ]]></javascript_typescript>
+        <python><![CDATA[
+# pragma: no cover (entire file)
+        ]]></python>
+      </solution>
+      <rule>Use this when the ENTIRE file has no testable logic - not just a single branch or function</rule>
+      <rule>If the file contains ANY functions, conditionals, or business logic, do NOT ignore the entire file - use specific line-level exclusions instead</rule>
+    </pattern>
   </untestable_code_patterns>
   </test_rules>
 </coding_standards> 
