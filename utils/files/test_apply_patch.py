@@ -118,6 +118,23 @@ def test_empty_original_no_diff_returns_empty(clone_dir):
     assert result.content == ""
 
 
+def test_apply_new_file_without_ab_prefix(clone_dir):
+    """Test new file creation when diff uses raw paths instead of a/ b/ prefix.
+    This is the exact format Claude generates: '--- /dev/null' and '+++ file_path'
+    without the 'b/' prefix. git apply fails on this format."""
+    diff = (
+        "--- /dev/null\n"
+        "+++ src/resolvers/getUserResolver.test.ts\n"
+        "@@ -0,0 +1,3 @@\n"
+        "+import getUserResolver from './getUserResolver';\n"
+        "+\n"
+        "+describe('getUserResolver', () => {});\n"
+    )
+    result = apply_patch("", diff, clone_dir, "src/resolvers/getUserResolver.test.ts")
+    assert result.error == ""
+    assert "getUserResolver" in result.content
+
+
 def test_nested_file_path(clone_dir):
     """Test that nested file paths work (parent dirs created automatically)."""
     original = "content\n"
