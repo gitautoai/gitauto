@@ -91,57 +91,61 @@ async def run_jest_test(
     use_coverage = bool(impl_file_to_collect_coverage_from)
     coverage_dir = os.path.join(clone_dir, "coverage")
 
-    # Run each test file individually so we know exactly which files fail
+    # Run all test files in a single invocation so Jest/vitest produces a single merged coverage report.
+    # -u (--updateSnapshot) auto-updates stale .snap files instead of failing
+    # --forceExit: Force jest to exit after tests complete, preventing hangs from uncleaned resources (e.g. MongoDB connections) that survive globalTeardown.
+    cmd = base_cmd + js_ts_test_files + ["-u", "--forceExit"]
+    if use_coverage and runner_name == "jest":
+        cmd.extend(
+            [
+                "--coverage",
+                f"--coverageDirectory={coverage_dir}",
+                "--coverageProvider=babel",
+                "--coverageReporters=json",
+                f"--collectCoverageFrom={impl_file_to_collect_coverage_from}",
+            ]
+        )
+    elif use_coverage and runner_name == "vitest":
+        cmd.extend(
+            [
+                "--coverage.enabled",
+                f"--coverage.reportsDirectory={coverage_dir}",
+                "--coverage.provider=istanbul",
+                "--coverage.reporter=json",
+                f"--coverage.include={impl_file_to_collect_coverage_from}",
+            ]
+        )
+    logger.info("%s: Running %s...", runner_name, ", ".join(js_ts_test_files))
     all_errors: list[str] = []
     error_files: set[str] = set()
-    for test_file in js_ts_test_files:
-        # -u (--updateSnapshot) auto-updates stale .snap files instead of failing
-        # --forceExit: Force jest to exit after tests complete, preventing hangs from uncleaned resources (e.g. MongoDB connections) that survive globalTeardown.
-        cmd = base_cmd + [test_file, "-u", "--forceExit"]
-        if use_coverage and runner_name == "jest":
-            cmd.extend(
-                [
-                    "--coverage",
-                    f"--coverageDirectory={coverage_dir}",
-                    "--coverageProvider=babel",
-                    "--coverageReporters=json",
-                    f"--collectCoverageFrom={impl_file_to_collect_coverage_from}",
-                ]
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=EFS_TIMEOUT_SECONDS,
+        check=False,
+        cwd=clone_dir,
+        env=env,
+    )
+    if result.returncode != 0:
+        output = result.stdout + result.stderr
+        # Jest/yarn may exit with code 1 due to environment issues (teardown failures, MongoDB Memory Server cleanup, etc.) even when all tests pass. Without this check, the agent loops for 900s trying to fix it, and if CI also fails, GitAuto gets re-triggered - burning more Lambda time and cost.
+        if "PASS " in result.stdout and "FAIL " not in result.stdout:
+            logger.warning(
+                "%s: exit code %d but all tests PASSED, treating as success",
+                runner_name,
+                result.returncode,
             )
-        elif use_coverage and runner_name == "vitest":
-            cmd.extend(
-                [
-                    "--coverage.enabled",
-                    f"--coverage.reportsDirectory={coverage_dir}",
-                    "--coverage.provider=istanbul",
-                    "--coverage.reporter=json",
-                    f"--coverage.include={impl_file_to_collect_coverage_from}",
-                ]
-            )
-        logger.info("%s: Running %s...", runner_name, test_file)
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=EFS_TIMEOUT_SECONDS,
-            check=False,
-            cwd=clone_dir,
-            env=env,
-        )
-        if result.returncode != 0:
-            output = result.stdout + result.stderr
-            # Jest/yarn may exit with code 1 due to environment issues (teardown failures, MongoDB Memory Server cleanup, etc.) even when all tests pass. Without this check, the agent loops for 900s trying to fix it, and if CI also fails, GitAuto gets re-triggered - burning more Lambda time and cost.
-            if "PASS " in result.stdout and "FAIL " not in result.stdout:
-                logger.warning(
-                    "%s: %s exit code %d but all tests PASSED, treating as success",
-                    runner_name,
-                    test_file,
-                    result.returncode,
-                )
-                continue
-            error_files.add(test_file)
+        else:
+            # Parse which specific files failed from Jest output (e.g. "FAIL src/a.test.ts")
+            for test_file in js_ts_test_files:
+                if f"FAIL {test_file}" in result.stdout:
+                    error_files.add(test_file)
+            # If no specific files detected, mark all as failed
+            if not error_files:
+                error_files.update(js_ts_test_files)
             all_errors.append(output.strip())
-            logger.warning("%s: %s failed:\n%s", runner_name, test_file, output.strip())
+            logger.warning("%s: tests failed:\n%s", runner_name, output.strip())
 
     # Parse coverage data if coverage was enabled and tests passed
     coverage: Coverage | None = None

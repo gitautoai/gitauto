@@ -147,9 +147,10 @@ async def test_run_phpunit_test_multiple_failures(mock_exists, mock_subprocess):
         return False
 
     mock_exists.side_effect = exists_side_effect
+    # PHPUnit output mentions failing files
     mock_subprocess.return_value = MagicMock(
         returncode=1,
-        stdout="FAILURES!\nTests: 2, Assertions: 3, Failures: 2.",
+        stdout="FAILURES!\ntests/Unit/ATest.php\ntests/Unit/BTest.php\nTests: 2, Assertions: 3, Failures: 2.",
         stderr="",
     )
 
@@ -163,6 +164,76 @@ async def test_run_phpunit_test_multiple_failures(mock_exists, mock_subprocess):
     assert result.success is False
     assert "tests/Unit/ATest.php" in result.error_files
     assert "tests/Unit/BTest.php" in result.error_files
+
+
+@pytest.mark.asyncio
+@patch("services.phpunit.run_phpunit_test.subprocess.run")
+@patch("services.phpunit.run_phpunit_test.os.path.exists")
+async def test_run_phpunit_test_one_of_three_fails(mock_exists, mock_subprocess):
+    def exists_side_effect(path):
+        if path == "/tmp/clone/vendor/bin/phpunit":
+            return True
+        if path.endswith("phpunit.xml"):
+            return True
+        return False
+
+    mock_exists.side_effect = exists_side_effect
+    mock_subprocess.return_value = MagicMock(
+        returncode=1,
+        stdout="FAILURES!\ntests/Unit/BTest.php failed\nTests: 3, Assertions: 5, Failures: 1.",
+        stderr="",
+    )
+
+    base_args = cast(
+        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    )
+    result = await run_phpunit_test(
+        base_args=base_args,
+        test_file_paths=[
+            "tests/Unit/ATest.php",
+            "tests/Unit/BTest.php",
+            "tests/Unit/CTest.php",
+        ],
+    )
+    assert result.success is False
+    assert "tests/Unit/ATest.php" not in result.error_files
+    assert "tests/Unit/BTest.php" in result.error_files
+    assert "tests/Unit/CTest.php" not in result.error_files
+
+
+@pytest.mark.asyncio
+@patch("services.phpunit.run_phpunit_test.subprocess.run")
+@patch("services.phpunit.run_phpunit_test.os.path.exists")
+async def test_run_phpunit_test_all_three_fail(mock_exists, mock_subprocess):
+    def exists_side_effect(path):
+        if path == "/tmp/clone/vendor/bin/phpunit":
+            return True
+        if path.endswith("phpunit.xml"):
+            return True
+        return False
+
+    mock_exists.side_effect = exists_side_effect
+    mock_subprocess.return_value = MagicMock(
+        returncode=1,
+        stdout="FAILURES!\ntests/Unit/ATest.php\ntests/Unit/BTest.php\ntests/Unit/CTest.php\nTests: 3, Assertions: 5, Failures: 3.",
+        stderr="",
+    )
+
+    base_args = cast(
+        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    )
+    result = await run_phpunit_test(
+        base_args=base_args,
+        test_file_paths=[
+            "tests/Unit/ATest.php",
+            "tests/Unit/BTest.php",
+            "tests/Unit/CTest.php",
+        ],
+    )
+    assert result.success is False
+    assert "tests/Unit/ATest.php" in result.error_files
+    assert "tests/Unit/BTest.php" in result.error_files
+    assert "tests/Unit/CTest.php" in result.error_files
 
 
 @pytest.mark.asyncio
