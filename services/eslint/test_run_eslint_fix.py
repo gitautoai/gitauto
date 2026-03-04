@@ -535,6 +535,63 @@ async def test_run_eslint_fix_includes_no_warn_ignored_for_v9(base_args):
 
 
 @pytest.mark.asyncio
+async def test_run_eslint_fix_ignores_file_ignored_message_on_v8(base_args):
+    """ESLint v8 reports 'File ignored because of a matching ignore pattern' with no
+    ruleId when an ignored file is passed explicitly. This must not be treated as a
+    lint error, otherwise the agent loops endlessly trying to fix it."""
+    # Real ESLint v7 JSON output from foxcom-forms (eslint --format json on an ignored .test.tsx file)
+    eslint_output = json.dumps(
+        [
+            {
+                "filePath": "/tmp/test-clone/src/index.test.tsx",
+                "messages": [
+                    {
+                        "fatal": False,
+                        "severity": 1,
+                        "message": 'File ignored because of a matching ignore pattern. Use "--no-ignore" to override.',
+                    }
+                ],
+                "errorCount": 0,
+                "warningCount": 1,
+                "fixableErrorCount": 0,
+                "fixableWarningCount": 0,
+                "usedDeprecatedRules": [],
+            }
+        ]
+    )
+
+    with patch(
+        "services.eslint.run_eslint_fix.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch(
+            "services.eslint.run_eslint_fix.get_dependency_major_version",
+            return_value=8,
+        ):
+            with patch("services.eslint.run_eslint_fix.os.makedirs"):
+                with patch("builtins.open", mock_open(read_data="const x = 1;")):
+                    with patch(
+                        "services.eslint.run_eslint_fix.subprocess.run"
+                    ) as mock_run:
+                        # ESLint v7/v8 returns exit code 0 for ignored files (warningCount=1, errorCount=0)
+                        mock_run.return_value = MagicMock(
+                            returncode=0, stdout=eslint_output, stderr=""
+                        )
+
+                        coro = run_eslint_fix(
+                            base_args=base_args,
+                            file_path="src/index.test.tsx",
+                            file_content="const x = 1;",
+                        )
+                        assert coro is not None
+                        result = await coro
+
+    assert result.success is True
+    assert result.lint_errors is None
+    assert result.coverage_errors is None
+
+
+@pytest.mark.asyncio
 async def test_run_eslint_fix_excludes_no_warn_ignored_for_v8(base_args):
     """--no-warn-ignored is NOT added when package.json has eslint v8.
     This flag causes fatal error (exit code 2) on v8."""

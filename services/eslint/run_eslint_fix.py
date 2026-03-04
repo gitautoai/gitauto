@@ -159,10 +159,19 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
         env=env,
     )
 
+    with open(full_path, "r", encoding=UTF8) as f:
+        fixed_content = f.read()
+
     # ESLint exit codes:
     # 0 = no linting errors
     # 1 = linting errors found (some fixable, some not)
     # 2+ = fatal error (bad config, missing file, crash, invalid CLI option)
+    if result.returncode == 0:
+        logger.info("ESLint: Successfully fixed %s", file_path)
+        return ESLintResult(
+            success=True, content=fixed_content, lint_errors=None, coverage_errors=None
+        )
+
     if result.returncode >= 2:
         error_msg = result.stderr.strip() or "Fatal ESLint error"
         # Fatal ESLint errors are infrastructure issues (invalid CLI options, missing plugins, bad config), not code issues the agent can fix. Reporting them as lint_errors causes the agent to loop endlessly calling verify_task_is_complete.
@@ -172,9 +181,6 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
         return ESLintResult(
             success=True, content=None, lint_errors=None, coverage_errors=None
         )
-
-    with open(full_path, "r", encoding=UTF8) as f:
-        fixed_content = f.read()
 
     lint_errors: list[str] = []
     coverage_errors: list[str] = []
