@@ -665,6 +665,27 @@ def test_kwargs_parameter_ignored(tmp_path):
                 assert "Applied diff to test.py" in result.message
 
 
+def test_no_changes_returns_success_false(
+    sample_base_args,
+    mock_requests_get_existing_file,
+    mock_create_headers,
+):
+    """Test that identical content after apply_patch returns success=False."""
+    original_content = "print('hello world')\n"
+    with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
+        mock_patch.return_value = PatchResult(content=original_content, error="")
+
+        result = apply_diff_to_file(
+            diff="--- test\n+++ test\n@@ -1,1 +1,1 @@\n-old\n+new",
+            file_path="test.py",
+            base_args=sample_base_args,
+        )
+
+        assert isinstance(result, FileWriteResult)
+        assert result.success is False
+        assert "No changes" in result.message
+
+
 @pytest.mark.parametrize(
     "error_type,error_message",
     [

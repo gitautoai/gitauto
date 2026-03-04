@@ -370,7 +370,10 @@ async def chat_with_agent(
             and file_path
         ):
             replace_old_file_content(messages, file_path, is_full_file_read=True)
-            msg = f"Committed changes to `{file_path}`."
+            if isinstance(tool_result, FileWriteResult):
+                msg = tool_result.message
+            else:
+                msg = f"Committed changes to `{file_path}`."
 
         elif (
             tool_name == "search_google"
