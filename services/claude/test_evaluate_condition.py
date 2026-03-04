@@ -104,6 +104,25 @@ def test_integration_returns_false_for_non_testable_code():
 
 
 @pytest.mark.skip(reason="Integration test - calls real API")
+def test_integration_returns_false_for_graphql_document_definition():
+    gql_document = """import gql from 'graphql-tag';
+
+gql`
+  mutation generateId($type: IdType!) {
+    generateId(type: $type)
+  }
+`;
+"""
+    eval_result = evaluate_condition(
+        content=f"File path: src/models/graphql/operation/document/generateId.ts\n\nContent:\n{gql_document}",
+        system_prompt=SHOULD_TEST_FILE_PROMPT,
+    )
+    assert eval_result.result is False
+    assert isinstance(eval_result.reason, str)
+    assert len(eval_result.reason) > 0
+
+
+@pytest.mark.skip(reason="Integration test - calls real API")
 def test_integration_returns_false_for_untestable_php_script():
     php_script = """<?php
 
