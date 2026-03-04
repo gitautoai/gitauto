@@ -10,8 +10,8 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 1-1. For modified files (Replace lines of code)
 
 ```diff(unified=0)
---- path/to/file1
-+++ path/to/file1
+--- a/path/to/file1
++++ b/path/to/file1
 @@ -5,1 +5,1 @@
 - original line 5
 + modified line 5
@@ -20,8 +20,8 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 1-2. For modified files (Remove lines of code)
 
 ```diff(unified=0)
---- path/to/file2
-+++ path/to/file2
+--- a/path/to/file2
++++ b/path/to/file2
 @@ -10,1 +10,0 @@
 - original line 10
 ```
@@ -29,8 +29,8 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 1-3. For modified files (Add lines of code)
 
 ```diff(unified=0)
---- path/to/file3
-+++ path/to/file3
+--- a/path/to/file3
++++ b/path/to/file3
 @@ -15,0 +15,1 @@
 + added line 15
 ```
@@ -38,8 +38,8 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 1-4. For modified files (Remove markdown bullet points)
 
 ```diff(unified=0)
---- path/to/file4.md
-+++ path/to/file4.md
+--- a/path/to/file4.md
++++ b/path/to/file4.md
 @@ -20,3 +20,0 @@
 - - First bullet point
 - - Second bullet point
@@ -50,7 +50,7 @@ A UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff -
 
 ```diff(unified=0)
 --- /dev/null
-+++ path/to/new/file
++++ b/path/to/new/file
 @@ -0,0 +1,3 @@
 + added line 1
 + added line 2
