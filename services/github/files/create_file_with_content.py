@@ -6,6 +6,7 @@ import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
+from services.github.commits.format_commit_message import format_commit_message
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
@@ -31,6 +32,8 @@ def create_file_with_content(
         commit_message = (
             f"Create {file_path} [skip ci]" if skip_ci else f"Create {file_path}"
         )
+
+    commit_message = format_commit_message(message=commit_message, base_args=base_args)
 
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/contents/{file_path}?ref={new_branch}"
     headers = create_headers(token=token)

@@ -7,6 +7,7 @@ import requests
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT, UTF8
 from services.claude.tools.file_modify_result import FileWriteResult
+from services.github.commits.format_commit_message import format_commit_message
 from services.github.files.delete_remote_file import delete_remote_file
 from services.github.types.contents import Contents
 from services.github.types.github_types import BaseArgs
@@ -34,6 +35,7 @@ def apply_diff_to_file(
     """https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents"""
     skip_ci = base_args.get("skip_ci", False)
     message = f"Update {file_path} [skip ci]" if skip_ci else f"Update {file_path}"
+    message = format_commit_message(message=message, base_args=base_args)
     owner, repo, token = base_args["owner"], base_args["repo"], base_args["token"]
     new_branch = base_args["new_branch"]
     if not new_branch:

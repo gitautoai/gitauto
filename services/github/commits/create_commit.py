@@ -6,6 +6,7 @@ import requests
 
 # Local imports
 from config import GITHUB_API_URL, TIMEOUT
+from services.github.commits.format_commit_message import format_commit_message
 from services.github.types.github_types import BaseArgs
 from services.github.utils.create_headers import create_headers
 from utils.error.handle_exceptions import handle_exceptions
@@ -16,6 +17,9 @@ def create_commit(base_args: BaseArgs, message: str, tree_sha: str, parent_sha: 
     owner = base_args["owner"]
     repo = base_args["repo"]
     token = base_args["token"]
+
+    # Append Co-Authored-By trailer for contribution credit
+    message = format_commit_message(message=message, base_args=base_args)
 
     # Create new commit with same tree (empty commit)
     commit_data = {"message": message, "tree": tree_sha, "parents": [parent_sha]}
