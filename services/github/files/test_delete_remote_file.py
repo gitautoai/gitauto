@@ -6,6 +6,15 @@ import pytest
 from services.github.files.delete_remote_file import delete_remote_file
 
 
+@pytest.fixture(autouse=True)
+def _mock_format_commit_message():
+    with patch(
+        "services.github.files.delete_remote_file.format_commit_message",
+        side_effect=lambda message, base_args: message,
+    ):
+        yield
+
+
 @pytest.fixture
 def base_args(tmp_path):
     """Fixture for base arguments."""

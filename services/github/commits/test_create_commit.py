@@ -6,6 +6,15 @@ import requests
 from services.github.commits.create_commit import create_commit
 
 
+@pytest.fixture(autouse=True)
+def _mock_format_commit_message():
+    with patch(
+        "services.github.commits.create_commit.format_commit_message",
+        side_effect=lambda message, base_args: message,
+    ):
+        yield
+
+
 @pytest.fixture
 def sample_base_args(create_test_base_args, test_owner, test_repo):
     return create_test_base_args(
