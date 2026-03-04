@@ -106,7 +106,7 @@ def apply_diff_to_file(
     if result.content == original_text:
         logger.info("No changes to %s, skipping", file_path)
         return FileWriteResult(
-            success=True,
+            success=False,
             message=f"No changes to {file_path}.",
             file_path=file_path,
             content=result.content,

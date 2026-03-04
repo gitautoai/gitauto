@@ -698,6 +698,82 @@ async def test_file_write_result_success_includes_formatted_content(
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
 @patch("services.chat_with_agent.update_comment")
+async def test_apply_diff_no_changes_logs_tool_result_message(
+    mock_update_comment, mock_chat_with_claude, mock_get_model
+):
+    """Test that apply_diff_to_file with no changes uses tool_result.message instead of hardcoded 'Committed changes'."""
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "apply_diff_to_file",
+                    "input": {"file_path": "test.py", "diff": "some diff"},
+                }
+            ],
+        },
+        [
+            ToolCall(
+                id="test_id",
+                name="apply_diff_to_file",
+                args={"file_path": "test.py", "diff": "some diff"},
+            )
+        ],
+        15,
+        10,
+    )
+
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        mock_tools.__contains__.return_value = True
+        mock_tools.__getitem__.return_value = Mock(
+            return_value=FileWriteResult(
+                success=False,
+                message="No changes to test.py.",
+                file_path="test.py",
+                content="original content",
+            )
+        )
+
+        await chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            system_message="test system message",
+            base_args=base_args,
+            tools=[],
+            usage_id=123,
+            allow_edit_any_file=True,
+            allowed_to_edit_files=set(),
+            model_id=None,
+        )
+
+    call_args = mock_update_comment.call_args_list
+    assert len(call_args) > 0
+
+    found_no_changes = False
+    found_committed = False
+    for call in call_args:
+        body_arg = call.kwargs.get("body", "")
+        if "No changes to test.py." in body_arg:
+            found_no_changes = True
+        if "Committed changes" in body_arg:
+            found_committed = True
+
+    assert (
+        found_no_changes
+    ), f"Expected 'No changes to test.py.' in update_comment calls: {[call.kwargs.get('body', '') for call in call_args]}"
+    assert (
+        not found_committed
+    ), f"Should not contain 'Committed changes' when there are no changes: {[call.kwargs.get('body', '') for call in call_args]}"
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.update_comment")
 async def test_file_write_result_failure_returns_message_only(
     _mock_update_comment, mock_chat_with_claude, mock_get_model
 ):
