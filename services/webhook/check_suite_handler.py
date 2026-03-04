@@ -387,7 +387,7 @@ async def handle_check_suite(
         failed_job_logs = []
 
         for job in workflow_jobs:
-            if job.get("status") != "failed":
+            if job.get("status") not in ("failed", "infrastructure_fail", "timedout"):
                 continue
 
             job_number = job.get("job_number")

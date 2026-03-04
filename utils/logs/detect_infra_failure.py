@@ -2,10 +2,26 @@
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
-# Only patterns we've actually observed in real CI logs. Add more as we encounter them.
+# Patterns for transient infrastructure failures (not code bugs). Add more as we encounter them.
 INFRA_FAILURE_PATTERNS = [
+    # Segfaults
     "Segmentation fault",
     "exit code 139",
+    # Package registry failures
+    'Request failed "502 Bad Gateway"',
+    'Request failed "503 Service Unavailable"',
+    'Request failed "429 Too Many Requests"',
+    "ETIMEDOUT",
+    "ECONNRESET",
+    "ECONNREFUSED",
+    "EAI_AGAIN",
+    # CI timeouts
+    "Too long with no output",
+    "context deadline exceeded",
+    # OOM
+    "out of memory",
+    "exit code 137",
+    "ENOMEM",
 ]
 
 

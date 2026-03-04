@@ -361,7 +361,7 @@ def test_parse_lcov_ts_foxden_tools():
     """Test parsing foxden-tools TypeScript LCOV file.
 
     This repo uses V8 coverage provider and has FN:(empty-report) format.
-    The schedule handler was creating issues for files with 100% coverage
+    The schedule handler was creating PRs for files with 100% coverage
     because the coverage report was not being parsed/ingested.
     """
     with open("payloads/lcov/lcov-ts-foxden-tools.info", "r", encoding=UTF8) as f:
