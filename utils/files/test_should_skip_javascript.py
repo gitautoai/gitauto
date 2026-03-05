@@ -963,3 +963,30 @@ def test_exported_async_method():
   }
 }"""
     assert should_skip_javascript(content) is False
+
+
+def test_exported_const_async_arrow_function():
+    # export const with async arrow function has real logic - should NOT be skipped
+    # Real case: Foxquilt/foxden-version-controller src/utils/checkPaidQuoteId.ts
+    content = """import { MongoClient, ObjectId } from 'mongodb';
+
+interface CheckPaidQuoteIdResult {
+  isPaid: boolean;
+  applicationId: ObjectId;
+}
+
+export const checkPaidQuoteId = async (
+  quoteId: string,
+  mongoClient: MongoClient,
+): Promise<CheckPaidQuoteIdResult> => {
+  const pipeline = [
+    { $match: { _id: new ObjectId(quoteId) } },
+  ];
+  const payObject = mongoClient.db().collection('Quote').aggregate(pipeline);
+  const result = await payObject.next();
+  return {
+    isPaid: !!result,
+    applicationId: result?.data?.db?.applicationId,
+  };
+};"""
+    assert should_skip_javascript(content) is False
