@@ -18,7 +18,7 @@ def should_skip_javascript(content: str) -> bool:
     - Any executable code beyond declarations
     """
     lines = content.split("\n")
-    code_lines = []
+    code_lines: list[str] = []
 
     # Remove comments and normalize whitespace
     in_multiline_comment = False
@@ -64,8 +64,30 @@ def should_skip_javascript(content: str) -> bool:
         # Skip destructured requires
         if re.match(r"^(const|let|var)\s+{.*}\s*=\s*require\(", line):
             continue
-        # Skip export statements
+        # Skip export statements that are re-exports or simple declarations but NOT exported functions/classes/arrow functions with logic
         if line.startswith("export "):
+            rest = line[len("export ") :]
+            # export default, export { ... }, export * from, export type
+            if rest.startswith(("default ", "{", "* ", "type ")):
+                continue
+            # export const/let/var with arrow function or function expression = real logic
+            if "=>" in rest or "function" in rest:
+                return False
+            # export const/let/var with async = arrow function on next line
+            if re.match(r"^(const|let|var)\s+\w+\s*=\s*async\s*\(", rest):
+                return False
+            # export function or export class with body = real logic
+            if rest.startswith(("function ", "async function ")):
+                return False
+            if rest.startswith("class ") and "{}" not in rest:
+                # Non-empty class - check if it has methods
+                if re.match(r"^class\s+\w+(\s+extends\s+\w+)?\s*\{\s*\}$", rest):
+                    continue
+                if re.match(r"^class\s+\w+(\s+extends\s+\w+)?\s*\{$", rest):
+                    in_class_definition = True
+                    continue
+                return False
+            # Simple export (const X = value, enum, interface, etc.)
             continue
         # Skip module.exports (including object literals)
         if line.startswith("module.exports") or line.startswith("exports."):
