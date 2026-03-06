@@ -1,5 +1,9 @@
 from unittest.mock import patch
+
 from utils.text.sort_imports_py import sort_python_imports
+
+# Use __file__ as a valid file_path for isort settings discovery
+FILE_PATH = __file__
 
 
 def test_sort_python_imports_basic():
@@ -22,7 +26,7 @@ import requests
 
 from config import SOMETHING
 """
-    result = sort_python_imports(content)
+    result = sort_python_imports(content, FILE_PATH)
     # isort preserves comments but may place them semantically incorrectly
     assert result == expected
 
@@ -30,7 +34,7 @@ from config import SOMETHING
 def test_sort_python_imports_empty():
     """Test empty Python content."""
     content = ""
-    result = sort_python_imports(content)
+    result = sort_python_imports(content, FILE_PATH)
     assert result == ""
 
 
@@ -40,7 +44,7 @@ def test_sort_python_imports_no_imports():
     print('world')"""
     expected = """def hello():
     print('world')"""
-    result = sort_python_imports(content)
+    result = sort_python_imports(content, FILE_PATH)
     # Should return exactly the same content when no imports
     assert result == expected
 
@@ -90,7 +94,7 @@ def main():
     print("Hello World")
 """
 
-    result = sort_python_imports(messy_code)
+    result = sort_python_imports(messy_code, FILE_PATH)
     assert result == expected
 
 
@@ -121,7 +125,7 @@ def foo():
     pass
 """
 
-    result = sort_python_imports(code)
+    result = sort_python_imports(code, FILE_PATH)
     assert result == expected
 
 
@@ -149,7 +153,7 @@ def main():
     pass
 '''
 
-    result = sort_python_imports(code)
+    result = sort_python_imports(code, FILE_PATH)
     assert result == expected
 
 
@@ -176,7 +180,37 @@ def process():
     pass
 """
 
-    result = sort_python_imports(code)
+    result = sort_python_imports(code, FILE_PATH)
+    assert result == expected
+
+
+def test_sort_python_imports_local_module_vs_third_party(tmp_path):
+    """Test that isort correctly orders local modules after third-party when file_path is provided.
+
+    Regression test: without file_path, isort misclassified a local module (calculator)
+    relative to a third-party module (pytest), producing wrong import order.
+    """
+    # Create a fake project with calculator.py so isort can detect it as first-party
+    (tmp_path / "calculator.py").write_text("def add(a, b): return a + b\n")
+    test_file = tmp_path / "test_calculator.py"
+    test_file.write_text("")
+
+    content = (
+        "from unittest.mock import patch\n"
+        "\n"
+        "from calculator import add, divide, main, multiply, subtract\n"
+        "\n"
+        "import pytest\n"
+    )
+
+    expected = (
+        "from unittest.mock import patch\n"
+        "\n"
+        "import pytest\n"
+        "from calculator import add, divide, main, multiply, subtract\n"
+    )
+
+    result = sort_python_imports(content, str(test_file))
     assert result == expected
 
 
@@ -188,12 +222,12 @@ def test_sort_python_imports_error_handling():
     with patch(
         "utils.text.sort_imports_py.isort.code", side_effect=ValueError("Test error")
     ):
-        result = sort_python_imports(content)
+        result = sort_python_imports(content, "test.py")
         # Should return original content unchanged on error
         assert result == content
 
     # Test with empty content - should handle gracefully
-    assert sort_python_imports("") == ""
+    assert sort_python_imports("", FILE_PATH) == ""
 
 
 def test_sort_python_imports_failure_scenarios():
@@ -203,7 +237,7 @@ def test_sort_python_imports_failure_scenarios():
 
     # Even with malformed content, isort usually handles it, but if it fails,
     # we should get the original back
-    result = sort_python_imports(malformed_content)
+    result = sort_python_imports(malformed_content, FILE_PATH)
     # Either sorted or original, but never None or empty (unless input was empty)
     assert result is not None
     assert len(result) > 0

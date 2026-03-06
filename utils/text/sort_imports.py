@@ -12,7 +12,7 @@ def sort_imports(content: str, file_path: str):
 
     # Python files
     if file_path.endswith(".py"):
-        return sort_python_imports(content)
+        return sort_python_imports(content, file_path)
 
     # JavaScript/TypeScript files
     if file_path.endswith((".js", ".jsx", ".ts", ".tsx")):
