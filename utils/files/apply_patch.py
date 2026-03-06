@@ -50,6 +50,13 @@ def apply_patch(original_text: str, diff_text: str, clone_dir: str, file_path: s
             diff_fname = diff_file.name
             diff_file.write(diff_content)
 
+        # Log file state before git apply for debugging patch failures
+        content_before = read_local_file(file_path, clone_dir)
+        if content_before is not None:
+            logger.info("File before git apply:\n%s", content_before)
+        else:
+            logger.info("File does not exist before git apply: %s", target_path)
+
         # See https://git-scm.com/docs/git-apply
         subprocess.run(
             args=["git", "apply", "--verbose", diff_fname],
