@@ -238,6 +238,9 @@ class TestHandleInstallationCreated:
             token="ghs_test_token",
             user_id=11111,
             user_name="test-sender",
+            installation_id=12345,
+            sender_email="test@example.com",
+            sender_display_name="Test Sender",
         )
 
     async def test_handle_installation_created_existing_owner_with_existing_grant(
@@ -299,6 +302,9 @@ class TestHandleInstallationCreated:
             token="ghs_test_token",
             user_id=11111,
             user_name="test-sender",
+            installation_id=12345,
+            sender_email="test@example.com",
+            sender_display_name="Test Sender",
         )
 
     async def test_handle_installation_created_new_owner_existing_grant(
@@ -491,6 +497,9 @@ class TestHandleInstallationCreated:
             token="ghs_test_token",
             user_id=11111,
             user_name="test-sender",
+            installation_id=12345,
+            sender_email="test@example.com",
+            sender_display_name="Test Sender",
         )
 
     async def test_handle_installation_created_with_single_repository(
@@ -520,6 +529,9 @@ class TestHandleInstallationCreated:
             token="ghs_test_token",
             user_id=11111,
             user_name="test-sender",
+            installation_id=12345,
+            sender_email="test@example.com",
+            sender_display_name="Test Sender",
         )
 
     async def test_handle_installation_created_with_exception_in_get_token(
@@ -878,6 +890,9 @@ class TestHandleInstallationCreated:
             token="ghs_test_token",
             user_id=11111,
             user_name="test-sender",
+            installation_id=12345,
+            sender_email="test@example.com",
+            sender_display_name="Test Sender",
         )
 
     async def test_handle_installation_created_with_none_repositories(
@@ -906,6 +921,9 @@ class TestHandleInstallationCreated:
             token="ghs_test_token",
             user_id=11111,
             user_name="test-sender",
+            installation_id=12345,
+            sender_email="test@example.com",
+            sender_display_name="Test Sender",
         )
 
     async def test_handle_installation_created_with_complex_repository_data(
@@ -956,6 +974,9 @@ class TestHandleInstallationCreated:
             token="ghs_test_token",
             user_id=11111,
             user_name="test-sender",
+            installation_id=12345,
+            sender_email="test@example.com",
+            sender_display_name="Test Sender",
         )
 
     async def test_handle_installation_created_with_special_characters_in_names(
