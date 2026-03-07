@@ -1,6 +1,5 @@
 # Standard imports
 import os
-from typing import cast
 
 # Local imports
 from services.aws.run_install_via_codebuild import run_install_via_codebuild
@@ -17,6 +16,7 @@ from services.github.commits.get_latest_remote_commit_sha import (
 )
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.repositories.get_repository_stats import get_repository_stats
+from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.types.github_types import BaseArgs
 from services.github.types.owner import OwnerType
 from services.github.types.repository import RepositoryAddedOrRemoved
@@ -49,6 +49,9 @@ async def process_repositories(
     token: str,
     user_id: int,
     user_name: str,
+    installation_id: int,
+    sender_email: str | None,
+    sender_display_name: str,
 ):
     for repo in repositories:
         repo_id = repo["id"]
@@ -127,17 +130,33 @@ async def process_repositories(
         # Create GitAuto setup PR with any necessary configuration
         new_branch = generate_branch_name(trigger="setup")
 
-        base_args = cast(
-            BaseArgs,
-            {
-                "owner": owner_name,
-                "repo": repo_name,
-                "token": token,
-                "base_branch": default_branch,
-                "new_branch": new_branch,
-                "clone_dir": efs_dir,
-            },
-        )
+        base_args: BaseArgs = {
+            "owner_type": owner_type,
+            "owner_id": owner_id,
+            "owner": owner_name,
+            "repo_id": repo_id,
+            "repo": repo_name,
+            "clone_url": clone_url,
+            "is_fork": is_repo_forked(owner=owner_name, repo=repo_name, token=token),
+            "base_branch": default_branch,
+            "new_branch": new_branch,
+            "installation_id": installation_id,
+            "token": token,
+            "sender_id": user_id,
+            "sender_name": user_name,
+            "sender_email": sender_email,
+            "sender_display_name": sender_display_name,
+            "is_automation": False,
+            "reviewers": [user_name] if user_name and "[bot]" not in user_name else [],
+            "github_urls": [],
+            "other_urls": [],
+            "clone_dir": efs_dir,
+            "pr_number": 0,
+            "pr_title": SETUP_PR_TITLE,
+            "pr_body": "",
+            "pr_comments": [],
+            "pr_creator": user_name,
+        }
 
         sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
         create_remote_branch(sha=sha, base_args=base_args)

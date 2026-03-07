@@ -148,6 +148,14 @@ def mock_os_path_isfile():
 
 
 @pytest.fixture
+def mock_is_repo_forked():
+    with patch(
+        "services.webhook.process_repositories.is_repo_forked", return_value=False
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
 def mock_delete_remote_branch():
     with patch("services.webhook.process_repositories.delete_remote_branch") as mock:
         yield mock
@@ -208,6 +216,7 @@ async def test_process_repositories_efs_exists_fetches(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
+    mock_is_repo_forked,
     mock_ensure_tsconfig_relaxed_for_tests,
     mock_os_listdir,
     mock_os_path_isfile,
@@ -225,6 +234,9 @@ async def test_process_repositories_efs_exists_fetches(
         token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
+        installation_id=99999,
+        sender_email="test@example.com",
+        sender_display_name="Test User",
     )
 
     assert mock_get_default_branch.call_count == 2
@@ -252,6 +264,7 @@ async def test_process_repositories_efs_not_exists_clones(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
+    mock_is_repo_forked,
     mock_ensure_tsconfig_relaxed_for_tests,
     mock_os_listdir,
     mock_os_path_isfile,
@@ -268,6 +281,9 @@ async def test_process_repositories_efs_not_exists_clones(
         token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
+        installation_id=99999,
+        sender_email="test@example.com",
+        sender_display_name="Test User",
     )
 
     assert mock_git_clone_to_efs.call_count == 2
@@ -295,6 +311,9 @@ async def test_process_repositories_empty_list(
         token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
+        installation_id=99999,
+        sender_email="test@example.com",
+        sender_display_name="Test User",
     )
 
     mock_get_default_branch.assert_not_called()
@@ -322,6 +341,7 @@ async def test_process_repositories_stats_saved_correctly(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
+    mock_is_repo_forked,
     mock_ensure_tsconfig_relaxed_for_tests,
     mock_os_listdir,
     mock_os_path_isfile,
@@ -350,6 +370,9 @@ async def test_process_repositories_stats_saved_correctly(
         token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
+        installation_id=99999,
+        sender_email="test@example.com",
+        sender_display_name="Test User",
     )
 
     assert mock_upsert_repository.call_count == 2
@@ -386,6 +409,7 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
+    mock_is_repo_forked,
     mock_ensure_tsconfig_relaxed_for_tests,
     mock_os_listdir,
     mock_os_path_isfile,
@@ -413,6 +437,9 @@ async def test_process_repositories_empty_repo_skips_clone(
         token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
+        installation_id=99999,
+        sender_email="test@example.com",
+        sender_display_name="Test User",
     )
 
     mock_get_default_branch.assert_called_once()
@@ -450,6 +477,7 @@ async def test_process_repositories_non_typescript_deletes_branch_no_pr(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
+    mock_is_repo_forked,
     mock_ensure_tsconfig_relaxed_for_tests,
     mock_os_listdir,
     mock_os_path_isfile,
@@ -480,6 +508,9 @@ async def test_process_repositories_non_typescript_deletes_branch_no_pr(
         token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
+        installation_id=99999,
+        sender_email="test@example.com",
+        sender_display_name="Test User",
     )
 
     mock_create_remote_branch.assert_called_once()
@@ -504,6 +535,7 @@ async def test_process_repositories_typescript_creates_pr(
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
     mock_create_remote_branch,
+    mock_is_repo_forked,
     mock_ensure_tsconfig_relaxed_for_tests,
     mock_os_listdir,
     mock_os_path_isfile,
@@ -537,6 +569,9 @@ async def test_process_repositories_typescript_creates_pr(
         token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
+        installation_id=99999,
+        sender_email="test@example.com",
+        sender_display_name="Test User",
     )
 
     mock_create_remote_branch.assert_called_once()

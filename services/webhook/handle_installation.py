@@ -81,6 +81,9 @@ async def handle_installation_created(payload: InstallationPayload):
         token=token,
         user_id=user_id,
         user_name=sender_name,
+        installation_id=installation_id,
+        sender_email=user_info.email,
+        sender_display_name=user_info.display_name,
     )
 
     # Auto-create coverage workflow PR when a single repo is installed
