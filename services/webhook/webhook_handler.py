@@ -4,13 +4,12 @@ from typing import Any, cast
 # Local imports
 from config import (
     GITHUB_APP_USER_ID,
+    GITHUB_APP_USER_NAME,
     GITHUB_CHECK_RUN_FAILURES,
     PRODUCT_ID,
 )
 from constants.triggers import Trigger
-from payloads.github.pull_request_review_comment.types import (
-    PullRequestReviewCommentPayload,
-)
+from services.github.types.webhook.review_run_payload import ReviewRunPayload
 from services.github.types.github_types import (
     CheckSuiteCompletedPayload,
     InstallationPayload,
@@ -18,6 +17,7 @@ from services.github.types.github_types import (
     PrClosedPayload,
     PrLabeledPayload,
 )
+from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
 from services.github.types.webhook.push import PushWebhookPayload
 from services.slack.slack_notify import slack_notify
 from services.supabase.installations.unsuspend_installation import (
@@ -40,7 +40,12 @@ from services.webhook.handle_installation_repos_removed import (
 from services.webhook.new_pr_handler import handle_new_pr
 from services.webhook.pr_body_handler import write_pr_description
 from services.webhook.push_handler import handle_push
+from services.github.pulls.get_pull_request import get_pull_request
+from services.github.token.get_installation_token import get_installation_access_token
 from services.webhook.review_run_handler import handle_review_run
+from services.webhook.utils.adapt_pr_comment_to_review_payload import (
+    adapt_pr_comment_to_review_payload,
+)
 from services.webhook.successful_check_suite_handler import (
     handle_successful_check_suite,
 )
@@ -201,10 +206,59 @@ async def handle_webhook_event(
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment
     # Do nothing when action is "deleted"
     if event_name == "pull_request_review_comment" and action in ("created", "edited"):
-        typed_payload = cast(PullRequestReviewCommentPayload, payload)
+        typed_payload = cast(ReviewRunPayload, payload)
         await handle_review_run(
             payload=typed_payload,
             trigger="review_comment",
+            lambda_info=lambda_info,
+        )
+        return
+
+    # https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
+    # Handle general PR comments (not inline review comments)
+    if event_name == "issue_comment" and action in ("created", "edited"):
+        typed_payload = cast(IssueCommentWebhookPayload, payload)
+
+        # Only handle PR comments, not issue comments
+        if not typed_payload["issue"].get("pull_request"):
+            logger.info("Ignoring issue comment (not a PR comment)")
+            return
+
+        # Skip if sender is GitAuto itself
+        if typed_payload["sender"]["login"] == GITHUB_APP_USER_NAME:
+            logger.info("Ignoring PR comment from GitAuto itself")
+            return
+
+        # Fetch full PR object since issue_comment payload only has a stub
+        issue = typed_payload["issue"]
+        repo_payload = typed_payload["repository"]
+        owner_name = repo_payload["owner"]["login"]
+        repo_name = repo_payload["name"]
+        pr_number = issue["number"]
+        installation_id = typed_payload["installation"]["id"]
+        token = get_installation_access_token(installation_id=installation_id)
+        pr = get_pull_request(
+            owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
+        )
+        if not pr:
+            logger.info("Failed to fetch PR #%d, skipping", pr_number)
+            return
+
+        # Only handle comments on GitAuto PRs
+        head_ref = pr["head"]["ref"]
+        if not head_ref.startswith(PRODUCT_ID + "/"):
+            logger.info("Ignoring PR comment on non-GitAuto PR (branch: %s)", head_ref)
+            return
+
+        adapted_payload = adapt_pr_comment_to_review_payload(
+            payload=typed_payload, pull_request=pr
+        )
+        if not adapted_payload:
+            logger.info("Failed to adapt issue comment payload, skipping")
+            return
+        await handle_review_run(
+            payload=adapted_payload,
+            trigger="pr_comment",
             lambda_info=lambda_info,
         )
         return
