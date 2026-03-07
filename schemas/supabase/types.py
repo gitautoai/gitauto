@@ -144,7 +144,16 @@ class Credits(TypedDict):
     id: int
     owner_id: int
     amount_usd: int
-    transaction_type: Literal["purchase", "usage", "expiration", "refund", "auto_reload", "trial", "grant", "salvage"]
+    transaction_type: Literal[
+        "purchase",
+        "usage",
+        "expiration",
+        "refund",
+        "auto_reload",
+        "trial",
+        "grant",
+        "salvage",
+    ]
     stripe_payment_intent_id: str | None
     usage_id: int | None
     expires_at: datetime.datetime | None
@@ -154,7 +163,16 @@ class Credits(TypedDict):
 class CreditsInsert(TypedDict):
     owner_id: int
     amount_usd: int
-    transaction_type: Literal["purchase", "usage", "expiration", "refund", "auto_reload", "trial", "grant", "salvage"]
+    transaction_type: Literal[
+        "purchase",
+        "usage",
+        "expiration",
+        "refund",
+        "auto_reload",
+        "trial",
+        "grant",
+        "salvage",
+    ]
     stripe_payment_intent_id: NotRequired[str | None]
     usage_id: NotRequired[int | None]
     expires_at: NotRequired[datetime.datetime | None]
