@@ -29,6 +29,7 @@ from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.slack.slack_notify import slack_notify
 from services.github.commits.create_empty_commit import create_empty_commit
+from services.github.refs.get_reference import get_reference
 from services.github.files.get_local_file_content import get_local_file_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
@@ -412,13 +413,15 @@ async def handle_review_run(
         final_result = await verify_task_is_complete(base_args=base_args)
         is_completed = final_result.success
 
-    # Trigger final test workflows with an empty commit
-    if not review_author_is_bot:
-        update_comment(
-            body="Creating final empty commit to trigger workflows...",
-            base_args=base_args,
-        )
-    create_empty_commit(base_args=base_args)
+    # Trigger final test workflows with an empty commit (skip if agent made no commits)
+    current_head = get_reference(base_args)
+    if current_head != pull_request["head"]["sha"]:
+        if not review_author_is_bot:
+            update_comment(
+                body="Creating final empty commit to trigger workflows...",
+                base_args=base_args,
+            )
+        create_empty_commit(base_args=base_args)
 
     # Use the agent's own explanation as the final reply
     if completion_reason:

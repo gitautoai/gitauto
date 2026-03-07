@@ -75,6 +75,7 @@ def mock_review_comment_payload():
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
 @patch("services.webhook.review_run_handler.chat_with_agent")
 @patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch(
     "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
@@ -90,6 +91,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     _mock_git_clone_to_efs,
     _mock_ensure_node_packages,
     mock_update_usage,
+    _mock_get_reference,
     mock_create_empty_commit,
     mock_chat_with_agent,
     _mock_should_bail,
@@ -191,6 +193,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
 @patch("services.webhook.review_run_handler.chat_with_agent")
 @patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch(
     "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
@@ -207,6 +210,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
     _mock_git_clone_to_efs,
     _mock_ensure_node_packages,
     _mock_update_usage,
+    _mock_get_reference,
     _mock_create_empty_commit,
     mock_chat_with_agent,
     _mock_should_bail,
@@ -338,6 +342,7 @@ def mock_bot_review_comment_payload():
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
 @patch("services.webhook.review_run_handler.chat_with_agent")
 @patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch(
     "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
@@ -361,6 +366,7 @@ async def test_thread_resolved_during_loop_stops_agent(
     _mock_git_clone_to_efs,
     _mock_ensure_node,
     _mock_update_usage,
+    _mock_get_reference,
     _mock_create_empty_commit,
     mock_chat_with_agent,
     _mock_should_bail,
@@ -426,6 +432,7 @@ async def test_thread_resolved_during_loop_stops_agent(
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
 @patch("services.webhook.review_run_handler.chat_with_agent")
 @patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch(
     "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
@@ -449,6 +456,7 @@ async def test_bot_first_review_comment_is_processed(
     _mock_git_clone_to_efs,
     _mock_ensure_node,
     _mock_update_usage,
+    _mock_get_reference,
     _mock_create_empty_commit,
     mock_chat_with_agent,
     _mock_should_bail,
@@ -607,6 +615,7 @@ async def test_bot_reply_after_gitauto_replied_is_skipped(
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
 @patch("services.webhook.review_run_handler.chat_with_agent")
 @patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch(
     "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
@@ -630,6 +639,7 @@ async def test_human_review_comment_always_processed(
     _mock_git_clone_to_efs,
     _mock_ensure_node,
     _mock_update_usage,
+    _mock_get_reference,
     _mock_create_empty_commit,
     mock_chat_with_agent,
     _mock_should_bail,
@@ -762,6 +772,7 @@ def mock_pr_comment_payload():
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
 @patch("services.webhook.review_run_handler.chat_with_agent")
 @patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch(
     "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
@@ -785,6 +796,7 @@ async def test_pr_comment_uses_create_comment_not_reply(
     _mock_git_clone_to_efs,
     _mock_ensure_node,
     _mock_update_usage,
+    _mock_get_reference,
     _mock_create_empty_commit,
     mock_chat_with_agent,
     _mock_should_bail,
@@ -843,3 +855,108 @@ async def test_pr_comment_uses_create_comment_not_reply(
 
     # Agent was called
     mock_chat_with_agent.assert_called_once()
+
+
+@pytest.mark.skip(
+    reason="Integration test - calls real Claude API, costs money. Run manually to verify."
+)
+@patch("services.webhook.review_run_handler.slack_notify")
+@patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
+@patch("services.webhook.review_run_handler.set_npm_token_env")
+@patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
+@patch("services.webhook.review_run_handler.get_repository")
+@patch("services.webhook.review_run_handler.create_user_request")
+@patch("services.webhook.review_run_handler.get_review_thread_comments")
+@patch("services.webhook.review_run_handler.reply_to_comment")
+@patch("services.webhook.review_run_handler.create_comment")
+@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch("services.webhook.review_run_handler.get_pull_request_files")
+@patch("services.webhook.review_run_handler.update_comment")
+@patch("services.webhook.review_run_handler.should_bail", return_value=False)
+@patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.get_reference")
+@patch("services.webhook.review_run_handler.update_usage")
+@patch(
+    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
+)
+@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch(
+    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
+)
+@patch(
+    "services.webhook.review_run_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
+    "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
+)
+@patch("services.claude.tools.tools.tools_to_call")
+@patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
+@pytest.mark.asyncio
+async def test_question_comment_agent_replies_without_code_changes(
+    _mock_tools_to_call,
+    _mock_verify_task_is_ready,
+    _mock_ensure_php,
+    _mock_prepare_repo,
+    _mock_git_clone_to_efs,
+    _mock_ensure_node,
+    _mock_update_usage,
+    mock_get_reference,
+    mock_create_empty_commit,
+    _mock_should_bail,
+    _mock_update_comment,
+    mock_get_pr_files,
+    _mock_get_file_content,
+    mock_create_comment,
+    mock_reply_to_comment,
+    mock_get_thread_comments,
+    mock_create_user_request,
+    mock_get_repo,
+    mock_get_user_public_info,
+    mock_get_token,
+    _mock_set_npm_token_env,
+    _mock_get_local_file_tree,
+    _mock_slack_notify,
+    mock_pr_comment_payload,
+):
+    """Integration test: real Claude call for a question comment. Agent should just reply, no code changes."""
+    mock_pr_comment_payload["comment"][
+        "body"
+    ] = "Why did you use a dictionary here instead of a dataclass?"
+    mock_get_token.return_value = "ghs_test_token"
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
+    )()
+    mock_get_repo.return_value = {"id": 98765}
+    mock_create_user_request.return_value = 777
+    mock_create_comment.return_value = "http://new-comment-url"
+    mock_get_pr_files.return_value = [{"filename": "src/main.py", "status": "modified"}]
+    _mock_verify_task_is_ready.return_value = VerifyTaskIsReadyResult()
+    # HEAD SHA unchanged = agent made no commits
+    mock_get_reference.return_value = "fff999aaa111"
+
+    # Mock tools_to_call so Claude's tool calls don't hit real APIs
+    mock_verify = AsyncMock(
+        return_value=VerifyTaskIsCompleteResult(
+            success=True, message="Task completed. No changes were needed."
+        )
+    )
+    _mock_tools_to_call.__getitem__ = lambda self, key: (
+        mock_verify if key == "verify_task_is_complete" else lambda **kwargs: "mocked"
+    )
+    _mock_tools_to_call.__contains__ = lambda self, key: True
+
+    await handle_review_run(mock_pr_comment_payload, trigger="pr_comment")
+
+    # Final reply posted via create_comment (PR comment, not inline review)
+    final_calls = mock_create_comment.call_args_list
+    assert len(final_calls) >= 1
+    # At least one call should contain the agent's explanation
+    all_bodies = " ".join(c.kwargs.get("body", "") for c in final_calls)
+    assert len(all_bodies) > 50  # Agent wrote a real explanation
+
+    # reply_to_comment NOT used (PR comment path)
+    mock_reply_to_comment.assert_not_called()
+
+    # Empty commit NOT created (agent just replied, no code changes)
+    mock_create_empty_commit.assert_not_called()
