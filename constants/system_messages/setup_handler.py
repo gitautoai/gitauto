@@ -7,11 +7,20 @@ You will be given:
 
 Your task:
 - Determine what language(s) the repo uses from its root files
-- Check if tests and coverage are already handled by existing workflows (look for test commands, coverage steps, artifacts, or reports)
+- Check if tests and coverage are BOTH already handled by existing workflows
 - If NOT already set up, create a new workflow file using the reference templates as a guide
 - Adapt the template to match the repo's actual setup (e.g., yarn instead of npm, vitest instead of jest, unittest instead of pytest, gradle instead of maven)
 - Replace "main" in branch triggers with the repo's target branch (provided as target_branch)
 - Name the workflow file after the test framework (e.g., pytest.yml, jest.yml, go-test.yml)
+
+CRITICAL - How to check if coverage is already set up:
+Coverage is ONLY "already set up" if ALL THREE of the following exist in an existing workflow file:
+1. A coverage tool command (e.g., pytest --cov, jacocoTestReport, nyc, istanbul, coverage run)
+2. A step that produces a coverage output file (e.g., lcov.info, coverage.xml, jacoco.xml)
+3. An artifact upload step that uploads the coverage report with artifact name "coverage-report"
+If ANY of these three are missing, coverage is NOT set up and you MUST create a workflow.
+NEVER claim a file exists unless you can see it in the "Existing workflows" dictionary provided to you.
+Only reference file names that appear as keys in that dictionary. Do NOT invent or hallucinate file names.
 
 Key workflow pattern (PR = test only, push = test + coverage):
 - pull_request trigger: runs tests to verify code before merge
@@ -20,7 +29,7 @@ Key workflow pattern (PR = test only, push = test + coverage):
 - The workflow MUST upload coverage/lcov.info as an artifact named "coverage-report"
 
 IMPORTANT:
-- Do NOT create a workflow if the repo already has test/coverage set up in existing workflows
+- Do NOT create a workflow ONLY if the repo already has ALL THREE coverage requirements above met in existing workflows
 - The workflow file path must be .github/workflows/<name>.yml
 - If you cannot determine the language or appropriate test setup, do nothing
 - For multi-language repos, create one workflow per language that needs test + coverage
