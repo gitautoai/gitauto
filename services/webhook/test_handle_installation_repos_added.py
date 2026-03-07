@@ -129,6 +129,7 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name="test-owner",
             owner_type="Organization",
@@ -136,6 +137,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
@@ -183,10 +186,13 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name="test-owner",
             owner_type="Organization",
             repositories=[],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
@@ -280,6 +286,7 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name="test-owner",
             owner_type="Organization",
@@ -287,6 +294,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
@@ -422,10 +431,13 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name="test-owner",
             owner_type="Organization",
             repositories=[{"id": 333, "name": "single-repo"}],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
@@ -456,6 +468,7 @@ class TestHandleInstallationReposAdded:
             installation_id=different_installation_id
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=different_installation_id,
             owner_id=12345,
             owner_name="test-owner",
             owner_type="Organization",
@@ -463,6 +476,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_different_token",
             user_id=67890,
             user_name="test-sender",
@@ -488,6 +503,7 @@ class TestHandleInstallationReposAdded:
         mock_is_installation_valid.assert_called_once_with(installation_id=0)
         mock_get_installation_access_token.assert_called_once_with(installation_id=0)
         mock_process_repositories.assert_called_once_with(
+            installation_id=0,
             owner_id=12345,
             owner_name="test-owner",
             owner_type="Organization",
@@ -495,6 +511,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
@@ -524,6 +542,7 @@ class TestHandleInstallationReposAdded:
             installation_id=str(67890)
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=str(67890),
             owner_id="12345",
             owner_name="test-owner",
             owner_type="Organization",
@@ -531,6 +550,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id="67890",
             user_name="test-sender",
@@ -578,10 +599,13 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name="test-owner",
             owner_type="Organization",
             repositories=complex_repos,
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
@@ -610,6 +634,7 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name="tëst-öwnér",
             owner_type="Organization",
@@ -617,6 +642,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="tëst-sëndér",
@@ -795,10 +822,13 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name="test-owner",
             owner_type="Organization",
             repositories=large_repo_list,
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
@@ -847,10 +877,13 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name="test-owner",
             owner_type="Organization",
             repositories=None,
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
@@ -880,6 +913,7 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name=long_name,
             owner_type="Organization",
@@ -887,6 +921,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name=long_name,
@@ -917,6 +953,7 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name=special_owner,
             owner_type="Organization",
@@ -924,6 +961,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name=special_sender,
@@ -954,6 +993,7 @@ class TestHandleInstallationReposAdded:
             installation_id=max_int
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=max_int,
             owner_id=max_int,
             owner_name="test-owner",
             owner_type="Organization",
@@ -961,6 +1001,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=max_int,
             user_name="test-sender",
@@ -988,6 +1030,7 @@ class TestHandleInstallationReposAdded:
             installation_id=12345.0
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=12345.0,
             owner_id=12345,
             owner_name="test-owner",
             owner_type="Organization",
@@ -995,6 +1038,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
@@ -1023,6 +1068,7 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name="   ",
             owner_type="Organization",
@@ -1030,6 +1076,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="\t\n\r",
@@ -1056,6 +1104,7 @@ class TestHandleInstallationReposAdded:
             installation_id=67890
         )
         mock_process_repositories.assert_called_once_with(
+            installation_id=67890,
             owner_id=12345,
             owner_name="test-owner",
             owner_type="Organization",
@@ -1063,6 +1112,8 @@ class TestHandleInstallationReposAdded:
                 {"id": 111, "name": "test-repo-1"},
                 {"id": 222, "name": "test-repo-2"},
             ],
+            sender_display_name="Test Sender",
+            sender_email="test@example.com",
             token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
