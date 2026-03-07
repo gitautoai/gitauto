@@ -43,6 +43,7 @@
     <rule>Do not over-assert on internal function call parameters when the behavior is what matters</rule>
     <rule>Do not create unnecessarily complex mock chains when testing method chaining - focus on the final result, not each step of the chain</rule>
     <rule>Do not test constant content (values, text, or any content within constants) unless explicitly requested - tests should not fail when constant values are updated</rule>
+    <rule>Do not blindly reuse heavy test utilities (database connections, in-memory servers, full context builders) just because existing tests use them. When all external services are already mocked with jest.mock()/unittest.mock/etc., use lightweight inline mock objects instead. Heavy test utilities that start databases or connect to external services waste memory and CPU, and can cause OOM/timeout failures in resource-constrained environments.</rule>
   </anti_patterns>
 
   <dead_code_handling>
