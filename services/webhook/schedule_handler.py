@@ -390,7 +390,6 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         "sender_name": user_name,
         "sender_email": sender_email,
         "sender_display_name": sender_info.display_name,
-        "is_automation": True,
         "reviewers": [user_name],
         "github_urls": [],
         "other_urls": [],

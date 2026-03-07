@@ -146,7 +146,6 @@ async def process_repositories(
             "sender_name": user_name,
             "sender_email": sender_email,
             "sender_display_name": sender_display_name,
-            "is_automation": False,
             "reviewers": [user_name] if user_name and "[bot]" not in user_name else [],
             "github_urls": [],
             "other_urls": [],

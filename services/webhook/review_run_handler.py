@@ -187,7 +187,6 @@ async def handle_review_run(
         "sender_name": sender_name,
         "sender_email": sender_info.email,
         "sender_display_name": sender_info.display_name,
-        "is_automation": False,
         "reviewers": [],
         "github_urls": [],
         "other_urls": [],

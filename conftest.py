@@ -71,7 +71,6 @@ def create_test_base_args():
             "sender_name": "test-sender",
             "sender_email": "test@example.com",
             "sender_display_name": "Test Sender",
-            "is_automation": False,
             "reviewers": [],
             "github_urls": [],
             "other_urls": [],
