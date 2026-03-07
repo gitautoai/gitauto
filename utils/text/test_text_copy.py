@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 
+from utils.text.build_pr_completion_comment import build_pr_completion_comment
 from utils.text.text_copy import (
     git_command,
-    pull_request_completed,
     request_pr_comment,
     UPDATE_COMMENT_FOR_422,
     UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
@@ -29,86 +29,72 @@ def test_git_command():
     assert result == expected
 
 
-def test_pull_request_completed_bot_creator_bot_sender():
+def test_build_pr_completion_comment_bot_creator_bot_sender():
     pr_creator = "sentry-io[bot]"
     sender_name = "gitauto-ai[bot]"
-    is_automation = False
-
-    result = pull_request_completed(pr_creator, sender_name, is_automation)
+    result = build_pr_completion_comment(pr_creator, sender_name, trigger="dashboard")
 
     expected = f"{COMPLETED_PR}\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
 
-def test_pull_request_completed_bot_creator_product_sender():
+def test_build_pr_completion_comment_bot_creator_product_sender():
     pr_creator = "sentry-io[bot]"
     sender_name = f"user-{PRODUCT_ID}"
-    is_automation = False
-
-    result = pull_request_completed(pr_creator, sender_name, is_automation)
+    result = build_pr_completion_comment(pr_creator, sender_name, trigger="dashboard")
 
     expected = f"{COMPLETED_PR}\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
 
-def test_pull_request_completed_bot_creator_human_sender():
+def test_build_pr_completion_comment_bot_creator_human_sender():
     pr_creator = "sentry-io[bot]"
     sender_name = "human-user"
-    is_automation = False
-
-    result = pull_request_completed(pr_creator, sender_name, is_automation)
+    result = build_pr_completion_comment(pr_creator, sender_name, trigger="dashboard")
 
     expected = f"@{sender_name} {COMPLETED_PR}\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
 
-def test_pull_request_completed_same_creator_and_sender():
+def test_build_pr_completion_comment_same_creator_and_sender():
     pr_creator = "test-user"
     sender_name = "test-user"
-    is_automation = False
-
-    result = pull_request_completed(pr_creator, sender_name, is_automation)
+    result = build_pr_completion_comment(pr_creator, sender_name, trigger="dashboard")
 
     expected = f"@{pr_creator} {COMPLETED_PR}\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
 
-def test_pull_request_completed_product_in_sender():
+def test_build_pr_completion_comment_product_in_sender():
     pr_creator = "test-user"
     sender_name = f"user-{PRODUCT_ID}"
-    is_automation = False
-
-    result = pull_request_completed(pr_creator, sender_name, is_automation)
+    result = build_pr_completion_comment(pr_creator, sender_name, trigger="dashboard")
 
     expected = f"@{pr_creator} {COMPLETED_PR}\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
 
-def test_pull_request_completed_different_creator_and_sender():
+def test_build_pr_completion_comment_different_creator_and_sender():
     pr_creator = "test-user1"
     sender_name = "test-user2"
-    is_automation = False
-
-    result = pull_request_completed(pr_creator, sender_name, is_automation)
+    result = build_pr_completion_comment(pr_creator, sender_name, trigger="dashboard")
 
     expected = f"@{pr_creator} @{sender_name} {COMPLETED_PR}\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
 
-def test_pull_request_completed_automation_true():
+def test_build_pr_completion_comment_automation_true():
     pr_creator = "test-user"
     sender_name = "test-user"
-    is_automation = True
+    result = build_pr_completion_comment(pr_creator, sender_name, trigger="schedule")
 
-    result = pull_request_completed(pr_creator, sender_name, is_automation)
-
-    expected = f"@{pr_creator} {COMPLETED_PR}\n\nNote: I automatically create pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+    expected = f"@{pr_creator} {COMPLETED_PR}\n\nI autonomously open pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
@@ -251,36 +237,30 @@ def test_update_comment_constants():
     assert "feedback or need help?" in UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE
 
 
-def test_pull_request_completed_automation_bot_creator_bot_sender():
+def test_build_pr_completion_comment_automation_bot_creator_bot_sender():
     pr_creator = "sentry-io[bot]"
     sender_name = "gitauto-ai[bot]"
-    is_automation = True
+    result = build_pr_completion_comment(pr_creator, sender_name, trigger="schedule")
 
-    result = pull_request_completed(pr_creator, sender_name, is_automation)
-
-    expected = f"{COMPLETED_PR}\n\nNote: I automatically create pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+    expected = f"{COMPLETED_PR}\n\nI autonomously open pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
 
-def test_pull_request_completed_automation_different_users():
+def test_build_pr_completion_comment_automation_different_users():
     pr_creator = "test-user1"
     sender_name = "test-user2"
-    is_automation = True
+    result = build_pr_completion_comment(pr_creator, sender_name, trigger="schedule")
 
-    result = pull_request_completed(pr_creator, sender_name, is_automation)
-
-    expected = f"@{pr_creator} @{sender_name} {COMPLETED_PR}\n\nNote: I automatically create pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+    expected = f"@{pr_creator} @{sender_name} {COMPLETED_PR}\n\nI autonomously open pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
 
-def test_pull_request_completed_edge_case_product_id_in_creator():
+def test_build_pr_completion_comment_edge_case_product_id_in_creator():
     pr_creator = f"user-{PRODUCT_ID}-test"
     sender_name = "different-user"
-    is_automation = False
-
-    result = pull_request_completed(pr_creator, sender_name, is_automation)
+    result = build_pr_completion_comment(pr_creator, sender_name, trigger="dashboard")
 
     # Since PRODUCT_ID is in sender_name condition, but not in pr_creator condition,
     # this should fall into the "different creator and sender" case
@@ -289,12 +269,10 @@ def test_pull_request_completed_edge_case_product_id_in_creator():
     assert result == expected
 
 
-def test_pull_request_completed_empty_names():
+def test_build_pr_completion_comment_empty_names():
     pr_creator = ""
     sender_name = ""
-    is_automation = False
-
-    result = pull_request_completed(pr_creator, sender_name, is_automation)
+    result = build_pr_completion_comment(pr_creator, sender_name, trigger="dashboard")
     # Empty names should be treated as same creator and sender
     expected = f"@ {COMPLETED_PR}\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 

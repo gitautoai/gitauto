@@ -76,9 +76,7 @@ from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.memory.gc_collect_and_log import gc_collect_and_log
 from utils.progress_bar.progress_bar import create_progress_bar
-from utils.text.text_copy import (
-    pull_request_completed,
-)
+from utils.text.build_pr_completion_comment import build_pr_completion_comment
 from utils.urls.extract_urls import extract_image_urls
 
 
@@ -138,8 +136,6 @@ async def handle_new_pr(
     sender_email = base_args["sender_email"]
     sender_display_name = base_args["sender_display_name"]
     github_urls = base_args["github_urls"]
-    # other_urls = base_args["other_urls"]
-    is_automation = base_args["is_automation"]
 
     # Get repository features
     repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)
@@ -597,10 +593,10 @@ async def handle_new_pr(
     create_empty_commit(base_args=base_args, parent_sha=last_commit_sha)
 
     # Update the PR comment
-    body_after_pr = pull_request_completed(
+    body_after_pr = build_pr_completion_comment(
         pr_creator=pr_creator,
         sender_name=sender_name,
-        is_automation=is_automation,
+        trigger=trigger,
     )
     update_comment(body=body_after_pr, base_args=base_args)
 

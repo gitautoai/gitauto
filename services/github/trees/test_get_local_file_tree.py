@@ -29,7 +29,6 @@ def _make_base_args(clone_dir: str):
             "sender_id": 1,
             "sender_name": "tester",
             "sender_email": None,
-            "is_automation": False,
             "reviewers": [],
             "github_urls": [],
             "other_urls": [],

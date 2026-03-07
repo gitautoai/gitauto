@@ -127,7 +127,6 @@ async def setup_handler(
         "sender_name": sender_name,
         "sender_email": sender_email,
         "sender_display_name": sender_info.display_name,
-        "is_automation": False,
         "reviewers": [sender_name] if sender_name else [],
         "github_urls": [],
         "other_urls": [],

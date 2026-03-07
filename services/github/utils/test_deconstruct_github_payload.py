@@ -4,7 +4,6 @@ from typing import Any, cast
 from unittest.mock import patch
 
 import pytest
-from config import GITHUB_APP_USER_ID
 from services.github.types.github_types import PrLabeledPayload
 from services.github.users.get_user_public_email import UserPublicInfo
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
@@ -112,7 +111,6 @@ def test_deconstruct_github_payload_basic_functionality(
     assert base_args["sender_name"] == "test-sender"
     assert base_args["sender_email"] == "test@example.com"
     assert base_args["sender_display_name"] == "Test Sender"
-    assert base_args["is_automation"] is False
     assert base_args["reviewers"] == []
     assert base_args["github_urls"] == ["https://github.com"]
     assert base_args["other_urls"] == ["https://example.com"]
@@ -302,38 +300,6 @@ def test_deconstruct_github_payload_with_target_branch_not_exists(
 
     # Verify default branch is used when target branch doesn't exist
     assert base_args["base_branch"] == "main"
-
-
-@patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
-@patch("services.github.utils.deconstruct_github_payload.get_repository")
-@patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
-@patch("services.github.utils.deconstruct_github_payload.extract_urls")
-@patch("services.github.utils.deconstruct_github_payload.get_user_public_info")
-def test_deconstruct_github_payload_with_automation_user(
-    mock_get_user_public_info,
-    mock_extract_urls,
-    mock_check_branch_exists,
-    mock_get_repository,
-    mock_get_installation_access_token,
-):
-    """Test detection of automation user."""
-    # Setup mocks
-    mock_get_installation_access_token.return_value = "test_token"
-    mock_get_repository.return_value = {"target_branch": None}
-    mock_check_branch_exists.return_value = False
-    mock_extract_urls.return_value = ([], [])
-    mock_get_user_public_info.return_value = UserPublicInfo(
-        email="test@example.com", display_name="Test Sender"
-    )
-
-    # Create test payload with automation user (using GITHUB_APP_USER_ID from config)
-    payload = create_mock_payload(sender_id=GITHUB_APP_USER_ID)
-
-    # Call the function
-    base_args, _ = deconstruct_github_payload(payload)
-
-    # Verify automation is detected
-    assert base_args["is_automation"] is True
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
