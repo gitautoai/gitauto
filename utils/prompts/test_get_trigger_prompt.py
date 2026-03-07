@@ -59,12 +59,12 @@ def test_get_trigger_prompt_unknown_trigger(mock_read_xml_file):
 
 
 def test_get_trigger_prompt_file_read_exception(mock_read_xml_file):
-    """Test that function handles file read exceptions gracefully."""
+    """Test that function handles file read exceptions gracefully via @handle_exceptions."""
     mock_read_xml_file.side_effect = FileNotFoundError("File not found")
 
-    with pytest.raises(FileNotFoundError):
-        get_trigger_prompt("dashboard")
+    result = get_trigger_prompt("dashboard")
 
+    assert result is None
     mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/pr.xml")
 
 
@@ -94,8 +94,9 @@ def test_get_trigger_prompt_whitespace_xml_content(mock_read_xml_file):
     [
         ("dashboard", "utils/prompts/triggers/pr.xml"),
         ("schedule", "utils/prompts/triggers/pr.xml"),
-        ("test_failure", "utils/prompts/triggers/check_run.xml"),
+        ("pr_comment", "utils/prompts/triggers/review.xml"),
         ("review_comment", "utils/prompts/triggers/review.xml"),
+        ("test_failure", "utils/prompts/triggers/check_run.xml"),
     ],
 )
 def test_get_trigger_prompt_file_mapping(mock_read_xml_file, trigger, expected_file):

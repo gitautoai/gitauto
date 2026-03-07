@@ -696,3 +696,150 @@ async def test_human_review_comment_always_processed(
     # Human gets the agent's explanation via update_comment
     final_update_body = _mock_update_comment.call_args_list[-1].kwargs.get("body", "")
     assert "Fixed the logic" in final_update_body
+
+
+@pytest.fixture
+def mock_pr_comment_payload():
+    """PR comment payload (adapted from issue_comment via adapt_pr_comment_to_review_payload)."""
+    return {
+        "action": "created",
+        "comment": {
+            "id": 55555,
+            "node_id": "IC_55555",
+            "body": "you didn't complete the task",
+            "user": {"login": "test-reviewer", "type": "User"},
+            "path": "",
+            "subject_type": "pr_comment",
+            "line": 0,
+            "side": "",
+        },
+        "pull_request": {
+            "number": 789,
+            "title": "Fix login bug",
+            "body": "Fixes the login issue",
+            "url": "https://api.github.com/repos/test-owner/test-repo/pulls/789",
+            "user": {"login": "gitauto-ai[bot]"},
+            "head": {
+                "ref": f"{PRODUCT_ID}/dashboard-20250301-100000-Zz1A",
+                "sha": "fff999aaa111",
+            },
+            "base": {"ref": "main"},
+        },
+        "repository": {
+            "id": 98765,
+            "name": "test-repo",
+            "owner": {
+                "id": 11111,
+                "login": "test-owner",
+                "type": "Organization",
+            },
+            "clone_url": "https://github.com/test-owner/test-repo.git",
+            "fork": False,
+        },
+        "sender": {
+            "id": 22222,
+            "login": "test-reviewer",
+        },
+        "installation": {
+            "id": 33333,
+        },
+    }
+
+
+@patch("services.webhook.review_run_handler.slack_notify")
+@patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
+@patch("services.webhook.review_run_handler.set_npm_token_env")
+@patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
+@patch("services.webhook.review_run_handler.get_repository")
+@patch("services.webhook.review_run_handler.create_user_request")
+@patch("services.webhook.review_run_handler.get_review_thread_comments")
+@patch("services.webhook.review_run_handler.reply_to_comment")
+@patch("services.webhook.review_run_handler.create_comment")
+@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch("services.webhook.review_run_handler.get_pull_request_files")
+@patch("services.webhook.review_run_handler.update_comment")
+@patch("services.webhook.review_run_handler.should_bail", return_value=False)
+@patch("services.webhook.review_run_handler.chat_with_agent")
+@patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.update_usage")
+@patch(
+    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
+)
+@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
+@patch(
+    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
+)
+@patch(
+    "services.webhook.review_run_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
+    "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
+)
+@patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
+@pytest.mark.asyncio
+async def test_pr_comment_uses_create_comment_not_reply(
+    _mock_verify_task_is_ready,
+    _mock_ensure_php,
+    _mock_prepare_repo,
+    _mock_git_clone_to_efs,
+    _mock_ensure_node,
+    _mock_update_usage,
+    _mock_create_empty_commit,
+    mock_chat_with_agent,
+    _mock_should_bail,
+    _mock_update_comment,
+    mock_get_pr_files,
+    _mock_get_file_content,
+    mock_create_comment,
+    mock_reply_to_comment,
+    mock_get_thread_comments,
+    mock_create_user_request,
+    mock_get_repo,
+    mock_get_user_public_info,
+    mock_get_token,
+    _mock_set_npm_token_env,
+    _mock_get_local_file_tree,
+    _mock_slack_notify,
+    mock_pr_comment_payload,
+):
+    """PR comment (no review_path) should use create_comment, not reply_to_comment, and skip thread checks."""
+    mock_get_token.return_value = "ghs_test_token"
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
+    )()
+    mock_get_repo.return_value = {"id": 98765}
+    mock_create_user_request.return_value = 777
+    mock_create_comment.return_value = "http://new-comment-url"
+    mock_get_pr_files.return_value = [{"filename": "src/main.py", "status": "modified"}]
+    _mock_verify_task_is_ready.return_value = VerifyTaskIsReadyResult()
+
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[{"role": "user", "content": "review"}],
+        token_input=100,
+        token_output=50,
+        is_completed=True,
+        completion_reason="Completed the task as requested.",
+        p=40,
+        is_planned=False,
+    )
+
+    await handle_review_run(mock_pr_comment_payload, trigger="pr_comment")
+
+    # create_comment used for greeting (not reply_to_comment)
+    mock_create_comment.assert_called()
+    greeting_body = mock_create_comment.call_args_list[0].kwargs.get("body", "")
+    assert "Re:" in greeting_body
+    assert "comment" in greeting_body
+
+    # reply_to_comment NOT used for greeting
+    mock_reply_to_comment.assert_not_called()
+
+    # get_review_thread_comments NOT called (no thread for PR comments)
+    mock_get_thread_comments.assert_not_called()
+
+    # get_local_file_content NOT called (no review_path)
+    _mock_get_file_content.assert_not_called()
+
+    # Agent was called
+    mock_chat_with_agent.assert_called_once()
