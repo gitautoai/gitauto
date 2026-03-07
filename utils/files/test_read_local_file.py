@@ -25,6 +25,14 @@ def test_returns_none_for_missing_file(tmp_path):
     assert result is None
 
 
+def test_returns_label_for_binary_file(tmp_path):
+    file_path = os.path.join(tmp_path, "bun.lockb")
+    with open(file_path, "wb") as f:
+        f.write(b"\x00\x9b\xff\xfe binary content")
+    result = read_local_file("bun.lockb", base_dir=str(tmp_path))
+    assert result == "[Binary file: bun.lockb]"
+
+
 def test_returns_none_for_missing_dir():
     result = read_local_file("foo.py", base_dir="/nonexistent/path")
     assert result is None
