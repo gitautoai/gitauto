@@ -1,6 +1,6 @@
 from typing import Literal, Union
 
-ReviewTrigger = Literal["review_comment"]
+ReviewTrigger = Literal["review_comment", "pr_comment"]
 
 Trigger = Union[
     Literal[

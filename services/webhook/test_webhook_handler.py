@@ -1016,3 +1016,144 @@ class TestHandleWebhookEvent:
             == "gitauto-wes/schedule-20260221-225547-4tb2"
         )
         assert received_trigger == "schedule"
+
+    @pytest.mark.asyncio
+    async def test_issue_comment_on_non_pr_is_ignored(self, mock_handle_review_run):
+        payload = {
+            "action": "created",
+            "issue": {"number": 1, "title": "Bug"},
+            "comment": {"id": 1, "body": "hello"},
+            "sender": {"login": "user"},
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "installation": {"id": 1},
+        }
+        await handle_webhook_event(event_name="issue_comment", payload=payload)
+        mock_handle_review_run.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_issue_comment_from_gitauto_is_ignored(self, mock_handle_review_run):
+        payload = {
+            "action": "created",
+            "issue": {
+                "number": 1,
+                "pull_request": {"url": "https://api.github.com/repos/o/r/pulls/1"},
+            },
+            "comment": {"id": 1, "body": "I fixed it"},
+            "sender": {"login": "gitauto-ai[bot]"},
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "installation": {"id": 1},
+        }
+        with patch(
+            "services.webhook.webhook_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]"
+        ):
+            await handle_webhook_event(event_name="issue_comment", payload=payload)
+        mock_handle_review_run.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("services.webhook.webhook_handler.get_pull_request")
+    @patch("services.webhook.webhook_handler.get_installation_access_token")
+    async def test_issue_comment_on_non_gitauto_pr_is_ignored(
+        self,
+        mock_get_token,
+        mock_get_pr,
+        mock_handle_review_run,
+    ):
+        mock_get_token.return_value = "token"
+        mock_get_pr.return_value = {"head": {"ref": "feature/something"}}
+
+        payload = {
+            "action": "created",
+            "issue": {
+                "number": 5,
+                "pull_request": {"url": "https://api.github.com/repos/o/r/pulls/5"},
+            },
+            "comment": {"id": 1, "body": "fix this"},
+            "sender": {"login": "user"},
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "installation": {"id": 1},
+        }
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(event_name="issue_comment", payload=payload)
+
+        mock_handle_review_run.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("services.webhook.webhook_handler.adapt_pr_comment_to_review_payload")
+    @patch("services.webhook.webhook_handler.get_pull_request")
+    @patch("services.webhook.webhook_handler.get_installation_access_token")
+    async def test_issue_comment_on_gitauto_pr_calls_review_handler(
+        self,
+        mock_get_token,
+        mock_get_pr,
+        mock_adapt,
+        mock_handle_review_run,
+    ):
+        mock_get_token.return_value = "token"
+        pr = {"head": {"ref": "gitauto/dashboard-20250101-Ab1C"}}
+        mock_get_pr.return_value = pr
+
+        adapted = {
+            "action": "created",
+            "comment": {
+                "id": 111,
+                "node_id": "IC_111",
+                "body": "you didn't complete the task",
+                "user": {"login": "reviewer", "type": "User"},
+                "path": "",
+                "subject_type": "pr_comment",
+                "line": 0,
+                "side": "",
+            },
+            "pull_request": pr,
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "organization": {"id": 2},
+            "sender": {"login": "reviewer"},
+            "installation": {"id": 1},
+        }
+        mock_adapt.return_value = adapted
+
+        payload = {
+            "action": "created",
+            "issue": {
+                "number": 10,
+                "pull_request": {"url": "https://api.github.com/repos/o/r/pulls/10"},
+            },
+            "comment": {
+                "id": 111,
+                "node_id": "IC_111",
+                "user": {"login": "reviewer", "type": "User"},
+                "body": "you didn't complete the task",
+                "created_at": "2025-01-01T00:00:00Z",
+                "updated_at": "2025-01-01T00:00:00Z",
+            },
+            "sender": {"login": "reviewer"},
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "installation": {"id": 1},
+        }
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(event_name="issue_comment", payload=payload)
+
+        mock_adapt.assert_called_once()
+        mock_handle_review_run.assert_called_once()
+        call_kwargs = mock_handle_review_run.call_args[1]
+        assert call_kwargs["trigger"] == "pr_comment"
+        assert call_kwargs["lambda_info"] is None
+        assert call_kwargs["payload"]["pull_request"] == pr
+        assert call_kwargs["payload"]["comment"]["path"] == ""
+        assert call_kwargs["payload"]["comment"]["subject_type"] == "pr_comment"
+
+    @pytest.mark.asyncio
+    async def test_issue_comment_deleted_is_ignored(self, mock_handle_review_run):
+        payload = {
+            "action": "deleted",
+            "issue": {
+                "number": 1,
+                "pull_request": {"url": "https://api.github.com/repos/o/r/pulls/1"},
+            },
+            "comment": {"id": 1, "body": "hello"},
+            "sender": {"login": "user"},
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "installation": {"id": 1},
+        }
+        await handle_webhook_event(event_name="issue_comment", payload=payload)
+        mock_handle_review_run.assert_not_called()

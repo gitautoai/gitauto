@@ -12,9 +12,7 @@ from anthropic.types import MessageParam
 from config import GITHUB_APP_USER_NAME, PRODUCT_ID
 from constants.agent import MAX_ITERATIONS
 from constants.triggers import ReviewTrigger
-from payloads.github.pull_request_review_comment.types import (
-    PullRequestReviewCommentPayload,
-)
+from services.github.types.webhook.review_run_payload import ReviewRunPayload
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.chat_with_agent import chat_with_agent
@@ -26,9 +24,10 @@ from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
+from services.github.comments.create_comment import create_comment
 from services.github.comments.reply_to_comment import reply_to_comment
-from services.slack.slack_notify import slack_notify
 from services.github.comments.update_comment import update_comment
+from services.slack.slack_notify import slack_notify
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.files.get_local_file_content import get_local_file_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
@@ -51,26 +50,23 @@ from utils.progress_bar.progress_bar import create_progress_bar
 
 
 async def handle_review_run(
-    payload: PullRequestReviewCommentPayload,
+    payload: ReviewRunPayload,
     trigger: ReviewTrigger,
     lambda_info: dict[str, str | None] | None = None,
 ):
     current_time = time.time()
     set_trigger(trigger)
-
-    # Extract review comment etc
+    # Extract comment fields
     review = payload["comment"]
     review_id = review["id"]
     review_node_id = review["node_id"]
+    review_body = review["body"]
+    review_author = review["user"]
+    review_author_is_bot = review_author["type"] == "Bot"
     review_path = review["path"]
     review_subject_type = review["subject_type"]
     review_line = review["line"]
     review_side = review["side"]
-    # review_position: int = review["position"]
-    review_body = review["body"]
-
-    comment_author = review["user"]
-    comment_author_is_bot = comment_author["type"] == "Bot"
 
     # Extract repository related variables
     repo = payload["repository"]
@@ -120,48 +116,54 @@ async def handle_review_run(
         if email:
             sender_info.email = email
 
-    # Get all comments in the review thread
-    thread_result = get_review_thread_comments(
-        owner=owner_name,
-        repo=repo_name,
-        pr_number=pr_number,
-        comment_node_id=review_node_id,
-        token=token,
-    )
-    thread_comments = thread_result.comments
-
-    # Skip if the review thread is already resolved
-    if thread_result.is_resolved:
-        logger.info("Ignoring review comment on already-resolved thread")
-        return
-
-    # If a bot posted this comment AND GitAuto already replied in the same thread, skip to prevent infinite bot-to-bot loops. But if GitAuto hasn't replied yet, process it (e.g. Devin's first review comment is valuable feedback).
-    if comment_author_is_bot and thread_comments:
-        gitauto_already_replied = any(
-            c["author"]["login"] == GITHUB_APP_USER_NAME for c in thread_comments
+    # For inline review comments, get thread context and check resolved status
+    if not review_path:
+        review_comment = review_body
+    else:
+        # Get all comments in the review thread
+        thread_result = get_review_thread_comments(
+            owner=owner_name,
+            repo=repo_name,
+            pr_number=pr_number,
+            comment_node_id=review_node_id,
+            token=token,
         )
-        if gitauto_already_replied:
-            logger.info(
-                "Ignoring bot review comment from %s - GitAuto already replied in this thread",
-                comment_author["login"],
-            )
+        thread_comments = thread_result.comments
+
+        # Skip if the review thread is already resolved
+        if thread_result.is_resolved:
+            logger.info("Ignoring review comment on already-resolved thread")
             return
 
-    # Combine all comments in chronological order for context
-    review_comment = f"## Review thread on {review_path} Line: {review_line}\n"
-    if thread_comments:
-        for comment in thread_comments:
-            author = comment["author"]["login"]
-            body = comment["body"]
-            created_at = comment["createdAt"]
-            review_comment += f"{author} commented at {created_at}: {body}\n"
-    else:
-        # Fallback to single comment if thread fetch fails
-        review_comment += f"{review_body}"
+        # If a bot posted this comment AND GitAuto already replied in the same thread, skip to prevent infinite bot-to-bot loops. But if GitAuto hasn't replied yet, process it (e.g. Devin's first review comment is valuable feedback).
+        if review_author_is_bot and thread_comments:
+            gitauto_already_replied = any(
+                c["author"]["login"] == GITHUB_APP_USER_NAME for c in thread_comments
+            )
+            if gitauto_already_replied:
+                logger.info(
+                    "Ignoring bot review comment from %s - GitAuto already replied in this thread",
+                    review_author["login"],
+                )
+                return
+
+        # Combine all comments in chronological order for context
+        review_comment = f"## Review thread on {review_path} Line: {review_line}\n"
+        if thread_comments:
+            for tc in thread_comments:
+                author = tc["author"]["login"]
+                body = tc["body"]
+                created_at = tc["createdAt"]
+                review_comment += f"{author} commented at {created_at}: {body}\n"
+        else:
+            # Fallback to single comment if thread fetch fails
+            review_comment += f"{review_body}"
 
     # Start notification
     start_msg = f"Review handler started: `{trigger}` by `{sender_name}` for `{pr_number}:{pr_title}` in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
+    if not review_author_is_bot:
+        slack_notify(f"💬 {sender_name}: {review_body}", thread_ts)
 
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args: ReviewBaseArgs = {
@@ -238,7 +240,7 @@ async def handle_review_run(
         repo_name=repo_name,
         pr_number=pr_number,
         source="github",
-        trigger="review_comment",
+        trigger=trigger,
         email=sender_info.email,
         display_name=sender_info.display_name,
         lambda_info=lambda_info,
@@ -247,28 +249,36 @@ async def handle_review_run(
     # Greeting and progress tracking (skip for bots to avoid triggering bot-to-bot noise)
     p = 0
     log_messages: list[str] = []
-    if not comment_author_is_bot:
-        msg = "Thanks for the review! I'm on it."
+    if not review_author_is_bot:
+        msg = "Thanks for the feedback. I'm on it."
         add_log_message(msg, log_messages)
         comment_body = create_progress_bar(p=0, msg="\n".join(log_messages))
-        comment_url = reply_to_comment(base_args=base_args, body=comment_body)
+        if review_path:
+            comment_url = reply_to_comment(base_args=base_args, body=comment_body)
+        else:
+            original_url = f"https://github.com/{owner_name}/{repo_name}/pull/{pr_number}#issuecomment-{review_id}"
+            mention = f"@{sender_name}'s " if not review_author_is_bot else ""
+            linked_body = f"Re: {mention}[comment]({original_url})\n\n{comment_body}"
+            comment_url = create_comment(base_args=base_args, body=linked_body)
         base_args["comment_url"] = comment_url
 
-    # Get a review commented file
-    review_file = get_local_file_content(file_path=review_path, base_args=base_args)
-    if not comment_author_is_bot:
-        p += 5
-        add_log_message(
-            f"Read the file `{review_path}` you commented on.", log_messages
-        )
-        comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-        update_comment(body=comment_body, base_args=base_args)
+    # Get a review commented file (skip when no specific file path)
+    review_file = ""
+    if review_path:
+        review_file = get_local_file_content(file_path=review_path, base_args=base_args)
+        if not review_author_is_bot:
+            p += 5
+            add_log_message(
+                f"Read the file `{review_path}` you commented on.", log_messages
+            )
+            comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
+            update_comment(body=comment_body, base_args=base_args)
 
     # Get list of changed files in the PR (filenames only, not contents)
     pr_files = get_pull_request_files(
         owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
-    if not comment_author_is_bot:
+    if not review_author_is_bot:
         p += 5
         add_log_message(f"Found {len(pr_files)} changed files in the PR.", log_messages)
         comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
@@ -352,17 +362,18 @@ async def handle_review_run(
         ):
             break
 
-        # Check if the review thread was resolved while we were working
-        thread_check = get_review_thread_comments(
-            owner=owner_name,
-            repo=repo_name,
-            pr_number=pr_number,
-            comment_node_id=review_node_id,
-            token=token,
-        )
-        if thread_check.is_resolved:
-            logger.info("Review thread was resolved during execution, stopping")
-            break
+        # Check if the review thread was resolved while we were working (no thread for PR comments)
+        if review_path:
+            thread_check = get_review_thread_comments(
+                owner=owner_name,
+                repo=repo_name,
+                pr_number=pr_number,
+                comment_node_id=review_node_id,
+                token=token,
+            )
+            if thread_check.is_resolved:
+                logger.info("Review thread was resolved during execution, stopping")
+                break
 
         # Call the agent to explore the codebase and commit changes
         result = await chat_with_agent(
@@ -402,7 +413,7 @@ async def handle_review_run(
         is_completed = final_result.success
 
     # Trigger final test workflows with an empty commit
-    if not comment_author_is_bot:
+    if not review_author_is_bot:
         update_comment(
             body="Creating final empty commit to trigger workflows...",
             base_args=base_args,
@@ -411,7 +422,9 @@ async def handle_review_run(
 
     # Use the agent's own explanation as the final reply
     if completion_reason:
-        if comment_author_is_bot:
+        if not review_path:
+            create_comment(base_args=base_args, body=completion_reason)
+        elif review_author_is_bot:
             reply_to_comment(base_args=base_args, body=completion_reason)
         else:
             update_comment(body=completion_reason, base_args=base_args)
