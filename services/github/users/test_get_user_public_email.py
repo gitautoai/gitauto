@@ -230,14 +230,28 @@ def test_get_user_public_info_with_different_tokens():
             mock_create_headers.assert_called_with(token=token)
 
 
-def test_get_user_public_info_http_error_returns_default(sample_username, sample_token):
-    """Test that HTTP errors are handled and return default UserPublicInfo due to decorator."""
+def test_get_user_public_info_404_returns_default_without_raising(sample_token):
+    """Test that 404 (e.g. 'Copilot' user) returns default without hitting raise_for_status."""
     mock_response = MagicMock()
-    http_error = HTTPError("404 Not Found")
+    mock_response.status_code = 404
+    with patch(
+        "services.github.users.get_user_public_email.requests.get",
+        return_value=mock_response,
+    ):
+        result = get_user_public_info(username="Copilot", token=sample_token)
+        assert result == DEFAULT_RETURN
+        mock_response.raise_for_status.assert_not_called()
+
+
+def test_get_user_public_info_http_error_returns_default(sample_username, sample_token):
+    """Test that non-404 HTTP errors are handled and return default UserPublicInfo due to decorator."""
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    http_error = HTTPError("500 Server Error")
     error_response = MagicMock()
-    error_response.status_code = 404
-    error_response.reason = "Not Found"
-    error_response.text = "User not found"
+    error_response.status_code = 500
+    error_response.reason = "Server Error"
+    error_response.text = "Internal Server Error"
     http_error.response = error_response
 
     mock_response.raise_for_status.side_effect = http_error
