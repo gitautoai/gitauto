@@ -225,7 +225,7 @@ async def setup_handler(
             allow_edit_any_file=True,
             restrict_edit_to_target_test_file_only=False,
             allowed_to_edit_files=set(),
-            model_id=ClaudeModelId.SONNET_4_6,  # Workflow YAML generation is straightforward
+            model_id=ClaudeModelId.OPUS_4_6,  # Needs accurate analysis of existing workflows
         )
         messages = result.messages
         total_token_input += result.token_input
