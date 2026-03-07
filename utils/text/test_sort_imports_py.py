@@ -214,6 +214,14 @@ def test_sort_python_imports_local_module_vs_third_party(tmp_path):
     assert result == expected
 
 
+def test_sort_python_imports_nonexistent_file_path():
+    """Test that a nonexistent file_path still sorts imports (without settings discovery)."""
+    content = "import sys\nimport os\n"
+    expected = "import os\nimport sys\n"
+    result = sort_python_imports(content, "/nonexistent/path/to/file.py")
+    assert result == expected
+
+
 def test_sort_python_imports_error_handling():
     """Test that sort_python_imports returns original content on error"""
     content = "import os\nimport sys\nfrom typing import Any"
