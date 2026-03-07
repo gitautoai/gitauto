@@ -29,6 +29,10 @@ def get_user_public_info(username: str, token: str):
         headers=create_headers(token=token),
         timeout=TIMEOUT,
     )
+    # Some usernames (e.g. "Copilot") aren't real GitHub users
+    if response.status_code == 404:
+        return UserPublicInfo(email=None, display_name="")
+
     response.raise_for_status()
     user_data: dict[str, str | None] = response.json()
     email = user_data.get("email")
