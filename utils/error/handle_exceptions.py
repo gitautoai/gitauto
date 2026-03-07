@@ -13,6 +13,7 @@ from typing import Any, Callable, Literal, ParamSpec, TypeVar, cast, overload
 import requests
 import sentry_sdk
 
+from utils.error.is_billing_error import is_billing_error
 from utils.error.is_server_error import is_server_error
 from utils.logging.logging_config import logger
 
@@ -164,6 +165,9 @@ def _handle_generic_error(
     err_msg = f"{func_name} encountered an {type(err).__name__}: {err}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}"
     if is_server_error(err):
         logger.warning("%s received server error, not reporting to Sentry", func_name)
+        logger.warning(err_msg)
+    elif is_billing_error(err):
+        logger.warning("%s received billing error, not reporting to Sentry", func_name)
         logger.warning(err_msg)
     else:
         sentry_sdk.capture_exception(err)
