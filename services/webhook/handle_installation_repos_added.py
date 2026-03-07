@@ -55,6 +55,9 @@ async def handle_installation_repos_added(
         token=token,
         user_id=sender_id,
         user_name=sender_name,
+        installation_id=installation_id,
+        sender_email=sender_info.email,
+        sender_display_name=sender_info.display_name,
     )
 
     # Don't auto-trigger setup_handler here. When users add many repos at once, GitHub sends a separate webhook per repo, each with len(repositories_added)==1, which would create coverage PRs for every repo. Users can trigger setup from the website button instead.
