@@ -49,7 +49,7 @@ DIFF: dict[str, str] = {
 # See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
 APPLY_DIFF_TO_FILE: ToolUnionParam = {
     "name": "apply_diff_to_file",
-    "description": "Applies a diff to a file in the local clone and commits the change to the PR branch.",
+    "description": "Applies a diff to an EXISTING file in the local clone and commits the change to the PR branch. Do NOT use this to create new files - use replace_remote_file_content instead.",
     "input_schema": {
         "type": "object",
         "properties": {"file_path": FILE_PATH, "diff": DIFF},
