@@ -1,9 +1,8 @@
 from datetime import datetime
 
 # Local imports
-from config import EMAIL_LINK, PRODUCT_ID
-from constants.messages import COMPLETED_PR
-from constants.urls import DASHBOARD_CREDITS_URL, SETTINGS_TRIGGERS_URL
+from config import EMAIL_LINK
+from constants.urls import DASHBOARD_CREDITS_URL
 
 
 # Keep in sync with website: app/api/github/create-coverage-issues/route.ts gitCommand()
@@ -16,35 +15,6 @@ def git_command(new_branch_name: str) -> str:
         f"git pull origin {new_branch_name}\n"
         f"```"
     )
-
-
-def pull_request_completed(
-    pr_creator: str, sender_name: str, is_automation: bool
-) -> str:
-    # Ex) sentry-io[bot] is the creator and gitauto-ai[bot] is the sender
-    if "[bot]" in pr_creator and ("[bot]" in sender_name or PRODUCT_ID in sender_name):
-        user_part = ""
-
-    elif "[bot]" in pr_creator and (
-        "[bot]" not in sender_name and PRODUCT_ID not in sender_name
-    ):
-        user_part = f"@{sender_name} "
-
-    # Ex1) A user is the creator and sender
-    # Ex2) sender_name contains gitauto
-    elif pr_creator == sender_name or PRODUCT_ID in sender_name:
-        user_part = f"@{pr_creator} "
-
-    # Ex) A user is the creator and another user is the sender
-    else:
-        user_part = f"@{pr_creator} @{sender_name} "
-
-    # For user triggers
-    if not is_automation:
-        return f"{user_part}{COMPLETED_PR}\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
-
-    # For automation triggers
-    return f"{user_part}{COMPLETED_PR}\n\nNote: I automatically create pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
 
 def request_pr_comment(

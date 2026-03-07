@@ -2,7 +2,6 @@
 from typing import cast
 
 # Local imports
-from config import GITHUB_APP_USER_ID
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.types.github_types import BaseArgs, PrLabeledPayload
 from services.github.token.get_installation_token import get_installation_access_token
@@ -60,8 +59,6 @@ def deconstruct_github_payload(
     # Extract sender related variables
     sender_id = payload["sender"]["id"]
     sender_name = payload["sender"]["login"]
-    is_automation = sender_id == GITHUB_APP_USER_ID
-
     # Use requested reviewers from the PR (already set by add_reviewers or the user)
     reviewers = [
         r["login"]
@@ -100,7 +97,6 @@ def deconstruct_github_payload(
         "sender_name": sender_name,
         "sender_email": sender_email,
         "sender_display_name": sender_display_name,
-        "is_automation": is_automation,
         "reviewers": reviewers,
         "github_urls": github_urls,
         "other_urls": other_urls,

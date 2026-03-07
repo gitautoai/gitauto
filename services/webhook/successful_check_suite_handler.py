@@ -98,7 +98,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         logger.info("Auto-merge disabled for repo_id=%s", repo_id)
         return
 
-    # Create args for create_comment calls
     comment_args = cast(
         BaseArgs,
         {

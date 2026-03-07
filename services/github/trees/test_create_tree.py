@@ -34,7 +34,6 @@ def base_args():
         "sender_id": 1234567,
         "sender_name": "test-sender",
         "sender_email": "test@example.com",
-        "is_automation": False,
         "reviewers": [],
         "github_urls": [],
         "other_urls": [],

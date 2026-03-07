@@ -232,7 +232,6 @@ async def handle_check_suite(
         "sender_name": sender_name,
         "sender_email": sender_info.email,
         "sender_display_name": sender_info.display_name,
-        "is_automation": True,
         "reviewers": [],
         "github_urls": [],
         "other_urls": [],

@@ -33,7 +33,6 @@ class BaseArgs(TypedDict):
     sender_name: str
     sender_email: str | None
     sender_display_name: str
-    is_automation: bool
     reviewers: list[str]
     github_urls: list[str]
     other_urls: list[str]
