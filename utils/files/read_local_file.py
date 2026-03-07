@@ -13,5 +13,8 @@ def read_local_file(file_path: str, base_dir: str):
         logger.warning("File not found: %s", full_path)
         return None
 
-    with open(full_path, "r", encoding=UTF8) as f:
-        return f.read()
+    try:
+        with open(full_path, "r", encoding=UTF8) as f:
+            return f.read()
+    except UnicodeDecodeError:
+        return f"[Binary file: {file_path}]"
