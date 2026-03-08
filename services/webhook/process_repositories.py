@@ -69,16 +69,20 @@ async def process_repositories(
             user_name=user_name,
         )
 
-        default_branch, is_empty = get_default_branch(
-            owner=owner_name, repo=repo_name, token=token
-        )
+        repo_info = get_default_branch(owner=owner_name, repo=repo_name, token=token)
+
+        if repo_info.is_archived:
+            logger.info("Repository %s/%s is archived, skipping", owner_name, repo_name)
+            continue
 
         # Empty repos (size=0) have no commits - skip cloning
-        if is_empty:
+        if repo_info.is_empty:
             logger.info(
                 "Repository %s/%s is empty, skipping clone", owner_name, repo_name
             )
             continue
+
+        default_branch = repo_info.default_branch
 
         # Clone or update EFS (reusable for future PR work)
         efs_dir = get_efs_dir(owner_name, repo_name)

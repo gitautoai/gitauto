@@ -80,16 +80,15 @@ async def setup_handler(
         target_branch = repository["target_branch"]
         logger.info("Using target_branch: %s", target_branch)
     else:
-        target_branch, is_empty = get_default_branch(
-            owner=owner_name, repo=repo_name, token=token
-        )
-        if is_empty:
+        repo_info = get_default_branch(owner=owner_name, repo=repo_name, token=token)
+        if repo_info.is_empty:
             logger.info("Repository %s/%s is empty, skipping", owner_name, repo_name)
             slack_notify(
                 f"Setup skipped for {owner_name}/{repo_name}: repository is empty",
                 thread_ts=thread_ts,
             )
             return
+        target_branch = repo_info.default_branch
         logger.info("Using default branch as target: %s", target_branch)
 
     efs_dir = get_efs_dir(owner_name, repo_name)

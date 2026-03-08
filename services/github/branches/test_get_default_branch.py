@@ -7,7 +7,7 @@ import pytest
 import requests
 
 from config import GITHUB_API_URL, TIMEOUT
-from services.github.branches.get_default_branch import get_default_branch
+from services.github.branches.get_default_branch import RepoInfo, get_default_branch
 
 
 @pytest.fixture
@@ -37,6 +37,7 @@ def sample_repo_response():
         "default_branch": "main",
         "private": False,
         "size": 108,
+        "archived": False,
     }
 
 
@@ -49,6 +50,20 @@ def sample_empty_repo_response():
         "default_branch": "main",
         "private": False,
         "size": 0,
+        "archived": False,
+    }
+
+
+@pytest.fixture
+def sample_archived_repo_response():
+    return {
+        "id": 123456789,
+        "name": "test-repo",
+        "full_name": "test-owner/test-repo",
+        "default_branch": "main",
+        "private": False,
+        "size": 108,
+        "archived": True,
     }
 
 
@@ -63,7 +78,9 @@ class TestGetDefaultBranch:
 
         result = get_default_branch("test-owner", "test-repo", "test-token")
 
-        assert result == ("main", False)
+        assert result == RepoInfo(
+            default_branch="main", is_empty=False, is_archived=False
+        )
         mock_requests_get.assert_called_once()
         call_args = mock_requests_get.call_args
         assert call_args[1]["url"] == f"{GITHUB_API_URL}/repos/test-owner/test-repo"
@@ -79,7 +96,23 @@ class TestGetDefaultBranch:
 
         result = get_default_branch("test-owner", "test-repo", "test-token")
 
-        assert result == ("main", True)
+        assert result == RepoInfo(
+            default_branch="main", is_empty=True, is_archived=False
+        )
+
+    def test_archived_repository(
+        self, mock_requests_get, mock_create_headers, sample_archived_repo_response
+    ):
+        repo_response = MagicMock()
+        repo_response.json.return_value = sample_archived_repo_response
+        repo_response.raise_for_status.return_value = None
+        mock_requests_get.return_value = repo_response
+
+        result = get_default_branch("test-owner", "test-repo", "test-token")
+
+        assert result == RepoInfo(
+            default_branch="main", is_empty=False, is_archived=True
+        )
 
     def test_different_default_branch(self, mock_requests_get, mock_create_headers):
         repo_response_data = {
@@ -89,6 +122,7 @@ class TestGetDefaultBranch:
             "default_branch": "develop",
             "private": False,
             "size": 500,
+            "archived": False,
         }
         repo_response = MagicMock()
         repo_response.json.return_value = repo_response_data
@@ -97,7 +131,9 @@ class TestGetDefaultBranch:
 
         result = get_default_branch("test-owner", "test-repo", "test-token")
 
-        assert result == ("develop", False)
+        assert result == RepoInfo(
+            default_branch="develop", is_empty=False, is_archived=False
+        )
 
     def test_http_error(self, mock_requests_get, mock_create_headers):
         http_error = requests.exceptions.HTTPError("404 Not Found")
@@ -154,7 +190,7 @@ class TestGetDefaultBranch:
         with pytest.raises(KeyError):
             get_default_branch("test-owner", "test-repo", "test-token")
 
-    def test_return_types(
+    def test_return_type(
         self, mock_requests_get, mock_create_headers, sample_repo_response
     ):
         repo_response = MagicMock()
@@ -164,10 +200,10 @@ class TestGetDefaultBranch:
 
         result = get_default_branch("test-owner", "test-repo", "test-token")
 
-        assert isinstance(result, tuple)
-        assert len(result) == 2
-        assert isinstance(result[0], str)
-        assert isinstance(result[1], bool)
+        assert isinstance(result, RepoInfo)
+        assert isinstance(result.default_branch, str)
+        assert isinstance(result.is_empty, bool)
+        assert isinstance(result.is_archived, bool)
 
     @pytest.mark.parametrize(
         "owner,repo,expected_url",
@@ -201,12 +237,12 @@ class TestGetDefaultBranch:
         assert call_args[1]["url"] == expected_url
 
     @pytest.mark.parametrize(
-        "default_branch,size,expected_is_empty",
+        "default_branch,size,archived,expected",
         [
-            ("main", 100, False),
-            ("master", 0, True),
-            ("develop", 500, False),
-            ("feature-branch", 0, True),
+            ("main", 100, False, RepoInfo("main", False, False)),
+            ("master", 0, False, RepoInfo("master", True, False)),
+            ("develop", 500, True, RepoInfo("develop", False, True)),
+            ("feature-branch", 0, True, RepoInfo("feature-branch", True, True)),
         ],
     )
     def test_various_branch_names_and_sizes(
@@ -215,7 +251,8 @@ class TestGetDefaultBranch:
         mock_create_headers,
         default_branch,
         size,
-        expected_is_empty,
+        archived,
+        expected,
     ):
         repo_response_data = {
             "id": 123456789,
@@ -224,6 +261,7 @@ class TestGetDefaultBranch:
             "default_branch": default_branch,
             "private": False,
             "size": size,
+            "archived": archived,
         }
         repo_response = MagicMock()
         repo_response.json.return_value = repo_response_data
@@ -232,4 +270,24 @@ class TestGetDefaultBranch:
 
         result = get_default_branch("test-owner", "test-repo", "test-token")
 
-        assert result == (default_branch, expected_is_empty)
+        assert result == expected
+
+    def test_missing_archived_key_defaults_false(
+        self, mock_requests_get, mock_create_headers
+    ):
+        repo_response_data = {
+            "id": 123456789,
+            "name": "test-repo",
+            "full_name": "test-owner/test-repo",
+            "default_branch": "main",
+            "private": False,
+            "size": 100,
+        }
+        repo_response = MagicMock()
+        repo_response.json.return_value = repo_response_data
+        repo_response.raise_for_status.return_value = None
+        mock_requests_get.return_value = repo_response
+
+        result = get_default_branch("test-owner", "test-repo", "test-token")
+
+        assert result.is_archived is False
