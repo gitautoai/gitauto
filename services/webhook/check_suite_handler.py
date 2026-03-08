@@ -483,7 +483,7 @@ async def handle_check_suite(
 
         # Early return notification
         msg = "Skipped - error log not found"
-        logger.error(msg)
+        logger.warning(msg)
         slack_notify(f"{msg} for `{owner_name}/{repo_name}`", thread_ts)
         return
 
