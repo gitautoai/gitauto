@@ -2,6 +2,7 @@
 from unittest.mock import patch
 
 from config import UTF8
+from services.github.branches.get_default_branch import RepoInfo
 from services.webhook.handle_coverage_report import handle_coverage_report
 
 
@@ -585,7 +586,7 @@ def test_handle_coverage_report_fallback_to_default_branch():
         mock_token.return_value = "fake-token"
         mock_repo.return_value = {"target_branch": ""}
         _mock_branch_exists.return_value = True
-        mock_default.return_value = ("main", "abc123")
+        mock_default.return_value = RepoInfo("main", False, False)
         mock_branch_head.return_value = "def4567890123"
 
         result = handle_coverage_report(
@@ -1165,7 +1166,7 @@ def test_handle_coverage_report_stale_target_branch_falls_back():
         mock_token.return_value = "fake-token"
         mock_repo.return_value = {"target_branch": "test-branch"}
         mock_branch_exists.return_value = False
-        mock_default.return_value = ("main", False)
+        mock_default.return_value = RepoInfo("main", False, False)
         mock_branch_head.return_value = "def4567890123"
 
         result = handle_coverage_report(

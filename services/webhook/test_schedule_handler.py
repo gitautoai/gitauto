@@ -9,6 +9,7 @@ import pytest
 
 # Local imports
 from services.claude.evaluate_condition import EvaluationResult
+from services.github.branches.get_default_branch import RepoInfo
 from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.webhook.schedule_handler import schedule_handler
 
@@ -189,7 +190,7 @@ def test_schedule_handler_skips_export_only_files(
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
-    mock_get_default_branch.return_value = ("main", None)
+    mock_get_default_branch.return_value = RepoInfo("main", False, False)
     mock_get_file_tree.return_value = [
         {"path": "src/components/Button/index.ts", "type": "blob", "size": 100},
         {"path": "src/utils/helper.ts", "type": "blob", "size": 200},
@@ -283,7 +284,7 @@ def test_schedule_handler_skips_empty_files(
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
-    mock_get_default_branch.return_value = ("main", None)
+    mock_get_default_branch.return_value = RepoInfo("main", False, False)
     mock_get_file_tree.return_value = [
         {"path": "src/index.ts", "type": "blob", "size": 0},
         {"path": "src/app.ts", "type": "blob", "size": 300},
@@ -363,7 +364,7 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
-    mock_get_default_branch.return_value = ("main", None)
+    mock_get_default_branch.return_value = RepoInfo("main", False, False)
     mock_get_file_tree.return_value = [
         {"path": "src/partial.py", "type": "blob", "size": 50},
         {"path": "src/untouched.py", "type": "blob", "size": 100},
@@ -515,7 +516,7 @@ def test_schedule_handler_skips_ai_eval_when_tests_exist(
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
-    mock_get_default_branch.return_value = ("main", None)
+    mock_get_default_branch.return_value = RepoInfo("main", False, False)
     # File tree has both a source file and its test file (mirror directory)
     mock_get_file_tree.return_value = [
         {"path": "src/services/getPolicyInfo.ts", "type": "blob", "size": 500},
@@ -614,7 +615,7 @@ def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
-    mock_get_default_branch.return_value = ("master", None)
+    mock_get_default_branch.return_value = RepoInfo("master", False, False)
     mock_get_file_tree.return_value = [
         {"path": "src/app.php", "type": "blob", "size": 100},
     ]
@@ -702,7 +703,7 @@ def test_schedule_handler_skips_file_with_open_pr_different_title_format(
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
-    mock_get_default_branch.return_value = ("master", None)
+    mock_get_default_branch.return_value = RepoInfo("master", False, False)
     mock_get_file_tree.return_value = [
         {"path": "src/app.php", "type": "blob", "size": 100},
     ]
@@ -792,7 +793,7 @@ def test_schedule_handler_skips_none_coverage_as_fully_covered(
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
-    mock_get_default_branch.return_value = ("main", None)
+    mock_get_default_branch.return_value = RepoInfo("main", False, False)
     mock_get_file_tree.return_value = [
         {"path": "src/fully_covered_php.php", "type": "blob", "size": 50},
     ]
@@ -885,7 +886,7 @@ def test_schedule_handler_all_none_coverage_treated_as_candidate(
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
-    mock_get_default_branch.return_value = ("main", None)
+    mock_get_default_branch.return_value = RepoInfo("main", False, False)
     mock_get_file_tree.return_value = [
         {"path": "web/pickup/finishp.php", "type": "blob", "size": 500},
     ]
