@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from services.efs.clone_and_install import clone_and_install
+from services.github.branches.get_default_branch import RepoInfo
 
 
 @pytest.fixture
@@ -119,7 +120,7 @@ async def test_clone_and_install_with_default_branch(
     mock_get_installation.return_value = mock_installation
     mock_get_token.return_value = "test-token"
     mock_get_repo.return_value = None
-    mock_get_default_branch.return_value = ("main", False)
+    mock_get_default_branch.return_value = RepoInfo("main", False, False)
     mock_get_efs_dir.return_value = "/mnt/efs/test-owner/test-repo"
     mock_get_clone_url.return_value = "https://github.com/test-owner/test-repo.git"
     mock_install_node.return_value = True
@@ -157,7 +158,7 @@ async def test_clone_and_install_empty_repository(
     mock_get_installation.return_value = mock_installation
     mock_get_token.return_value = "test-token"
     mock_get_repo.return_value = None
-    mock_get_default_branch.return_value = ("", True)
+    mock_get_default_branch.return_value = RepoInfo("", True, False)
 
     result = await clone_and_install("test-owner", "test-repo")
 

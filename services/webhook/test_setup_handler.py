@@ -8,6 +8,7 @@ import pytest
 from anthropic.types import MessageParam
 
 from services.chat_with_agent import AgentResult
+from services.github.branches.get_default_branch import RepoInfo
 from services.github.users.get_user_public_email import UserPublicInfo
 from services.webhook.setup_handler import setup_handler
 
@@ -48,7 +49,7 @@ INSTALLATION = {"owner_id": 1, "installation_id": 123, "owner_type": "Organizati
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
-@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_default_branch", return_value=RepoInfo("main", False, False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
 @patch(f"{MODULE}.get_email_from_commits", return_value=None)
@@ -109,7 +110,7 @@ async def test_not_completed_closes_pr_and_deletes_branch(
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
-@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_default_branch", return_value=RepoInfo("main", False, False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
 @patch(f"{MODULE}.get_email_from_commits", return_value=None)
@@ -169,7 +170,7 @@ async def test_completed_keeps_pr(
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
-@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_default_branch", return_value=RepoInfo("main", False, False))
 @patch(
     f"{MODULE}.get_repository_by_name",
     return_value={"target_branch": "develop", "repo_id": 456},
@@ -236,7 +237,7 @@ async def test_uses_target_branch_when_set(
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
-@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_default_branch", return_value=RepoInfo("main", False, False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
 @patch(f"{MODULE}.get_email_from_commits", return_value=None)
@@ -305,7 +306,7 @@ async def test_passes_existing_workflows_to_claude(
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
-@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_default_branch", return_value=RepoInfo("main", False, False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
 @patch(f"{MODULE}.get_email_from_commits", return_value=None)
@@ -375,7 +376,7 @@ async def test_no_installation_skips(mock_installation):
 
 
 @pytest.mark.asyncio
-@patch(f"{MODULE}.get_default_branch", return_value=("main", True))
+@patch(f"{MODULE}.get_default_branch", return_value=RepoInfo("main", True, False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
 async def test_empty_repo_skips(mock_installation, mock_repo, mock_default_branch):
@@ -405,7 +406,7 @@ async def test_empty_repo_skips(mock_installation, mock_repo, mock_default_branc
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
-@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_default_branch", return_value=RepoInfo("main", False, False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
 @patch(f"{MODULE}.get_email_from_commits", return_value=None)
@@ -465,7 +466,7 @@ async def test_system_message_mentions_coverage(
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
 @patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
 @patch(f"{MODULE}.get_efs_dir")
-@patch(f"{MODULE}.get_default_branch", return_value=("main", False))
+@patch(f"{MODULE}.get_default_branch", return_value=RepoInfo("main", False, False))
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
 @patch(f"{MODULE}.get_email_from_commits", return_value=None)
