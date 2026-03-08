@@ -18,6 +18,9 @@ def get_email_from_commits(owner: str, repo: str, username: str, token: str):
         params={"author": username, "per_page": 5},
         timeout=TIMEOUT,
     )
+    if response.status_code == 404:
+        logger.info("Repository %s/%s not found, skipping email lookup", owner, repo)
+        return None
     if response.status_code == 409:
         logger.info("Repository %s/%s is empty, skipping email lookup", owner, repo)
         return None
