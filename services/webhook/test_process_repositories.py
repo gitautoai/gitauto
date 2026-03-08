@@ -5,6 +5,7 @@ from unittest.mock import patch, AsyncMock
 
 import pytest
 
+from services.github.branches.get_default_branch import RepoInfo
 from services.github.types.repository import RepositoryAddedOrRemoved
 from services.webhook.process_repositories import process_repositories
 
@@ -63,7 +64,9 @@ def mock_os_path_exists():
 @pytest.fixture
 def mock_get_default_branch():
     with patch("services.webhook.process_repositories.get_default_branch") as mock:
-        mock.return_value = ("main", False)
+        mock.return_value = RepoInfo(
+            default_branch="main", is_empty=False, is_archived=False
+        )
         yield mock
 
 
@@ -224,7 +227,10 @@ async def test_process_repositories_efs_exists_fetches(
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
-    mock_get_default_branch.side_effect = [("main", False), ("master", False)]
+    mock_get_default_branch.side_effect = [
+        RepoInfo(default_branch="main", is_empty=False, is_archived=False),
+        RepoInfo(default_branch="master", is_empty=False, is_archived=False),
+    ]
 
     await process_repositories(
         owner_id=12345,
@@ -415,7 +421,9 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_os_path_isfile,
     mock_delete_remote_branch,
 ):
-    mock_get_default_branch.return_value = ("main", True)
+    mock_get_default_branch.return_value = RepoInfo(
+        default_branch="main", is_empty=True, is_archived=False
+    )
     single_repo = cast(
         list[RepositoryAddedOrRemoved],
         [

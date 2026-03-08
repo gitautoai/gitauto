@@ -76,9 +76,10 @@ def handle_coverage_report(
         update_repository(owner_id=owner_id, repo_id=repo_id, target_branch="")
         target_branch = ""
     if not target_branch:
-        target_branch, _ = get_default_branch(
+        repo_info = get_default_branch(
             owner=owner_name, repo=repo_name, token=github_token
         )
+        target_branch = repo_info.default_branch
 
     # Check if head_sha is the HEAD of target branch. This handles: PR merge, direct push, manual trigger on target branch
     target_head = get_branch_head(

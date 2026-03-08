@@ -50,8 +50,8 @@ async def clone_and_install(owner: str, repo: str):
         branch = repository["target_branch"]
         logger.info("Using target_branch from repository: %s", branch)
     else:
-        branch, is_empty = get_default_branch(owner=owner, repo=repo, token=token)
-        if is_empty:
+        repo_info = get_default_branch(owner=owner, repo=repo, token=token)
+        if repo_info.is_empty:
             logger.warning("Repository %s/%s is empty", owner, repo)
             return CloneAndInstallResult(
                 status="error",
@@ -60,6 +60,7 @@ async def clone_and_install(owner: str, repo: str):
                 node_installed=False,
                 php_installed=False,
             )
+        branch = repo_info.default_branch
         logger.info("Using default branch: %s", branch)
 
     efs_dir = get_efs_dir(owner, repo)

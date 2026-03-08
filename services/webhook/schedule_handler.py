@@ -96,9 +96,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     # Get repository files and coverage data
     target_branch = repo_settings.get("target_branch")
     if not target_branch:
-        target_branch, _ = get_default_branch(
+        target_branch = get_default_branch(
             owner=owner_name, repo=repo_name, token=token
-        )
+        ).default_branch
     tree_items = get_file_tree(
         owner=owner_name, repo=repo_name, ref=target_branch, token=token
     )
