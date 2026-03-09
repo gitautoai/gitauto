@@ -1,250 +1,46 @@
-# Standard imports
-import json
-from unittest.mock import patch
-
-# Third-party imports
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 import pytest
 
-# Local imports
 from services.claude.tools.file_modify_result import FileMoveResult
 from services.github.files.move_file import move_file
 
 
 @pytest.fixture
 def base_args(create_test_base_args, tmp_path):
-    """Create base args for testing."""
-    return create_test_base_args(
-        owner="test-owner",
-        repo="test-repo",
-        token="test-token",
-        new_branch="test-branch",
-        clone_dir=str(tmp_path),
-    )
-
-
-@pytest.fixture
-def mock_tree_items():
-    """Mock tree items for testing."""
-    return [
-        {"path": "old/file.py", "type": "blob", "mode": "100644", "sha": "abc123"},
-        {
-            "path": "other/file.py",
-            "type": "blob",
-            "mode": "100644",
-            "sha": "def456",
-        },
-    ]
+    return create_test_base_args(clone_dir=str(tmp_path))
 
 
 def test_same_file_paths_error(base_args):
-    """Test error when old_file_path and new_file_path are the same."""
     result = move_file("same/path.py", "same/path.py", base_args)
     assert isinstance(result, FileMoveResult)
     assert result.success is False
     assert "same" in result.message
 
 
-@patch("services.github.files.move_file.get_reference")
-def test_get_reference_failure(mock_get_reference, base_args):
-    """Test error when get_reference fails."""
-    mock_get_reference.return_value = None
-
-    result = move_file("old/path.py", "new/path.py", base_args)
-
-    assert isinstance(result, FileMoveResult)
-    assert result.success is False
-    assert "reference" in result.message
-    mock_get_reference.assert_called_once_with(base_args)
-
-
-@patch("services.github.files.move_file.get_commit")
-@patch("services.github.files.move_file.get_reference")
-def test_get_commit_failure(mock_get_reference, mock_get_commit, base_args):
-    """Test error when get_commit fails."""
-    mock_get_reference.return_value = "commit_sha_123"
-    mock_get_commit.return_value = None
-
-    result = move_file("old/path.py", "new/path.py", base_args)
-
-    assert isinstance(result, FileMoveResult)
-    assert result.success is False
-    assert "tree SHA" in result.message
-    mock_get_reference.assert_called_once_with(base_args)
-    mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
-
-
-@patch("services.github.files.move_file.get_file_tree")
-@patch("services.github.files.move_file.get_commit")
-@patch("services.github.files.move_file.get_reference")
-def test_file_not_found_error(
-    mock_get_reference,
-    mock_get_commit,
-    mock_get_file_tree,
-    base_args,
-    mock_tree_items,
-):
-    """Test error when source file is not found."""
-    mock_get_reference.return_value = "commit_sha_123"
-    mock_get_commit.return_value = "tree_sha_456"
-    mock_get_file_tree.return_value = mock_tree_items
-
+def test_source_file_not_found(base_args):
     result = move_file("nonexistent/file.py", "new/path.py", base_args)
-
     assert isinstance(result, FileMoveResult)
     assert result.success is False
     assert "not found" in result.message
-    mock_get_reference.assert_called_once_with(base_args)
-    mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
-    mock_get_file_tree.assert_called_once_with(
-        "test-owner", "test-repo", "tree_sha_456", "test-token"
-    )
 
 
-@patch("services.github.files.move_file.get_file_tree")
-@patch("services.github.files.move_file.get_commit")
-@patch("services.github.files.move_file.get_reference")
-def test_target_file_exists_error(
-    mock_get_reference,
-    mock_get_commit,
-    mock_get_file_tree,
-    base_args,
-    mock_tree_items,
-):
-    """Test error when target file already exists."""
-    mock_get_reference.return_value = "commit_sha_123"
-    mock_get_commit.return_value = "tree_sha_456"
-    mock_get_file_tree.return_value = mock_tree_items
+def test_target_file_already_exists(base_args, tmp_path):
+    (tmp_path / "old").mkdir()
+    (tmp_path / "old" / "file.py").write_text("content")
+    (tmp_path / "new").mkdir()
+    (tmp_path / "new" / "file.py").write_text("existing")
 
-    result = move_file("old/file.py", "other/file.py", base_args)
-
+    result = move_file("old/file.py", "new/file.py", base_args)
     assert isinstance(result, FileMoveResult)
     assert result.success is False
     assert "already exists" in result.message
-    mock_get_reference.assert_called_once_with(base_args)
-    mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
-    mock_get_file_tree.assert_called_once_with(
-        "test-owner", "test-repo", "tree_sha_456", "test-token"
-    )
 
 
-@patch("services.github.files.move_file.create_tree")
-@patch("services.github.files.move_file.get_file_tree")
-@patch("services.github.files.move_file.get_commit")
-@patch("services.github.files.move_file.get_reference")
-def test_create_tree_failure(
-    mock_get_reference,
-    mock_get_commit,
-    mock_get_file_tree,
-    mock_create_tree,
-    base_args,
-    mock_tree_items,
-):
-    """Test error when create_tree fails."""
-    mock_get_reference.return_value = "commit_sha_123"
-    mock_get_commit.return_value = "tree_sha_456"
-    mock_get_file_tree.return_value = mock_tree_items
-    mock_create_tree.return_value = None
-
-    result = move_file("old/file.py", "new/path.py", base_args)
-
-    assert isinstance(result, FileMoveResult)
-    assert result.success is False
-    assert "tree" in result.message
-    mock_get_reference.assert_called_once_with(base_args)
-    mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
-    mock_get_file_tree.assert_called_once_with(
-        "test-owner", "test-repo", "tree_sha_456", "test-token"
-    )
-
-    expected_tree_items = [
-        {
-            "path": "new/path.py",
-            "mode": "100644",
-            "type": "blob",
-            "sha": "abc123",
-        },
-        {
-            "path": "old/file.py",
-            "mode": "100644",
-            "type": "blob",
-            "sha": None,
-        },
-    ]
-    mock_create_tree.assert_called_once_with(
-        base_args, "tree_sha_456", expected_tree_items
-    )
-
-
-@patch("services.github.files.move_file.create_commit")
-@patch("services.github.files.move_file.create_tree")
-@patch("services.github.files.move_file.get_file_tree")
-@patch("services.github.files.move_file.get_commit")
-@patch("services.github.files.move_file.get_reference")
-def test_create_commit_failure(
-    mock_get_reference,
-    mock_get_commit,
-    mock_get_file_tree,
-    mock_create_tree,
-    mock_create_commit,
-    base_args,
-    mock_tree_items,
-):
-    """Test error when create_commit fails."""
-    mock_get_reference.return_value = "commit_sha_123"
-    mock_get_commit.return_value = "tree_sha_456"
-    mock_get_file_tree.return_value = mock_tree_items
-    mock_create_tree.return_value = "new_tree_sha_789"
-    mock_create_commit.return_value = None
-
-    result = move_file("old/file.py", "new/path.py", base_args)
-
-    assert isinstance(result, FileMoveResult)
-    assert result.success is False
-    assert "commit" in result.message
-    mock_get_reference.assert_called_once_with(base_args)
-    mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
-    mock_get_file_tree.assert_called_once_with(
-        "test-owner", "test-repo", "tree_sha_456", "test-token"
-    )
-    mock_create_tree.assert_called_once()
-    mock_create_commit.assert_called_once_with(
-        base_args,
-        "Move old/file.py to new/path.py",
-        "new_tree_sha_789",
-        "commit_sha_123",
-    )
-
-
-@patch("services.github.files.move_file.update_reference")
-@patch("services.github.files.move_file.create_commit")
-@patch("services.github.files.move_file.create_tree")
-@patch("services.github.files.move_file.get_file_tree")
-@patch("services.github.files.move_file.get_commit")
-@patch("services.github.files.move_file.get_reference")
-def test_successful_move_without_skip_ci(
-    mock_get_reference,
-    mock_get_commit,
-    mock_get_file_tree,
-    mock_create_tree,
-    mock_create_commit,
-    mock_update_reference,
-    base_args,
-    mock_tree_items,
-    tmp_path,
-):
-    """Test successful file move without skip_ci."""
-    mock_get_reference.return_value = "commit_sha_123"
-    mock_get_commit.return_value = "tree_sha_456"
-    mock_get_file_tree.return_value = mock_tree_items
-    mock_create_tree.return_value = "new_tree_sha_789"
-    mock_create_commit.return_value = "new_commit_sha_abc"
-    mock_update_reference.return_value = True
-
-    # Create local file to verify move
+def test_successful_move(base_args, tmp_path):
     old_dir = tmp_path / "old"
-    old_dir.mkdir(parents=True, exist_ok=True)
-    old_file = old_dir / "file.py"
-    old_file.write_text("test content")
+    old_dir.mkdir()
+    (old_dir / "file.py").write_text("test content")
 
     result = move_file("old/file.py", "new/path.py", base_args)
 
@@ -253,312 +49,31 @@ def test_successful_move_without_skip_ci(
     assert result.old_file_path == "old/file.py"
     assert result.new_file_path == "new/path.py"
     assert "Moved" in result.message
-    mock_get_reference.assert_called_once_with(base_args)
-    mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
-    mock_get_file_tree.assert_called_once_with(
-        "test-owner", "test-repo", "tree_sha_456", "test-token"
-    )
-    mock_create_tree.assert_called_once()
-    mock_create_commit.assert_called_once_with(
-        base_args,
-        "Move old/file.py to new/path.py",
-        "new_tree_sha_789",
-        "commit_sha_123",
-    )
-    mock_update_reference.assert_called_once_with(base_args, "new_commit_sha_abc")
-
-    # Verify local file was moved
-    assert not old_file.exists()
-    new_file = tmp_path / "new" / "path.py"
-    assert new_file.exists()
-    assert new_file.read_text() == "test content"
+    assert not (old_dir / "file.py").exists()
+    assert (tmp_path / "new" / "path.py").exists()
+    assert (tmp_path / "new" / "path.py").read_text() == "test content"
 
 
-@patch("services.github.files.move_file.update_reference")
-@patch("services.github.files.move_file.create_commit")
-@patch("services.github.files.move_file.create_tree")
-@patch("services.github.files.move_file.get_file_tree")
-@patch("services.github.files.move_file.get_commit")
-@patch("services.github.files.move_file.get_reference")
-def test_successful_move_with_skip_ci(
-    mock_get_reference,
-    mock_get_commit,
-    mock_get_file_tree,
-    mock_create_tree,
-    mock_create_commit,
-    mock_update_reference,
-    base_args,
-    mock_tree_items,
-):
-    """Test successful file move with skip_ci enabled."""
-    base_args["skip_ci"] = True
-    mock_get_reference.return_value = "commit_sha_123"
-    mock_get_commit.return_value = "tree_sha_456"
-    mock_get_file_tree.return_value = mock_tree_items
-    mock_create_tree.return_value = "new_tree_sha_789"
-    mock_create_commit.return_value = "new_commit_sha_abc"
-    mock_update_reference.return_value = True
+def test_move_creates_parent_directories(base_args, tmp_path):
+    (tmp_path / "src.py").write_text("content")
 
-    result = move_file("old/file.py", "new/path.py", base_args)
+    result = move_file("src.py", "deep/nested/dir/dest.py", base_args)
 
     assert isinstance(result, FileMoveResult)
     assert result.success is True
-    assert result.old_file_path == "old/file.py"
-    assert result.new_file_path == "new/path.py"
-    assert "Moved" in result.message
-    mock_get_reference.assert_called_once_with(base_args)
-    mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
-    mock_get_file_tree.assert_called_once_with(
-        "test-owner", "test-repo", "tree_sha_456", "test-token"
-    )
-    mock_create_tree.assert_called_once()
-    mock_create_commit.assert_called_once_with(
-        base_args,
-        "Move old/file.py to new/path.py [skip ci]",
-        "new_tree_sha_789",
-        "commit_sha_123",
-    )
-    mock_update_reference.assert_called_once_with(base_args, "new_commit_sha_abc")
-
-
-@patch("services.github.files.move_file.get_file_tree")
-@patch("services.github.files.move_file.get_commit")
-@patch("services.github.files.move_file.get_reference")
-def test_file_search_with_non_blob_items(
-    mock_get_reference, mock_get_commit, mock_get_file_tree, base_args
-):
-    """Test file search ignores non-blob items."""
-    mock_get_reference.return_value = "commit_sha_123"
-    mock_get_commit.return_value = "tree_sha_456"
-    tree_items_with_tree = [
-        {
-            "path": "old/file.py",
-            "type": "tree",  # This should be ignored
-            "mode": "040000",
-            "sha": "tree123",
-        },
-        {"path": "old/file.py", "type": "blob", "mode": "100644", "sha": "abc123"},
-    ]
-    mock_get_file_tree.return_value = tree_items_with_tree
-
-    # This should find the blob, not the tree
-    with patch("services.github.files.move_file.create_tree") as mock_create_tree:
-        mock_create_tree.return_value = None  # Force failure to check tree items
-        result = move_file("old/file.py", "new/path.py", base_args)
-
-        assert isinstance(result, FileMoveResult)
-        assert result.success is False
-        assert "tree" in result.message
-        # Verify the correct blob was found by checking the tree items passed to create_tree
-        expected_tree_items = [
-            {
-                "path": "new/path.py",
-                "mode": "100644",
-                "type": "blob",
-                "sha": "abc123",
-            },
-            {
-                "path": "old/file.py",
-                "mode": "100644",
-                "type": "blob",
-                "sha": None,
-            },
-        ]
-        mock_create_tree.assert_called_once_with(
-            base_args, "tree_sha_456", expected_tree_items
-        )
-
-
-@patch("services.github.files.move_file.get_file_tree")
-@patch("services.github.files.move_file.get_commit")
-@patch("services.github.files.move_file.get_reference")
-def test_target_file_check_with_non_blob_items(
-    mock_get_reference, mock_get_commit, mock_get_file_tree, base_args
-):
-    """Test target file existence check ignores non-blob items."""
-    mock_get_reference.return_value = "commit_sha_123"
-    mock_get_commit.return_value = "tree_sha_456"
-    tree_items_with_tree = [
-        {"path": "old/file.py", "type": "blob", "mode": "100644", "sha": "abc123"},
-        {
-            "path": "new/path.py",
-            "type": "tree",  # This should be ignored
-            "mode": "040000",
-            "sha": "tree123",
-        },
-    ]
-    mock_get_file_tree.return_value = tree_items_with_tree
-
-    # This should not find the tree as a conflicting file
-    with patch("services.github.files.move_file.create_tree") as mock_create_tree:
-        mock_create_tree.return_value = (
-            None  # Force failure to verify we got past the target check
-        )
-        result = move_file("old/file.py", "new/path.py", base_args)
-
-        assert isinstance(result, FileMoveResult)
-        assert result.success is False
-        assert "tree" in result.message
-        # If we got here, it means the target file check passed (tree was ignored)
-
-
-@patch("services.github.files.move_file.get_file_tree")
-@patch("services.github.files.move_file.get_commit")
-@patch("services.github.files.move_file.get_reference")
-def test_empty_tree_items(
-    mock_get_reference, mock_get_commit, mock_get_file_tree, base_args
-):
-    """Test behavior with empty tree items."""
-    mock_get_reference.return_value = "commit_sha_123"
-    mock_get_commit.return_value = "tree_sha_456"
-    mock_get_file_tree.return_value = []
-
-    result = move_file("old/file.py", "new/path.py", base_args)
-
-    assert isinstance(result, FileMoveResult)
-    assert result.success is False
-    assert "not found" in result.message
-    mock_get_reference.assert_called_once_with(base_args)
-    mock_get_commit.assert_called_once_with(base_args, "commit_sha_123")
-    mock_get_file_tree.assert_called_once_with(
-        "test-owner", "test-repo", "tree_sha_456", "test-token"
-    )
-
-
-def test_skip_ci_default_value(base_args):
-    """Test that skip_ci defaults to False when not provided."""
-    # Remove skip_ci from base_args if it exists
-    base_args.pop("skip_ci", None)
-
-    with patch("services.github.files.move_file.get_reference") as mock_get_reference:
-        mock_get_reference.return_value = None  # Force early return
-
-        result = move_file("old/file.py", "new/path.py", base_args)
-
-        # The function should handle missing skip_ci gracefully
-        assert isinstance(result, FileMoveResult)
-        assert result.success is False
-        assert "reference" in result.message
-
-
-@patch("services.github.files.move_file.update_reference")
-@patch("services.github.files.move_file.create_commit")
-@patch("services.github.files.move_file.create_tree")
-@patch("services.github.files.move_file.get_file_tree")
-@patch("services.github.files.move_file.get_commit")
-@patch("services.github.files.move_file.get_reference")
-def test_different_file_modes(
-    mock_get_reference,
-    mock_get_commit,
-    mock_get_file_tree,
-    mock_create_tree,
-    mock_create_commit,
-    mock_update_reference,
-    base_args,
-):
-    """Test moving files with different modes (executable, etc.)."""
-    mock_get_reference.return_value = "commit_sha_123"
-    mock_get_commit.return_value = "tree_sha_456"
-    executable_tree_items = [
-        {
-            "path": "old/script.sh",
-            "type": "blob",
-            "mode": "100755",  # Executable file
-            "sha": "script123",
-        }
-    ]
-    mock_get_file_tree.return_value = executable_tree_items
-    mock_create_tree.return_value = "new_tree_sha_789"
-    mock_create_commit.return_value = "new_commit_sha_abc"
-    mock_update_reference.return_value = True
-
-    result = move_file("old/script.sh", "new/script.sh", base_args)
-
-    assert isinstance(result, FileMoveResult)
-    assert result.success is True
-    assert result.old_file_path == "old/script.sh"
-    assert result.new_file_path == "new/script.sh"
-    assert "Moved" in result.message
-
-    # Verify the executable mode is preserved
-    expected_tree_items = [
-        {
-            "path": "new/script.sh",
-            "mode": "100755",
-            "type": "blob",
-            "sha": "script123",
-        },
-        {
-            "path": "old/script.sh",
-            "mode": "100755",
-            "type": "blob",
-            "sha": None,
-        },
-    ]
-    mock_create_tree.assert_called_once_with(
-        base_args, "tree_sha_456", expected_tree_items
-    )
-
-
-@patch("services.github.files.move_file.get_reference")
-def test_exception_handling_returns_result(mock_get_reference, base_args):
-    """Test that exceptions are handled and FileMoveResult is returned due to decorator."""
-    # Make get_reference raise an exception
-    mock_get_reference.side_effect = Exception("Test exception")
-
-    result = move_file("old/file.py", "new/file.py", base_args)
-
-    assert isinstance(result, FileMoveResult)
-    assert result.success is False
-    assert result.old_file_path == "old/file.py"
-    assert result.new_file_path == "new/file.py"
-
-
-@patch("services.github.files.move_file.get_reference")
-def test_json_decode_error_handling(mock_get_reference, base_args):
-    """Test that JSON decode errors are handled properly."""
-    # Make get_reference raise a JSONDecodeError
-    mock_get_reference.side_effect = json.JSONDecodeError("Test JSON error", "doc", 0)
-
-    result = move_file("old/file.py", "new/file.py", base_args)
-
-    assert isinstance(result, FileMoveResult)
-    assert result.success is False
-    assert result.old_file_path == "old/file.py"
-    assert result.new_file_path == "new/file.py"
-
-
-@patch("services.github.files.move_file.get_reference")
-def test_attribute_error_handling(mock_get_reference, base_args):
-    """Test that AttributeError is handled properly."""
-    # Make get_reference raise an AttributeError
-    mock_get_reference.side_effect = AttributeError("Test attribute error")
-
-    result = move_file("old/file.py", "new/file.py", base_args)
-
-    assert isinstance(result, FileMoveResult)
-    assert result.success is False
-    assert result.old_file_path == "old/file.py"
-    assert result.new_file_path == "new/file.py"
-
-
-@patch("services.github.files.move_file.get_reference")
-def test_key_error_handling(mock_get_reference, base_args):
-    """Test that KeyError is handled properly."""
-    # Make get_reference raise a KeyError
-    mock_get_reference.side_effect = KeyError("Test key error")
-
-    result = move_file("old/file.py", "new/file.py", base_args)
-
-    assert isinstance(result, FileMoveResult)
-    assert result.success is False
-    assert result.old_file_path == "old/file.py"
-    assert result.new_file_path == "new/file.py"
+    assert (tmp_path / "deep" / "nested" / "dir" / "dest.py").exists()
+    assert not (tmp_path / "src.py").exists()
 
 
 def test_kwargs_parameter_ignored(base_args):
-    """Test that additional kwargs are ignored."""
     result = move_file("same/path.py", "same/path.py", base_args, extra_param="ignored")
     assert isinstance(result, FileMoveResult)
     assert result.success is False
     assert "same" in result.message
+
+
+def test_exception_handling_returns_result(base_args, tmp_path):
+    (tmp_path / "my_dir").mkdir()
+
+    result = move_file("my_dir", "new_dir", base_args)
+    assert isinstance(result, FileMoveResult)

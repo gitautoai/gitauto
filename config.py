@@ -28,6 +28,10 @@ GITHUB_CHECK_RUN_FAILURES = [
     "timed_out",
 ]
 GITHUB_NOREPLY_EMAIL_DOMAIN = "users.noreply.github.com"  # https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-email-preferences/setting-your-commit-email-address
+# GitAuto's noreply email for git commits
+GITHUB_APP_GIT_EMAIL = (
+    f"{GITHUB_APP_USER_ID}+{GITHUB_APP_USER_NAME}@{GITHUB_NOREPLY_EMAIL_DOMAIN}"
+)
 GITHUB_PRIVATE_KEY_ENCODED = get_env_var(name="GH_PRIVATE_KEY")
 GITHUB_PRIVATE_KEY = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED)
 GITHUB_WEBHOOK_SECRET = get_env_var(name="GH_WEBHOOK_SECRET")

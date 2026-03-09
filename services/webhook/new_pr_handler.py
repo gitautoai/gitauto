@@ -551,7 +551,6 @@ async def handle_new_pr(
         await verify_task_is_complete(base_args=base_args)
 
     # Add headers to test files before triggering CI
-    last_commit_sha = ""
     changed_files = get_pull_request_files(
         owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
@@ -575,13 +574,12 @@ async def handle_new_pr(
         if not updated_content or updated_content == file_content:
             continue
 
-        result = replace_remote_file_content(
+        replace_remote_file_content(
             file_content=updated_content,
             file_path=file_path,
             base_args=base_args,
+            commit_message=f"Disable unnecessary lint rules for {file_path}",
         )
-        if result.commit_sha:
-            last_commit_sha = result.commit_sha
 
     # Trigger final test workflows with an empty commit
     comment_body = "Triggering workflows..."
@@ -590,7 +588,7 @@ async def handle_new_pr(
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
-    create_empty_commit(base_args=base_args, parent_sha=last_commit_sha)
+    create_empty_commit(base_args=base_args)
 
     # Update the PR comment
     body_after_pr = build_pr_completion_comment(

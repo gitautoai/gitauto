@@ -13,8 +13,7 @@ def read_local_file(file_path: str, base_dir: str):
         logger.warning("File not found: %s", full_path)
         return None
 
-    try:
-        with open(full_path, "r", encoding=UTF8) as f:
-            return f.read()
-    except UnicodeDecodeError:
-        return f"[Binary file: {file_path}]"
+    # newline="" preserves original line endings (\r\n) instead of Python's default normalization to \n
+    # errors="replace" substitutes U+FFFD for malformed bytes instead of raising UnicodeDecodeError
+    with open(full_path, "r", encoding=UTF8, newline="", errors="replace") as f:
+        return f.read()

@@ -667,7 +667,7 @@ async def test_file_write_result_success_includes_formatted_content(
         mock_tools.__getitem__.return_value = Mock(
             return_value=FileWriteResult(
                 success=True,
-                message="Applied diff to test.py.",
+                message="Updated test.py.",
                 file_path="test.py",
                 content="line1\nline2",
             )
@@ -688,7 +688,7 @@ async def test_file_write_result_success_includes_formatted_content(
     tool_result_content_list = cast(list, messages[-1]["content"])
     tool_result_content = tool_result_content_list[0]["content"]
 
-    assert "Applied diff to test.py." in tool_result_content
+    assert "Updated test.py." in tool_result_content
     assert "```test.py" in tool_result_content
     assert "1:line1" in tool_result_content
     assert "2:line2" in tool_result_content

@@ -4,12 +4,7 @@ import shutil
 
 # Local imports
 from services.claude.tools.file_modify_result import FileMoveResult
-from services.github.commits.create_commit import create_commit
-from services.github.commits.get_commit import get_commit
-from services.github.refs.get_reference import get_reference
-from services.github.refs.update_reference import update_reference
-from services.github.trees.create_tree import create_tree
-from services.github.trees.get_file_tree import get_file_tree
+from services.git.git_commit_and_push import git_commit_and_push
 from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -30,7 +25,7 @@ def move_file(
     base_args: BaseArgs,
     **_kwargs,
 ):
-    """Move a file in the GitHub repository using Trees API to ensure Git recognizes it as a rename."""
+    """Move a file in the local clone, then commit and push to the PR branch."""
     if old_file_path == new_file_path:
         return FileMoveResult(
             success=False,
@@ -39,43 +34,12 @@ def move_file(
             new_file_path=new_file_path,
         )
 
-    owner = base_args["owner"]
-    repo = base_args["repo"]
-    token = base_args["token"]
-    new_branch = base_args["new_branch"]
-    skip_ci = base_args.get("skip_ci", False)
+    clone_dir = base_args["clone_dir"]
+    old_local_path = os.path.join(clone_dir, old_file_path)
+    new_local_path = os.path.join(clone_dir, new_file_path)
 
-    # Get the latest commit SHA
-    latest_commit_sha = get_reference(base_args)
-    if not latest_commit_sha:
-        return FileMoveResult(
-            success=False,
-            message=f"Could not get reference for branch '{new_branch}'.",
-            old_file_path=old_file_path,
-            new_file_path=new_file_path,
-        )
-
-    # Get the tree SHA from the commit
-    base_tree_sha = get_commit(base_args, latest_commit_sha)
-    if not base_tree_sha:
-        return FileMoveResult(
-            success=False,
-            message=f"Could not get tree SHA for commit '{latest_commit_sha}'.",
-            old_file_path=old_file_path,
-            new_file_path=new_file_path,
-        )
-
-    # Get the current tree
-    tree_items = get_file_tree(owner, repo, base_tree_sha, token)
-
-    # Find the file to move
-    file_blob = None
-    for item in tree_items:
-        if item["path"] == old_file_path and item["type"] == "blob":
-            file_blob = item
-            break
-
-    if not file_blob:
+    # Check source file exists
+    if not os.path.exists(old_local_path):
         return FileMoveResult(
             success=False,
             message=f"File '{old_file_path}' not found.",
@@ -83,74 +47,26 @@ def move_file(
             new_file_path=new_file_path,
         )
 
-    # Check if new file already exists
-    for item in tree_items:
-        if item["path"] == new_file_path and item["type"] == "blob":
-            return FileMoveResult(
-                success=False,
-                message=f"Target file '{new_file_path}' already exists.",
-                old_file_path=old_file_path,
-                new_file_path=new_file_path,
-            )
-
-    # Create tree items for move operation
-    move_tree_items = [
-        # Add the file at the new location
-        {
-            "path": new_file_path,
-            "mode": file_blob["mode"],
-            "type": "blob",
-            "sha": file_blob["sha"],
-        },
-        # Delete the file from the old location
-        {
-            "path": old_file_path,
-            "mode": file_blob["mode"],
-            "type": "blob",
-            "sha": None,  # Setting sha to null deletes the file
-        },
-    ]
-
-    # Create the new tree
-    new_tree_sha = create_tree(base_args, base_tree_sha, move_tree_items)
-    if not new_tree_sha:
+    # Check target doesn't already exist
+    if os.path.exists(new_local_path):
         return FileMoveResult(
             success=False,
-            message="Could not create new tree.",
+            message=f"Target file '{new_file_path}' already exists.",
             old_file_path=old_file_path,
             new_file_path=new_file_path,
         )
 
-    # Create commit message
-    commit_message = (
-        f"Move {old_file_path} to {new_file_path} [skip ci]"
-        if skip_ci
-        else f"Move {old_file_path} to {new_file_path}"
+    # Move the file locally
+    os.makedirs(os.path.dirname(new_local_path), exist_ok=True)
+    shutil.move(old_local_path, new_local_path)
+    logger.info("Moved local: %s -> %s", old_local_path, new_local_path)
+
+    # Stage both old (deleted) and new (added) paths
+    git_commit_and_push(
+        base_args=base_args,
+        message=f"Move {old_file_path} to {new_file_path}",
+        files=[old_file_path, new_file_path],
     )
-
-    # Create a new commit
-    new_commit_sha = create_commit(
-        base_args, commit_message, new_tree_sha, latest_commit_sha
-    )
-    if not new_commit_sha:
-        return FileMoveResult(
-            success=False,
-            message="Could not create commit.",
-            old_file_path=old_file_path,
-            new_file_path=new_file_path,
-        )
-
-    # Update the branch reference
-    update_reference(base_args, new_commit_sha)
-
-    # Also move local file for verification (tsc, jest, eslint, etc.)
-    clone_dir = base_args["clone_dir"]
-    old_local_path = os.path.join(clone_dir, old_file_path)
-    new_local_path = os.path.join(clone_dir, new_file_path)
-    if os.path.exists(old_local_path):
-        os.makedirs(os.path.dirname(new_local_path), exist_ok=True)
-        shutil.move(old_local_path, new_local_path)
-        logger.info("Moved local: %s -> %s", old_local_path, new_local_path)
 
     return FileMoveResult(
         success=True,
