@@ -216,7 +216,7 @@ async def handle_check_suite(
         "owner": owner_name,
         "repo_id": repo_id,
         "repo": repo_name,
-        "clone_url": repo["clone_url"],
+        "clone_url": get_clone_url(owner_name, repo_name, token),
         "is_fork": is_fork,
         "pr_number": pr_number,
         "pr_title": pr_title,
