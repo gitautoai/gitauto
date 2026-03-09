@@ -55,7 +55,7 @@ def create_test_base_args():
             "owner": "test-owner",
             "repo_id": random.randint(1, 999999),
             "repo": "test-repo",
-            "clone_url": "https://github.com/test-owner/test-repo.git",
+            "clone_url": "https://x-access-token:test-token@github.com/test-owner/test-repo.git",
             "is_fork": False,
             "pr_number": random.randint(1, 9999),
             "pr_title": "Test Issue",

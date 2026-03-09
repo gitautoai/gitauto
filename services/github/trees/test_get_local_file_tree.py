@@ -16,7 +16,7 @@ def _make_base_args(clone_dir: str):
             "owner": "test-owner",
             "repo_id": 1,
             "repo": "test-repo",
-            "clone_url": "https://github.com/test-owner/test-repo.git",
+            "clone_url": "https://x-access-token:test-token@github.com/test-owner/test-repo.git",
             "is_fork": False,
             "pr_number": 1,
             "pr_title": "Test",
