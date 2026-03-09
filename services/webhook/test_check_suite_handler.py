@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from config import GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
+from constants.messages import CHECK_RUN_FAILED_MESSAGE
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.chat_with_agent import AgentResult
 from services.webhook.check_suite_handler import handle_check_suite
@@ -161,9 +162,12 @@ async def test_handle_check_suite_skips_when_trigger_disabled(
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.get_pull_request")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
 @patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
@@ -171,9 +175,10 @@ async def test_handle_check_suite_skips_when_trigger_disabled(
 async def test_handle_check_suite_skips_when_comment_exists(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     mock_slack_notify,
     mock_get_pr,
     mock_get_repo,
@@ -201,7 +206,9 @@ async def test_handle_check_suite_skips_when_comment_exists(
         "base": {"ref": "main"},
     }
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = True
+    mock_get_all_comments.return_value = [
+        {"user": {"login": GITHUB_APP_USER_NAME}, "body": CHECK_RUN_FAILED_MESSAGE}
+    ]
 
     await handle_check_suite(payload)
 
@@ -209,7 +216,7 @@ async def test_handle_check_suite_skips_when_comment_exists(
     mock_get_failed_runs.assert_called_once()
     mock_get_pr.assert_called_once()
     mock_get_repo.assert_called()
-    mock_has_comment.assert_called_once()
+    mock_get_all_comments.assert_called_once()
     mock_create_comment.assert_not_called()
     mock_slack_notify.assert_called()
 
@@ -219,7 +226,7 @@ async def test_handle_check_suite_skips_when_comment_exists(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -237,12 +244,16 @@ async def test_handle_check_suite_skips_when_comment_exists(
 @patch("services.webhook.check_suite_handler.verify_task_is_complete")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_race_condition_prevention(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     _mock_verify_task,
     _mock_create_empty_commit,
@@ -259,7 +270,7 @@ async def test_handle_check_suite_race_condition_prevention(
     mock_cancel_workflows,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -281,7 +292,7 @@ async def test_handle_check_suite_race_condition_prevention(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = (
         "https://github.com/test/test/issues/1#issuecomment-123"
     )
@@ -340,7 +351,7 @@ async def test_handle_check_suite_race_condition_prevention(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -356,12 +367,16 @@ async def test_handle_check_suite_race_condition_prevention(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_full_workflow(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     _mock_update_usage,
     _mock_create_empty_commit,
@@ -376,7 +391,7 @@ async def test_handle_check_suite_full_workflow(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -398,7 +413,7 @@ async def test_handle_check_suite_full_workflow(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -467,7 +482,7 @@ async def test_handle_check_suite_full_workflow(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -479,12 +494,16 @@ async def test_handle_check_suite_full_workflow(
 @patch("services.webhook.check_suite_handler.get_installation_permissions")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_with_404_logs(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     mock_get_permissions,
     mock_create_permission_url,
@@ -495,7 +514,7 @@ async def test_handle_check_suite_with_404_logs(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -517,7 +536,7 @@ async def test_handle_check_suite_with_404_logs(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -561,7 +580,7 @@ async def test_handle_check_suite_with_404_logs(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -571,12 +590,16 @@ async def test_handle_check_suite_with_404_logs(
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_with_none_logs(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     mock_update_comment,
     mock_get_logs,
@@ -585,7 +608,7 @@ async def test_handle_check_suite_with_none_logs(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -607,7 +630,7 @@ async def test_handle_check_suite_with_none_logs(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -647,7 +670,7 @@ async def test_handle_check_suite_with_none_logs(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -661,12 +684,16 @@ async def test_handle_check_suite_with_none_logs(
 @patch("services.webhook.check_suite_handler.clean_logs")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_with_existing_retry_pair(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     mock_clean_logs,
     mock_update_usage,
@@ -679,7 +706,7 @@ async def test_handle_check_suite_with_existing_retry_pair(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -701,7 +728,7 @@ async def test_handle_check_suite_with_existing_retry_pair(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -755,7 +782,7 @@ async def test_handle_check_suite_with_existing_retry_pair(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -770,12 +797,16 @@ async def test_handle_check_suite_with_existing_retry_pair(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_with_closed_pr(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     _mock_update_usage,
     _mock_create_empty_commit,
@@ -789,7 +820,7 @@ async def test_handle_check_suite_with_closed_pr(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -811,7 +842,7 @@ async def test_handle_check_suite_with_closed_pr(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -853,7 +884,7 @@ async def test_handle_check_suite_with_closed_pr(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -868,12 +899,16 @@ async def test_handle_check_suite_with_closed_pr(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_with_deleted_branch(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     _mock_update_usage,
     _mock_create_empty_commit,
@@ -887,7 +922,7 @@ async def test_handle_check_suite_with_deleted_branch(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -909,7 +944,7 @@ async def test_handle_check_suite_with_deleted_branch(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -951,7 +986,7 @@ async def test_handle_check_suite_with_deleted_branch(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -967,12 +1002,16 @@ async def test_handle_check_suite_with_deleted_branch(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_check_run_handler_token_accumulation(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     mock_update_usage,
     _mock_create_empty_commit,
@@ -987,7 +1026,7 @@ async def test_check_run_handler_token_accumulation(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -1009,7 +1048,7 @@ async def test_check_run_handler_token_accumulation(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = 888
     mock_get_pr.return_value = {
@@ -1069,7 +1108,7 @@ async def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -1086,12 +1125,16 @@ async def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_skips_duplicate_older_request(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     _mock_should_bail,
     _mock_verify_task,
@@ -1107,7 +1150,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -1129,7 +1172,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_slack_notify.return_value = "thread-123"
     mock_create_user_request.return_value = 999
@@ -1188,7 +1231,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -1206,12 +1249,16 @@ async def test_handle_check_suite_skips_duplicate_older_request(
 @patch("services.webhook.check_suite_handler.get_codecov_commit_coverage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_codecov_failure(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     mock_get_codecov_coverage,
     mock_get_codecov_token,
@@ -1227,7 +1274,7 @@ async def test_handle_check_suite_codecov_failure(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -1253,7 +1300,7 @@ async def test_handle_check_suite_codecov_failure(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -1318,7 +1365,7 @@ async def test_handle_check_suite_codecov_failure(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -1335,12 +1382,16 @@ async def test_handle_check_suite_codecov_failure(
 @patch("services.webhook.check_suite_handler.get_codecov_token")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
 async def test_handle_check_suite_codecov_no_token(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     mock_get_codecov_token,
     _mock_update_usage,
@@ -1355,7 +1406,7 @@ async def test_handle_check_suite_codecov_no_token(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -1381,7 +1432,7 @@ async def test_handle_check_suite_codecov_no_token(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -1433,7 +1484,7 @@ async def test_handle_check_suite_codecov_no_token(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.has_comment_with_text")
+@patch("services.webhook.check_suite_handler.get_all_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -1449,6 +1500,9 @@ async def test_handle_check_suite_codecov_no_token(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch(
+    "services.webhook.check_suite_handler.ensure_php_packages", new_callable=AsyncMock
+)
+@patch(
     "services.webhook.check_suite_handler.prepare_repo_for_work", new_callable=AsyncMock
 )
 @patch("services.webhook.check_suite_handler.git_clone_to_efs", new_callable=AsyncMock)
@@ -1456,6 +1510,7 @@ async def test_handle_check_suite_codecov_no_token(
 async def test_handle_check_suite_max_iterations_forces_verification(
     _mock_git_clone,
     _mock_prepare_repo,
+    _mock_ensure_php,
     _mock_start_async,
     _mock_update_usage,
     _mock_create_empty_commit,
@@ -1470,7 +1525,7 @@ async def test_handle_check_suite_max_iterations_forces_verification(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_has_comment,
+    mock_get_all_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -1492,7 +1547,7 @@ async def test_handle_check_suite_max_iterations_forces_verification(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_has_comment.return_value = False
+    mock_get_all_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
