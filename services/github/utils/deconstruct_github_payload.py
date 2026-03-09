@@ -2,6 +2,7 @@
 from typing import cast
 
 # Local imports
+from services.git.get_clone_url import get_clone_url
 from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.types.github_types import BaseArgs, PrLabeledPayload
 from services.github.token.get_installation_token import get_installation_access_token
@@ -28,7 +29,6 @@ def deconstruct_github_payload(
     repo = payload["repository"]
     repo_id = repo["id"]
     repo_name = repo["name"]
-    clone_url = repo["clone_url"]
     is_fork = repo.get("fork", False)
 
     # Extract owner related variables
@@ -82,7 +82,7 @@ def deconstruct_github_payload(
         "owner": owner_name,
         "repo_id": repo_id,
         "repo": repo_name,
-        "clone_url": clone_url,
+        "clone_url": get_clone_url(owner_name, repo_name, token),
         "is_fork": is_fork,
         "pr_number": pr_number,
         "pr_title": pr_title,

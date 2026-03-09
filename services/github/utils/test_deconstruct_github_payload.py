@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 """Unit tests for deconstruct_github_payload function."""
 
 from typing import Any, cast
@@ -62,6 +64,7 @@ def create_mock_payload(
     )
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -73,9 +76,13 @@ def test_deconstruct_github_payload_basic_functionality(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test basic functionality with all mocked dependencies."""
     # Setup mocks
+    mock_get_clone_url.return_value = (
+        "https://x-access-token:test_token@github.com/test-owner/test-repo.git"
+    )
     mock_get_installation_access_token.return_value = "test_token"
     mock_get_repository.return_value = {"target_branch": None}
     mock_check_branch_exists.return_value = False
@@ -97,7 +104,11 @@ def test_deconstruct_github_payload_basic_functionality(
     assert base_args["owner"] == "test-owner"
     assert base_args["repo_id"] == 456
     assert base_args["repo"] == "test-repo"
-    assert base_args["clone_url"] == "https://github.com/test-owner/test-repo.git"
+    # clone_url must have the token embedded for git push auth
+    assert base_args["clone_url"] == (
+        "https://x-access-token:test_token@github.com/test-owner/test-repo.git"
+    )
+    mock_get_clone_url.assert_called_once_with("test-owner", "test-repo", "test_token")
     assert base_args["is_fork"] is False
     assert base_args["pr_number"] == 123
     assert base_args["pr_title"] == "Test PR"
@@ -140,6 +151,7 @@ def test_deconstruct_github_payload_no_token_raises_error(
     assert "Installation 67890 suspended or deleted" in str(excinfo.value)
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -151,6 +163,7 @@ def test_deconstruct_github_payload_with_empty_pr_body(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test handling of empty PR body (None case)."""
     # Setup mocks
@@ -172,6 +185,7 @@ def test_deconstruct_github_payload_with_empty_pr_body(
     assert base_args["pr_body"] == ""
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -183,6 +197,7 @@ def test_deconstruct_github_payload_with_fork_repository(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test handling of fork repository."""
     # Setup mocks
@@ -204,6 +219,7 @@ def test_deconstruct_github_payload_with_fork_repository(
     assert base_args["is_fork"] is True
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -215,6 +231,7 @@ def test_deconstruct_github_payload_with_bot_users(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test filtering of bot users from reviewers."""
     # Setup mocks
@@ -238,6 +255,7 @@ def test_deconstruct_github_payload_with_bot_users(
     assert not base_args["reviewers"]
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -249,6 +267,7 @@ def test_deconstruct_github_payload_with_target_branch_exists(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test using target branch when it exists in repository."""
     # Setup mocks
@@ -270,6 +289,7 @@ def test_deconstruct_github_payload_with_target_branch_exists(
     assert base_args["base_branch"] == "develop"
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -281,6 +301,7 @@ def test_deconstruct_github_payload_with_target_branch_not_exists(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test falling back to default branch when target branch doesn't exist."""
     # Setup mocks
@@ -302,6 +323,7 @@ def test_deconstruct_github_payload_with_target_branch_not_exists(
     assert base_args["base_branch"] == "main"
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -313,6 +335,7 @@ def test_deconstruct_github_payload_no__(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test handling when repository settings are None."""
     # Setup mocks
@@ -335,6 +358,7 @@ def test_deconstruct_github_payload_no__(
     assert _ is None
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -346,6 +370,7 @@ def test_deconstruct_github_payload_no_target_branch_in_settings(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test handling when target_branch is None in repository settings."""
     # Setup mocks
@@ -369,6 +394,7 @@ def test_deconstruct_github_payload_no_target_branch_in_settings(
     mock_check_branch_exists.assert_not_called()
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -380,6 +406,7 @@ def test_deconstruct_github_payload_duplicate_reviewers(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test handling of duplicate reviewers (sender and PR creator are the same)."""
     # Setup mocks
@@ -401,6 +428,7 @@ def test_deconstruct_github_payload_duplicate_reviewers(
     assert base_args["reviewers"] == []
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -412,6 +440,7 @@ def test_deconstruct_github_payload_missing_fork_key(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test handling when fork key is missing from repository (defaults to False)."""
     # Setup mocks
@@ -432,6 +461,7 @@ def test_deconstruct_github_payload_missing_fork_key(
     assert base_args["is_fork"] is False
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -443,6 +473,7 @@ def test_deconstruct_github_payload_target_branch_used(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test that target branch is used when it exists."""
     # Setup mocks
@@ -464,6 +495,7 @@ def test_deconstruct_github_payload_target_branch_used(
     assert base_args["base_branch"] == "develop"
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -475,6 +507,7 @@ def test_deconstruct_github_payload_schedule_trigger_uses_assignees_as_reviewers
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test that schedule-triggered PRs use assignees as reviewers when sender/creator are bots."""
     # Setup mocks
@@ -499,6 +532,7 @@ def test_deconstruct_github_payload_schedule_trigger_uses_assignees_as_reviewers
     assert base_args["reviewers"] == ["takamori-san"]
 
 
+@patch("services.github.utils.deconstruct_github_payload.get_clone_url")
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")
 @patch("services.github.utils.deconstruct_github_payload.get_repository")
 @patch("services.github.utils.deconstruct_github_payload.check_branch_exists")
@@ -510,6 +544,7 @@ def test_deconstruct_github_payload_branch_from_pr_head(
     mock_check_branch_exists,
     mock_get_repository,
     mock_get_installation_access_token,
+    mock_get_clone_url,
 ):
     """Test that branch name comes from pull_request head ref."""
     # Setup mocks
