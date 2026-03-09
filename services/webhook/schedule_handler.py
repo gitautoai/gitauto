@@ -8,6 +8,7 @@ from payloads.aws.event_bridge_scheduler.event_types import EventBridgeScheduler
 from schemas.supabase.types import Coverages, CoveragesInsert
 from services.claude.evaluate_condition import evaluate_condition
 from services.aws.delete_scheduler import delete_scheduler
+from services.git.get_clone_url import get_clone_url
 from services.github.branches.create_remote_branch import create_remote_branch
 from services.github.branches.get_default_branch import get_default_branch
 from services.github.commits.create_empty_commit import create_empty_commit
@@ -373,7 +374,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     # Create a PR
     new_branch = generate_branch_name(trigger="schedule")
-    clone_url = f"https://github.com/{owner_name}/{repo_name}.git"
+    clone_url = get_clone_url(owner_name, repo_name, token)
     base_args: BaseArgs = {
         "owner_type": event["ownerType"],
         "owner_id": owner_id,
