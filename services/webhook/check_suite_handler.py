@@ -13,7 +13,7 @@ from anthropic.types import MessageParam
 from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
 from constants.agent import MAX_ITERATIONS
 from constants.general import MAX_GITAUTO_COMMITS_PER_PR, MAX_INFRA_RETRIES
-from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_STUMBLED_MESSAGE
+from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_FAILED_MESSAGE
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.chat_with_agent import chat_with_agent
@@ -32,7 +32,7 @@ from services.github.check_suites.get_failed_check_runs import (
     get_failed_check_runs_from_check_suite,
 )
 from services.github.comments.create_comment import create_comment
-from services.github.comments.has_comment_with_text import has_comment_with_text
+from services.github.comments.get_all_comments import get_all_comments
 from services.github.comments.update_comment import update_comment
 from services.github.commits.create_empty_commit import create_empty_commit
 from services.github.installations.get_installation_permissions import (
@@ -262,26 +262,33 @@ async def handle_check_suite(
     php_ready = await ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("php: ready=%s", php_ready)
 
-    # Check if permission comment or stumbled comment already exists
-    if has_comment_with_text(
-        owner=owner_name,
-        repo=repo_name,
-        pr_number=pr_number,
-        token=token,
-        texts=[CHECK_RUN_STUMBLED_MESSAGE],
-    ):
-        msg = f"Skipped - stumbled comment exists for PR #{pr_number}"
-        logger.info(msg)
-        slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
-        return
+    # Check if CI-failed comment already exists (skip if GA is already handling this PR).
+    # Exception: if the LATEST CI-failed comment is from an infra retry (contains "Re-triggering CI"), proceed because CI was re-triggered and failed with real errors.
+    comments = get_all_comments(
+        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
+    )
+    gitauto_failed_comments = [
+        c
+        for c in comments
+        if c.get("user", {}).get("login") == GITHUB_APP_USER_NAME
+        and CHECK_RUN_FAILED_MESSAGE in c.get("body", "")
+    ]
+    if gitauto_failed_comments:
+        latest_failed = gitauto_failed_comments[-1]
+        if "Re-triggering CI" not in latest_failed.get("body", ""):
+            msg = f"Skipped - CI-failed comment exists for PR #{pr_number}"
+            logger.info(msg)
+            slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
+            return
 
-    if has_comment_with_text(
-        owner=owner_name,
-        repo=repo_name,
-        pr_number=pr_number,
-        token=token,
-        texts=[PERMISSION_DENIED_MESSAGE],
-    ):
+    # Check if permission denied comment exists (reuse comments already fetched above)
+    has_permission_denied = any(
+        c
+        for c in comments
+        if c.get("user", {}).get("login") == GITHUB_APP_USER_NAME
+        and PERMISSION_DENIED_MESSAGE in c.get("body", "")
+    )
+    if has_permission_denied:
         msg = f"Skipped - permission request pending for PR #{pr_number}"
         logger.error(msg)
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
@@ -309,7 +316,7 @@ async def handle_check_suite(
     # Create the first comment
     p = 0
     log_messages = []
-    msg = CHECK_RUN_STUMBLED_MESSAGE
+    msg = CHECK_RUN_FAILED_MESSAGE
     add_log_message(msg, log_messages)
     body = create_progress_bar(p=p, msg="\n".join(log_messages))
     comment_url = create_comment(body=body, base_args=base_args)
