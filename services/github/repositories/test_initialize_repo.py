@@ -19,11 +19,10 @@ class TestInitializeRepo:
         """Mock configuration constants."""
         with patch.multiple(
             "services.github.repositories.initialize_repo",
+            GITHUB_APP_GIT_EMAIL="161652217+gitauto-ai[bot]@users.noreply.github.com",
+            GITHUB_APP_USER_NAME="gitauto-ai[bot]",
             PRODUCT_NAME="GitAuto",
             UTF8="utf-8",
-            GITHUB_APP_USER_NAME="gitauto-ai[bot]",
-            GITHUB_APP_USER_ID=161652217,
-            GITHUB_NOREPLY_EMAIL_DOMAIN="users.noreply.github.com",
         ):
             yield
 
@@ -68,8 +67,8 @@ class TestInitializeRepo:
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
         ) as mock_file, patch(
-            "services.github.repositories.initialize_repo.run_command"
-        ) as mock_run_command:
+            "services.github.repositories.initialize_repo.run_subprocess"
+        ) as mock_run_subprocess:
 
             result = initialize_repo(test_repo_path, test_remote_url, test_token)
 
@@ -92,27 +91,35 @@ class TestInitializeRepo:
 
             # Verify git commands were executed in correct order
             expected_calls = [
-                call(command="git init -b main", cwd=test_repo_path),
+                call(["git", "init", "-b", "main"], test_repo_path),
+                call(["git", "config", "user.name", "gitauto-ai[bot]"], test_repo_path),
                 call(
-                    command='git config user.name "gitauto-ai[bot]"',
-                    cwd=test_repo_path,
+                    [
+                        "git",
+                        "config",
+                        "user.email",
+                        "161652217+gitauto-ai[bot]@users.noreply.github.com",
+                    ],
+                    test_repo_path,
+                ),  # GITHUB_APP_GIT_EMAIL
+                call(["git", "add", "README.md"], test_repo_path),
+                call(
+                    ["git", "commit", "-m", "Initial commit with README"],
+                    test_repo_path,
                 ),
                 call(
-                    command='git config user.email "161652217+gitauto-ai[bot]@users.noreply.github.com"',
-                    cwd=test_repo_path,
+                    [
+                        "git",
+                        "remote",
+                        "add",
+                        "origin",
+                        f"https://x-access-token:{test_token}@github.com/test-owner/test-repo.git",
+                    ],
+                    test_repo_path,
                 ),
-                call(command="git add README.md", cwd=test_repo_path),
-                call(
-                    command='git commit -m "Initial commit with README"',
-                    cwd=test_repo_path,
-                ),
-                call(
-                    command=f"git remote add origin https://x-access-token:{test_token}@github.com/test-owner/test-repo.git",
-                    cwd=test_repo_path,
-                ),
-                call(command="git push -u origin main", cwd=test_repo_path),
+                call(["git", "push", "-u", "origin", "main"], test_repo_path),
             ]
-            mock_run_command.assert_has_calls(expected_calls)
+            mock_run_subprocess.assert_has_calls(expected_calls)
 
     def test_initialize_repo_creates_directory_when_not_exists(
         self,
@@ -126,7 +133,7 @@ class TestInitializeRepo:
         with patch("os.path.exists", return_value=False), patch(
             "os.makedirs"
         ) as mock_makedirs, patch("builtins.open", mock_open()), patch(
-            "services.github.repositories.initialize_repo.run_command"
+            "services.github.repositories.initialize_repo.run_subprocess"
         ):
 
             initialize_repo(test_repo_path, test_remote_url, test_token)
@@ -145,25 +152,31 @@ class TestInitializeRepo:
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
         ), patch(
-            "services.github.repositories.initialize_repo.run_command"
-        ) as mock_run_command:
+            "services.github.repositories.initialize_repo.run_subprocess"
+        ) as mock_run_subprocess:
 
             # Make remote add command fail
-            def side_effect(command, cwd):
-                if "git remote add origin" in command:
-                    raise Exception("Remote already exists")
+            def side_effect(args, cwd):
+                if args[:3] == ["git", "remote", "add"]:
+                    raise ValueError("Remote already exists")
                 return MagicMock()
 
-            mock_run_command.side_effect = side_effect
+            mock_run_subprocess.side_effect = side_effect
 
             initialize_repo(test_repo_path, test_remote_url, test_token)
 
             # Verify that set-url command was called after add failed
             set_url_call = call(
-                command=f"git remote set-url origin https://x-access-token:{test_token}@github.com/test-owner/test-repo.git",
-                cwd=test_repo_path,
+                [
+                    "git",
+                    "remote",
+                    "set-url",
+                    "origin",
+                    f"https://x-access-token:{test_token}@github.com/test-owner/test-repo.git",
+                ],
+                test_repo_path,
             )
-            assert set_url_call in mock_run_command.call_args_list
+            assert set_url_call in mock_run_subprocess.call_args_list
 
     def test_initialize_repo_file_write_error_handled(
         self,
@@ -194,7 +207,7 @@ class TestInitializeRepo:
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
         ), patch(
-            "services.github.repositories.initialize_repo.run_command",
+            "services.github.repositories.initialize_repo.run_subprocess",
             side_effect=ValueError("Git command failed"),
         ):
 
@@ -231,7 +244,7 @@ class TestInitializeRepo:
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
         ) as mock_file, patch(
-            "services.github.repositories.initialize_repo.run_command"
+            "services.github.repositories.initialize_repo.run_subprocess"
         ):
 
             initialize_repo(test_repo_path, test_remote_url, test_token)
@@ -271,23 +284,28 @@ class TestInitializeRepo:
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
         ), patch(
-            "services.github.repositories.initialize_repo.run_command"
-        ) as mock_run_command:
+            "services.github.repositories.initialize_repo.run_subprocess"
+        ) as mock_run_subprocess:
 
             initialize_repo(test_repo_path, test_remote_url, test_token)
 
             # Verify git config commands
             config_name_call = call(
-                command='git config user.name "gitauto-ai[bot]"',
-                cwd=test_repo_path,
+                ["git", "config", "user.name", "gitauto-ai[bot]"],
+                test_repo_path,
             )
             config_email_call = call(
-                command='git config user.email "161652217+gitauto-ai[bot]@users.noreply.github.com"',
-                cwd=test_repo_path,
+                [
+                    "git",
+                    "config",
+                    "user.email",
+                    "161652217+gitauto-ai[bot]@users.noreply.github.com",
+                ],
+                test_repo_path,
             )
 
-            assert config_name_call in mock_run_command.call_args_list
-            assert config_email_call in mock_run_command.call_args_list
+            assert config_name_call in mock_run_subprocess.call_args_list
+            assert config_email_call in mock_run_subprocess.call_args_list
 
     @pytest.mark.parametrize(
         "remote_url,expected_auth_url",
@@ -324,17 +342,17 @@ class TestInitializeRepo:
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
         ), patch(
-            "services.github.repositories.initialize_repo.run_command"
-        ) as mock_run_command:
+            "services.github.repositories.initialize_repo.run_subprocess"
+        ) as mock_run_subprocess:
 
             initialize_repo(test_repo_path, remote_url, token)
 
             # Verify the token was correctly injected
             remote_add_call = call(
-                command=f"git remote add origin {expected_auth_url}",
-                cwd=test_repo_path,
+                ["git", "remote", "add", "origin", expected_auth_url],
+                test_repo_path,
             )
-            assert remote_add_call in mock_run_command.call_args_list
+            assert remote_add_call in mock_run_subprocess.call_args_list
 
     def test_initialize_repo_handle_exceptions_decorator_behavior(
         self,

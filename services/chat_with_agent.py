@@ -264,6 +264,7 @@ async def chat_with_agent(
                     tool_result_content = tool_result.message
                 else:
                     tool_result_content = str(tool_result)
+
         else:
             tool_result_content = f"Error: The function '{tool_name}' does not exist in the available tools. Please use one of the available tools."
             owner = base_args.get("owner", "unknown")

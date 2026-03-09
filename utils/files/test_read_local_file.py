@@ -25,12 +25,45 @@ def test_returns_none_for_missing_file(tmp_path):
     assert result is None
 
 
-def test_returns_label_for_binary_file(tmp_path):
+def test_replaces_malformed_bytes_in_binary_file(tmp_path):
     file_path = os.path.join(tmp_path, "bun.lockb")
     with open(file_path, "wb") as f:
         f.write(b"\x00\x9b\xff\xfe binary content")
     result = read_local_file("bun.lockb", base_dir=str(tmp_path))
-    assert result == "[Binary file: bun.lockb]"
+    assert result is not None
+    assert "\ufffd" in result
+    assert "binary content" in result
+
+
+def test_preserves_crlf_line_endings(tmp_path):
+    file_path = os.path.join(tmp_path, "crlf.txt")
+    with open(file_path, "wb") as f:
+        f.write(b"line1\r\nline2\r\n")
+    result = read_local_file("crlf.txt", base_dir=str(tmp_path))
+    assert result is not None
+    assert "\r\n" in result
+    assert result == "line1\r\nline2\r\n"
+
+
+def test_preserves_lf_line_endings(tmp_path):
+    file_path = os.path.join(tmp_path, "lf.txt")
+    with open(file_path, "wb") as f:
+        f.write(b"line1\nline2\n")
+    result = read_local_file("lf.txt", base_dir=str(tmp_path))
+    assert result is not None
+    assert "\r\n" not in result
+    assert result == "line1\nline2\n"
+
+
+def test_preserves_cr_line_endings(tmp_path):
+    file_path = os.path.join(tmp_path, "cr.txt")
+    with open(file_path, "wb") as f:
+        f.write(b"line1\rline2\r")
+    result = read_local_file("cr.txt", base_dir=str(tmp_path))
+    assert result is not None
+    assert "\r" in result
+    assert "\n" not in result
+    assert result == "line1\rline2\r"
 
 
 def test_returns_none_for_missing_dir():
