@@ -148,7 +148,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     ]
 
     # Execute the function
-    await handle_review_run(mock_review_comment_payload, trigger="review_comment")
+    await handle_review_run(mock_review_comment_payload, trigger="pr_file_review")
 
     assert mock_chat_with_agent.call_count == 1
 
@@ -273,7 +273,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
         ),
     ]
 
-    await handle_review_run(mock_review_comment_payload, trigger="review_comment")
+    await handle_review_run(mock_review_comment_payload, trigger="pr_file_review")
 
     assert mock_chat_with_agent.call_count == 2
     mock_verify_task_is_complete.assert_called_once()
@@ -411,7 +411,7 @@ async def test_thread_resolved_during_loop_stops_agent(
         ReviewThreadResult(comments=[], is_resolved=True),
     ]
 
-    await handle_review_run(mock_review_comment_payload, trigger="review_comment")
+    await handle_review_run(mock_review_comment_payload, trigger="pr_file_review")
 
     # chat_with_agent should NOT be called because thread was resolved before it ran
     mock_chat_with_agent.assert_not_called()
@@ -506,7 +506,7 @@ async def test_bot_first_review_comment_is_processed(
         is_planned=False,
     )
 
-    await handle_review_run(mock_bot_review_comment_payload, trigger="review_comment")
+    await handle_review_run(mock_bot_review_comment_payload, trigger="pr_file_review")
 
     # chat_with_agent was called → handler processed the bot review
     mock_chat_with_agent.assert_called_once()
@@ -547,7 +547,7 @@ async def test_resolved_thread_is_skipped(
         is_resolved=True,
     )
 
-    await handle_review_run(mock_review_comment_payload, trigger="review_comment")
+    await handle_review_run(mock_review_comment_payload, trigger="pr_file_review")
 
     # chat_with_agent should NOT be called → handler skipped the resolved thread
     mock_chat_with_agent.assert_not_called()
@@ -594,7 +594,7 @@ async def test_bot_reply_after_gitauto_replied_is_skipped(
         ]
     )
 
-    await handle_review_run(mock_bot_review_comment_payload, trigger="review_comment")
+    await handle_review_run(mock_bot_review_comment_payload, trigger="pr_file_review")
 
     # chat_with_agent should NOT be called → handler skipped the loop
     mock_chat_with_agent.assert_not_called()
@@ -699,7 +699,7 @@ async def test_human_review_comment_always_processed(
         is_planned=False,
     )
 
-    await handle_review_run(mock_review_comment_payload, trigger="review_comment")
+    await handle_review_run(mock_review_comment_payload, trigger="pr_file_review")
 
     # Human comment is always processed regardless of prior GitAuto replies
     mock_chat_with_agent.assert_called_once()

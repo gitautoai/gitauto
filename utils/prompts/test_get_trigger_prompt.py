@@ -37,11 +37,11 @@ def test_get_trigger_prompt_test_failure(mock_read_xml_file, mock_xml_content):
     mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/check_run.xml")
 
 
-def test_get_trigger_prompt_review_comment(mock_read_xml_file, mock_xml_content):
-    """Test that review_comment trigger returns correct XML content."""
+def test_get_trigger_prompt_pr_file_review(mock_read_xml_file, mock_xml_content):
+    """Test that pr_file_review trigger returns correct XML content."""
     mock_read_xml_file.return_value = mock_xml_content
 
-    result = get_trigger_prompt("review_comment")
+    result = get_trigger_prompt("pr_file_review")
 
     assert result == mock_xml_content
     mock_read_xml_file.assert_called_once_with("utils/prompts/triggers/review.xml")
@@ -95,7 +95,7 @@ def test_get_trigger_prompt_whitespace_xml_content(mock_read_xml_file):
         ("dashboard", "utils/prompts/triggers/pr.xml"),
         ("schedule", "utils/prompts/triggers/pr.xml"),
         ("pr_comment", "utils/prompts/triggers/review.xml"),
-        ("review_comment", "utils/prompts/triggers/review.xml"),
+        ("pr_file_review", "utils/prompts/triggers/review.xml"),
         ("test_failure", "utils/prompts/triggers/check_run.xml"),
     ],
 )

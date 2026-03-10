@@ -10,7 +10,8 @@ def get_trigger_prompt(trigger: Trigger):
         "dashboard": f"{base_path}/pr.xml",
         "schedule": f"{base_path}/pr.xml",
         "pr_comment": f"{base_path}/review.xml",
-        "review_comment": f"{base_path}/review.xml",
+        "pr_file_review": f"{base_path}/review.xml",
+        "pr_review": f"{base_path}/review.xml",
         "test_failure": f"{base_path}/check_run.xml",
     }
 
