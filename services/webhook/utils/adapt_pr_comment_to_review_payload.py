@@ -24,8 +24,11 @@ def adapt_pr_comment_to_review_payload(
         },
         "pull_request": pull_request,
         "repository": payload["repository"],
-        "organization": payload["organization"],
         "sender": payload["sender"],
         "installation": payload["installation"],
     }
+    organization = payload.get("organization")  # Personal repos don't have this key
+    if organization is not None:
+        result["organization"] = organization
+
     return result

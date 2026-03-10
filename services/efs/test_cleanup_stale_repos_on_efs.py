@@ -2,7 +2,11 @@
 from unittest.mock import MagicMock, patch
 
 from services.efs.cleanup_stale_repos_on_efs import (
-    _format_size, _get_dir_size, cleanup_stale_repos_on_efs, lambda_handler)
+    _format_size,
+    _get_dir_size,
+    cleanup_stale_repos_on_efs,
+    lambda_handler,
+)
 
 MODULE = "services.efs.cleanup_stale_repos_on_efs"
 
@@ -45,7 +49,10 @@ def test_cleanup_skips_non_directory_at_repo_level():
         patch(f"{MODULE}.os.path.exists", return_value=True),
         patch(f"{MODULE}.os.listdir", side_effect=[["owner"], ["readme.md"]]),
         patch(f"{MODULE}.os.path.isdir", side_effect=mock_isdir),
-        patch(f"{MODULE}.os.path.join", side_effect=["/mnt/efs/owner", "/mnt/efs/owner/readme.md"]),
+        patch(
+            f"{MODULE}.os.path.join",
+            side_effect=["/mnt/efs/owner", "/mnt/efs/owner/readme.md"],
+        ),
         patch(f"{MODULE}.slack_notify") as mock_slack,
     ):
         result = cleanup_stale_repos_on_efs("/mnt/efs")
@@ -283,7 +290,10 @@ def test_format_size_terabytes():
 
 
 def test_lambda_handler():
-    with patch(f"{MODULE}.cleanup_stale_repos_on_efs", return_value={"deleted": 3, "size_freed": 9999}) as mock_cleanup:
+    with patch(
+        f"{MODULE}.cleanup_stale_repos_on_efs",
+        return_value={"deleted": 3, "size_freed": 9999},
+    ) as mock_cleanup:
         result = lambda_handler({}, {})
 
     assert result == {"deleted": 3, "size_freed": 9999}

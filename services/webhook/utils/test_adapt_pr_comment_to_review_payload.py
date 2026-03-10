@@ -58,6 +58,49 @@ def test_adapt_pr_comment_to_review_payload_maps_fields():
     assert result["comment"]["side"] == ""
     assert result["pull_request"] == pr
     assert result["repository"] == payload["repository"]
-    assert result["organization"] == payload["organization"]
+    assert result["organization"] == payload["organization"]  # type: ignore[typeddict-item]
     assert result["sender"] == payload["sender"]
     assert result["installation"] == payload["installation"]
+
+
+def test_adapt_pr_comment_to_review_payload_no_organization():
+    """Test that adapter works for personal repos without 'organization' key."""
+    payload = {
+        "action": "created",
+        "comment": {
+            "id": 222,
+            "node_id": "IC_222",
+            "body": "please fix",
+            "user": {"login": "user1", "type": "User"},
+            "created_at": "2025-01-01T00:00:00Z",
+            "updated_at": "2025-01-01T00:00:00Z",
+        },
+        "issue": {
+            "number": 5,
+            "pull_request": {"url": "https://api.github.com/repos/user1/repo/pulls/5"},
+        },
+        "repository": {"id": 1, "owner": {"login": "user1"}, "name": "repo"},
+        "sender": {"login": "user1"},
+        "installation": {"id": 3},
+        "changes": {},
+    }
+    pr = {
+        "number": 5,
+        "title": "Fix bug",
+        "body": "Fixes issue",
+        "url": "https://api.github.com/repos/user1/repo/pulls/5",
+        "user": {"login": "gitauto-ai[bot]"},
+        "head": {"ref": "gitauto/fix-20250101-Ab1C", "sha": "def456"},
+        "base": {"ref": "main"},
+    }
+
+    result = adapt_pr_comment_to_review_payload(
+        payload=cast(IssueCommentWebhookPayload, payload),
+        pull_request=cast(PullRequest, pr),
+    )
+
+    assert result is not None
+    assert result["action"] == "created"
+    assert result["comment"]["id"] == 222
+    assert "organization" not in result
+    assert result["sender"] == payload["sender"]
