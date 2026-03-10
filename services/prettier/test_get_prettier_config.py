@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from services.github.files.get_prettier_config import get_prettier_config
+from services.prettier.get_prettier_config import get_prettier_config
 from services.github.types.github_types import BaseArgs
 
 
@@ -25,9 +25,7 @@ def base_args():
 
 
 def test_get_prettier_config_finds_prettierrc(base_args):
-    with patch(
-        "services.github.files.get_prettier_config.read_local_file"
-    ) as mock_read:
+    with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == ".prettierrc":
@@ -44,9 +42,7 @@ def test_get_prettier_config_finds_prettierrc(base_args):
 
 
 def test_get_prettier_config_finds_prettierrc_json(base_args):
-    with patch(
-        "services.github.files.get_prettier_config.read_local_file"
-    ) as mock_read:
+    with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == ".prettierrc.json":
@@ -64,9 +60,7 @@ def test_get_prettier_config_finds_prettierrc_json(base_args):
 def test_get_prettier_config_finds_prettierrc_js(base_args):
     prettierrc_js = "module.exports = { semi: false };"
 
-    with patch(
-        "services.github.files.get_prettier_config.read_local_file"
-    ) as mock_read:
+    with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == ".prettierrc.js":
@@ -85,9 +79,7 @@ def test_get_prettier_config_finds_prettierrc_js(base_args):
 def test_get_prettier_config_finds_prettier_config_js(base_args):
     config_js = "export default { semi: true };"
 
-    with patch(
-        "services.github.files.get_prettier_config.read_local_file"
-    ) as mock_read:
+    with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "prettier.config.js":
@@ -112,9 +104,7 @@ def test_get_prettier_config_finds_in_package_json(base_args):
   }
 }"""
 
-    with patch(
-        "services.github.files.get_prettier_config.read_local_file"
-    ) as mock_read:
+    with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "package.json":
@@ -142,9 +132,7 @@ def test_get_prettier_config_package_json_without_prettier(base_args):
   }
 }"""
 
-    with patch(
-        "services.github.files.get_prettier_config.read_local_file"
-    ) as mock_read:
+    with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "package.json":
@@ -159,9 +147,7 @@ def test_get_prettier_config_package_json_without_prettier(base_args):
 
 
 def test_get_prettier_config_not_found(base_args):
-    with patch(
-        "services.github.files.get_prettier_config.read_local_file"
-    ) as mock_read:
+    with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
         mock_read.return_value = None
 
         result = get_prettier_config(base_args)
@@ -170,9 +156,7 @@ def test_get_prettier_config_not_found(base_args):
 
 
 def test_get_prettier_config_priority_order(base_args):
-    with patch(
-        "services.github.files.get_prettier_config.read_local_file"
-    ) as mock_read:
+    with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == ".prettierrc":
@@ -190,9 +174,7 @@ def test_get_prettier_config_priority_order(base_args):
 
 
 def test_get_prettier_config_handles_exception_gracefully(base_args):
-    with patch(
-        "services.github.files.get_prettier_config.read_local_file"
-    ) as mock_read:
+    with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
         mock_read.side_effect = Exception("Network error")
 
         result = get_prettier_config(base_args)
@@ -203,9 +185,7 @@ def test_get_prettier_config_handles_exception_gracefully(base_args):
 def test_get_prettier_config_handles_json_decode_error(base_args):
     invalid_json = "{ invalid json content"
 
-    with patch(
-        "services.github.files.get_prettier_config.read_local_file"
-    ) as mock_read:
+    with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
             if file_name == "package.json":

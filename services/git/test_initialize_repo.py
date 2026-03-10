@@ -8,7 +8,7 @@ from unittest.mock import patch, mock_open, MagicMock, call
 import pytest
 
 # Local imports
-from services.github.repositories.initialize_repo import initialize_repo
+from services.git.initialize_repo import initialize_repo
 
 
 class TestInitializeRepo:
@@ -18,7 +18,7 @@ class TestInitializeRepo:
     def mock_config_constants(self):
         """Mock configuration constants."""
         with patch.multiple(
-            "services.github.repositories.initialize_repo",
+            "services.git.initialize_repo",
             GITHUB_APP_GIT_EMAIL="161652217+gitauto-ai[bot]@users.noreply.github.com",
             GITHUB_APP_USER_NAME="gitauto-ai[bot]",
             PRODUCT_NAME="GitAuto",
@@ -30,7 +30,7 @@ class TestInitializeRepo:
     def mock_url_constants(self):
         """Mock URL constants."""
         with patch.multiple(
-            "services.github.repositories.initialize_repo",
+            "services.git.initialize_repo",
             BLOG_URL="https://gitauto.ai/blog",
             PRODUCT_DEMO_URL="https://www.youtube.com/watch?v=demo",
             PRODUCT_LINKEDIN_URL="https://www.linkedin.com/company/gitauto/",
@@ -67,7 +67,7 @@ class TestInitializeRepo:
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
         ) as mock_file, patch(
-            "services.github.repositories.initialize_repo.run_subprocess"
+            "services.git.initialize_repo.run_subprocess"
         ) as mock_run_subprocess:
 
             result = initialize_repo(test_repo_path, test_remote_url, test_token)
@@ -133,7 +133,7 @@ class TestInitializeRepo:
         with patch("os.path.exists", return_value=False), patch(
             "os.makedirs"
         ) as mock_makedirs, patch("builtins.open", mock_open()), patch(
-            "services.github.repositories.initialize_repo.run_subprocess"
+            "services.git.initialize_repo.run_subprocess"
         ):
 
             initialize_repo(test_repo_path, test_remote_url, test_token)
@@ -151,9 +151,7 @@ class TestInitializeRepo:
         """Test that remote set-url is used when remote add fails."""
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
-        ), patch(
-            "services.github.repositories.initialize_repo.run_subprocess"
-        ) as mock_run_subprocess:
+        ), patch("services.git.initialize_repo.run_subprocess") as mock_run_subprocess:
 
             # Make remote add command fail
             def side_effect(args, cwd):
@@ -207,7 +205,7 @@ class TestInitializeRepo:
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
         ), patch(
-            "services.github.repositories.initialize_repo.run_subprocess",
+            "services.git.initialize_repo.run_subprocess",
             side_effect=ValueError("Git command failed"),
         ):
 
@@ -243,9 +241,7 @@ class TestInitializeRepo:
         """Test that README.md content is formatted correctly."""
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
-        ) as mock_file, patch(
-            "services.github.repositories.initialize_repo.run_subprocess"
-        ):
+        ) as mock_file, patch("services.git.initialize_repo.run_subprocess"):
 
             initialize_repo(test_repo_path, test_remote_url, test_token)
 
@@ -283,9 +279,7 @@ class TestInitializeRepo:
         """Test that git config commands use correct user information."""
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
-        ), patch(
-            "services.github.repositories.initialize_repo.run_subprocess"
-        ) as mock_run_subprocess:
+        ), patch("services.git.initialize_repo.run_subprocess") as mock_run_subprocess:
 
             initialize_repo(test_repo_path, test_remote_url, test_token)
 
@@ -341,9 +335,7 @@ class TestInitializeRepo:
 
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
-        ), patch(
-            "services.github.repositories.initialize_repo.run_subprocess"
-        ) as mock_run_subprocess:
+        ), patch("services.git.initialize_repo.run_subprocess") as mock_run_subprocess:
 
             initialize_repo(test_repo_path, remote_url, token)
 

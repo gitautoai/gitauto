@@ -1,8 +1,8 @@
 from anthropic.types import ToolUnionParam
 
-from services.github.search.grep_files import grep_files
 from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.grep_files import grep_files
 from utils.logging.logging_config import logger
 
 SEARCH_LOCAL_FILE_CONTENT: ToolUnionParam = {

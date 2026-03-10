@@ -14,16 +14,15 @@ from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
 from constants.agent import MAX_ITERATIONS
 from constants.general import MAX_GITAUTO_COMMITS_PER_PR, MAX_INFRA_RETRIES
 from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_FAILED_MESSAGE
-from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.agents.verify_task_is_complete import verify_task_is_complete
+from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.chat_with_agent import chat_with_agent
 from services.circleci.get_build_logs import get_circleci_build_logs
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
+from services.claude.tools.tools import TOOLS_FOR_PRS
 from services.codecov.get_commit_coverage import get_codecov_commit_coverage
 from services.efs.get_efs_dir import get_efs_dir
-from services.node.ensure_node_packages import ensure_node_packages
-from services.node.set_npm_token_env import set_npm_token_env
-from services.php.ensure_php_packages import ensure_php_packages
+from services.git.create_empty_commit import create_empty_commit
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
@@ -34,44 +33,45 @@ from services.github.check_suites.get_failed_check_runs import (
 from services.github.comments.create_comment import create_comment
 from services.github.comments.get_all_comments import get_all_comments
 from services.github.comments.update_comment import update_comment
-from services.git.create_empty_commit import create_empty_commit
 from services.github.installations.get_installation_permissions import (
     get_installation_permissions,
 )
 from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_commits import get_pull_request_commits
 from services.github.pulls.get_pull_request_files import get_pull_request_files
-from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
-from services.github.utils.create_permission_url import create_permission_url
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_local_file_tree import get_local_file_tree
-from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
-from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
-from services.claude.tools.tools import TOOLS_FOR_PRS
-from services.slack.slack_notify import slack_notify
+from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
 from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
+from services.github.utils.create_permission_url import create_permission_url
+from services.github.workflow_runs.cancel_workflow_runs import cancel_workflow_runs
+from services.github.workflow_runs.get_workflow_run_logs import get_workflow_run_logs
+from services.node.ensure_node_packages import ensure_node_packages
+from services.node.set_npm_token_env import set_npm_token_env
+from services.php.ensure_php_packages import ensure_php_packages
+from services.slack.slack_notify import slack_notify
 from services.supabase.check_suites.insert_check_suite import insert_check_suite
+from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 from services.supabase.codecov_tokens.get_codecov_token import get_codecov_token
 from services.supabase.create_user_request import create_user_request
-from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 from services.supabase.repositories.get_repository import get_repository
+from services.supabase.usage.check_older_active_test_failure import (
+    check_older_active_test_failure_request,
+)
 from services.supabase.usage.get_retry_pairs import get_retry_workflow_id_hash_pairs
 from services.supabase.usage.update_retry_pairs import (
     update_retry_workflow_id_hash_pairs,
 )
 from services.supabase.usage.update_usage import update_usage
-from services.supabase.usage.check_older_active_test_failure import (
-    check_older_active_test_failure_request,
-)
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.should_bail import should_bail
 from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title
+from utils.files.get_local_file_tree import get_local_file_tree
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.logs.clean_logs import clean_logs
-from utils.memory.gc_collect_and_log import gc_collect_and_log
 from utils.logs.detect_infra_failure import detect_infra_failure
+from utils.memory.gc_collect_and_log import gc_collect_and_log
 from utils.progress_bar.progress_bar import create_progress_bar
 
 

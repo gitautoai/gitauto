@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from services.github.search.grep_patterns import GREP_EXCLUDE_DIRS
+from utils.files.grep_patterns import GREP_EXCLUDE_DIRS
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 

@@ -1,6 +1,6 @@
 import os
 
-from services.github.search.grep_files import grep_files
+from utils.files.grep_files import grep_files
 
 
 def _create_file(base: str, rel_path: str, content: str = ""):

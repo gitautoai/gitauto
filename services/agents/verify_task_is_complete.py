@@ -11,8 +11,8 @@ from services.eslint.ensure_eslint_relaxed_for_tests import (
 )
 from services.eslint.run_eslint_fix import run_eslint_fix
 from services.github.comments.create_comment import create_comment
-from services.github.commits.replace_remote_file import replace_remote_file_content
-from services.github.files.get_eslint_config import get_eslint_config
+from services.git.replace_remote_file import replace_remote_file_content
+from services.eslint.get_eslint_config import get_eslint_config
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.types.github_types import BaseArgs

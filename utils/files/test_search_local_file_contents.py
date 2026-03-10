@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from config import UTF8
-from services.github.search.search_local_file_contents import (
+from utils.files.search_local_file_contents import (
     search_local_file_contents,
 )
 from services.github.types.github_types import BaseArgs
@@ -103,7 +103,7 @@ def test_search_limits_to_20_files():
 
 def test_search_grep_failure():
     with tempfile.TemporaryDirectory() as tmpdir:
-        with patch("services.github.search.grep_files.subprocess.run") as mock_run:
+        with patch("utils.files.grep_files.subprocess.run") as mock_run:
             mock_run.return_value.returncode = 2
             mock_run.return_value.stderr = "grep: error"
             mock_run.return_value.stdout = ""
