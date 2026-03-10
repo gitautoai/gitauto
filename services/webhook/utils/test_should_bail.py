@@ -10,6 +10,7 @@ BASE_ARGS = cast(
     {
         "owner": "test-owner",
         "repo": "test-repo",
+        "clone_url": "https://x-access-token:test-token@github.com/test-owner/test-repo.git",
         "pr_number": 42,
         "new_branch": "feature-branch",
         "token": "test-token",
@@ -130,6 +131,7 @@ def test_skips_pr_check_when_pr_number_not_set(
         {
             "owner": "test-owner",
             "repo": "test-repo",
+            "clone_url": "https://x-access-token:test-token@github.com/test-owner/test-repo.git",
             "new_branch": "feature-branch",
             "token": "test-token",
         },

@@ -11,10 +11,8 @@ from services.aws.delete_scheduler import delete_scheduler
 from services.git.get_clone_url import get_clone_url
 from services.github.branches.create_remote_branch import create_remote_branch
 from services.github.branches.get_default_branch import get_default_branch
-from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.commits.get_latest_remote_commit_sha import (
-    get_latest_remote_commit_sha,
-)
+from services.git.create_empty_commit import create_empty_commit
+from services.git.get_latest_remote_commit_sha import get_latest_remote_commit_sha
 from services.github.files.get_raw_content import get_raw_content
 from services.github.labels.add_labels import add_labels
 from services.github.repositories.is_repo_forked import is_repo_forked

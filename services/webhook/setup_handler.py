@@ -12,12 +12,10 @@ from services.efs.get_efs_dir import get_efs_dir
 from services.git.git_clone_to_efs import git_clone_to_efs
 from services.git.get_clone_url import get_clone_url
 from services.github.branches.create_remote_branch import create_remote_branch
-from services.github.branches.delete_remote_branch import delete_remote_branch
+from services.git.delete_remote_branch import delete_remote_branch
 from services.github.branches.get_default_branch import get_default_branch
-from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.commits.get_latest_remote_commit_sha import (
-    get_latest_remote_commit_sha,
-)
+from services.git.create_empty_commit import create_empty_commit
+from services.git.get_latest_remote_commit_sha import get_latest_remote_commit_sha
 from services.claude.tools.tools import TOOLS_FOR_SETUP
 from services.github.pulls.close_pull_request import close_pull_request
 from services.github.pulls.create_pull_request import create_pull_request

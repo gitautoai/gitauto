@@ -1,41 +1,24 @@
-# Third-party imports
-import requests
-
-# Local imports
-from config import GITHUB_API_URL, TIMEOUT
-
-# Local imports (GitHub)
 from services.github.comments.update_comment import update_comment
 from services.github.repositories.initialize_repo import initialize_repo
 from services.github.types.github_types import BaseArgs
-from services.github.utils.create_headers import create_headers
-
-# Local imports (Utils)
+from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
 
 @handle_exceptions(raise_on_error=True)
 def get_latest_remote_commit_sha(clone_url: str, base_args: BaseArgs) -> str:
-    """SHA stands for Secure Hash Algorithm. It's a unique identifier for a commit.
-    https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference"""
     owner = base_args["owner"]
     repo = base_args["repo"]
     branch = base_args["base_branch"]
     token = base_args["token"]
     try:
-        response: requests.Response = requests.get(
-            url=f"{GITHUB_API_URL}/repos/{owner}/{repo}/git/ref/heads/{branch}",
-            headers=create_headers(token=token),
-            timeout=TIMEOUT,
+        result = run_subprocess(
+            args=["git", "ls-remote", clone_url, f"refs/heads/{branch}"],
+            cwd="/tmp",  # git ls-remote needs no local repo; /tmp is just a valid cwd
         )
-        response.raise_for_status()
-        return response.json()["object"]["sha"]
-    except requests.exceptions.HTTPError as e:
-        if (
-            e.response.status_code == 409
-            and e.response.json()["message"] == "Git Repository is empty."
-        ):
+        output = result.stdout.strip()
+        if not output:
             msg = "Repository is empty. So, creating an initial empty commit."
             logger.info(msg)
             repo_path = f"/tmp/repo/{owner}-{repo}"
@@ -43,7 +26,8 @@ def get_latest_remote_commit_sha(clone_url: str, base_args: BaseArgs) -> str:
             return get_latest_remote_commit_sha(
                 clone_url=clone_url, base_args=base_args
             )
-        raise
+        return output.split("\t")[0]
+
     except Exception as e:
         msg = f"{get_latest_remote_commit_sha.__name__} encountered an error: {e}"
         update_comment(body=msg, base_args=base_args)

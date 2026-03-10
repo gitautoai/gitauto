@@ -5,7 +5,8 @@ from json import dumps
 from config import GITHUB_APP_USER_NAME
 
 # Local imports (GitHub)
-from services.github.branches.check_branch_exists import check_branch_exists
+from services.git.check_branch_exists import check_branch_exists
+from services.git.get_clone_url import get_clone_url
 from services.github.pulls.get_pull_request_file_changes import (
     get_pull_request_file_changes,
 )
@@ -87,9 +88,8 @@ def write_pr_description(payload: dict):
         logger.info("Skipping AI call: PR #%d has been closed", pr_number)
         return
 
-    if not check_branch_exists(
-        owner=owner, repo=repo_name, branch_name=head_branch, token=token
-    ):
+    clone_url = get_clone_url(owner, repo_name, token)
+    if not check_branch_exists(clone_url=clone_url, branch_name=head_branch):
         logger.info("Skipping AI call: Branch '%s' has been deleted", head_branch)
         return
 

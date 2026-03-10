@@ -28,8 +28,8 @@ from services.github.comments.create_comment import create_comment
 from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.slack.slack_notify import slack_notify
-from services.github.commits.create_empty_commit import create_empty_commit
-from services.github.refs.get_reference import get_reference
+from services.git.create_empty_commit import create_empty_commit
+from services.git.get_reference import get_reference
 from services.github.files.get_local_file_content import get_local_file_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
@@ -413,7 +413,9 @@ async def handle_review_run(
         is_completed = final_result.success
 
     # Trigger final test workflows with an empty commit (skip if agent made no commits)
-    current_head = get_reference(base_args)
+    current_head = get_reference(
+        clone_url=base_args["clone_url"], branch=base_args["new_branch"]
+    )
     if current_head != pull_request["head"]["sha"]:
         if not review_author_is_bot:
             update_comment(

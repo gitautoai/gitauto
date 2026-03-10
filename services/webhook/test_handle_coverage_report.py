@@ -1183,10 +1183,8 @@ def test_handle_coverage_report_stale_target_branch_falls_back():
 
         assert result is None
         mock_branch_exists.assert_called_once_with(
-            owner="test-owner",
-            repo="test-repo",
+            clone_url="https://x-access-token:fake-token@github.com/test-owner/test-repo.git",
             branch_name="test-branch",
-            token="fake-token",
         )
         mock_update_repo.assert_called_once_with(
             owner_id=12345, repo_id=67890, target_branch=""

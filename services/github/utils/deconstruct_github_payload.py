@@ -2,8 +2,8 @@
 from typing import cast
 
 # Local imports
+from services.git.check_branch_exists import check_branch_exists
 from services.git.get_clone_url import get_clone_url
-from services.github.branches.check_branch_exists import check_branch_exists
 from services.github.types.github_types import BaseArgs, PrLabeledPayload
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.users.get_email_from_commits import get_email_from_commits
@@ -43,6 +43,8 @@ def deconstruct_github_payload(
     installation_id = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
 
+    clone_url = get_clone_url(owner_name, repo_name, token)
+
     # Get repository rules from Supabase
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     target_branch = (
@@ -51,7 +53,7 @@ def deconstruct_github_payload(
 
     # If target branch is set and exists in the repository, use it, otherwise use default branch
     if target_branch and check_branch_exists(
-        owner=owner_name, repo=repo_name, branch_name=target_branch, token=token
+        clone_url=clone_url, branch_name=target_branch
     ):
         base_branch_name = target_branch
         logger.info("Using target branch: %s", target_branch)
@@ -82,7 +84,7 @@ def deconstruct_github_payload(
         "owner": owner_name,
         "repo_id": repo_id,
         "repo": repo_name,
-        "clone_url": get_clone_url(owner_name, repo_name, token),
+        "clone_url": clone_url,
         "is_fork": is_fork,
         "pr_number": pr_number,
         "pr_title": pr_title,
