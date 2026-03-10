@@ -1,4 +1,4 @@
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name, unused-argument
 from unittest.mock import MagicMock, patch
 
 from services.efs.cleanup_stale_repos_on_efs import (
