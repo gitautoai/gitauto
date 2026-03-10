@@ -1,5 +1,5 @@
 # Local imports
-from services.github.branches.check_branch_exists import check_branch_exists
+from services.git.check_branch_exists import check_branch_exists
 from services.github.comments.update_comment import update_comment
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.github.types.github_types import BaseArgs
@@ -50,7 +50,7 @@ def should_bail(
             logger.warning(msg)
 
         elif not check_branch_exists(
-            owner=owner, repo=repo, branch_name=branch, token=token
+            clone_url=base_args["clone_url"], branch_name=branch
         ):
             msg = f"Process stopped: Branch '{branch}' was deleted during {phase}."
             logger.warning(msg)

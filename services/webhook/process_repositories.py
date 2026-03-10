@@ -9,11 +9,9 @@ from services.git.git_clone_to_efs import git_clone_to_efs
 from services.git.git_fetch import git_fetch
 from services.git.git_reset import git_reset
 from services.github.branches.create_remote_branch import create_remote_branch
-from services.github.branches.delete_remote_branch import delete_remote_branch
+from services.git.delete_remote_branch import delete_remote_branch
 from services.github.branches.get_default_branch import get_default_branch
-from services.github.commits.get_latest_remote_commit_sha import (
-    get_latest_remote_commit_sha,
-)
+from services.git.get_latest_remote_commit_sha import get_latest_remote_commit_sha
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.repositories.get_repository_stats import get_repository_stats
 from services.github.repositories.is_repo_forked import is_repo_forked

@@ -26,7 +26,7 @@ from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.github.comments.create_comment import create_comment
 from services.github.comments.get_comments import get_comments
 from services.github.comments.update_comment import update_comment
-from services.github.commits.create_empty_commit import create_empty_commit
+from services.git.create_empty_commit import create_empty_commit
 from services.github.commits.replace_remote_file import replace_remote_file_content
 from services.github.files.get_raw_content import get_raw_content
 from services.github.files.get_remote_file_content_by_url import (

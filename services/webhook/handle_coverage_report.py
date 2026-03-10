@@ -11,8 +11,9 @@ from services.github.artifacts.get_workflow_artifacts import get_workflow_artifa
 from services.circleci.download_circleci_artifact import download_circleci_artifact
 from services.circleci.get_job_artifacts import get_circleci_job_artifacts
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
-from services.github.branches.check_branch_exists import check_branch_exists
-from services.github.branches.get_branch_head import get_branch_head
+from services.git.check_branch_exists import check_branch_exists
+from services.git.get_branch_head import get_branch_head
+from services.git.get_clone_url import get_clone_url
 from services.github.branches.get_default_branch import get_default_branch
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 from services.supabase.repositories.get_repository import get_repository
@@ -61,11 +62,13 @@ def handle_coverage_report(
             f"No token for installation {installation_id} ({owner_name}/{repo_name})"
         )
 
+    clone_url = get_clone_url(owner_name, repo_name, github_token)
+
     # Only process coverage for target branch
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     target_branch = repo_settings.get("target_branch") if repo_settings else ""
     if target_branch and not check_branch_exists(
-        owner=owner_name, repo=repo_name, branch_name=target_branch, token=github_token
+        clone_url=clone_url, branch_name=target_branch
     ):
         logger.warning(
             "target_branch '%s' no longer exists for %s/%s, clearing and falling back to default branch",
@@ -82,9 +85,7 @@ def handle_coverage_report(
         target_branch = repo_info.default_branch
 
     # Check if head_sha is the HEAD of target branch. This handles: PR merge, direct push, manual trigger on target branch
-    target_head = get_branch_head(
-        owner=owner_name, repo=repo_name, branch=target_branch, token=github_token
-    )
+    target_head = get_branch_head(clone_url=clone_url, branch=target_branch)
     if head_sha == target_head:
         logger.info(
             "Commit %s is HEAD of %s, saving coverage (head_branch was %s)",

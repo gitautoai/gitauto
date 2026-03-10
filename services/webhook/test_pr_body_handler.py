@@ -163,10 +163,8 @@ class TestWritePrDescription:
             token="ghs_test_token",
         )
         all_mocks["check_branch_exists"].assert_called_once_with(
-            owner="test-owner",
-            repo="test-repo",
+            clone_url="https://x-access-token:ghs_test_token@github.com/test-owner/test-repo.git",
             branch_name="feature-branch",
-            token="ghs_test_token",
         )
 
         # Verify AI call
@@ -587,10 +585,8 @@ class TestWritePrDescription:
 
         # Verify branch check with special characters
         all_mocks["check_branch_exists"].assert_called_once_with(
-            owner="test-owner",
-            repo="test-repo",
+            clone_url="https://x-access-token:ghs_test_token@github.com/test-owner/test-repo.git",
             branch_name="feature/fix-issue#456",
-            token="ghs_test_token",
         )
 
     def test_write_pr_description_with_very_long_title(
