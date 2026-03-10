@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from services.github.types.installation import Installation
 from services.github.types.organization import Organization
@@ -23,6 +23,6 @@ class ReviewRunPayload(TypedDict):
     comment: ReviewRunComment
     pull_request: PullRequest
     repository: Repository
-    organization: Organization
+    organization: NotRequired[Organization]  # Personal repos don't have this key
     sender: User
     installation: Installation

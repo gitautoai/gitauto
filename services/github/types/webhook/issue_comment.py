@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 from services.github.types.installation import Installation
 from services.github.types.issue import Issue, PrIssue
@@ -28,7 +28,7 @@ class IssueCommentWebhookPayload(TypedDict):
     comment: Comment
     issue: Issue
     repository: Repository
-    organization: Organization
+    organization: NotRequired[Organization]  # Personal repos don't have this key
     sender: Sender
     installation: Installation
     changes: Changes
@@ -40,7 +40,7 @@ class PrCommentWebhookPayload(TypedDict):
     comment: Comment
     issue: PrIssue
     repository: Repository
-    organization: Organization
+    organization: NotRequired[Organization]  # Personal repos don't have this key
     sender: Sender
     installation: Installation
     changes: Changes

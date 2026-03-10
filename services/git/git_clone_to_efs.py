@@ -52,6 +52,10 @@ async def git_clone_to_efs(efs_dir: str, clone_url: str, branch: str):
                 ["git", "remote", "add", "origin", clone_url], efs_dir
             )
 
+        # Resolve locks again right before fetch to close the race window
+        # (another Lambda may have created locks between the first resolve and now)
+        await resolve_git_locks(efs_git_dir)
+
         returncode, _ = await run_subprocess_async(
             ["git", "fetch", "--depth", "1", "origin", branch], efs_dir
         )
