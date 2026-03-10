@@ -88,7 +88,7 @@ def test_all_trigger_types(mock_read_xml_file, mock_get_trigger_prompt):
 
     triggers: list[Trigger] = [
         "dashboard",
-        "review_comment",
+        "pr_file_review",
         "test_failure",
         "schedule",
     ]

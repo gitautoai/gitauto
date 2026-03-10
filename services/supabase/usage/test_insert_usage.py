@@ -100,7 +100,7 @@ def test_insert_usage_with_different_triggers():
 
     triggers: list[Trigger] = [
         "dashboard",
-        "review_comment",
+        "pr_file_review",
         "test_failure",
         "schedule",
     ]

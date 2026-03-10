@@ -111,7 +111,7 @@ class TestCreateUserRequest:
         """Test create_user_request with different trigger types."""
         triggers = [
             "dashboard",
-            "review_comment",
+            "pr_file_review",
             "test_failure",
             "schedule",
         ]

@@ -554,7 +554,7 @@ class TestHandleWebhookEvent:
         )
 
         mock_handle_review_run.assert_called_once_with(
-            payload=payload, trigger="review_comment", lambda_info=None
+            payload=payload, trigger="pr_file_review", lambda_info=None
         )
 
     @pytest.mark.asyncio
@@ -569,7 +569,7 @@ class TestHandleWebhookEvent:
         )
 
         mock_handle_review_run.assert_called_once_with(
-            payload=payload, trigger="review_comment", lambda_info=None
+            payload=payload, trigger="pr_file_review", lambda_info=None
         )
 
     @pytest.mark.asyncio
@@ -1156,4 +1156,254 @@ class TestHandleWebhookEvent:
             "installation": {"id": 1},
         }
         await handle_webhook_event(event_name="issue_comment", payload=payload)
+        mock_handle_review_run.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("services.webhook.webhook_handler.adapt_pr_review_to_review_payload")
+    async def test_pr_review_changes_requested_calls_review_handler(
+        self, mock_adapt, mock_handle_review_run, mock_slack_notify
+    ):
+        adapted = {"action": "submitted", "comment": {"body": "change target branch"}}
+        mock_adapt.return_value = adapted
+
+        payload = {
+            "action": "submitted",
+            "review": {
+                "id": 100,
+                "node_id": "PRR_100",
+                "body": "change target branch",
+                "user": {"login": "reviewer"},
+                "state": "changes_requested",
+            },
+            "pull_request": {
+                "number": 42,
+                "head": {"ref": "gitauto/dashboard-20250101-Ab1C"},
+            },
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "sender": {"login": "reviewer"},
+            "installation": {"id": 1},
+        }
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(
+                event_name="pull_request_review", payload=payload
+            )
+
+        mock_adapt.assert_called_once_with(payload=payload)
+        mock_handle_review_run.assert_called_once()
+        call_kwargs = mock_handle_review_run.call_args[1]
+        assert call_kwargs["trigger"] == "pr_review"
+        assert call_kwargs["payload"] == adapted
+        mock_slack_notify.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_pr_review_approved_sends_slack_only(
+        self, mock_handle_review_run, mock_slack_notify
+    ):
+        payload = {
+            "action": "submitted",
+            "review": {
+                "id": 101,
+                "node_id": "PRR_101",
+                "body": "LGTM",
+                "user": {"login": "reviewer"},
+                "state": "approved",
+            },
+            "pull_request": {
+                "number": 42,
+                "head": {"ref": "gitauto/dashboard-20250101-Ab1C"},
+            },
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "sender": {"login": "reviewer"},
+            "installation": {"id": 1},
+        }
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(
+                event_name="pull_request_review", payload=payload
+            )
+
+        mock_slack_notify.assert_called_once_with(
+            "PR #42 approved by `reviewer` for `o/r`"
+        )
+        mock_handle_review_run.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("services.webhook.webhook_handler.adapt_pr_review_to_review_payload")
+    async def test_pr_review_commented_with_body_calls_review_handler(
+        self, mock_adapt, mock_handle_review_run, mock_slack_notify
+    ):
+        adapted = {"action": "submitted", "comment": {"body": "what about this?"}}
+        mock_adapt.return_value = adapted
+
+        payload = {
+            "action": "submitted",
+            "review": {
+                "id": 102,
+                "node_id": "PRR_102",
+                "body": "what about this?",
+                "user": {"login": "reviewer"},
+                "state": "commented",
+            },
+            "pull_request": {
+                "number": 42,
+                "head": {"ref": "gitauto/dashboard-20250101-Ab1C"},
+            },
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "sender": {"login": "reviewer"},
+            "installation": {"id": 1},
+        }
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(
+                event_name="pull_request_review", payload=payload
+            )
+
+        mock_adapt.assert_called_once_with(payload=payload)
+        mock_handle_review_run.assert_called_once()
+        call_kwargs = mock_handle_review_run.call_args[1]
+        assert call_kwargs["trigger"] == "pr_review"
+        mock_slack_notify.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_pr_review_commented_empty_body_sends_slack_only(
+        self, mock_handle_review_run, mock_slack_notify
+    ):
+        payload = {
+            "action": "submitted",
+            "review": {
+                "id": 103,
+                "node_id": "PRR_103",
+                "body": "",
+                "user": {"login": "reviewer"},
+                "state": "commented",
+            },
+            "pull_request": {
+                "number": 42,
+                "head": {"ref": "gitauto/dashboard-20250101-Ab1C"},
+            },
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "sender": {"login": "reviewer"},
+            "installation": {"id": 1},
+        }
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(
+                event_name="pull_request_review", payload=payload
+            )
+
+        mock_slack_notify.assert_called_once()
+        assert "empty body" in mock_slack_notify.call_args[0][0]
+        mock_handle_review_run.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_pr_review_dismissed_is_ignored(
+        self, mock_handle_review_run, mock_slack_notify
+    ):
+        payload = {
+            "action": "dismissed",
+            "review": {
+                "id": 104,
+                "node_id": "PRR_104",
+                "body": "old review",
+                "user": {"login": "reviewer"},
+                "state": "dismissed",
+            },
+            "pull_request": {
+                "number": 42,
+                "head": {"ref": "gitauto/dashboard-20250101-Ab1C"},
+            },
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "sender": {"login": "reviewer"},
+            "installation": {"id": 1},
+        }
+        await handle_webhook_event(event_name="pull_request_review", payload=payload)
+
+        mock_handle_review_run.assert_not_called()
+        mock_slack_notify.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_pr_review_from_gitauto_is_ignored(
+        self, mock_handle_review_run, mock_slack_notify
+    ):
+        payload = {
+            "action": "submitted",
+            "review": {
+                "id": 105,
+                "node_id": "PRR_105",
+                "body": "auto review",
+                "user": {"login": "gitauto-ai[bot]"},
+                "state": "commented",
+            },
+            "pull_request": {
+                "number": 42,
+                "head": {"ref": "gitauto/dashboard-20250101-Ab1C"},
+            },
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "sender": {"login": "gitauto-ai[bot]"},
+            "installation": {"id": 1},
+        }
+        with patch(
+            "services.webhook.webhook_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]"
+        ):
+            await handle_webhook_event(
+                event_name="pull_request_review", payload=payload
+            )
+
+        mock_handle_review_run.assert_not_called()
+        mock_slack_notify.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_pr_review_on_non_gitauto_pr_is_ignored(
+        self, mock_handle_review_run, mock_slack_notify
+    ):
+        payload = {
+            "action": "submitted",
+            "review": {
+                "id": 106,
+                "node_id": "PRR_106",
+                "body": "looks good",
+                "user": {"login": "reviewer"},
+                "state": "approved",
+            },
+            "pull_request": {
+                "number": 42,
+                "head": {"ref": "feature/something"},
+            },
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "sender": {"login": "reviewer"},
+            "installation": {"id": 1},
+        }
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(
+                event_name="pull_request_review", payload=payload
+            )
+
+        mock_handle_review_run.assert_not_called()
+        mock_slack_notify.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_pr_review_null_body_sends_slack_only(
+        self, mock_handle_review_run, mock_slack_notify
+    ):
+        payload = {
+            "action": "submitted",
+            "review": {
+                "id": 107,
+                "node_id": "PRR_107",
+                "body": None,
+                "user": {"login": "reviewer"},
+                "state": "changes_requested",
+            },
+            "pull_request": {
+                "number": 42,
+                "head": {"ref": "gitauto/dashboard-20250101-Ab1C"},
+            },
+            "repository": {"owner": {"login": "o"}, "name": "r"},
+            "sender": {"login": "reviewer"},
+            "installation": {"id": 1},
+        }
+        with patch("services.webhook.webhook_handler.PRODUCT_ID", "gitauto"):
+            await handle_webhook_event(
+                event_name="pull_request_review", payload=payload
+            )
+
+        mock_slack_notify.assert_called_once()
+        assert "empty body" in mock_slack_notify.call_args[0][0]
         mock_handle_review_run.assert_not_called()

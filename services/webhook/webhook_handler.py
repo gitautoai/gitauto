@@ -18,6 +18,7 @@ from services.github.types.github_types import (
     PrLabeledPayload,
 )
 from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
+from services.github.types.webhook.pull_request_review import PullRequestReviewPayload
 from services.github.types.webhook.push import PushWebhookPayload
 from services.slack.slack_notify import slack_notify
 from services.supabase.installations.unsuspend_installation import (
@@ -45,6 +46,9 @@ from services.github.token.get_installation_token import get_installation_access
 from services.webhook.review_run_handler import handle_review_run
 from services.webhook.utils.adapt_pr_comment_to_review_payload import (
     adapt_pr_comment_to_review_payload,
+)
+from services.webhook.utils.adapt_pr_review_to_review_payload import (
+    adapt_pr_review_to_review_payload,
 )
 from services.webhook.successful_check_suite_handler import (
     handle_successful_check_suite,
@@ -209,9 +213,56 @@ async def handle_webhook_event(
         typed_payload = cast(ReviewRunPayload, payload)
         await handle_review_run(
             payload=typed_payload,
-            trigger="review_comment",
+            trigger="pr_file_review",
             lambda_info=lambda_info,
         )
+        return
+
+    # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review
+    if event_name == "pull_request_review" and action in ("submitted", "edited"):
+        typed_payload = cast(PullRequestReviewPayload, payload)
+        sender_login = typed_payload["sender"]["login"]
+        if sender_login == GITHUB_APP_USER_NAME:
+            logger.info("Ignoring PR review from GitAuto itself")
+            return
+
+        head_ref = typed_payload["pull_request"]["head"]["ref"]
+        if not head_ref.startswith(PRODUCT_ID + "/"):
+            logger.info("Ignoring PR review on non-GitAuto PR (branch: %s)", head_ref)
+            return
+
+        review = typed_payload["review"]
+        state = review["state"]
+        owner_name = typed_payload["repository"]["owner"]["login"]
+        repo_name = typed_payload["repository"]["name"]
+        pr_number = typed_payload["pull_request"]["number"]
+        body = review["body"] or ""
+
+        if state == "approved":
+            msg = f"PR #{pr_number} approved by `{sender_login}` for `{owner_name}/{repo_name}`"
+            logger.info(msg)
+            slack_notify(msg)
+            return
+
+        if state in ("changes_requested", "commented") and body.strip():
+            adapted_payload = adapt_pr_review_to_review_payload(payload=typed_payload)
+            if not adapted_payload:
+                logger.info("Failed to adapt PR review payload, skipping")
+                return
+            await handle_review_run(
+                payload=adapted_payload,
+                trigger="pr_review",
+                lambda_info=lambda_info,
+            )
+            return
+
+        if state in ("changes_requested", "commented"):
+            msg = f"PR #{pr_number} review ({state}) by `{sender_login}` for `{owner_name}/{repo_name}` (empty body, skipping)"
+            logger.info(msg)
+            slack_notify(msg)
+            return
+
+        logger.info("Ignoring PR review with state: %s", state)
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
