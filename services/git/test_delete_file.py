@@ -2,7 +2,7 @@
 # pyright: reportUnusedVariable=false
 import pytest
 
-from services.github.files.delete_file import delete_file
+from services.git.delete_file import delete_file
 
 
 @pytest.fixture

@@ -30,13 +30,11 @@ from services.github.comments.update_comment import update_comment
 from services.slack.slack_notify import slack_notify
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_reference import get_reference
-from services.github.files.get_local_file_content import get_local_file_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
-from services.github.trees.get_local_file_tree import get_local_file_tree
 from services.github.types.github_types import ReviewBaseArgs
 from services.claude.tools.tools import TOOLS_FOR_REVIEW_COMMENTS
 from services.supabase.create_user_request import create_user_request
@@ -44,6 +42,8 @@ from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.should_bail import should_bail
+from utils.files.get_local_file_content import get_local_file_content
+from utils.files.get_local_file_tree import get_local_file_tree
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.memory.gc_collect_and_log import gc_collect_and_log

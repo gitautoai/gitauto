@@ -3,7 +3,7 @@ import re
 
 import jsonc
 
-from services.github.commits.replace_remote_file import replace_remote_file_content
+from services.git.replace_remote_file import replace_remote_file_content
 from services.github.files.get_raw_content import get_raw_content
 from services.github.types.github_types import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions

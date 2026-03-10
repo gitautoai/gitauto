@@ -3,7 +3,7 @@ from typing import cast
 from unittest.mock import patch
 
 # Local imports
-from services.github.commits.format_commit_message import format_commit_message
+from services.git.format_commit_message import format_commit_message
 from services.github.types.github_types import BaseArgs
 
 
@@ -50,7 +50,7 @@ def test_preserves_original_message():
     assert "Co-Authored-By:" in result
 
 
-@patch("services.github.commits.format_commit_message.GITHUB_APP_USER_ID", new=99999)
+@patch("services.git.format_commit_message.GITHUB_APP_USER_ID", new=99999)
 def test_bot_sender_credits_all_reviewers():
     base_args = _make_base_args(sender_id=99999, reviewers=["alice", "bob"])
     result = format_commit_message(message="Update file.py", base_args=base_args)
@@ -61,7 +61,7 @@ def test_bot_sender_credits_all_reviewers():
     )
 
 
-@patch("services.github.commits.format_commit_message.GITHUB_APP_USER_ID", new=99999)
+@patch("services.git.format_commit_message.GITHUB_APP_USER_ID", new=99999)
 def test_bot_sender_no_reviewers_skips_co_author():
     base_args = _make_base_args(sender_id=99999, reviewers=[])
     result = format_commit_message(message="Initial commit", base_args=base_args)

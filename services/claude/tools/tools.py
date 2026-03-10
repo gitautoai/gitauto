@@ -6,34 +6,34 @@ from anthropic.types import ToolUnionParam
 
 # Local imports
 from services.agents.verify_task_is_complete import verify_task_is_complete
+from services.claude.tools.properties import FILE_PATH
 from services.env.set_env import SET_ENV, set_env
+from services.git.apply_diff_to_file import apply_diff_to_file
+from services.git.create_directory import CREATE_DIRECTORY, create_directory
+from services.git.delete_file import delete_file
+from services.git.move_file import move_file
+from services.git.replace_remote_file import (
+    REPLACE_REMOTE_FILE_CONTENT,
+    replace_remote_file_content,
+)
 from services.github.comments.create_comment import CREATE_COMMENT, create_comment
 from services.github.comments.reply_to_comment import (
     REPLY_TO_REVIEW_COMMENT,
     reply_to_comment,
 )
-from services.github.commits.apply_diff_to_file import apply_diff_to_file
-from services.github.commits.replace_remote_file import (
-    REPLACE_REMOTE_FILE_CONTENT,
-    replace_remote_file_content,
-)
-from services.github.files.delete_file import delete_file
-from services.github.files.get_local_file_content import (
+from utils.files.get_local_file_content import (
     GET_LOCAL_FILE_CONTENT,
     GET_LOCAL_FILE_CONTENT_FULL_ONLY,
     get_local_file_content,
 )
-from services.github.files.move_file import move_file
-from services.github.search.search_local_file_contents import (
-    SEARCH_LOCAL_FILE_CONTENT,
-    search_local_file_contents,
-)
-from services.github.trees.create_directory import CREATE_DIRECTORY, create_directory
-from services.github.trees.get_local_file_tree import (
+from utils.files.get_local_file_tree import (
     GET_LOCAL_FILE_TREE,
     get_local_file_tree,
 )
-from services.claude.tools.properties import FILE_PATH
+from utils.files.search_local_file_contents import (
+    SEARCH_LOCAL_FILE_CONTENT,
+    search_local_file_contents,
+)
 from utils.prompts.diff import DIFF_DESCRIPTION
 
 # Tool description best practices (Anthropic):

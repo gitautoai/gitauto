@@ -1,7 +1,7 @@
 import os
 import re
 
-from services.github.search.grep_files import grep_files
+from utils.files.grep_files import grep_files
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 

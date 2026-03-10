@@ -1,4 +1,4 @@
-from services.github.utils.build_setup_pr_body import (
+from utils.build_setup_pr_body import (
     SETUP_PR_TITLE,
     build_setup_pr_body,
 )

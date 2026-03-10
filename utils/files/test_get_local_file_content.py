@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 from typing import cast
 
-from services.github.files.get_local_file_content import get_local_file_content
+from utils.files.get_local_file_content import get_local_file_content
 from services.github.types.github_types import BaseArgs
 
 

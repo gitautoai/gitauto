@@ -2,7 +2,7 @@ import os
 import tempfile
 from unittest.mock import MagicMock
 
-from services.github.trees.create_directory import create_directory
+from services.git.create_directory import create_directory
 
 
 def test_create_directory_creates_new_dir():

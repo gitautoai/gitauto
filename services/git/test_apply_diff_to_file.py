@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from services.claude.tools.file_modify_result import FileWriteResult
-from services.github.commits.apply_diff_to_file import apply_diff_to_file
+from services.git.apply_diff_to_file import apply_diff_to_file
 from services.github.types.github_types import BaseArgs
 from utils.files.apply_patch import PatchResult
 
@@ -30,7 +30,7 @@ def test_successful_file_update(sample_base_args, tmp_path):
     # Create existing file
     (tmp_path / "test.py").write_text("print('hello world')\n")
 
-    with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
+    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
         mock_patch.return_value = PatchResult(
             content="print('hello modified world')\n", error=""
         )
@@ -48,7 +48,7 @@ def test_successful_file_update(sample_base_args, tmp_path):
 
 
 def test_new_file_creation(sample_base_args, tmp_path):
-    with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
+    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
         mock_patch.return_value = PatchResult(content="print('new file')\n", error="")
 
         result = apply_diff_to_file(
@@ -65,7 +65,7 @@ def test_new_file_creation(sample_base_args, tmp_path):
 def test_deletion_diff(sample_base_args, tmp_path):
     (tmp_path / "to_delete.py").write_text("# delete me\n")
 
-    with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
+    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
         mock_patch.return_value = PatchResult(content="", error="")
 
         result = apply_diff_to_file(
@@ -97,7 +97,7 @@ def test_directory_path_error(sample_base_args, tmp_path):
 def test_patch_error(sample_base_args, tmp_path):
     (tmp_path / "test.py").write_text("original\n")
 
-    with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
+    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
         mock_patch.return_value = PatchResult(content="", error="Failed to apply diff.")
 
         result = apply_diff_to_file(
@@ -115,7 +115,7 @@ def test_no_changes_returns_success_false(sample_base_args, tmp_path):
     original_content = "print('hello world')\n"
     (tmp_path / "test.py").write_text(original_content)
 
-    with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
+    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
         mock_patch.return_value = PatchResult(content=original_content, error="")
 
         result = apply_diff_to_file(
@@ -130,7 +130,7 @@ def test_no_changes_returns_success_false(sample_base_args, tmp_path):
 
 
 def test_extra_kwargs_ignored(sample_base_args, tmp_path):
-    with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
+    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
         mock_patch.return_value = PatchResult(content="new\n", error="")
 
         result = apply_diff_to_file(
@@ -149,7 +149,7 @@ def test_nested_file_path(sample_base_args, tmp_path):
     nested_dir.mkdir(parents=True)
     (nested_dir / "helper.py").write_text("old\n")
 
-    with patch("services.github.commits.apply_diff_to_file.apply_patch") as mock_patch:
+    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
         mock_patch.return_value = PatchResult(content="new\n", error="")
 
         result = apply_diff_to_file(

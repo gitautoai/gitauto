@@ -3,7 +3,7 @@
 import pytest
 
 from services.claude.tools.file_modify_result import FileMoveResult
-from services.github.files.move_file import move_file
+from services.git.move_file import move_file
 
 
 @pytest.fixture

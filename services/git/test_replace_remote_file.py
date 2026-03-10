@@ -5,7 +5,7 @@ from typing import cast
 import pytest
 
 from services.claude.tools.file_modify_result import FileWriteResult
-from services.github.commits.replace_remote_file import (
+from services.git.replace_remote_file import (
     REPLACE_REMOTE_FILE_CONTENT,
     replace_remote_file_content,
 )

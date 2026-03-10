@@ -1,7 +1,7 @@
 import subprocess
 from unittest.mock import Mock, patch
 
-from services.github.repositories.get_repository_stats import (
+from utils.files.get_repository_stats import (
     DEFAULT_REPO_STATS,
     get_repository_stats,
 )
