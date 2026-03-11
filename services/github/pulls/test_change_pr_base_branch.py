@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 from services.github.pulls.change_pr_base_branch import change_pr_base_branch
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 
 @pytest.fixture

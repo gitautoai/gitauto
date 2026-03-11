@@ -1,6 +1,6 @@
 from typing import Literal, TypedDict
 
-from services.github.types.owner import OwnerType
+from schemas.supabase.types import OwnerType
 
 
 class EventBridgeSchedulerEvent(TypedDict):

@@ -6,11 +6,11 @@ from dataclasses import dataclass, field
 from constants.aws import EFS_TIMEOUT_SECONDS
 from constants.files import JS_TEST_FILE_EXTENSIONS
 from services.efs.get_efs_dir import get_efs_dir
-from services.github.types.github_types import BaseArgs
 from services.jest.get_mongoms_distro import get_mongoms_distro
 from services.jest.parse_coverage_json import Coverage, parse_coverage_json
 from services.node.detect_package_manager import detect_package_manager
 from services.node.get_test_script_name import get_test_script_name
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 from utils.process.kill_processes_by_name import kill_processes_by_name

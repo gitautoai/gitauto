@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 
 from config import GITHUB_APP_IDS
 from services.github.comments.get_comments import get_comments
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 
 def test_get_comments_success(test_owner, test_repo, test_token):

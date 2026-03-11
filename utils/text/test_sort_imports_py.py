@@ -58,7 +58,7 @@ from typing import Any, Dict, List
 import requests
 from config import GITHUB_API_URL, TIMEOUT
 import os
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 import json
 from pathlib import Path
 import base64
@@ -82,7 +82,7 @@ from typing import Any, Dict, List
 import requests
 
 from config import GITHUB_API_URL, TIMEOUT
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 
 

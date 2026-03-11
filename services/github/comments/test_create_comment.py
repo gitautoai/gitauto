@@ -2,7 +2,7 @@ from typing import cast
 from unittest.mock import patch, MagicMock
 
 from services.github.comments.create_comment import create_comment
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 
 def test_create_comment_success(test_owner, test_repo, test_token):

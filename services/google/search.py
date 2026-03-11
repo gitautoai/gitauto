@@ -4,7 +4,7 @@ from googlesearch import search
 
 from config import TIMEOUT
 from constants.requests import USER_AGENT
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 

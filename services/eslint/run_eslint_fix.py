@@ -12,7 +12,7 @@ from services.eslint.eslint_config_has_parser_project import (
     eslint_config_has_parser_project,
 )
 from services.eslint.get_eslint_config import get_eslint_config
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from services.node.get_npm_cache_dir import set_npm_cache_env
 from services.node.get_dependency_major_version import get_dependency_major_version
 from utils.error.handle_exceptions import handle_exceptions

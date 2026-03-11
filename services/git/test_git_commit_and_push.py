@@ -3,7 +3,7 @@ from typing import cast
 from unittest.mock import MagicMock, patch
 
 from services.git.git_commit_and_push import git_commit_and_push
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 
 def _make_base_args():

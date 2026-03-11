@@ -2,6 +2,7 @@
 import os
 
 # Local imports
+from schemas.supabase.types import OwnerType
 from services.aws.run_install_via_codebuild import run_install_via_codebuild
 from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_remote_branch import create_remote_branch
@@ -15,8 +16,6 @@ from services.git.git_reset import git_reset
 from services.github.branches.is_repo_archived import is_repo_archived
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.repositories.is_repo_forked import is_repo_forked
-from services.github.types.github_types import BaseArgs
-from services.github.types.owner import OwnerType
 from services.github.types.repository import RepositoryAddedOrRemoved
 from services.node.detect_package_manager import detect_package_manager
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
@@ -26,6 +25,7 @@ from services.node.ensure_tsconfig_relaxed_for_tests import (
     ensure_tsconfig_relaxed_for_tests,
 )
 from services.supabase.repositories.upsert_repository import upsert_repository
+from services.types.base_args import BaseArgs
 from services.website.sync_files_from_github_to_coverage import (
     sync_files_from_github_to_coverage,
 )

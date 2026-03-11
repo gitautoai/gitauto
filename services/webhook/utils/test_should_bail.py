@@ -2,7 +2,7 @@
 from typing import cast
 from unittest.mock import patch
 
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from services.webhook.utils.should_bail import should_bail
 
 BASE_ARGS = cast(

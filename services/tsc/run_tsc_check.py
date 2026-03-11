@@ -3,7 +3,7 @@ import subprocess
 from dataclasses import dataclass
 
 from constants.aws import EFS_TIMEOUT_SECONDS
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 

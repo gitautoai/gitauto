@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from services.github.types.github_types import OwnerType
+from schemas.supabase.types import OwnerType
 from services.github.utils.create_permission_url import create_permission_url
 
 

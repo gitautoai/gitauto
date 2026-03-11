@@ -1,5 +1,5 @@
 # Local imports
-from services.github.types.owner import OwnerType
+from schemas.supabase.types import OwnerType
 from services.supabase.owners.insert_owner import insert_owner
 from services.supabase.owners.get_owner import get_owner
 from services.supabase.repositories.get_repository import get_repository

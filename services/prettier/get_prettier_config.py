@@ -1,6 +1,6 @@
 import json
 
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.files.read_local_file import read_local_file
 from utils.error.handle_exceptions import handle_exceptions
 

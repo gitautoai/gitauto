@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from services.github.types.owner import OwnerType
+from schemas.supabase.types import OwnerType
 
 
 class Sender(TypedDict):

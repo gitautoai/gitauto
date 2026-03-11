@@ -1,6 +1,6 @@
 from config import GITHUB_APP_GIT_EMAIL, GITHUB_APP_USER_NAME
 from services.git.format_commit_message import format_commit_message
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger

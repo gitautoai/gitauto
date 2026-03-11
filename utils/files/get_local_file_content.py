@@ -11,8 +11,8 @@ from services.claude.tools.properties import (
     LINE_NUMBER,
     START_LINE,
 )
-from services.github.types.github_types import BaseArgs
 from services.openai.vision import describe_image
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 from utils.new_lines.detect_new_line import detect_line_break

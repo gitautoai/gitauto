@@ -8,7 +8,7 @@ import pytest
 
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.eslint.run_eslint_fix import ESLintResult
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from services.jest.run_jest_test import JestResult
 from services.phpunit.run_phpunit_test import PhpunitResult
 from services.prettier.run_prettier_fix import PrettierResult

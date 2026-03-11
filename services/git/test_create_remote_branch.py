@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 
 from services.git.create_remote_branch import create_remote_branch
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 
 @pytest.fixture

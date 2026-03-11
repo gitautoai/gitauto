@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 # Local imports
 from services.git.format_commit_message import format_commit_message
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 
 def _make_base_args(

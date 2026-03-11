@@ -10,7 +10,7 @@ from services.eslint.ensure_eslint_relaxed_for_tests import (
     TEST_FILE_GLOBS,
     ensure_eslint_relaxed_for_tests,
 )
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 
 def _mock_success_result(file_path: str = ".eslintrc.json"):

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title
 from utils.files.is_test_file import is_test_file

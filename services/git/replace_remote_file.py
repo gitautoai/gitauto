@@ -9,7 +9,7 @@ from config import UTF8
 from services.claude.tools.file_modify_result import FileWriteResult
 from services.claude.tools.properties import FILE_PATH
 from services.git.git_commit_and_push import git_commit_and_push
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger

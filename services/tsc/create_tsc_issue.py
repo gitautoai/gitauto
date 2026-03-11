@@ -1,6 +1,6 @@
 from services.github.issues.create_issue import create_issue
 from services.github.issues.issue_exists import issue_exists
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
