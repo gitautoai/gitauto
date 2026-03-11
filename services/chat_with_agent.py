@@ -1,5 +1,6 @@
 # Standard imports
 from dataclasses import dataclass
+from difflib import unified_diff
 import inspect
 
 # Third party imports
@@ -18,6 +19,7 @@ from services.model_selection import get_model, try_next_model
 from services.claude.tools.tools import FILE_EDIT_TOOLS, tools_to_call
 from services.slack.slack_notify import slack_notify
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.read_local_file import read_local_file
 from utils.files.is_target_test_file import is_target_test_file
 from utils.files.is_test_file import is_test_file
 from utils.formatting.collapse_list import collapse_list
@@ -174,6 +176,7 @@ async def chat_with_agent(
 
         if tool_name in tools_to_call:
             is_file_edit_tool = tool_name in FILE_EDIT_TOOLS
+            is_gitauto_md = False
 
             # File edit validation
             if is_file_edit_tool:
@@ -183,12 +186,17 @@ async def chat_with_agent(
                     else ""
                 )
 
+                # Always allow editing GITAUTO.md (repo-level learning file)
+                is_gitauto_md = file_path.endswith("GITAUTO.md")
+
                 validation_error = None
                 is_in_allowed_to_edit_files = any(
                     file_path.endswith(f) for f in allowed_to_edit_files
                 )
                 is_target = is_target_test_file(file_path, base_args)
-                if (
+                if is_gitauto_md:
+                    pass  # Always allowed
+                elif (
                     file_path
                     and restrict_edit_to_target_test_file_only
                     and not is_target
@@ -221,6 +229,16 @@ async def chat_with_agent(
                         }
                     )
                     continue
+
+            # Capture old GITAUTO.md content before edit for diff
+            old_gitauto_md = ""
+            if is_gitauto_md:
+                clone_dir = base_args.get("clone_dir", "")
+                if clone_dir:
+                    old_gitauto_md = (
+                        read_local_file(file_path="GITAUTO.md", base_dir=clone_dir)
+                        or ""
+                    )
 
             # Execute the tool
             if isinstance(tool_args, dict):
@@ -264,6 +282,33 @@ async def chat_with_agent(
                     tool_result_content = tool_result.message
                 else:
                     tool_result_content = str(tool_result)
+
+            # Notify Slack when GITAUTO.md is created or updated
+            if (
+                is_file_edit_tool
+                and is_gitauto_md
+                and isinstance(tool_result, FileWriteResult)
+                and tool_result.success
+            ):
+                owner = base_args.get("owner", "unknown")
+                repo = base_args.get("repo", "unknown")
+                pr_number = base_args.get("pr_number", "?")
+                diff_lines = list(
+                    unified_diff(
+                        old_gitauto_md.splitlines(keepends=True),
+                        (tool_result.content or "").splitlines(keepends=True),
+                        fromfile="GITAUTO.md (before)",
+                        tofile="GITAUTO.md (after)",
+                    )
+                )
+                diff_text = (
+                    "".join(diff_lines)
+                    if diff_lines
+                    else "(new file)\n" + (tool_result.content or "")
+                )
+                slack_notify(
+                    f"📝 GITAUTO.md updated in `{owner}/{repo}` (PR #{pr_number}):\n```\n{diff_text}\n```"
+                )
 
         else:
             tool_result_content = f"Error: The function '{tool_name}' does not exist in the available tools. Please use one of the available tools."

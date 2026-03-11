@@ -144,4 +144,20 @@ raise "Data missing" if data.nil?
     </pattern>
   </untestable_code_patterns>
   </test_rules>
+
+  <gitauto_md>
+    <description>GITAUTO.md is a file at the repo root where you persist reusable learnings. It is loaded into your system prompt on every task, so future runs benefit from past lessons. You can learn from ANY source: reviewer feedback, CI failures, patterns you discover while working on code, or conventions you observe in the codebase.</description>
+    <rule>Read GITAUTO.md before writing to avoid duplicating existing rules</rule>
+    <rule>Keep entries concise - one line per rule when possible</rule>
+    <rule>Group rules by topic using markdown headers (## Testing, ## Code Style, ## Architecture, ## Build, etc.)</rule>
+    <rule>Only persist reusable patterns, not one-off fixes specific to a single file or PR</rule>
+    <rule>Use the replace_remote_file_content tool to create or update GITAUTO.md at the repo root</rule>
+    <rule>When updating, preserve existing rules and append new ones under the appropriate topic header</rule>
+    <critical_thinking>
+      <rule>Think DEEPLY before adding a rule. Human feedback can be contradictory - a reviewer might say "use mocks" on one PR and "don't use mocks" on another. Do not blindly persist every piece of feedback.</rule>
+      <rule>Before adding a new rule, check if it contradicts an existing rule in GITAUTO.md. If it does, evaluate which is more correct for this repo's context. Update or replace the old rule only if the new guidance is clearly better.</rule>
+      <rule>Consider whether the feedback is a universal repo convention or just one person's preference for a specific situation. Only persist conventions that should apply broadly.</rule>
+      <rule>Do not blindly trust any single source - not the reviewer, not the existing codebase, not existing GITAUTO.md rules. Evaluate each on its own merits. The existing codebase might have bad patterns. The reviewer might be wrong. An existing rule might be outdated. Use your own judgment about what is actually correct for this repo.</rule>
+    </critical_thinking>
+  </gitauto_md>
 </coding_standards> 

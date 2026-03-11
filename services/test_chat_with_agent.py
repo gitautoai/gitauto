@@ -1100,3 +1100,77 @@ async def test_multiple_parallel_tool_calls(
 
     # Progress reflects all 3 tool calls
     assert result.p == 15  # 5 * 3
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.get_model")
+@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.is_target_test_file")
+@patch("services.chat_with_agent.update_comment")
+async def test_gitauto_md_edit_always_allowed(
+    _mock_update_comment,
+    mock_is_target_test_file,
+    mock_chat_with_claude,
+    mock_get_model,
+):
+    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
+    mock_is_target_test_file.return_value = False
+    mock_chat_with_claude.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "replace_remote_file_content",
+                    "input": {
+                        "file_path": "GITAUTO.md",
+                        "file_content": "## Testing\n- Use factories",
+                    },
+                }
+            ],
+        },
+        [
+            ToolCall(
+                id="test_id",
+                name="replace_remote_file_content",
+                args={
+                    "file_path": "GITAUTO.md",
+                    "file_content": "## Testing\n- Use factories",
+                },
+            )
+        ],
+        15,
+        10,
+    )
+
+    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+
+    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
+        mock_tools.__contains__.return_value = True
+        mock_tools.__getitem__.return_value = Mock(
+            return_value=FileWriteResult(
+                success=True,
+                message="Updated GITAUTO.md.",
+                file_path="GITAUTO.md",
+                content="## Testing\n- Use factories",
+            )
+        )
+
+        result = await chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            system_message="test system message",
+            base_args=base_args,
+            tools=[],
+            usage_id=123,
+            restrict_edit_to_target_test_file_only=True,
+            allow_edit_any_file=False,
+            allowed_to_edit_files=set(),
+            model_id=None,
+        )
+
+    # GITAUTO.md should be allowed despite restrict_edit_to_target_test_file_only=True
+    messages = result.messages
+    last_content = cast(list, messages[-1]["content"])
+    assert "Error: Cannot modify" not in last_content[0]["content"]
+    assert "Updated GITAUTO.md." in last_content[0]["content"]
