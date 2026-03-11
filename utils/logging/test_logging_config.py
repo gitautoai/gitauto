@@ -1,3 +1,5 @@
+import importlib
+import sys
 from unittest.mock import MagicMock, patch
 
 from utils.logging.logging_config import (clear_state, set_event_action,
