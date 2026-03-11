@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name, unused-argument
 import importlib
 import sys
 from unittest.mock import MagicMock, patch
