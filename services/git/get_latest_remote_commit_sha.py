@@ -1,6 +1,6 @@
 from services.github.comments.update_comment import update_comment
 from services.git.initialize_repo import initialize_repo
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger

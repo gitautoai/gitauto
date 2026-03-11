@@ -5,8 +5,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from services.github.types.github_types import BaseArgs
 from services.phpunit.run_phpunit_test import run_phpunit_test
+from services.types.base_args import BaseArgs
 
 
 @pytest.mark.asyncio

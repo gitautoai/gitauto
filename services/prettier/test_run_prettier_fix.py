@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from constants.aws import EFS_TIMEOUT_SECONDS
-from services.github.types.github_types import BaseArgs
 from services.prettier.run_prettier_fix import run_prettier_fix
+from services.types.base_args import BaseArgs
 
 
 @pytest.fixture

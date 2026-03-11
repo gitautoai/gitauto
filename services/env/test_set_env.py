@@ -4,7 +4,7 @@ import os
 from typing import cast
 
 from services.env.set_env import set_env
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 BASE_ARGS = cast(BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"})
 

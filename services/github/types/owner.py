@@ -1,6 +1,6 @@
-from typing import Literal, TypedDict
+from typing import TypedDict
 
-OwnerType = Literal["User", "Organization"]
+from schemas.supabase.types import OwnerType
 
 
 class Owner(TypedDict):

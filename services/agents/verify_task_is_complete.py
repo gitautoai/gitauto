@@ -15,7 +15,7 @@ from services.git.replace_remote_file import replace_remote_file_content
 from services.eslint.get_eslint_config import get_eslint_config
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from services.jest.format_coverage_comment import format_coverage_comment
 from services.jest.run_jest_test import run_jest_test
 from services.node.ensure_jest_uses_tsconfig_for_tests import (

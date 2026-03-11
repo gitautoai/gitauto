@@ -40,7 +40,7 @@ from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_commits import get_pull_request_commits
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.types.github_types import BaseArgs, CheckSuiteCompletedPayload
+from services.github.types.github_types import CheckSuiteCompletedPayload
 from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
 from services.github.utils.create_permission_url import create_permission_url
@@ -63,6 +63,7 @@ from services.supabase.usage.update_retry_pairs import (
     update_retry_workflow_id_hash_pairs,
 )
 from services.supabase.usage.update_usage import update_usage
+from services.types.base_args import BaseArgs
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.should_bail import should_bail
 from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title

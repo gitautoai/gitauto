@@ -13,7 +13,7 @@ from services.claude.replace_old_file_content import replace_old_file_content
 from services.claude.sanitize_tool_args import sanitize_tool_args
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
 from services.github.comments.update_comment import update_comment
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from services.model_selection import get_model, try_next_model
 from services.claude.tools.tools import FILE_EDIT_TOOLS, tools_to_call
 from services.slack.slack_notify import slack_notify

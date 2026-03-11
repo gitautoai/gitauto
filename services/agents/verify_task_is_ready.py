@@ -4,7 +4,7 @@ from constants.files import PHP_TEST_FILE_EXTENSIONS
 from services.eslint.run_eslint_fix import run_eslint_fix
 from services.git.replace_remote_file import replace_remote_file_content
 from services.github.files.get_raw_content import get_raw_content
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from services.jest.run_jest_test import run_jest_test
 from services.phpunit.run_phpunit_test import run_phpunit_test
 from services.prettier.run_prettier_fix import run_prettier_fix

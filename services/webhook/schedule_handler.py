@@ -23,7 +23,6 @@ from services.github.pulls.get_open_pull_requests import get_open_pull_requests
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
-from services.github.types.github_types import BaseArgs
 from services.supabase.coverages.exclude_from_testing import exclude_from_testing
 from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.supabase.coverages.insert_coverages import insert_coverages
@@ -31,6 +30,7 @@ from services.supabase.coverages.update_issue_url import update_issue_url
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.schedule_pauses.is_schedule_paused import is_schedule_paused
 from services.stripe.check_availability import check_availability
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.has_test_file_candidate import has_test_file_candidate
 from utils.files.is_code_file import is_code_file

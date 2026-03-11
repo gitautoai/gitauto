@@ -3,8 +3,8 @@ import tempfile
 from pathlib import Path
 from typing import cast
 
+from services.types.base_args import BaseArgs
 from utils.files.get_local_file_tree import get_local_file_tree
-from services.github.types.github_types import BaseArgs
 
 
 def _make_base_args(clone_dir: str):

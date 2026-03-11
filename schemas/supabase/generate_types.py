@@ -58,9 +58,13 @@ for line in enum_result.stdout.split("\n"):
             enum_name, enum_label = parts
             enum_values[enum_name].append(enum_label)
 
+enum_alias_names: dict[str, str] = {}
 for enum_name, labels in enum_values.items():
-    literal_values = ", ".join(f'"{label}"' for label in labels)
-    enum_types[enum_name] = f"Literal[{literal_values}]"
+    enum_types[enum_name] = f"Literal[{', '.join(f'\"{label}\"' for label in labels)}]"
+    # Convert snake_case enum name to PascalCase alias, stripping _enum suffix
+    enum_alias_names[enum_name] = "".join(
+        word.capitalize() for word in enum_name.removesuffix("_enum").split("_")
+    )
 
 # Step 2: Query table columns
 result = subprocess.run(
@@ -85,6 +89,7 @@ if result.returncode != 0:
     sys.exit(1)
 
 tables = defaultdict(list)
+used_enum_names: set[str] = set()
 for line in result.stdout.split("\n"):
     if line.strip():
         parts = [p.strip() for p in line.split("|")]
@@ -120,8 +125,9 @@ for line in result.stdout.split("\n"):
                 "_jsonb": "dict[str, Any]",
             }
 
-            if data_type == "USER-DEFINED" and udt_name in enum_types:
-                PYTHON_TYPE = enum_types[udt_name]
+            if data_type == "USER-DEFINED" and udt_name in enum_alias_names:
+                PYTHON_TYPE = enum_alias_names[udt_name]
+                used_enum_names.add(udt_name)
             elif data_type == "ARRAY":
                 element_type = array_element_mapping.get(udt_name, "Any")
                 PYTHON_TYPE = f"list[{element_type}]"
@@ -139,11 +145,19 @@ for line in result.stdout.split("\n"):
             )
 
 output_path = Path(__file__).parent / "types.py"
+
 with open(output_path, "w", encoding="utf-8") as f:
     f.write("import datetime\n")
     f.write("from typing import Any, Literal\n")
     f.write("from typing_extensions import TypedDict, NotRequired\n")
     f.write("\n\n")
+
+    # Emit enum type aliases (only those used in public tables)
+    for enum_name in sorted(used_enum_names):
+        alias = enum_alias_names[enum_name]
+        f.write(f"{alias} = {enum_types[enum_name]}\n")
+    if used_enum_names:
+        f.write("\n\n")
 
     auto_fields = {"id", "created_at", "updated_at"}
 

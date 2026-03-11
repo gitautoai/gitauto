@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 from constants.aws import EFS_TIMEOUT_SECONDS
 from constants.files import PHP_TEST_FILE_EXTENSIONS
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 

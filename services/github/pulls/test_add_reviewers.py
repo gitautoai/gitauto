@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 from services.github.pulls.add_reviewers import add_reviewers
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 
 @pytest.fixture

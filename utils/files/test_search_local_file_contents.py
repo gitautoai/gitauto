@@ -9,7 +9,7 @@ from config import UTF8
 from utils.files.search_local_file_contents import (
     search_local_file_contents,
 )
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 REPO_ROOT = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

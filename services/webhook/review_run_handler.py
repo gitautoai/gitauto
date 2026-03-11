@@ -35,11 +35,11 @@ from services.github.pulls.get_review_thread_comments import get_review_thread_c
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
-from services.github.types.github_types import ReviewBaseArgs
 from services.claude.tools.tools import TOOLS_FOR_REVIEW_COMMENTS
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
+from services.types.base_args import ReviewBaseArgs
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.should_bail import should_bail
 from utils.files.get_local_file_content import get_local_file_content

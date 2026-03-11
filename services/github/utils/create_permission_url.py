@@ -1,5 +1,5 @@
 from constants.urls import GH_BASE_URL
-from services.github.types.owner import OwnerType
+from schemas.supabase.types import OwnerType
 
 
 def create_permission_url(owner_type: OwnerType, owner_name: str, installation_id: int):

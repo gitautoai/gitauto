@@ -7,7 +7,7 @@ import pytest
 
 from services.claude.tools.file_modify_result import FileWriteResult
 from services.git.apply_diff_to_file import apply_diff_to_file
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.files.apply_patch import PatchResult
 
 

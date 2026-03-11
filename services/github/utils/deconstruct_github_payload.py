@@ -4,11 +4,12 @@ from typing import cast
 # Local imports
 from services.git.check_branch_exists import check_branch_exists
 from services.git.get_clone_url import get_clone_url
-from services.github.types.github_types import BaseArgs, PrLabeledPayload
+from services.github.types.github_types import PrLabeledPayload
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
 from services.supabase.repositories.get_repository import get_repository
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 from utils.urls.extract_urls import extract_urls

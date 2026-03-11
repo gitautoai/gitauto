@@ -7,10 +7,10 @@ from unittest.mock import MagicMock, patch
 import jsonc
 
 from services.claude.tools.file_modify_result import FileWriteResult
-from services.github.types.github_types import BaseArgs
 from services.node.ensure_tsconfig_relaxed_for_tests import (
     ensure_tsconfig_relaxed_for_tests,
 )
+from services.types.base_args import BaseArgs
 
 
 def _mock_success_result(file_path: str = "test.py"):

@@ -2,8 +2,8 @@
 from typing import cast
 from unittest.mock import patch
 
-from services.github.types.github_types import BaseArgs
 from services.tsc.create_tsc_issue import create_tsc_issue
+from services.types.base_args import BaseArgs
 
 
 def _make_base_args():

@@ -5,8 +5,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from services.github.types.github_types import BaseArgs
 from services.tsc.run_tsc_check import run_tsc_check
+from services.types.base_args import BaseArgs
 
 
 @pytest.mark.asyncio

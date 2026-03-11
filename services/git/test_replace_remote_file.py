@@ -9,7 +9,7 @@ from services.git.replace_remote_file import (
     REPLACE_REMOTE_FILE_CONTENT,
     replace_remote_file_content,
 )
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 
 @pytest.fixture

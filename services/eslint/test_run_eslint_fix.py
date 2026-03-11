@@ -8,7 +8,7 @@ import pytest
 
 from constants.aws import EFS_TIMEOUT_SECONDS
 from services.eslint.run_eslint_fix import run_eslint_fix
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 
 @pytest.fixture

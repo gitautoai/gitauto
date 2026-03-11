@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 from config import UTF8
 from constants.aws import EFS_TIMEOUT_SECONDS
-from services.prettier.get_prettier_config import get_prettier_config
-from services.github.types.github_types import BaseArgs
 from services.node.get_npm_cache_dir import set_npm_cache_env
+from services.prettier.get_prettier_config import get_prettier_config
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 

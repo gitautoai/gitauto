@@ -1,6 +1,6 @@
 from typing import cast
 
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from utils.files.is_target_test_file import is_target_test_file
 
 

@@ -7,7 +7,7 @@ import pytest
 
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.eslint.run_eslint_fix import ESLintResult
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 from services.jest.run_jest_test import JestResult
 from services.prettier.run_prettier_fix import PrettierResult
 from services.tsc.run_tsc_check import TscResult

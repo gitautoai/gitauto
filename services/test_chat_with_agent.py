@@ -7,7 +7,7 @@ from constants.claude import ClaudeModelId
 from services.chat_with_agent import chat_with_agent
 from services.claude.chat_with_claude import ToolCall
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
-from services.github.types.github_types import BaseArgs
+from services.types.base_args import BaseArgs
 
 
 @pytest.mark.asyncio

@@ -21,7 +21,6 @@ from services.github.pulls.close_pull_request import close_pull_request
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.repositories.is_repo_forked import is_repo_forked
-from services.github.types.github_types import BaseArgs
 from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
 from services.slack.slack_notify import slack_notify
@@ -31,6 +30,7 @@ from services.supabase.installations.get_installation_by_owner import (
     get_installation_by_owner,
 )
 from services.supabase.repositories.get_repository_by_name import get_repository_by_name
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.read_local_file import read_local_file
 from utils.formatting.format_with_line_numbers import format_content_with_line_numbers

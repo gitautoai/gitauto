@@ -1,4 +1,4 @@
-from services.github.types.owner import OwnerType
+from schemas.supabase.types import OwnerType
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
