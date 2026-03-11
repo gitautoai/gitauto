@@ -153,12 +153,15 @@ def test_set_trigger_does_nothing_when_trigger_empty(mock_logger):
     mock_logger.append_keys.assert_not_called()
 
 
-def test_module_creates_powertools_logger_when_prd():
-    with patch("constants.general.IS_PRD", True):
-        if "utils.logging.logging_config" in sys.modules:
-            del sys.modules["utils.logging.logging_config"]
-        import utils.logging.logging_config as mod
+def test_module_level_creates_powertools_logger_when_prd():
+    from aws_lambda_powertools import Logger
 
-        importlib.reload(mod)
-        from aws_lambda_powertools import Logger
-        assert isinstance(mod.logger, Logger)
+    original_mod = sys.modules.pop("utils.logging.logging_config", None)
+    try:
+        with patch("constants.general.IS_PRD", True):
+            mod = importlib.import_module("utils.logging.logging_config")
+            assert isinstance(mod.logger, Logger)
+    finally:
+        sys.modules.pop("utils.logging.logging_config", None)
+        if original_mod is not None:
+            sys.modules["utils.logging.logging_config"] = original_mod
