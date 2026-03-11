@@ -2,7 +2,6 @@
 from unittest.mock import patch
 
 from config import UTF8
-from services.github.branches.get_default_branch import RepoInfo
 from services.webhook.handle_coverage_report import handle_coverage_report
 
 
@@ -586,7 +585,7 @@ def test_handle_coverage_report_fallback_to_default_branch():
         mock_token.return_value = "fake-token"
         mock_repo.return_value = {"target_branch": ""}
         _mock_branch_exists.return_value = True
-        mock_default.return_value = RepoInfo("main", False, False)
+        mock_default.return_value = "main"
         mock_branch_head.return_value = "def4567890123"
 
         result = handle_coverage_report(
@@ -603,7 +602,7 @@ def test_handle_coverage_report_fallback_to_default_branch():
 
         assert result is None
         mock_default.assert_called_once_with(
-            owner="test-owner", repo="test-repo", token="fake-token"
+            clone_url="https://x-access-token:fake-token@github.com/test-owner/test-repo.git"
         )
         mock_logger.info.assert_any_call(
             "Skipping saving coverage to Supabase: head_branch=%s != target_branch=%s, head_sha=%s != target_head=%s",
@@ -1166,7 +1165,7 @@ def test_handle_coverage_report_stale_target_branch_falls_back():
         mock_token.return_value = "fake-token"
         mock_repo.return_value = {"target_branch": "test-branch"}
         mock_branch_exists.return_value = False
-        mock_default.return_value = RepoInfo("main", False, False)
+        mock_default.return_value = "main"
         mock_branch_head.return_value = "def4567890123"
 
         result = handle_coverage_report(
@@ -1190,7 +1189,7 @@ def test_handle_coverage_report_stale_target_branch_falls_back():
             owner_id=12345, repo_id=67890, target_branch=""
         )
         mock_default.assert_called_once_with(
-            owner="test-owner", repo="test-repo", token="fake-token"
+            clone_url="https://x-access-token:fake-token@github.com/test-owner/test-repo.git"
         )
         mock_logger.warning.assert_any_call(
             "target_branch '%s' no longer exists for %s/%s, clearing and falling back to default branch",

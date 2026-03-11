@@ -49,6 +49,41 @@ def local_repo():
         capture_output=True,
     )
 
+    # Add more files for get_file_tree tests
+    src_dir = os.path.join(work_dir, "src")
+    os.makedirs(src_dir, exist_ok=True)
+    with open(os.path.join(src_dir, "main.py"), "w", encoding="utf-8") as f:
+        f.write("print('hello')\n")
+    with open(os.path.join(src_dir, "utils.py"), "w", encoding="utf-8") as f:
+        f.write("def helper(): pass\n")
+    subprocess.run(["git", "add", "."], cwd=work_dir, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Add source files"],
+        cwd=work_dir,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "push", "origin", "main"],
+        cwd=work_dir,
+        check=True,
+        capture_output=True,
+    )
+
+    # Add a [skip ci] commit
+    subprocess.run(
+        ["git", "commit", "--allow-empty", "-m", "Empty commit [skip ci]"],
+        cwd=work_dir,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "push", "origin", "main"],
+        cwd=work_dir,
+        check=True,
+        capture_output=True,
+    )
+
     # Second branch with a commit
     subprocess.run(
         ["git", "checkout", "-b", "feature/test-branch"],

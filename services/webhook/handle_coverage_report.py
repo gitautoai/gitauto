@@ -6,6 +6,8 @@ import json
 from schemas.supabase.types import RepoCoverageInsert
 from services.coverages.parse_lcov_coverage import parse_lcov_coverage
 from services.coverages.coverage_types import CoverageReport
+from services.efs.get_efs_dir import get_efs_dir
+from services.git.get_file_tree import get_file_tree
 from services.github.artifacts.download_artifact import download_artifact
 from services.github.artifacts.get_workflow_artifacts import get_workflow_artifacts
 from services.circleci.download_circleci_artifact import download_circleci_artifact
@@ -14,7 +16,7 @@ from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
 from services.git.check_branch_exists import check_branch_exists
 from services.git.get_branch_head import get_branch_head
 from services.git.get_clone_url import get_clone_url
-from services.github.branches.get_default_branch import get_default_branch
+from services.git.get_default_branch import get_default_branch
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.repositories.update_repository import update_repository
@@ -22,7 +24,6 @@ from services.github.token.get_installation_token import get_installation_access
 from services.github.check_suites.get_circleci_workflow_id import (
     get_circleci_workflow_ids_from_check_suite,
 )
-from services.github.trees.get_file_tree import get_file_tree
 from services.supabase.coverages.delete_stale_coverages import delete_stale_coverages
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.coverages.upsert_coverages import upsert_coverages
@@ -79,10 +80,10 @@ def handle_coverage_report(
         update_repository(owner_id=owner_id, repo_id=repo_id, target_branch="")
         target_branch = ""
     if not target_branch:
-        repo_info = get_default_branch(
-            owner=owner_name, repo=repo_name, token=github_token
-        )
-        target_branch = repo_info.default_branch
+        target_branch = get_default_branch(clone_url=clone_url)
+        if not target_branch:
+            logger.warning("Repository %s/%s is empty", owner_name, repo_name)
+            return None
 
     # Check if head_sha is the HEAD of target branch. This handles: PR merge, direct push, manual trigger on target branch
     target_head = get_branch_head(clone_url=clone_url, branch=target_branch)
@@ -147,7 +148,8 @@ def handle_coverage_report(
         return None
 
     # Fetch file tree early to normalize absolute paths in lcov files
-    tree_items = get_file_tree(owner_name, repo_name, head_branch, github_token)
+    efs_dir = get_efs_dir(owner_name, repo_name)
+    tree_items = get_file_tree(clone_dir=efs_dir, ref=head_branch)
     repo_files = {item["path"] for item in tree_items if item["type"] == "blob"}
 
     coverage_data: list[CoverageReport] = []

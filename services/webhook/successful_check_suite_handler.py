@@ -10,7 +10,8 @@ from services.github.comments.create_comment import create_comment
 from services.github.comments.delete_comments_by_identifiers import (
     delete_comments_by_identifiers,
 )
-from services.github.commits.check_commit_has_skip_ci import check_commit_has_skip_ci
+from services.efs.get_efs_dir import get_efs_dir
+from services.git.check_commit_has_skip_ci import check_commit_has_skip_ci
 from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.merge_pull_request import MergeMethod, merge_pull_request
@@ -63,9 +64,8 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     # check_suite completed with conclusion=success (no checks ran = success).
     # Without this early check, the handler could attempt to auto-merge an empty PR.
     head_sha = check_suite["head_sha"]
-    if check_commit_has_skip_ci(
-        owner=owner_name, repo=repo_name, commit_sha=head_sha, token=token
-    ):
+    efs_dir = get_efs_dir(owner_name, repo_name)
+    if check_commit_has_skip_ci(commit_sha=head_sha, clone_dir=efs_dir):
         logger.info("Last commit has [skip ci], skipping auto-merge check")
         return
 

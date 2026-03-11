@@ -870,7 +870,6 @@ class TestApiSyncFilesFromGithubToCoverage:
             repo="test-repo",
             body=MagicMock(branch="main", owner_id=123, repo_id=456, user_name="user"),
             background_tasks=mock_background_tasks,
-            token="test-token",
             api_key="test-api-key",
         )
 
@@ -879,6 +878,5 @@ class TestApiSyncFilesFromGithubToCoverage:
         assert call_kwargs["owner"] == "test-owner"
         assert call_kwargs["repo"] == "test-repo"
         assert call_kwargs["branch"] == "main"
-        assert call_kwargs["token"] == "test-token"
         assert call_kwargs["api_key"] == "test-api-key"
         assert result == {"status": "syncing"}

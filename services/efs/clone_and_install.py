@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from services.efs.get_efs_dir import get_efs_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import git_clone_to_efs
-from services.github.branches.get_default_branch import get_default_branch
+from services.git.get_default_branch import get_default_branch
 from services.github.token.get_installation_token import get_installation_access_token
 from services.node.ensure_node_packages import ensure_node_packages
 from services.php.ensure_php_packages import ensure_php_packages
@@ -50,8 +50,9 @@ async def clone_and_install(owner: str, repo: str):
         branch = repository["target_branch"]
         logger.info("Using target_branch from repository: %s", branch)
     else:
-        repo_info = get_default_branch(owner=owner, repo=repo, token=token)
-        if repo_info.is_empty:
+        clone_url = get_clone_url(owner, repo, token)
+        branch = get_default_branch(clone_url=clone_url)
+        if not branch:
             logger.warning("Repository %s/%s is empty", owner, repo)
             return CloneAndInstallResult(
                 status="error",
@@ -60,7 +61,6 @@ async def clone_and_install(owner: str, repo: str):
                 node_installed=False,
                 php_installed=False,
             )
-        branch = repo_info.default_branch
         logger.info("Using default branch: %s", branch)
 
     efs_dir = get_efs_dir(owner, repo)

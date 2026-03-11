@@ -18,7 +18,16 @@ def mock_verify_api_key():
 
 
 @pytest.fixture
-def mock_get_file_tree():
+def mock_get_efs_dir():
+    with patch(
+        "services.website.sync_files_from_github_to_coverage.get_efs_dir",
+        return_value="/mnt/efs/test-owner/test-repo",
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_get_file_tree(mock_get_efs_dir):
     with patch(
         "services.website.sync_files_from_github_to_coverage.get_file_tree"
     ) as mock:
@@ -57,7 +66,6 @@ def test_sync_upserts_files(
         owner="test-owner",
         repo="test-repo",
         branch="main",
-        token="test-token",
         owner_id=123,
         repo_id=456,
         user_name="test-user",
@@ -87,7 +95,6 @@ def test_sync_calls_delete_stale(
         owner="test-owner",
         repo="test-repo",
         branch="main",
-        token="test-token",
         owner_id=123,
         repo_id=456,
         user_name="test-user",
@@ -116,7 +123,6 @@ def test_sync_filters_directories(
         owner="test-owner",
         repo="test-repo",
         branch="main",
-        token="test-token",
         owner_id=123,
         repo_id=456,
         user_name="test-user",
@@ -138,7 +144,6 @@ def test_sync_invalid_api_key(mock_get_file_tree):
                 owner="test-owner",
                 repo="test-repo",
                 branch="main",
-                token="test-token",
                 owner_id=123,
                 repo_id=456,
                 user_name="test-user",
@@ -164,7 +169,6 @@ def test_sync_skips_verification_without_api_key(
             owner="test-owner",
             repo="test-repo",
             branch="main",
-            token="test-token",
             owner_id=123,
             repo_id=456,
             user_name="test-user",
