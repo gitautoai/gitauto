@@ -1,4 +1,6 @@
-from __future__ import annotations  # Sentry SDK exposes Event/Hint types only for type checkers, not at runtime
+from __future__ import (
+    annotations,
+)  # Sentry SDK exposes Event/Hint types only for type checkers, not at runtime
 
 from typing import TYPE_CHECKING
 
