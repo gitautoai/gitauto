@@ -77,13 +77,7 @@ def test_deletion_only_hunk():
 
 
 def test_addition_only_hunk():
-    diff = (
-        "--- a/file.py\n"
-        "+++ b/file.py\n"
-        "@@ -1,0 +1,2 @@\n"
-        "+new1\n"
-        "+new2\n"
-    )
+    diff = "--- a/file.py\n" "+++ b/file.py\n" "@@ -1,0 +1,2 @@\n" "+new1\n" "+new2\n"
     result = fix_diff_hunk_counts(diff)
     assert "@@ -1,0 +1,2 @@" in result
 

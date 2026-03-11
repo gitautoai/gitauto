@@ -6,6 +6,7 @@ from schemas.supabase.types import Repositories
 # Local imports
 from constants.triggers import Trigger
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.read_local_file import read_local_file
 from utils.files.read_xml_file import read_xml_file
 from utils.logging.logging_config import logger
 from utils.prompts.get_trigger_prompt import get_trigger_prompt
@@ -15,6 +16,7 @@ from utils.prompts.get_trigger_prompt import get_trigger_prompt
 def create_system_message(
     trigger: Trigger,
     repo_settings: Repositories | None = None,
+    clone_dir: str | None = None,
 ):
     content_parts = []
 
@@ -45,6 +47,17 @@ def create_system_message(
                 f"<freeform_repository_rules>\n{free_rules.strip()}\n</freeform_repository_rules>"
             )
             logger.info("Freeform rules: %s", free_rules.strip())
+
+    # GITAUTO.md rules (highest priority - repo-specific learnings from feedback)
+    if clone_dir:
+        gitauto_md_content = read_local_file(file_path="GITAUTO.md", base_dir=clone_dir)
+        if gitauto_md_content and gitauto_md_content.strip():
+            content_parts.append(
+                f"<gitauto_md_rules>\n{gitauto_md_content.strip()}\n</gitauto_md_rules>"
+            )
+            logger.info(
+                "GITAUTO.md rules loaded (%d chars)", len(gitauto_md_content.strip())
+            )
 
     combined_content = "\n\n".join(content_parts) if content_parts else ""
     return combined_content

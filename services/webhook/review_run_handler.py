@@ -351,7 +351,9 @@ async def handle_review_run(
     is_completed = False
     completion_reason = ""
 
-    system_message = create_system_message(trigger=trigger, repo_settings=repo_settings)
+    system_message = create_system_message(
+        trigger=trigger, repo_settings=repo_settings, clone_dir=clone_dir
+    )
 
     for _iteration in range(MAX_ITERATIONS):
         if should_bail(

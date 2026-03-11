@@ -330,3 +330,72 @@ def test_attribute_error_handling(mock_read_xml_file, mock_get_trigger_prompt):
     result = create_system_message("dashboard")
 
     assert result == ""
+
+
+@patch("services.webhook.utils.create_system_message.read_local_file")
+def test_with_gitauto_md_content(
+    mock_read_local, mock_read_xml_file, mock_get_trigger_prompt
+):
+    mock_read_xml_file.return_value = "<rules>Rules</rules>"
+    mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+    mock_read_local.return_value = "## Testing\n- Use factories instead of mocks"
+
+    result = create_system_message("dashboard", clone_dir="/tmp/repo")
+
+    assert "<gitauto_md_rules>" in result
+    assert "Use factories instead of mocks" in result
+    assert "</gitauto_md_rules>" in result
+    mock_read_local.assert_called_once_with(
+        file_path="GITAUTO.md", base_dir="/tmp/repo"
+    )
+
+
+def test_gitauto_md_no_clone_dir(mock_read_xml_file, mock_get_trigger_prompt):
+    mock_read_xml_file.return_value = "<rules>Rules</rules>"
+    mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+
+    result = create_system_message("dashboard", clone_dir=None)
+
+    assert "<gitauto_md_rules>" not in result
+
+
+@patch("services.webhook.utils.create_system_message.read_local_file")
+def test_gitauto_md_file_not_found(
+    mock_read_local, mock_read_xml_file, mock_get_trigger_prompt
+):
+    mock_read_xml_file.return_value = "<rules>Rules</rules>"
+    mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+    mock_read_local.return_value = None
+
+    result = create_system_message("dashboard", clone_dir="/tmp/repo")
+
+    assert "<gitauto_md_rules>" not in result
+
+
+@patch("services.webhook.utils.create_system_message.read_local_file")
+def test_gitauto_md_content_empty(
+    mock_read_local, mock_read_xml_file, mock_get_trigger_prompt
+):
+    mock_read_xml_file.return_value = "<rules>Rules</rules>"
+    mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+    mock_read_local.return_value = "   \n\t  "
+
+    result = create_system_message("dashboard", clone_dir="/tmp/repo")
+
+    assert "<gitauto_md_rules>" not in result
+
+
+@patch("services.webhook.utils.create_system_message.read_local_file")
+def test_gitauto_md_comes_after_repo_rules(
+    mock_read_local, mock_read_xml_file, mock_get_trigger_prompt
+):
+    mock_read_xml_file.return_value = "<rules>Rules</rules>"
+    mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+    mock_read_local.return_value = "## Testing\n- Use factories"
+
+    repo_settings = create_repositories_data(repo_rules="Use TypeScript")
+    result = create_system_message("dashboard", repo_settings, clone_dir="/tmp/repo")
+
+    freeform_pos = result.index("<freeform_repository_rules>")
+    gitauto_pos = result.index("<gitauto_md_rules>")
+    assert gitauto_pos > freeform_pos

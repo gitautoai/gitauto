@@ -21,6 +21,8 @@
   - Always search for import statements before deleting files to avoid breaking the codebase
   - After renaming/deleting files, update any import statements that reference the old paths
 
+  If a CI failure reveals a repo-specific pattern that should be remembered (e.g., a required env var, a lint rule, a build step, a type convention), update or create GITAUTO.md at the repo root to persist the learning. Keep entries concise. Group by topic. Do not duplicate rules that already exist in GITAUTO.md. Think deeply before adding - verify the pattern is a real convention, not a flaky test or one-off environment issue.
+
   **Syntax/Brace Errors (TypeScript TS1128, missing closing brace, unexpected token, etc.)**:
 
   When you see errors about missing braces, unexpected tokens, or nesting issues:

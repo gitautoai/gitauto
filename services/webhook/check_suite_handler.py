@@ -652,7 +652,9 @@ async def handle_check_suite(
     total_token_output = 0
     is_completed = False
 
-    system_message = create_system_message(trigger=trigger, repo_settings=repo_settings)
+    system_message = create_system_message(
+        trigger=trigger, repo_settings=repo_settings, clone_dir=clone_dir
+    )
 
     for _iteration in range(MAX_ITERATIONS):
         if should_bail(
