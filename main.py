@@ -13,14 +13,15 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 # Local imports
 from config import ENV, GITHUB_WEBHOOK_SECRET, PRODUCT_NAME, SENTRY_DSN, UTF8
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
+from services.aws.cleanup_tmp import cleanup_tmp
+from services.efs.cleanup_stale_repos_on_efs import cleanup_stale_repos_on_efs
+from services.efs.clone_and_install import clone_and_install
 from services.github.utils.verify_webhook_signature import verify_webhook_signature
+from services.sentry.before_send import before_send
 from services.slack.slack_notify import slack_notify
 from services.supabase.webhook_deliveries.insert_webhook_delivery import (
     insert_webhook_delivery,
 )
-from services.efs.cleanup_stale_repos_on_efs import cleanup_stale_repos_on_efs
-from services.aws.cleanup_tmp import cleanup_tmp
-from services.efs.clone_and_install import clone_and_install
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.setup_handler import setup_handler
 from services.webhook.webhook_handler import handle_webhook_event
@@ -43,6 +44,7 @@ if ENV == "prod":
         environment=ENV,
         integrations=[AwsLambdaIntegration()],
         traces_sample_rate=1.0,
+        before_send=before_send,
     )
 
 # Create FastAPI instance and Mangum handler. Mangum is a library that allows you to use FastAPI with AWS Lambda.
