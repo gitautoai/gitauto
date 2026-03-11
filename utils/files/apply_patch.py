@@ -7,6 +7,7 @@ from dataclasses import dataclass
 # Local imports
 from config import UTF8
 from utils.files.ensure_diff_ab_prefixes import ensure_diff_ab_prefixes
+from utils.files.fix_diff_hunk_counts import fix_diff_hunk_counts
 from utils.files.read_local_file import read_local_file
 from utils.files.write_local_file import write_local_file
 from utils.logging.logging_config import logger
@@ -41,6 +42,7 @@ def apply_patch(original_text: str, diff_text: str, clone_dir: str, file_path: s
             write_local_file(file_path, clone_dir, normalized)
 
         diff_text = ensure_diff_ab_prefixes(diff_text)
+        diff_text = fix_diff_hunk_counts(diff_text)
 
         # Write diff to a temp file
         diff_content = diff_text if diff_text.endswith("\n") else diff_text + "\n"
