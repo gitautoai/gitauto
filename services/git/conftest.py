@@ -13,6 +13,13 @@ def local_repo():
     work_dir = tempfile.mkdtemp(prefix="gitauto-work-")
 
     subprocess.run(["git", "init", "--bare", bare_dir], check=True, capture_output=True)
+    # Set bare repo's HEAD to main (git init defaults to master on some systems)
+    subprocess.run(
+        ["git", "symbolic-ref", "HEAD", "refs/heads/main"],
+        cwd=bare_dir,
+        check=True,
+        capture_output=True,
+    )
     subprocess.run(
         ["git", "clone", bare_dir, work_dir], check=True, capture_output=True
     )
