@@ -226,6 +226,7 @@ ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 - NO `.get()` DEFAULTS: Do not use `.get("key", {})` or `.get("key", "")`. Use `.get("key")` and handle `None` explicitly. Defaults hide missing data and make bugs harder to find. When you have to use `as any` in TypeScript/JavaScript, ALWAYS add a comment above explaining why it's needed. Example:
 - No annotations: Don't use annotations like var: type = value. Fix the root cause of type issues instead.
 - SINGLE RESPONSIBILITY: One file, one function. Don't create 2+ functions in a file. No private/helper functions alongside the main function. If a helper is used only once, inline it. If it's used multiple times or by other files, move it to its own file.
+- KEEP `main.py` THIN: Never add private/helper functions to `main.py`. It is an entrypoint file for routing only. Any logic (callbacks, filters, utilities) must live in its own file under the appropriate directory and be imported.
 - ALWAYS USE `@handle_exceptions` DECORATOR: Every function (sync or async) must use the `@handle_exceptions` decorator from `utils.error.handle_exceptions`. This ensures consistent error handling, Sentry reporting, and logging across the codebase. Use `@handle_exceptions(default_return_value=..., raise_on_error=False)` with an appropriate default return value.
 - NO `__init__.py`: Do not create `__init__.py` files. Python 3.3+ supports implicit namespace packages, so `__init__.py` is not required. This project uses Python 3.13.
 
