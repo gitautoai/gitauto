@@ -1,7 +1,8 @@
 from typing import cast
 
 from schemas.supabase.types import CoveragesInsert
-from services.github.trees.get_file_tree import get_file_tree
+from services.efs.get_efs_dir import get_efs_dir
+from services.git.get_file_tree import get_file_tree
 from services.supabase.coverages.delete_stale_coverages import delete_stale_coverages
 from services.supabase.coverages.upsert_coverages import upsert_coverages
 from services.website.verify_api_key import verify_api_key
@@ -13,20 +14,20 @@ def sync_files_from_github_to_coverage(
     owner: str,
     repo: str,
     branch: str,
-    token: str,
     owner_id: int,
     repo_id: int,
     user_name: str,
     api_key: str | None = None,
 ):
-    """Sync repository files from GitHub to coverage database."""
+    """Sync repository files from local clone to coverage database."""
     if api_key:
         verify_api_key(api_key)
 
     logger.info("Starting sync for %s/%s branch=%s", owner, repo, branch)
 
-    # Fetch files from GitHub (only code files, excluding test and migration files)
-    tree_items = get_file_tree(owner=owner, repo=repo, ref=branch, token=token)
+    # Fetch files from local clone (only code files, excluding test and migration files)
+    efs_dir = get_efs_dir(owner, repo)
+    tree_items = get_file_tree(clone_dir=efs_dir, ref=branch)
     current_files = {
         item["path"]: item.get("size", 0)
         for item in tree_items

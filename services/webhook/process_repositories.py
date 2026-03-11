@@ -4,14 +4,15 @@ import os
 # Local imports
 from services.aws.run_install_via_codebuild import run_install_via_codebuild
 from services.efs.get_efs_dir import get_efs_dir
+from services.git.create_remote_branch import create_remote_branch
 from services.git.delete_remote_branch import delete_remote_branch
 from services.git.get_clone_url import get_clone_url
+from services.git.get_default_branch import get_default_branch
 from services.git.get_latest_remote_commit_sha import get_latest_remote_commit_sha
 from services.git.git_clone_to_efs import git_clone_to_efs
 from services.git.git_fetch import git_fetch
 from services.git.git_reset import git_reset
-from services.github.branches.create_remote_branch import create_remote_branch
-from services.github.branches.get_default_branch import get_default_branch
+from services.github.branches.is_repo_archived import is_repo_archived
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.types.github_types import BaseArgs
@@ -67,25 +68,23 @@ async def process_repositories(
             user_name=user_name,
         )
 
-        repo_info = get_default_branch(owner=owner_name, repo=repo_name, token=token)
-
-        if repo_info.is_archived:
+        if is_repo_archived(owner=owner_name, repo=repo_name, token=token):
             logger.info("Repository %s/%s is archived, skipping", owner_name, repo_name)
             continue
 
-        # Empty repos (size=0) have no commits - skip cloning
-        if repo_info.is_empty:
+        clone_url = get_clone_url(owner_name, repo_name, token)
+        default_branch = get_default_branch(clone_url=clone_url)
+
+        # Empty repos have no commits - skip cloning
+        if not default_branch:
             logger.info(
                 "Repository %s/%s is empty, skipping clone", owner_name, repo_name
             )
             continue
 
-        default_branch = repo_info.default_branch
-
         # Clone or update EFS (reusable for future PR work)
         efs_dir = get_efs_dir(owner_name, repo_name)
         efs_git_dir = os.path.join(efs_dir, ".git")
-        clone_url = get_clone_url(owner_name, repo_name, token)
 
         if os.path.exists(efs_git_dir):
             logger.info("EFS clone exists, updating: %s", efs_dir)
@@ -123,7 +122,6 @@ async def process_repositories(
             owner=owner_name,
             repo=repo_name,
             branch=default_branch,
-            token=token,
             owner_id=owner_id,
             repo_id=repo_id,
             user_name=user_name,

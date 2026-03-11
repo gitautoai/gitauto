@@ -986,9 +986,7 @@ def test_skip_ci_returns_early(
         handle_successful_check_suite(cast(CheckSuiteCompletedPayload, payload))
 
         mock_check_skip_ci.assert_called_once_with(
-            owner="gitautoai",
-            repo="gitauto",
             commit_sha="f8a15e5cc8987ef16de232e6a7d6d27c62ace05b",
-            token="test-token",
+            clone_dir="/tmp/efs/gitautoai/gitauto",
         )
         mock_get_pr.assert_not_called()

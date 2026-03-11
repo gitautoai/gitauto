@@ -13,6 +13,13 @@ def local_repo():
     work_dir = tempfile.mkdtemp(prefix="gitauto-work-")
 
     subprocess.run(["git", "init", "--bare", bare_dir], check=True, capture_output=True)
+    # Set bare repo's HEAD to main (git init defaults to master on some systems)
+    subprocess.run(
+        ["git", "symbolic-ref", "HEAD", "refs/heads/main"],
+        cwd=bare_dir,
+        check=True,
+        capture_output=True,
+    )
     subprocess.run(
         ["git", "clone", bare_dir, work_dir], check=True, capture_output=True
     )
@@ -44,6 +51,41 @@ def local_repo():
     )
     subprocess.run(
         ["git", "push", "-u", "origin", "main"],
+        cwd=work_dir,
+        check=True,
+        capture_output=True,
+    )
+
+    # Add more files for get_file_tree tests
+    src_dir = os.path.join(work_dir, "src")
+    os.makedirs(src_dir, exist_ok=True)
+    with open(os.path.join(src_dir, "main.py"), "w", encoding="utf-8") as f:
+        f.write("print('hello')\n")
+    with open(os.path.join(src_dir, "utils.py"), "w", encoding="utf-8") as f:
+        f.write("def helper(): pass\n")
+    subprocess.run(["git", "add", "."], cwd=work_dir, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Add source files"],
+        cwd=work_dir,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "push", "origin", "main"],
+        cwd=work_dir,
+        check=True,
+        capture_output=True,
+    )
+
+    # Add a [skip ci] commit
+    subprocess.run(
+        ["git", "commit", "--allow-empty", "-m", "Empty commit [skip ci]"],
+        cwd=work_dir,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "push", "origin", "main"],
         cwd=work_dir,
         check=True,
         capture_output=True,

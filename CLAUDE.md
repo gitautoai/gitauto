@@ -208,6 +208,7 @@ ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 
 - Co-located Tests: Test files alongside source code
 - Test Patterns: `test_*.py`
+- Git operations (`services/git/`): MUST have both unit tests (mocked `run_subprocess`) AND integration tests that run real git commands against a local bare repo created in tmp. Use the `local_repo` fixture from `services/git/conftest.py` and mark integration tests with `@pytest.mark.integration`. Integration tests verify real git output parsing, not just mocked behavior.
 
 ## Important Notes
 

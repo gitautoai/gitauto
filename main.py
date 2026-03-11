@@ -169,16 +169,14 @@ async def api_sync_files_from_github_to_coverage(
     repo: str,
     body: SyncFilesRequest,
     background_tasks: BackgroundTasks,
-    token: str = Header(..., alias="X-GitHub-Token"),
     api_key: str = Header(..., alias="X-API-Key"),
 ):
-    """Sync repository files from GitHub to coverage database. Returns immediately, runs in background."""
+    """Sync repository files from local clone to coverage database. Returns immediately, runs in background."""
     background_tasks.add_task(
         sync_files_from_github_to_coverage,
         owner=owner,
         repo=repo,
         branch=body.branch,
-        token=token,
         owner_id=body.owner_id,
         repo_id=body.repo_id,
         user_name=body.user_name,

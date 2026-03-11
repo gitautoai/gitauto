@@ -9,13 +9,13 @@ from constants.system_messages.setup_handler import (
 )
 from services.chat_with_agent import chat_with_agent
 from services.efs.get_efs_dir import get_efs_dir
-from services.git.git_clone_to_efs import git_clone_to_efs
-from services.git.get_clone_url import get_clone_url
-from services.github.branches.create_remote_branch import create_remote_branch
-from services.git.delete_remote_branch import delete_remote_branch
-from services.github.branches.get_default_branch import get_default_branch
 from services.git.create_empty_commit import create_empty_commit
+from services.git.create_remote_branch import create_remote_branch
+from services.git.delete_remote_branch import delete_remote_branch
+from services.git.get_clone_url import get_clone_url
+from services.git.get_default_branch import get_default_branch
 from services.git.get_latest_remote_commit_sha import get_latest_remote_commit_sha
+from services.git.git_clone_to_efs import git_clone_to_efs
 from services.claude.tools.tools import TOOLS_FOR_SETUP
 from services.github.pulls.close_pull_request import close_pull_request
 from services.github.pulls.create_pull_request import create_pull_request
@@ -78,15 +78,15 @@ async def setup_handler(
         target_branch = repository["target_branch"]
         logger.info("Using target_branch: %s", target_branch)
     else:
-        repo_info = get_default_branch(owner=owner_name, repo=repo_name, token=token)
-        if repo_info.is_empty:
+        clone_url = get_clone_url(owner_name, repo_name, token)
+        target_branch = get_default_branch(clone_url=clone_url)
+        if not target_branch:
             logger.info("Repository %s/%s is empty, skipping", owner_name, repo_name)
             slack_notify(
                 f"Setup skipped for {owner_name}/{repo_name}: repository is empty",
                 thread_ts=thread_ts,
             )
             return
-        target_branch = repo_info.default_branch
         logger.info("Using default branch as target: %s", target_branch)
 
     efs_dir = get_efs_dir(owner_name, repo_name)

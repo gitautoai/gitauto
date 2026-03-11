@@ -8,18 +8,19 @@ from payloads.aws.event_bridge_scheduler.event_types import EventBridgeScheduler
 from schemas.supabase.types import Coverages, CoveragesInsert
 from services.claude.evaluate_condition import evaluate_condition
 from services.aws.delete_scheduler import delete_scheduler
-from services.git.get_clone_url import get_clone_url
-from services.github.branches.create_remote_branch import create_remote_branch
-from services.github.branches.get_default_branch import get_default_branch
 from services.git.create_empty_commit import create_empty_commit
+from services.git.create_remote_branch import create_remote_branch
+from services.git.get_clone_url import get_clone_url
+from services.git.get_default_branch import get_default_branch
 from services.git.get_latest_remote_commit_sha import get_latest_remote_commit_sha
+from services.efs.get_efs_dir import get_efs_dir
+from services.git.get_file_tree import get_file_tree
 from services.github.files.get_raw_content import get_raw_content
 from services.github.labels.add_labels import add_labels
 from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.pulls.get_open_pull_requests import get_open_pull_requests
 from services.github.token.get_installation_token import get_installation_access_token
-from services.github.trees.get_file_tree import get_file_tree
 from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
 from services.github.types.github_types import BaseArgs
@@ -93,14 +94,16 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         return {"status": "skipped", "message": availability_status["log_message"]}
 
     # Get repository files and coverage data
+    clone_url = get_clone_url(owner_name, repo_name, token)
+    efs_dir = get_efs_dir(owner_name, repo_name)
     target_branch = repo_settings.get("target_branch")
     if not target_branch:
-        target_branch = get_default_branch(
-            owner=owner_name, repo=repo_name, token=token
-        ).default_branch
-    tree_items = get_file_tree(
-        owner=owner_name, repo=repo_name, ref=target_branch, token=token
-    )
+        target_branch = get_default_branch(clone_url=clone_url)
+        if not target_branch:
+            msg = f"Repository {owner_name}/{repo_name} is empty"
+            logger.info(msg)
+            return {"status": "skipped", "message": msg}
+    tree_items = get_file_tree(clone_dir=efs_dir, ref=target_branch)
 
     # Extract necessary data
     all_files_with_sizes = [
@@ -372,7 +375,6 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     # Create a PR
     new_branch = generate_branch_name(trigger="schedule")
-    clone_url = get_clone_url(owner_name, repo_name, token)
     base_args: BaseArgs = {
         "owner_type": event["ownerType"],
         "owner_id": owner_id,
@@ -392,7 +394,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         "reviewers": [user_name],
         "github_urls": [],
         "other_urls": [],
-        "clone_dir": "",  # Rebuilt by deconstruct_github_payload when labeled webhook fires
+        "clone_dir": efs_dir,
         "pr_number": 0,  # Set after create_pull_request below
         "pr_title": "",  # Set after create_pull_request below
         "pr_body": "",  # Set after create_pull_request below

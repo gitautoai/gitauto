@@ -5,7 +5,6 @@ from unittest.mock import patch, AsyncMock
 
 import pytest
 
-from services.github.branches.get_default_branch import RepoInfo
 from services.github.types.repository import RepositoryAddedOrRemoved
 from services.webhook.process_repositories import process_repositories
 
@@ -62,11 +61,17 @@ def mock_os_path_exists():
 
 
 @pytest.fixture
+def mock_is_repo_archived():
+    with patch(
+        "services.webhook.process_repositories.is_repo_archived", return_value=False
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
 def mock_get_default_branch():
     with patch("services.webhook.process_repositories.get_default_branch") as mock:
-        mock.return_value = RepoInfo(
-            default_branch="main", is_empty=False, is_archived=False
-        )
+        mock.return_value = "main"
         yield mock
 
 
@@ -210,6 +215,7 @@ async def test_process_repositories_efs_exists_fetches(
     mock_git_fetch,
     mock_git_reset,
     mock_os_path_exists,
+    mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
@@ -227,10 +233,7 @@ async def test_process_repositories_efs_exists_fetches(
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
-    mock_get_default_branch.side_effect = [
-        RepoInfo(default_branch="main", is_empty=False, is_archived=False),
-        RepoInfo(default_branch="master", is_empty=False, is_archived=False),
-    ]
+    mock_get_default_branch.side_effect = ["main", "master"]
 
     await process_repositories(
         owner_id=12345,
@@ -261,6 +264,7 @@ async def test_process_repositories_efs_not_exists_clones(
     mock_get_clone_url,
     mock_git_clone_to_efs,
     mock_os_path_exists,
+    mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
@@ -304,6 +308,7 @@ async def test_process_repositories_empty_list(
     mock_git_fetch,
     mock_git_reset,
     mock_os_path_exists,
+    mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
@@ -338,6 +343,7 @@ async def test_process_repositories_stats_saved_correctly(
     mock_git_fetch,
     mock_git_reset,
     mock_os_path_exists,
+    mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
@@ -406,6 +412,7 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_git_fetch,
     mock_git_reset,
     mock_os_path_exists,
+    mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
@@ -421,9 +428,7 @@ async def test_process_repositories_empty_repo_skips_clone(
     mock_os_path_isfile,
     mock_delete_remote_branch,
 ):
-    mock_get_default_branch.return_value = RepoInfo(
-        default_branch="main", is_empty=True, is_archived=False
-    )
+    mock_get_default_branch.return_value = None
     single_repo = cast(
         list[RepositoryAddedOrRemoved],
         [
@@ -476,6 +481,7 @@ async def test_process_repositories_non_typescript_deletes_branch_no_pr(
     mock_git_fetch,
     mock_git_reset,
     mock_os_path_exists,
+    mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
@@ -534,6 +540,7 @@ async def test_process_repositories_typescript_creates_pr(
     mock_git_fetch,
     mock_git_reset,
     mock_os_path_exists,
+    mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
