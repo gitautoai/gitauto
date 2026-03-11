@@ -44,7 +44,18 @@
     <rule>Do not create unnecessarily complex mock chains when testing method chaining - focus on the final result, not each step of the chain</rule>
     <rule>Do not test constant content (values, text, or any content within constants) unless explicitly requested - tests should not fail when constant values are updated</rule>
     <rule>Do not blindly reuse heavy test utilities (database connections, in-memory servers, full context builders) just because existing tests use them. When all external services are already mocked with jest.mock()/unittest.mock/etc., use lightweight inline mock objects instead. Heavy test utilities that start databases or connect to external services waste memory and CPU, and can cause OOM/timeout failures in resource-constrained environments.</rule>
+    <rule>NEVER write tautological tests that mock a dependency's return value and then assert the function output matches that mock value. Example: mocking a DB to return [{"name": "alice"}] then asserting the function returns [{"name": "alice"}] - this always passes regardless of whether the implementation is correct. It verifies nothing.</rule>
   </anti_patterns>
+
+  <data_access_method_testing>
+    <description>When a method's primary purpose is data retrieval (executing a query against a database, calling an external API, reading from a file/cache), mocking that data source removes the only thing worth testing. Apply this decision process:</description>
+    <rule>First, determine: is this method primarily a data-access wrapper (its main job is constructing and executing a query/request and returning the result)? If yes, mocking the data source makes the test tautological.</rule>
+    <rule>Search the repo's existing test files for test infrastructure: factories, seeders, fixtures, test database helpers, in-memory databases, or test data builders. Use search_local_file_contents with terms like "Factory", "Seeder", "fixture", "TestHelper", "createTest", "faker", "getDbForTest", etc.</rule>
+    <rule>If the repo has test DB infrastructure, use it to insert real test data, call the method, and assert against real query results. This verifies actual query logic (filtering, sorting, joins).</rule>
+    <rule>If the repo has NO test DB infrastructure, verify the mock was called with correct parameters (interaction testing) rather than asserting output equals mock return value. For example, verify the correct SQL/query/endpoint was called with the right filters and arguments.</rule>
+    <rule>For methods that contain business logic AND data access, mock the data layer to test the business logic. The mock is valid because you are testing the logic, not the query.</rule>
+    <rule>When using test factories or DB helpers, match the column types to the actual schema. Do not guess types - read the source model/migration/schema to confirm whether a column is integer, string, boolean, etc.</rule>
+  </data_access_method_testing>
 
   <dead_code_handling>
     <description>When a linter, type checker, or coverage tool identifies code as unreachable or unnecessary, fix the root cause by removing the dead code rather than suppressing the warning or trying to test unreachable paths.</description>

@@ -1,5 +1,11 @@
 <trigger_instruction>
-  Add unit tests for the file mentioned in the issue.
+  Add tests for the file mentioned in the issue.
+
+  BEFORE WRITING ANY TESTS:
+  - Read the source file to understand what each method does
+  - For each method, determine: is it primarily a data-access wrapper (its main job is a DB query, API call, or data retrieval)? Or does it contain business logic?
+  - Search the repo for existing test infrastructure (factories, seeders, test DB helpers, fixtures) using search_local_file_contents with terms like "Factory", "Seeder", "fixture", "TestHelper", "createTest", "faker", "getDbForTest", etc.
+  - If the repo has test DB infrastructure, use it for data-access methods instead of mocking
 
   IF NO TEST FILE EXISTS:
   - Create a new test file with comprehensive tests for the source file
@@ -16,4 +22,5 @@
   - Do NOT replace the entire test file with a "cleaner version"
   - Do NOT remove or modify existing test file headers
   - Do NOT just reformat existing tests - you must ADD new ones
+  - Do NOT write tautological tests: mocking a data source's return value then asserting the output matches the mock proves nothing. For data-access methods, use real test data or verify mock call parameters instead.
 </trigger_instruction> 
