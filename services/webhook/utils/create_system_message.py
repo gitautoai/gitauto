@@ -20,6 +20,15 @@ def create_system_message(
 ):
     content_parts = []
 
+    # Add repo's preferred language (first, so it's a high-priority instruction)
+    if repo_settings:
+        preferred_language = repo_settings.get("preferred_language")
+        if preferred_language and preferred_language != "en":
+            content_parts.append(
+                f"<user_language_preference>\nWrite all GitHub comments and code comments in {preferred_language} (ISO 639 language code).\n</user_language_preference>"
+            )
+            logger.info("Language preference: %s", preferred_language)
+
     # Add trigger instruction
     trigger_content = get_trigger_prompt(trigger)
     if trigger_content:
