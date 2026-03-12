@@ -10,6 +10,7 @@ import pytest
 # Local imports
 from services.claude.evaluate_condition import EvaluationResult
 from services.supabase.coverages.get_all_coverages import get_all_coverages
+from services.supabase.schedule_pauses.get_schedule_pause import SchedulePause
 from services.webhook.schedule_handler import schedule_handler
 
 
@@ -52,7 +53,7 @@ def test_schedule_handler_trigger_disabled(
     assert "trigger_on_schedule is not enabled" in result["message"]
 
 
-@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 def test_schedule_handler_paused(
@@ -64,13 +65,15 @@ def test_schedule_handler_paused(
         "name": "test-repo",
         "trigger_on_schedule": True,
     }
-    mock_is_paused.return_value = True
+    mock_is_paused.return_value = SchedulePause(
+        pause_start="2026-03-01T00:00:00Z", pause_end="2026-04-01T00:00:00Z"
+    )
     result = schedule_handler(mock_event)
     assert result["status"] == "skipped"
-    assert "schedule is currently paused" in result["message"]
+    assert "schedule is paused from" in result["message"]
 
 
-@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -149,7 +152,7 @@ def test_get_all_coverages_contract():
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.should_skip_test")
 @patch("services.webhook.schedule_handler.evaluate_condition")
-@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -243,7 +246,7 @@ def test_schedule_handler_skips_export_only_files(
 @patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
 @patch("services.webhook.schedule_handler.generate_branch_name")
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
-@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -323,7 +326,7 @@ def test_schedule_handler_skips_empty_files(
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.evaluate_condition")
 @patch("services.webhook.schedule_handler.should_skip_test")
-@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -473,7 +476,7 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.should_skip_test")
 @patch("services.webhook.schedule_handler.evaluate_condition")
-@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -578,7 +581,7 @@ def test_schedule_handler_skips_ai_eval_when_tests_exist(
 
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.should_skip_test")
-@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -664,7 +667,7 @@ def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
 
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.should_skip_test")
-@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -753,7 +756,7 @@ def test_schedule_handler_skips_file_with_open_pr_different_title_format(
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.evaluate_condition")
 @patch("services.webhook.schedule_handler.should_skip_test")
-@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")
@@ -842,7 +845,7 @@ def test_schedule_handler_skips_none_coverage_as_fully_covered(
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
 @patch("services.webhook.schedule_handler.evaluate_condition")
 @patch("services.webhook.schedule_handler.should_skip_test")
-@patch("services.webhook.schedule_handler.is_schedule_paused")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.check_availability")

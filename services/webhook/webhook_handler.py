@@ -42,6 +42,7 @@ from services.webhook.new_pr_handler import handle_new_pr
 from services.webhook.pr_body_handler import write_pr_description
 from services.webhook.push_handler import handle_push
 from services.github.pulls.get_pull_request import get_pull_request
+from services.github.pulls.get_review_inline_comments import get_review_inline_comments
 from services.github.token.get_installation_token import get_installation_access_token
 from services.webhook.review_run_handler import handle_review_run
 from services.webhook.utils.adapt_pr_comment_to_review_payload import (
@@ -239,12 +240,39 @@ async def handle_webhook_event(
         body = review["body"] or ""
 
         if state == "approved":
-            msg = f"PR #{pr_number} approved by `{sender_login}` for `{owner_name}/{repo_name}`"
-            logger.info(msg)
-            slack_notify(msg)
+            logger.info(
+                "PR #%d approved by %s for %s/%s",
+                pr_number,
+                sender_login,
+                owner_name,
+                repo_name,
+            )
             return
 
         if state in ("changes_requested", "commented") and body.strip():
+            # Skip if this review also has inline comments, which trigger separately via pull_request_review_comment with better file/line metadata
+            review_id = review["id"]
+            installation_id = typed_payload["installation"]["id"]
+            token = get_installation_access_token(installation_id=installation_id)
+            inline_comments = get_review_inline_comments(
+                owner=owner_name,
+                repo=repo_name,
+                pr_number=pr_number,
+                review_id=review_id,
+                token=token,
+            )
+            if inline_comments:
+                logger.info(
+                    "PR #%d review (%s) by %s for %s/%s - has %d inline comments, skipping summary (inline events handle it)",
+                    pr_number,
+                    state,
+                    sender_login,
+                    owner_name,
+                    repo_name,
+                    len(inline_comments),
+                )
+                return
+
             adapted_payload = adapt_pr_review_to_review_payload(payload=typed_payload)
             if not adapted_payload:
                 logger.info("Failed to adapt PR review payload, skipping")
@@ -257,9 +285,14 @@ async def handle_webhook_event(
             return
 
         if state in ("changes_requested", "commented"):
-            msg = f"PR #{pr_number} review ({state}) by `{sender_login}` for `{owner_name}/{repo_name}` (empty body, skipping)"
-            logger.info(msg)
-            slack_notify(msg)
+            logger.info(
+                "PR #%d review (%s) by %s for %s/%s - no review summary, skipping",
+                pr_number,
+                state,
+                sender_login,
+                owner_name,
+                repo_name,
+            )
             return
 
         logger.info("Ignoring PR review with state: %s", state)

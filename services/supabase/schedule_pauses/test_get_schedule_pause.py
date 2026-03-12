@@ -6,49 +6,60 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # Local imports
-from services.supabase.schedule_pauses.is_schedule_paused import is_schedule_paused
+from services.supabase.schedule_pauses.get_schedule_pause import (
+    SchedulePause,
+    get_schedule_pause,
+)
 
 
 @pytest.fixture
 def mock_supabase():
-    with patch("services.supabase.schedule_pauses.is_schedule_paused.supabase") as mock:
+    with patch("services.supabase.schedule_pauses.get_schedule_pause.supabase") as mock:
         yield mock
 
 
-class TestIsSchedulePaused:
-    def test_returns_true_when_pause_exists(self, mock_supabase: MagicMock):
+class TestGetSchedulePause:
+    def test_returns_pause_info_when_pause_exists(self, mock_supabase: MagicMock):
         mock_execute = MagicMock()
-        mock_execute.data = [{"id": "uuid-1"}]
+        mock_execute.data = [
+            {
+                "id": "uuid-1",
+                "pause_start": "2026-03-01T00:00:00Z",
+                "pause_end": "2026-04-01T00:00:00Z",
+            }
+        ]
         (
             mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.lte.return_value.gte.return_value.limit.return_value.execute
         ).return_value = mock_execute
 
-        result = is_schedule_paused(owner_id=123, repo_id=456)
+        result = get_schedule_pause(owner_id=123, repo_id=456)
 
-        assert result is True
+        assert result == SchedulePause(
+            pause_start="2026-03-01T00:00:00Z", pause_end="2026-04-01T00:00:00Z"
+        )
         mock_supabase.table.assert_called_with("schedule_pauses")
 
-    def test_returns_false_when_no_pause(self, mock_supabase: MagicMock):
+    def test_returns_none_when_no_pause(self, mock_supabase: MagicMock):
         mock_execute = MagicMock()
         mock_execute.data = []
         (
             mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.lte.return_value.gte.return_value.limit.return_value.execute
         ).return_value = mock_execute
 
-        result = is_schedule_paused(owner_id=123, repo_id=456)
+        result = get_schedule_pause(owner_id=123, repo_id=456)
 
-        assert result is False
+        assert result is None
 
-    def test_returns_false_when_data_is_none(self, mock_supabase: MagicMock):
+    def test_returns_none_when_data_is_none(self, mock_supabase: MagicMock):
         mock_execute = MagicMock()
         mock_execute.data = None
         (
             mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.lte.return_value.gte.return_value.limit.return_value.execute
         ).return_value = mock_execute
 
-        result = is_schedule_paused(owner_id=123, repo_id=456)
+        result = get_schedule_pause(owner_id=123, repo_id=456)
 
-        assert result is False
+        assert result is None
 
     def test_queries_with_utc_timestamp(self, mock_supabase: MagicMock):
         mock_execute = MagicMock()
@@ -67,7 +78,7 @@ class TestIsSchedulePaused:
         mock_select.eq.return_value = mock_eq1
         mock_supabase.table.return_value.select.return_value = mock_select
 
-        is_schedule_paused(owner_id=123, repo_id=456)
+        get_schedule_pause(owner_id=123, repo_id=456)
 
         mock_select.eq.assert_called_with("owner_id", 123)
         mock_eq1.eq.assert_called_with("repo_id", 456)
@@ -77,19 +88,18 @@ class TestIsSchedulePaused:
         assert "T" in lte_arg, f"Expected ISO timestamp with 'T', got: {lte_arg}"
         assert "T" in gte_arg, f"Expected ISO timestamp with 'T', got: {gte_arg}"
 
-    def test_returns_false_on_exception(self, mock_supabase: MagicMock):
+    def test_returns_none_on_exception(self, mock_supabase: MagicMock):
         mock_supabase.table.side_effect = Exception("DB connection failed")
 
-        result = is_schedule_paused(owner_id=123, repo_id=456)
+        result = get_schedule_pause(owner_id=123, repo_id=456)
 
-        assert result is False
+        assert result is None
 
 
-class TestIsSchedulePausedIntegration:
+class TestGetSchedulePauseIntegration:  # pylint: disable=import-outside-toplevel
     """Integration tests against the dev Supabase database."""
 
-    def test_returns_true_for_active_pause(self):
-        """Insert a pause, verify it's detected, then clean up."""
+    def test_returns_pause_info_for_active_pause(self):
         from services.supabase.client import supabase
 
         owner_id = 159883862
@@ -115,17 +125,19 @@ class TestIsSchedulePausedIntegration:
         )
 
         try:
-            result = is_schedule_paused(owner_id=owner_id, repo_id=repo_id)
-            assert result is True
+            result = get_schedule_pause(owner_id=owner_id, repo_id=repo_id)
+            assert result is not None
+            assert result.pause_start
+            assert result.pause_end
         finally:
             supabase.table("schedule_pauses").delete().eq(
                 "id", row.data[0]["id"]
             ).execute()
 
-    def test_returns_false_for_nonexistent_owner(self):
-        result = is_schedule_paused(owner_id=999999999, repo_id=999999999)
-        assert result is False
+    def test_returns_none_for_nonexistent_owner(self):
+        result = get_schedule_pause(owner_id=999999999, repo_id=999999999)
+        assert result is None
 
-    def test_returns_false_for_unpaused_repo(self):
-        result = is_schedule_paused(owner_id=159883862, repo_id=999999999)
-        assert result is False
+    def test_returns_none_for_unpaused_repo(self):
+        result = get_schedule_pause(owner_id=159883862, repo_id=999999999)
+        assert result is None

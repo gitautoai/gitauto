@@ -8,21 +8,23 @@ from services.github.types.user import User
 
 
 class ReviewRunComment(TypedDict):
-    id: int
-    node_id: str
     body: str
-    user: User
-    path: str
-    subject_type: str
+    id: int
     line: int
+    node_id: str
+    path: str
+    # Present in pull_request_review_comment events
+    pull_request_review_id: NotRequired[int]
     side: str
+    subject_type: str
+    user: User
 
 
 class ReviewRunPayload(TypedDict):
     action: str
     comment: ReviewRunComment
+    installation: Installation
+    organization: NotRequired[Organization]  # Personal repos don't have this key
     pull_request: PullRequest
     repository: Repository
-    organization: NotRequired[Organization]  # Personal repos don't have this key
     sender: User
-    installation: Installation
