@@ -477,6 +477,7 @@ class Repositories(TypedDict):
     schedule_execution_count: int
     schedule_interval_minutes: int
     test_dir_prefixes: list[str]
+    preferred_language: str | None
 
 
 class RepositoriesInsert(TypedDict):
@@ -512,6 +513,7 @@ class RepositoriesInsert(TypedDict):
     schedule_execution_count: int
     schedule_interval_minutes: int
     test_dir_prefixes: list[str]
+    preferred_language: NotRequired[str | None]
 
 
 class RepositoryFeatures(TypedDict):

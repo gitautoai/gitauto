@@ -12,6 +12,7 @@ from services.webhook.utils.create_system_message import create_system_message
 def create_repositories_data(
     structured_rules: dict[str, Any] | None = None,
     repo_rules: str | None = None,
+    preferred_language: str | None = None,
     **overrides,
 ) -> Repositories:
     base_data = {
@@ -46,6 +47,7 @@ def create_repositories_data(
         "schedule_day_of_week": None,
         "schedule_include_weekends": False,
         "structured_rules": structured_rules,
+        "preferred_language": preferred_language,
         "trigger_on_pr_change": True,
         "schedule_execution_count": 0,
         "schedule_interval_minutes": 60,
@@ -399,3 +401,47 @@ def test_gitauto_md_comes_after_repo_rules(
     freeform_pos = result.index("<freeform_repository_rules>")
     gitauto_pos = result.index("<gitauto_md_rules>")
     assert gitauto_pos > freeform_pos
+
+
+def test_with_preferred_language_japanese(mock_read_xml_file, mock_get_trigger_prompt):
+    mock_read_xml_file.return_value = "<rules>Rules</rules>"
+    mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+
+    repo_settings = create_repositories_data(preferred_language="ja")
+    result = create_system_message("dashboard", repo_settings)
+
+    assert "<user_language_preference>" in result
+    assert "ja" in result
+    assert "</user_language_preference>" in result
+
+
+def test_with_no_preferred_language(mock_read_xml_file, mock_get_trigger_prompt):
+    mock_read_xml_file.return_value = "<rules>Rules</rules>"
+    mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+
+    repo_settings = create_repositories_data(preferred_language=None)
+    result = create_system_message("dashboard", repo_settings)
+
+    assert "<user_language_preference>" not in result
+
+
+def test_with_preferred_language_english(mock_read_xml_file, mock_get_trigger_prompt):
+    mock_read_xml_file.return_value = "<rules>Rules</rules>"
+    mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+
+    repo_settings = create_repositories_data(preferred_language="en")
+    result = create_system_message("dashboard", repo_settings)
+
+    assert "<user_language_preference>" not in result
+
+
+def test_preferred_language_appears_first(mock_read_xml_file, mock_get_trigger_prompt):
+    mock_read_xml_file.return_value = "<rules>Rules</rules>"
+    mock_get_trigger_prompt.return_value = "<trigger>Trigger</trigger>"
+
+    repo_settings = create_repositories_data(preferred_language="fr")
+    result = create_system_message("dashboard", repo_settings)
+
+    lang_pos = result.index("<user_language_preference>")
+    trigger_pos = result.index("<trigger>")
+    assert lang_pos < trigger_pos
