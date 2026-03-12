@@ -168,7 +168,7 @@ class TestHandler:
         mock_slack_notify.assert_has_calls(
             [
                 call("Event Scheduler started for test-owner/test-repo"),
-                call("@channel Failed: Something went wrong", "thread-123"),
+                call("<!channel> Failed: Something went wrong", "thread-123"),
             ]
         )
         assert mock_slack_notify.call_count == 2
@@ -660,7 +660,7 @@ class TestEdgeCases:
         mock_slack_notify.assert_has_calls(
             [
                 call("Event Scheduler started for test-owner/test-repo"),
-                call("@channel Failed: Unknown status", "thread-789"),
+                call("<!channel> Failed: Unknown status", "thread-789"),
             ]
         )
         assert mock_slack_notify.call_count == 2
@@ -727,7 +727,7 @@ class TestEdgeCases:
         mock_slack_notify.assert_has_calls(
             [
                 call("Event Scheduler started for test-owner/test-repo"),
-                call("@channel Failed: Unknown error", "thread-999"),
+                call("<!channel> Failed: Unknown error", "thread-999"),
             ]
         )
         assert mock_slack_notify.call_count == 2

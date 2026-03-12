@@ -31,6 +31,7 @@ from services.slack.slack_notify import slack_notify
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_reference import get_reference
 from services.github.pulls.get_pull_request_files import get_pull_request_files
+from services.github.pulls.get_review_summary import get_review_summary
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.users.get_email_from_commits import get_email_from_commits
@@ -116,6 +117,20 @@ async def handle_review_run(
         )
         if email:
             sender_info.email = email
+
+    # Fetch review summary body if this inline comment is part of a review
+    review_summary = ""
+    pull_request_review_id = review.get("pull_request_review_id")
+    if pull_request_review_id:
+        summary_body = get_review_summary(
+            owner=owner_name,
+            repo=repo_name,
+            pr_number=pr_number,
+            review_id=pull_request_review_id,
+            token=token,
+        )
+        if summary_body and summary_body.strip():
+            review_summary = summary_body
 
     # For inline review comments, get thread context and check resolved status
     if not review_path:
@@ -331,6 +346,8 @@ async def handle_review_run(
         "target_dir": target_dir,
         "target_dir_files": target_dir_files,
     }
+    if review_summary:
+        input_message["review_summary"] = review_summary
     if fixes_applied or pre_existing_errors:
         input_message["step_2_prettier_eslint_note"] = (
             "Before you start, we ran Prettier/ESLint --fix. "
@@ -448,6 +465,6 @@ async def handle_review_run(
         )
 
     # End notification
-    end_msg = "Completed" if is_completed else "@channel Failed"
+    end_msg = "Completed" if is_completed else "<!channel> Failed"
     slack_notify(end_msg, thread_ts)
     return

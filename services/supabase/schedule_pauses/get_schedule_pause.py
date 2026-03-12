@@ -1,4 +1,5 @@
 # Standard imports
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
 # Local imports
@@ -7,14 +8,19 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
 
-@handle_exceptions(default_return_value=False, raise_on_error=False)
-def is_schedule_paused(owner_id: int, repo_id: int):
-    """Check if a schedule is currently paused for a given owner and repo."""
+@dataclass
+class SchedulePause:
+    pause_start: str
+    pause_end: str
+
+
+@handle_exceptions(default_return_value=None, raise_on_error=False)
+def get_schedule_pause(owner_id: int, repo_id: int):
     now_utc = datetime.now(timezone.utc).isoformat()
 
     result = (
         supabase.table("schedule_pauses")
-        .select("id")
+        .select("id, pause_start, pause_end")
         .eq("owner_id", owner_id)
         .eq("repo_id", repo_id)
         .lte("pause_start", now_utc)
@@ -24,12 +30,18 @@ def is_schedule_paused(owner_id: int, repo_id: int):
     )
 
     if result and result.data:
+        row = result.data[0]
+        pause = SchedulePause(
+            pause_start=row["pause_start"], pause_end=row["pause_end"]
+        )
         logger.info(
-            "Schedule paused for owner_id=%s, repo_id=%s (pause id: %s)",
+            "Schedule paused for owner_id=%s, repo_id=%s from %s to %s (pause id: %s)",
             owner_id,
             repo_id,
-            result.data[0]["id"],
+            pause.pause_start,
+            pause.pause_end,
+            row["id"],
         )
-        return True
+        return pause
 
-    return False
+    return None

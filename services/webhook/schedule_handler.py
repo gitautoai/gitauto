@@ -28,7 +28,7 @@ from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.supabase.coverages.insert_coverages import insert_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
 from services.supabase.repositories.get_repository import get_repository
-from services.supabase.schedule_pauses.is_schedule_paused import is_schedule_paused
+from services.supabase.schedule_pauses.get_schedule_pause import get_schedule_pause
 from services.stripe.check_availability import check_availability
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
@@ -76,8 +76,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         return {"status": "skipped", "message": msg}
 
     # Check if schedule is paused for this repo
-    if is_schedule_paused(owner_id=owner_id, repo_id=repo_id):
-        msg = f"Skipping repo_id: {repo_id} - schedule is currently paused"
+    pause_info = get_schedule_pause(owner_id=owner_id, repo_id=repo_id)
+    if pause_info:
+        msg = f"Skipping repo_id: {repo_id} - schedule is paused from {pause_info.pause_start} to {pause_info.pause_end}"
         logger.info(msg)
         return {"status": "skipped", "message": msg}
 
