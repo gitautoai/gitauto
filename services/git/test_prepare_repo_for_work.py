@@ -1,6 +1,6 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 
 import pytest
 
@@ -22,16 +22,9 @@ def mock_get_clone_url():
 
 
 @pytest.fixture
-def mock_clone_tasks():
-    with patch("services.git.prepare_repo_for_work.clone_tasks", {}) as mock:
-        yield mock
-
-
-@pytest.fixture
 def mock_git_fetch():
     with patch(
         "services.git.prepare_repo_for_work.git_fetch",
-        new_callable=AsyncMock,
         return_value=True,
     ) as mock:
         yield mock
@@ -41,7 +34,6 @@ def mock_git_fetch():
 def mock_git_reset():
     with patch(
         "services.git.prepare_repo_for_work.git_reset",
-        new_callable=AsyncMock,
         return_value=True,
     ) as mock:
         yield mock
@@ -51,7 +43,6 @@ def mock_git_reset():
 def mock_git_checkout():
     with patch(
         "services.git.prepare_repo_for_work.git_checkout",
-        new_callable=AsyncMock,
         return_value=True,
     ) as mock:
         yield mock
@@ -69,8 +60,7 @@ def mock_extract():
         yield mock
 
 
-@pytest.mark.asyncio
-async def test_prepare_repo_waits_for_clone_task(
+def test_prepare_repo_copies_and_extracts(
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_fetch,
@@ -79,40 +69,7 @@ async def test_prepare_repo_waits_for_clone_task(
     mock_copy_repo,
     mock_extract,
 ):
-    clone_task_awaited = False
-
-    async def mock_await():
-        nonlocal clone_task_awaited
-        clone_task_awaited = True
-
-    with patch(
-        "services.git.prepare_repo_for_work.clone_tasks",
-        {"/mnt/efs/owner/repo": mock_await()},
-    ):
-        await prepare_repo_for_work(
-            owner="owner",
-            repo="repo",
-            pr_branch="feature",
-            token="token",
-            clone_dir="/tmp/repo",
-        )
-
-    mock_copy_repo.assert_called_once()
-    mock_extract.assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_prepare_repo_copies_and_symlinks(
-    mock_get_efs_dir,
-    mock_get_clone_url,
-    mock_clone_tasks,
-    mock_git_fetch,
-    mock_git_reset,
-    mock_git_checkout,
-    mock_copy_repo,
-    mock_extract,
-):
-    await prepare_repo_for_work(
+    prepare_repo_for_work(
         owner="owner",
         repo="repo",
         pr_branch="feature",
@@ -124,18 +81,16 @@ async def test_prepare_repo_copies_and_symlinks(
     mock_extract.assert_called_once_with("/mnt/efs/owner/repo", "/tmp/repo")
 
 
-@pytest.mark.asyncio
-async def test_prepare_repo_fetches_pr_branch(
+def test_prepare_repo_fetches_pr_branch(
     mock_get_efs_dir,
     mock_get_clone_url,
-    mock_clone_tasks,
     mock_git_fetch,
     mock_git_reset,
     mock_git_checkout,
     mock_copy_repo,
     mock_extract,
 ):
-    await prepare_repo_for_work(
+    prepare_repo_for_work(
         owner="owner",
         repo="repo",
         pr_branch="feature",

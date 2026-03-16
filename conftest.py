@@ -6,16 +6,8 @@ import random
 os.environ.setdefault("GITAUTO_API_KEY", "test-api-key")
 
 import pytest
-from services.git.git_clone_to_efs import clone_tasks
 from services.github.token.get_installation_token import get_installation_access_token
 from services.types.base_args import BaseArgs
-
-
-@pytest.fixture(autouse=True)
-def clear_clone_tasks():
-    """Clear clone_tasks dict after each test to prevent subprocess cleanup warnings."""
-    yield
-    clone_tasks.clear()
 
 
 # Test constants as fixtures

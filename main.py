@@ -196,7 +196,7 @@ async def api_clone_and_install(
     api_key: str = Header(..., alias="X-API-Key"),
 ):
     verify_api_key(api_key)
-    return await clone_and_install(owner, repo)
+    return clone_and_install(owner, repo)
 
 
 @app.post(path="/api/{owner}/{repo}/setup_coverage_workflow")

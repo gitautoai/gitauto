@@ -73,7 +73,7 @@ async def handle_installation_created(payload: InstallationPayload):
         display_name=user_info.display_name,
     )
 
-    await process_repositories(
+    process_repositories(
         owner_id=owner_id,
         owner_name=owner_name,
         owner_type=owner_type,

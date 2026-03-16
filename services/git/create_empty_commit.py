@@ -42,6 +42,7 @@ def create_empty_commit(
     try:
         run_subprocess(["git", "config", "user.name", GITHUB_APP_USER_NAME], cwd)
         run_subprocess(["git", "config", "user.email", GITHUB_APP_GIT_EMAIL], cwd)
+
         run_subprocess(
             args=["git", "commit", "--allow-empty", "-m", message],
             cwd=cwd,

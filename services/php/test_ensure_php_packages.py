@@ -13,12 +13,11 @@ def efs_dir(tmp_path):
     return str(tmp_path)
 
 
-@pytest.mark.asyncio
-async def test_returns_false_when_no_composer_json():
+def test_returns_false_when_no_composer_json():
     with patch("services.php.ensure_php_packages.read_local_file") as mock_get:
         mock_get.return_value = None
 
-        result = await ensure_php_packages(
+        result = ensure_php_packages(
             owner_id=123,
             efs_dir="/mnt/efs/owner/repo",
         )
@@ -26,8 +25,7 @@ async def test_returns_false_when_no_composer_json():
         assert result is False
 
 
-@pytest.mark.asyncio
-async def test_reuses_when_vendor_and_content_match(efs_dir):
+def test_reuses_when_vendor_and_content_match(efs_dir):
     # Set up EFS with matching vendor, autoload, composer.json
     vendor_path = os.path.join(efs_dir, "vendor")
     os.makedirs(os.path.join(vendor_path, "autoload.php").rsplit("/", 1)[0])
@@ -46,7 +44,7 @@ async def test_reuses_when_vendor_and_content_match(efs_dir):
         side_effect=read_side_effect,
     ):
         with patch("services.php.ensure_php_packages.fcntl.flock"):
-            result = await ensure_php_packages(
+            result = ensure_php_packages(
                 owner_id=123,
                 efs_dir=efs_dir,
             )
@@ -54,15 +52,14 @@ async def test_reuses_when_vendor_and_content_match(efs_dir):
             assert result is True
 
 
-@pytest.mark.asyncio
-async def test_triggers_codebuild_when_no_vendor(efs_dir):
+def test_triggers_codebuild_when_no_vendor(efs_dir):
     with patch("services.php.ensure_php_packages.read_local_file") as mock_get:
         mock_get.return_value = '{"require": {}}'
         with patch("services.php.ensure_php_packages.fcntl.flock"):
             with patch(
                 "services.php.ensure_php_packages.run_install_via_codebuild"
             ) as mock_codebuild:
-                result = await ensure_php_packages(
+                result = ensure_php_packages(
                     owner_id=123,
                     efs_dir=efs_dir,
                 )
@@ -71,8 +68,7 @@ async def test_triggers_codebuild_when_no_vendor(efs_dir):
                 assert result is False
 
 
-@pytest.mark.asyncio
-async def test_triggers_codebuild_when_content_differs(efs_dir):
+def test_triggers_codebuild_when_content_differs(efs_dir):
     # Set up EFS with old composer.json
     vendor_path = os.path.join(efs_dir, "vendor")
     os.makedirs(vendor_path)
@@ -87,7 +83,7 @@ async def test_triggers_codebuild_when_content_differs(efs_dir):
             with patch(
                 "services.php.ensure_php_packages.run_install_via_codebuild"
             ) as mock_codebuild:
-                result = await ensure_php_packages(
+                result = ensure_php_packages(
                     owner_id=123,
                     efs_dir=efs_dir,
                 )
@@ -96,8 +92,7 @@ async def test_triggers_codebuild_when_content_differs(efs_dir):
                 assert result is False
 
 
-@pytest.mark.asyncio
-async def test_triggers_codebuild_when_autoload_missing(efs_dir):
+def test_triggers_codebuild_when_autoload_missing(efs_dir):
     # vendor exists but autoload.php missing
     os.makedirs(os.path.join(efs_dir, "vendor"))
 
@@ -107,7 +102,7 @@ async def test_triggers_codebuild_when_autoload_missing(efs_dir):
             with patch(
                 "services.php.ensure_php_packages.run_install_via_codebuild"
             ) as mock_codebuild:
-                result = await ensure_php_packages(
+                result = ensure_php_packages(
                     owner_id=123,
                     efs_dir=efs_dir,
                 )
@@ -116,8 +111,7 @@ async def test_triggers_codebuild_when_autoload_missing(efs_dir):
                 assert result is False
 
 
-@pytest.mark.asyncio
-async def test_triggers_codebuild_when_lock_differs(efs_dir):
+def test_triggers_codebuild_when_lock_differs(efs_dir):
     # Set up EFS with matching composer.json but different lock
     vendor_path = os.path.join(efs_dir, "vendor")
     os.makedirs(vendor_path)
@@ -143,7 +137,7 @@ async def test_triggers_codebuild_when_lock_differs(efs_dir):
             with patch(
                 "services.php.ensure_php_packages.run_install_via_codebuild"
             ) as mock_codebuild:
-                result = await ensure_php_packages(
+                result = ensure_php_packages(
                     owner_id=123,
                     efs_dir=efs_dir,
                 )
