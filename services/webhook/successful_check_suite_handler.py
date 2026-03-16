@@ -2,8 +2,10 @@ from typing import cast
 
 from config import PRODUCT_ID
 from constants.urls import DOC_URLS
+from services.efs.copy_repo_from_efs_to_tmp import copy_repo_from_efs_to_tmp
 from services.efs.get_efs_dir import get_efs_dir
 from services.git.check_commit_has_skip_ci import check_commit_has_skip_ci
+from services.git.get_clone_dir import get_clone_dir
 from services.github.branches.get_required_status_checks import (
     get_required_status_checks,
 )
@@ -66,7 +68,9 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     # Without this early check, the handler could attempt to auto-merge an empty PR.
     head_sha = check_suite["head_sha"]
     efs_dir = get_efs_dir(owner_name, repo_name)
-    if check_commit_has_skip_ci(commit_sha=head_sha, clone_dir=efs_dir):
+    clone_dir = get_clone_dir(owner_name, repo_name, pr_number=pr_number)
+    copy_repo_from_efs_to_tmp(efs_dir, clone_dir)
+    if check_commit_has_skip_ci(commit_sha=head_sha, clone_dir=clone_dir):
         logger.info("Last commit has [skip ci], skipping auto-merge check")
         return
 
