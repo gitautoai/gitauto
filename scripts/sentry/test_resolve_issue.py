@@ -1,5 +1,4 @@
-# pylint: disable=redefined-outer-name
-# pyright: reportUnusedVariable=false
+import os
 import subprocess
 import sys
 from unittest.mock import MagicMock, patch
