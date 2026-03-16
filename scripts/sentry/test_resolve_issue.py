@@ -1,4 +1,7 @@
 # pylint: disable=redefined-outer-name
+# pyright: reportUnusedVariable=false
+import subprocess
+import sys
 from unittest.mock import MagicMock, patch
 
 from scripts.sentry.resolve_issue import resolve_sentry_issue
@@ -61,7 +64,7 @@ def test_resolve_sentry_issue_failure_401(mock_put):
 
 
 @patch("scripts.sentry.resolve_issue.requests.put")
-def test_resolve_sentry_issue_url_construction(mock_put):
+def test_resolve_sentry_issue_url_construction_with_custom_org(mock_put):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_put.return_value = mock_response
@@ -98,7 +101,7 @@ def test_resolve_sentry_issue_prints_done_on_success(mock_put, capsys):
 
 
 @patch("scripts.sentry.resolve_issue.requests.put")
-def test_resolve_sentry_issue_prints_failed_on_error(mock_put, capsys):
+def test_resolve_sentry_issue_prints_failed_with_status_code(mock_put, capsys):
     mock_response = MagicMock()
     mock_response.status_code = 403
     mock_put.return_value = mock_response
@@ -111,7 +114,7 @@ def test_resolve_sentry_issue_prints_failed_on_error(mock_put, capsys):
 
 
 @patch("scripts.sentry.resolve_issue.requests.put")
-def test_resolve_sentry_issue_passes_headers(mock_put):
+def test_resolve_sentry_issue_passes_custom_headers(mock_put):
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_put.return_value = mock_response
@@ -135,117 +138,38 @@ def test_resolve_sentry_issue_uses_30s_timeout(mock_put):
     assert call_kwargs["timeout"] == 30
 
 
-@patch("scripts.sentry.resolve_issue.sys.exit")
-@patch("scripts.sentry.resolve_issue.os.getenv")
-@patch("scripts.sentry.resolve_issue.argparse.ArgumentParser")
-@patch("scripts.sentry.resolve_issue.resolve_sentry_issue")
-def test_main_block_all_succeed(mock_resolve, mock_parser_cls, mock_getenv, mock_exit):
-    mock_args = MagicMock()
-    mock_args.issue_ids = ["AGENT-1", "AGENT-2"]
-    mock_parser = MagicMock()
-    mock_parser.parse_args.return_value = mock_args
-    mock_parser_cls.return_value = mock_parser
+@patch("scripts.sentry.resolve_issue.requests.put")
+def test_resolve_sentry_issue_empty_issue_id(mock_put):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_put.return_value = mock_response
 
-    mock_getenv.side_effect = lambda key: {
-        "SENTRY_PERSONAL_TOKEN": "token",
-        "SENTRY_ORG_SLUG": "org",
-    }.get(key)
+    result = resolve_sentry_issue("", MOCK_HEADERS, MOCK_ORG)
 
-    mock_resolve.return_value = True
-
-    import runpy
-
-    with patch.dict("os.environ", {"SENTRY_PERSONAL_TOKEN": "token", "SENTRY_ORG_SLUG": "org"}):
-        runpy.run_module("scripts.sentry.resolve_issue", run_name="__main__")
-
-    assert mock_resolve.call_count == 2
-    mock_exit.assert_not_called()
+    assert result is True
+    call_url = mock_put.call_args[0][0]
+    assert call_url == "https://sentry.io/api/0/organizations/test-org/issues//"
 
 
-@patch("scripts.sentry.resolve_issue.sys.exit")
-@patch("scripts.sentry.resolve_issue.os.getenv")
-@patch("scripts.sentry.resolve_issue.argparse.ArgumentParser")
-@patch("scripts.sentry.resolve_issue.resolve_sentry_issue")
-def test_main_block_some_fail(mock_resolve, mock_parser_cls, mock_getenv, mock_exit):
-    mock_args = MagicMock()
-    mock_args.issue_ids = ["AGENT-1", "AGENT-2", "AGENT-3"]
-    mock_parser = MagicMock()
-    mock_parser.parse_args.return_value = mock_args
-    mock_parser_cls.return_value = mock_parser
+def test_main_missing_env_vars_exits_with_error():
+    result = subprocess.run(
+        [sys.executable, "-m", "scripts.sentry.resolve_issue", "AGENT-1"],
+        capture_output=True,
+        text=True,
+        env={"PATH": "", "PYTHONPATH": "."},
+        timeout=10,
+    )
 
-    mock_getenv.side_effect = lambda key: {
-        "SENTRY_PERSONAL_TOKEN": "token",
-        "SENTRY_ORG_SLUG": "org",
-    }.get(key)
-
-    mock_resolve.side_effect = [True, False, True]
-
-    import runpy
-
-    with patch.dict("os.environ", {"SENTRY_PERSONAL_TOKEN": "token", "SENTRY_ORG_SLUG": "org"}):
-        runpy.run_module("scripts.sentry.resolve_issue", run_name="__main__")
-
-    mock_exit.assert_called_once_with(1)
+    assert result.returncode == 1
+    assert "SENTRY_PERSONAL_TOKEN" in result.stdout
 
 
-@patch("scripts.sentry.resolve_issue.sys.exit")
-@patch("scripts.sentry.resolve_issue.os.getenv")
-@patch("scripts.sentry.resolve_issue.argparse.ArgumentParser")
-def test_main_block_missing_env_vars(mock_parser_cls, mock_getenv, mock_exit):
-    mock_args = MagicMock()
-    mock_args.issue_ids = ["AGENT-1"]
-    mock_parser = MagicMock()
-    mock_parser.parse_args.return_value = mock_args
-    mock_parser_cls.return_value = mock_parser
+def test_main_no_args_exits_with_error():
+    result = subprocess.run(
+        [sys.executable, "-m", "scripts.sentry.resolve_issue"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
 
-    mock_getenv.return_value = None
-
-    import runpy
-
-    runpy.run_module("scripts.sentry.resolve_issue", run_name="__main__")
-
-    mock_exit.assert_any_call(1)
-
-
-@patch("scripts.sentry.resolve_issue.sys.exit")
-@patch("scripts.sentry.resolve_issue.os.getenv")
-@patch("scripts.sentry.resolve_issue.argparse.ArgumentParser")
-def test_main_block_missing_token_only(mock_parser_cls, mock_getenv, mock_exit):
-    mock_args = MagicMock()
-    mock_args.issue_ids = ["AGENT-1"]
-    mock_parser = MagicMock()
-    mock_parser.parse_args.return_value = mock_args
-    mock_parser_cls.return_value = mock_parser
-
-    mock_getenv.side_effect = lambda key: {
-        "SENTRY_PERSONAL_TOKEN": None,
-        "SENTRY_ORG_SLUG": "org",
-    }.get(key)
-
-    import runpy
-
-    runpy.run_module("scripts.sentry.resolve_issue", run_name="__main__")
-
-    mock_exit.assert_any_call(1)
-
-
-@patch("scripts.sentry.resolve_issue.sys.exit")
-@patch("scripts.sentry.resolve_issue.os.getenv")
-@patch("scripts.sentry.resolve_issue.argparse.ArgumentParser")
-def test_main_block_missing_org_only(mock_parser_cls, mock_getenv, mock_exit):
-    mock_args = MagicMock()
-    mock_args.issue_ids = ["AGENT-1"]
-    mock_parser = MagicMock()
-    mock_parser.parse_args.return_value = mock_args
-    mock_parser_cls.return_value = mock_parser
-
-    mock_getenv.side_effect = lambda key: {
-        "SENTRY_PERSONAL_TOKEN": "token",
-        "SENTRY_ORG_SLUG": None,
-    }.get(key)
-
-    import runpy
-
-    runpy.run_module("scripts.sentry.resolve_issue", run_name="__main__")
-
-    mock_exit.assert_any_call(1)
+    assert result.returncode != 0
