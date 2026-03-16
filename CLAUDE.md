@@ -441,16 +441,20 @@ When making architectural decisions, ask "why" 5 times:
 4. Think about OPTIMIZATIONS (parallel execution, caching, copying from nearby resources)
 5. Consider EACH HANDLER's specific context (new PR vs existing PR, empty EFS vs populated EFS)
 
-## Always Write Tests for New Code
+## Always Write Tests for New Code AND Bug Fixes
 
-**CRITICAL**: When you create new functions/modules, ALWAYS write tests without being asked.
+**CRITICAL**: When you create new functions/modules OR fix a bug, ALWAYS write tests without being asked.
 
 - Don't wait for the user to say "where are the tests?"
 - Don't wait until LGTM to realize tests are missing
 - Write tests as part of the implementation, not as an afterthought
+- When fixing a bug, ALWAYS add a test case that reproduces the bug and verifies the fix. The test should fail without the fix and pass with it.
 
 **Bad**: Create `services/efs/is_efs_install_ready.py` → wait for user to ask for tests
 **Good**: Create `services/efs/is_efs_install_ready.py` → immediately create `services/efs/test_is_efs_install_ready.py`
+
+**Bad**: Fix `create_empty_commit` by adding `--no-verify` → no test
+**Good**: Fix `create_empty_commit` by adding `--no-verify` → immediately add `test_create_empty_commit_skips_pre_commit_hooks`
 
 ## Critical Thinking for Production Issues
 

@@ -144,6 +144,8 @@ Resources:
           LocalMountPath: /mnt/efs
       Environment:
         Variables:
+          # Lambda's default HOME (/home/sbx_user1051) doesn't exist, causing npm/git/etc to fail when they try to write to HOME
+          HOME: '/tmp'
           ANTHROPIC_API_KEY: '{{resolve:ssm:/gitauto/ANTHROPIC_API_KEY}}'
           ENV: '{{resolve:ssm:/gitauto/ENV}}'
           GH_APP_ID: '{{resolve:ssm:/gitauto/GH_APP_ID}}'

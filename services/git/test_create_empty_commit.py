@@ -49,6 +49,7 @@ def test_create_empty_commit_with_clone_dir(base_args_with_clone):
                 "git",
                 "commit",
                 "--allow-empty",
+                "--no-verify",
                 "-m",
                 "Empty commit to trigger final tests",
             ],
@@ -90,6 +91,22 @@ def test_create_empty_commit_without_clone_dir(base_args_without_clone):
         mock_rmtree.assert_called_once_with("/tmp/gitauto-tmp", ignore_errors=True)
 
 
+def test_create_empty_commit_skips_pre_commit_hooks(base_args_with_clone):
+    """Reproduces production failure: repos with pre-commit hooks (e.g. lint-staged)
+    fail in Lambda because npm can't mkdir in /home/sbx_user1051. --no-verify skips hooks.
+    """
+    with patch(
+        "services.git.create_empty_commit.run_subprocess"
+    ) as mock_subprocess, patch(
+        "services.git.create_empty_commit.os.path.isdir", return_value=True
+    ) as _mock_isdir:  # noqa: F841
+        create_empty_commit(base_args_with_clone)
+
+        commit_call = mock_subprocess.call_args_list[2]
+        assert "--no-verify" in commit_call[1]["args"]
+        assert "--allow-empty" in commit_call[1]["args"]
+
+
 def test_create_empty_commit_failure(base_args_with_clone):
     with patch(
         "services.git.create_empty_commit.run_subprocess"
@@ -118,7 +135,14 @@ def test_create_empty_commit_custom_message(base_args_with_clone):
 
         commit_call = mock_subprocess.call_args_list[2]
         assert commit_call == call(
-            args=["git", "commit", "--allow-empty", "-m", "Custom message"],
+            args=[
+                "git",
+                "commit",
+                "--allow-empty",
+                "--no-verify",
+                "-m",
+                "Custom message",
+            ],
             cwd="/tmp/test-owner/test-repo/pr-123",
         )
 
