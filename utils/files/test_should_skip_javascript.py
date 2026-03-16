@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from utils.files.should_skip_javascript import should_skip_javascript
 
 
@@ -962,6 +963,91 @@ def test_exported_async_method():
     return result;
   }
 }"""
+    assert should_skip_javascript(content) is False
+
+
+def test_istanbul_ignore_file():
+    # Files with /* istanbul ignore file */ pragma should be skipped
+    content = """/* istanbul ignore file */
+export interface FormData {
+  [key: string]: boolean | number | string;
+}
+
+export interface HubspotForm {
+  id: string;
+  data: FormData;
+  hubspotTracker?: string;
+}
+"""
+    assert should_skip_javascript(content) is True
+
+
+def test_c8_ignore_file():
+    # Files with /* c8 ignore file */ pragma should be skipped
+    content = """/* c8 ignore file */
+export function doSomething() {
+  return 42;
+}
+"""
+    assert should_skip_javascript(content) is True
+
+
+def test_exported_interface():
+    # export interface should be skipped - no runtime code
+    content = """export interface FormData {
+  [key: string]: boolean | number | string;
+}
+
+export interface HubspotForm {
+  id: string;
+  data: FormData;
+  hubspotTracker?: string;
+}
+"""
+    assert should_skip_javascript(content) is True
+
+
+def test_exported_enum():
+    # export enum should be skipped - type-only declaration
+    content = """export enum Status {
+  Active = 'active',
+  Inactive = 'inactive',
+  Pending = 'pending'
+}
+"""
+    assert should_skip_javascript(content) is True
+
+
+def test_exported_interface_with_imports():
+    # Exported interfaces with imports should be skipped
+    content = """import { SomeType } from './types';
+
+export interface Config {
+  timeout: number;
+  retries: number;
+  baseUrl: string;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  config?: Config;
+}
+"""
+    assert should_skip_javascript(content) is True
+
+
+def test_exported_enum_with_function():
+    # export enum alongside a function should NOT be skipped
+    content = """export enum Status {
+  Active = 'active',
+  Inactive = 'inactive'
+}
+
+export function getStatus(code: number): Status {
+  return code === 1 ? Status.Active : Status.Inactive;
+}
+"""
     assert should_skip_javascript(content) is False
 
 
