@@ -151,11 +151,16 @@ def test_resolve_sentry_issue_empty_issue_id(mock_put):
 
 
 def test_main_missing_env_vars_exits_with_error():
+    clean_env = {
+        "PATH": os.environ.get("PATH", ""),
+        "PYTHONPATH": ".",
+        "HOME": os.environ.get("HOME", ""),
+    }
     result = subprocess.run(
         [sys.executable, "-m", "scripts.sentry.resolve_issue", "AGENT-1"],
         capture_output=True,
         text=True,
-        env={"PATH": "", "PYTHONPATH": "."},
+        env=clean_env,
         timeout=10,
     )
 
