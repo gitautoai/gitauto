@@ -43,8 +43,9 @@ def create_empty_commit(
         run_subprocess(["git", "config", "user.name", GITHUB_APP_USER_NAME], cwd)
         run_subprocess(["git", "config", "user.email", GITHUB_APP_GIT_EMAIL], cwd)
 
+        # --no-verify skips pre-commit hooks (e.g. lint-staged) that fail in Lambda sandbox because npm can't mkdir /home/sbx_user1051
         run_subprocess(
-            args=["git", "commit", "--allow-empty", "-m", message],
+            args=["git", "commit", "--allow-empty", "--no-verify", "-m", message],
             cwd=cwd,
         )
         run_subprocess(
