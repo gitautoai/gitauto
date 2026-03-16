@@ -1,5 +1,4 @@
 # Standard imports
-import asyncio
 from datetime import datetime
 import hashlib
 import json
@@ -25,7 +24,7 @@ from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
-from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
+from services.git.git_clone_to_efs import git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.github.check_suites.get_failed_check_runs import (
     get_failed_check_runs_from_check_suite,
@@ -243,7 +242,7 @@ async def handle_check_suite(
     }
 
     # Clone repo to tmp
-    await prepare_repo_for_work(
+    prepare_repo_for_work(
         owner=owner_name,
         repo=repo_name,
         pr_branch=head_branch,
@@ -251,16 +250,14 @@ async def handle_check_suite(
         clone_dir=clone_dir,
     )
 
-    # Start clone and install tasks
+    # Clone and install
     efs_dir = get_efs_dir(owner_name, repo_name)
     clone_url = get_clone_url(owner_name, repo_name, token)
-    clone_tasks[efs_dir] = asyncio.create_task(
-        git_clone_to_efs(efs_dir, clone_url, target_branch)
-    )
-    node_ready = await ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
+    git_clone_to_efs(efs_dir, clone_url, target_branch)
+    node_ready = ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("node: ready=%s", node_ready)
 
-    php_ready = await ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
+    php_ready = ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("php: ready=%s", php_ready)
 
     # Check if CI-failed comment already exists (skip if GA is already handling this PR).

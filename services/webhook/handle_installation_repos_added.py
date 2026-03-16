@@ -10,7 +10,7 @@ from utils.logging.logging_config import set_trigger
 
 
 @handle_exceptions(raise_on_error=True)
-async def handle_installation_repos_added(
+def handle_installation_repos_added(
     payload: InstallationRepositoriesPayload,
 ):
     set_trigger("installation_repositories")
@@ -47,7 +47,7 @@ async def handle_installation_repos_added(
         email=sender_info.email,
         display_name=sender_info.display_name,
     )
-    await process_repositories(
+    process_repositories(
         owner_id=owner_id,
         owner_name=owner_name,
         owner_type=owner_type,

@@ -12,6 +12,8 @@ from services.efs.copy_repo_from_efs_to_tmp import copy_repo_from_efs_to_tmp
 from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_empty_commit import create_empty_commit
 from services.git.create_remote_branch import create_remote_branch
+from services.git.git_checkout import git_checkout
+from services.git.git_fetch import git_fetch
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.get_default_branch import get_default_branch
@@ -410,6 +412,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     }
     latest_sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
     create_remote_branch(sha=latest_sha, base_args=base_args)
+    # Fetch and checkout the new branch so HEAD matches the remote tip
+    git_fetch(clone_dir, clone_url, new_branch)
+    git_checkout(clone_dir, new_branch)
     create_empty_commit(
         base_args=base_args, message="Initial empty commit to create PR [skip ci]"
     )

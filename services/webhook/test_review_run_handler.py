@@ -77,13 +77,9 @@ def mock_review_comment_payload():
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
-@patch(
-    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
-)
-@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch(
-    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
-)
+@patch("services.webhook.review_run_handler.ensure_node_packages")
+@patch("services.webhook.review_run_handler.git_clone_to_efs")
+@patch("services.webhook.review_run_handler.prepare_repo_for_work")
 @patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
 @pytest.mark.asyncio
 async def test_review_run_handler_accumulates_tokens_correctly(
@@ -195,13 +191,9 @@ async def test_review_run_handler_accumulates_tokens_correctly(
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
-@patch(
-    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
-)
-@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch(
-    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
-)
+@patch("services.webhook.review_run_handler.ensure_node_packages")
+@patch("services.webhook.review_run_handler.git_clone_to_efs")
+@patch("services.webhook.review_run_handler.prepare_repo_for_work")
 @patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
 @patch("services.webhook.review_run_handler.MAX_ITERATIONS", 2)
 @pytest.mark.asyncio
@@ -344,16 +336,10 @@ def mock_bot_review_comment_payload():
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
-@patch(
-    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
-)
-@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch(
-    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
-)
-@patch(
-    "services.webhook.review_run_handler.ensure_php_packages", new_callable=AsyncMock
-)
+@patch("services.webhook.review_run_handler.ensure_node_packages")
+@patch("services.webhook.review_run_handler.git_clone_to_efs")
+@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
 )
@@ -434,16 +420,10 @@ async def test_thread_resolved_during_loop_stops_agent(
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
-@patch(
-    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
-)
-@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch(
-    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
-)
-@patch(
-    "services.webhook.review_run_handler.ensure_php_packages", new_callable=AsyncMock
-)
+@patch("services.webhook.review_run_handler.ensure_node_packages")
+@patch("services.webhook.review_run_handler.git_clone_to_efs")
+@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
 )
@@ -617,16 +597,10 @@ async def test_bot_reply_after_gitauto_replied_is_skipped(
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
-@patch(
-    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
-)
-@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch(
-    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
-)
-@patch(
-    "services.webhook.review_run_handler.ensure_php_packages", new_callable=AsyncMock
-)
+@patch("services.webhook.review_run_handler.ensure_node_packages")
+@patch("services.webhook.review_run_handler.git_clone_to_efs")
+@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
 )
@@ -774,16 +748,10 @@ def mock_pr_comment_payload():
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
-@patch(
-    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
-)
-@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch(
-    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
-)
-@patch(
-    "services.webhook.review_run_handler.ensure_php_packages", new_callable=AsyncMock
-)
+@patch("services.webhook.review_run_handler.ensure_node_packages")
+@patch("services.webhook.review_run_handler.git_clone_to_efs")
+@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
 )
@@ -877,16 +845,10 @@ async def test_pr_comment_uses_create_comment_not_reply(
 @patch("services.webhook.review_run_handler.create_empty_commit")
 @patch("services.webhook.review_run_handler.get_reference")
 @patch("services.webhook.review_run_handler.update_usage")
-@patch(
-    "services.webhook.review_run_handler.ensure_node_packages", new_callable=AsyncMock
-)
-@patch("services.webhook.review_run_handler.git_clone_to_efs", new_callable=AsyncMock)
-@patch(
-    "services.webhook.review_run_handler.prepare_repo_for_work", new_callable=AsyncMock
-)
-@patch(
-    "services.webhook.review_run_handler.ensure_php_packages", new_callable=AsyncMock
-)
+@patch("services.webhook.review_run_handler.ensure_node_packages")
+@patch("services.webhook.review_run_handler.git_clone_to_efs")
+@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
 )

@@ -123,7 +123,7 @@ async def handle_webhook_event(
     if event_name == "installation_repositories":
         typed_payload = cast(InstallationRepositoriesPayload, payload)
         if action == "added":
-            await handle_installation_repos_added(payload=typed_payload)
+            handle_installation_repos_added(payload=typed_payload)
             return
 
         if action == "removed":

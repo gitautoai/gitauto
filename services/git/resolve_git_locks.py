@@ -1,4 +1,3 @@
-import asyncio
 import os
 import time
 
@@ -11,7 +10,7 @@ LOCK_WAIT_TIMEOUT = 60  # max seconds to wait for a fresh lock
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def resolve_git_locks(git_dir: str):
+def resolve_git_locks(git_dir: str):
     """Clear git lock files: remove stale ones immediately, wait for fresh ones.
 
     - Lock >10min old (crashed Lambda): remove immediately
@@ -46,7 +45,7 @@ async def resolve_git_locks(git_dir: str):
             return
 
         logger.info("Waiting for fresh git locks in %s", git_dir)
-        await asyncio.sleep(LOCK_POLL_INTERVAL)
+        time.sleep(LOCK_POLL_INTERVAL)
 
     # Timeout - force remove remaining locks
     for root, _, files in os.walk(git_dir):

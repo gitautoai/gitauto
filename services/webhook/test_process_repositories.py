@@ -1,7 +1,7 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
 from typing import cast
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 
 import pytest
 
@@ -29,7 +29,6 @@ def mock_get_clone_url():
 def mock_git_clone_to_efs():
     with patch(
         "services.webhook.process_repositories.git_clone_to_efs",
-        new_callable=AsyncMock,
     ) as mock:
         yield mock
 
@@ -38,7 +37,6 @@ def mock_git_clone_to_efs():
 def mock_git_fetch():
     with patch(
         "services.webhook.process_repositories.git_fetch",
-        new_callable=AsyncMock,
         return_value=True,
     ) as mock:
         yield mock
@@ -48,7 +46,6 @@ def mock_git_fetch():
 def mock_git_reset():
     with patch(
         "services.webhook.process_repositories.git_reset",
-        new_callable=AsyncMock,
         return_value=True,
     ) as mock:
         yield mock
@@ -206,8 +203,7 @@ def sample_stats():
     }
 
 
-@pytest.mark.asyncio
-async def test_process_repositories_efs_exists_fetches(
+def test_process_repositories_efs_exists_fetches(
     sample_repositories,
     sample_stats,
     mock_get_efs_dir,
@@ -235,7 +231,7 @@ async def test_process_repositories_efs_exists_fetches(
     mock_get_repository_stats.return_value = sample_stats
     mock_get_default_branch.side_effect = ["main", "master"]
 
-    await process_repositories(
+    process_repositories(
         owner_id=12345,
         owner_name="test-owner",
         owner_type="Organization",
@@ -256,8 +252,7 @@ async def test_process_repositories_efs_exists_fetches(
     assert mock_run_install_via_codebuild.call_count == 2
 
 
-@pytest.mark.asyncio
-async def test_process_repositories_efs_not_exists_clones(
+def test_process_repositories_efs_not_exists_clones(
     sample_repositories,
     sample_stats,
     mock_get_efs_dir,
@@ -283,7 +278,7 @@ async def test_process_repositories_efs_not_exists_clones(
     mock_os_path_exists.return_value = False
     mock_get_repository_stats.return_value = sample_stats
 
-    await process_repositories(
+    process_repositories(
         owner_id=12345,
         owner_name="test-owner",
         owner_type="Organization",
@@ -301,8 +296,7 @@ async def test_process_repositories_efs_not_exists_clones(
     assert mock_run_install_via_codebuild.call_count == 2
 
 
-@pytest.mark.asyncio
-async def test_process_repositories_empty_list(
+def test_process_repositories_empty_list(
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_fetch,
@@ -314,7 +308,7 @@ async def test_process_repositories_empty_list(
     mock_upsert_repository,
     mock_run_install_via_codebuild,
 ):
-    await process_repositories(
+    process_repositories(
         owner_id=12345,
         owner_name="test-owner",
         owner_type="Organization",
@@ -335,8 +329,7 @@ async def test_process_repositories_empty_list(
     mock_run_install_via_codebuild.assert_not_called()
 
 
-@pytest.mark.asyncio
-async def test_process_repositories_stats_saved_correctly(
+def test_process_repositories_stats_saved_correctly(
     sample_stats,
     mock_get_efs_dir,
     mock_get_clone_url,
@@ -374,7 +367,7 @@ async def test_process_repositories_stats_saved_correctly(
         ],
     )
 
-    await process_repositories(
+    process_repositories(
         owner_id=12345,
         owner_name="test-owner",
         owner_type="Organization",
@@ -404,8 +397,7 @@ async def test_process_repositories_stats_saved_correctly(
     )
 
 
-@pytest.mark.asyncio
-async def test_process_repositories_empty_repo_skips_clone(
+def test_process_repositories_empty_repo_skips_clone(
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_clone_to_efs,
@@ -442,7 +434,7 @@ async def test_process_repositories_empty_repo_skips_clone(
         ],
     )
 
-    await process_repositories(
+    process_repositories(
         owner_id=12345,
         owner_name="test-owner",
         owner_type="Organization",
@@ -473,8 +465,7 @@ async def test_process_repositories_empty_repo_skips_clone(
     )
 
 
-@pytest.mark.asyncio
-async def test_process_repositories_non_typescript_deletes_branch_no_pr(
+def test_process_repositories_non_typescript_deletes_branch_no_pr(
     sample_stats,
     mock_get_efs_dir,
     mock_get_clone_url,
@@ -514,7 +505,7 @@ async def test_process_repositories_non_typescript_deletes_branch_no_pr(
         ],
     )
 
-    await process_repositories(
+    process_repositories(
         owner_id=12345,
         owner_name="test-owner",
         owner_type="Organization",
@@ -532,8 +523,7 @@ async def test_process_repositories_non_typescript_deletes_branch_no_pr(
     mock_create_pull_request.assert_not_called()
 
 
-@pytest.mark.asyncio
-async def test_process_repositories_typescript_creates_pr(
+def test_process_repositories_typescript_creates_pr(
     sample_stats,
     mock_get_efs_dir,
     mock_get_clone_url,
@@ -576,7 +566,7 @@ async def test_process_repositories_typescript_creates_pr(
         ],
     )
 
-    await process_repositories(
+    process_repositories(
         owner_id=12345,
         owner_name="test-owner",
         owner_type="Organization",

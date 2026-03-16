@@ -25,7 +25,7 @@ class CloneAndInstallResult:
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-async def clone_and_install(owner: str, repo: str):
+def clone_and_install(owner: str, repo: str):
     set_owner_repo(owner, repo)
     set_trigger("clone_and_install")
     logger.info("Starting clone_and_install for %s/%s", owner, repo)
@@ -67,14 +67,14 @@ async def clone_and_install(owner: str, repo: str):
     clone_url = get_clone_url(owner, repo, token)
 
     logger.info("Cloning to EFS: %s", efs_dir)
-    await git_clone_to_efs(efs_dir, clone_url, branch)
+    git_clone_to_efs(efs_dir, clone_url, branch)
 
     logger.info("Installing node packages")
-    node_result = await ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
+    node_result = ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("node: ready=%s", node_result)
 
     logger.info("Installing PHP packages")
-    php_result = await ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
+    php_result = ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("php: ready=%s", php_result)
 
     logger.info("Clone and install completed for %s/%s", owner, repo)

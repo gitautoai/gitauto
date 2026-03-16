@@ -1,5 +1,4 @@
 # Standard imports
-import asyncio
 from datetime import datetime
 from json import dumps
 from pathlib import Path
@@ -22,7 +21,7 @@ from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
-from services.git.git_clone_to_efs import clone_tasks, git_clone_to_efs
+from services.git.git_clone_to_efs import git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
 from services.git.replace_remote_file import replace_remote_file_content
 from services.github.comments.create_comment import create_comment
@@ -211,13 +210,11 @@ async def handle_new_pr(
     base_branch = base_args["base_branch"]
     efs_dir = get_efs_dir(owner_name, repo_name)
     clone_url = get_clone_url(owner_name, repo_name, token)
-    clone_tasks[efs_dir] = asyncio.create_task(
-        git_clone_to_efs(efs_dir, clone_url, base_branch)
-    )
-    node_ready = await ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
+    git_clone_to_efs(efs_dir, clone_url, base_branch)
+    node_ready = ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("node: ready=%s", node_ready)
 
-    php_ready = await ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
+    php_ready = ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
     logger.info("php: ready=%s", php_ready)
 
     # Create a usage record
@@ -320,7 +317,7 @@ async def handle_new_pr(
     # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args["clone_dir"] = clone_dir
-    await prepare_repo_for_work(
+    prepare_repo_for_work(
         owner=owner_name,
         repo=repo_name,
         pr_branch=new_branch_name,

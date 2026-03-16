@@ -40,7 +40,7 @@ from utils.logging.logging_config import logger, set_owner_repo
 
 
 @handle_exceptions(raise_on_error=True)
-async def process_repositories(
+def process_repositories(
     owner_id: int,
     owner_name: str,
     owner_type: OwnerType,
@@ -88,12 +88,12 @@ async def process_repositories(
 
         if os.path.exists(efs_git_dir):
             logger.info("EFS clone exists, updating: %s", efs_dir)
-            fetch_ok = await git_fetch(efs_dir, clone_url, default_branch)
+            fetch_ok = git_fetch(efs_dir, clone_url, default_branch)
             if fetch_ok:
-                await git_reset(efs_dir)
+                git_reset(efs_dir)
         else:
             logger.info("No EFS clone, creating: %s", efs_dir)
-            await git_clone_to_efs(efs_dir, clone_url, default_branch)
+            git_clone_to_efs(efs_dir, clone_url, default_branch)
 
         # Start package install via CodeBuild (fire-and-forget) for Node projects
         pkg_manager, lock_file, _ = detect_package_manager(efs_dir)

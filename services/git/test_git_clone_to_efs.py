@@ -1,6 +1,6 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -27,15 +27,11 @@ def mock_os_listdir():
         yield mock
 
 
-@pytest.mark.asyncio
-async def test_git_clone_to_efs_success(
+def test_git_clone_to_efs_success(
     mock_os_makedirs, mock_os_path_exists, mock_os_listdir
 ):
-    with patch(
-        "services.git.git_clone_to_efs.run_subprocess_async", new_callable=AsyncMock
-    ) as mock_run:
-        mock_run.return_value = (0, "")
-        result = await git_clone_to_efs(
+    with patch("services.git.git_clone_to_efs.run_subprocess") as mock_run:
+        result = git_clone_to_efs(
             "/mnt/efs/repo", "https://github.com/owner/repo.git", "main"
         )
 
@@ -53,30 +49,27 @@ async def test_git_clone_to_efs_success(
         ]
 
 
-@pytest.mark.asyncio
-async def test_git_clone_skips_when_git_dir_exists(mock_os_makedirs, mock_os_listdir):
-    with patch("services.git.git_clone_to_efs.os.path.exists") as mock_exists:
+def test_git_clone_skips_when_git_dir_exists(mock_os_makedirs, mock_os_listdir):
+    with patch("services.git.git_clone_to_efs.os.path.exists") as mock_exists, patch(
+        "services.git.git_clone_to_efs.run_subprocess"
+    ):
         mock_exists.return_value = True
 
-        result = await git_clone_to_efs(
+        result = git_clone_to_efs(
             "/mnt/efs/repo", "https://github.com/owner/repo.git", "main"
         )
 
         assert result == "/mnt/efs/repo"
 
 
-@pytest.mark.asyncio
-async def test_git_clone_uses_init_fetch_when_dir_not_empty(
+def test_git_clone_uses_init_fetch_when_dir_not_empty(
     mock_os_makedirs, mock_os_path_exists
 ):
     with patch("services.git.git_clone_to_efs.os.listdir") as mock_listdir:
         mock_listdir.return_value = ["node_modules", "package.json"]
 
-        with patch(
-            "services.git.git_clone_to_efs.run_subprocess_async", new_callable=AsyncMock
-        ) as mock_run:
-            mock_run.return_value = (0, "")
-            result = await git_clone_to_efs(
+        with patch("services.git.git_clone_to_efs.run_subprocess") as mock_run:
+            result = git_clone_to_efs(
                 "/mnt/efs/repo", "https://github.com/owner/repo.git", "main"
             )
 
@@ -85,19 +78,16 @@ async def test_git_clone_uses_init_fetch_when_dir_not_empty(
             assert mock_run.call_count == 5
 
 
-@pytest.mark.asyncio
-async def test_git_clone_skips_reset_when_fetch_fails(mock_os_makedirs):
+def test_git_clone_skips_reset_when_fetch_fails(mock_os_makedirs):
     """When .git exists but fetch fails, reset should NOT be called."""
     with patch("services.git.git_clone_to_efs.os.path.exists") as mock_exists:
         mock_exists.return_value = True
 
-        with patch(
-            "services.git.git_clone_to_efs.run_subprocess_async", new_callable=AsyncMock
-        ) as mock_run:
+        with patch("services.git.git_clone_to_efs.run_subprocess") as mock_run:
             # safe.directory succeeds, get-url succeeds, set-url succeeds, fetch fails
-            mock_run.side_effect = [(0, ""), (0, ""), (0, ""), (1, "auth failed")]
+            mock_run.side_effect = [None, None, None, ValueError("auth failed")]
 
-            result = await git_clone_to_efs(
+            result = git_clone_to_efs(
                 "/mnt/efs/repo", "https://github.com/owner/repo.git", "main"
             )
 
@@ -124,17 +114,12 @@ async def test_git_clone_skips_reset_when_fetch_fails(mock_os_makedirs):
             assert calls[3] == ["git", "fetch", "--depth", "1", "origin", "main"]
 
 
-@pytest.mark.asyncio
-async def test_git_clone_updates_origin_url_before_fetch(mock_os_makedirs):
+def test_git_clone_updates_origin_url_before_fetch(mock_os_makedirs):
     """When .git exists with expired token, set-url updates origin with fresh token before fetch."""
     with patch("services.git.git_clone_to_efs.os.path.exists") as mock_exists:
         mock_exists.return_value = True
 
-        with patch(
-            "services.git.git_clone_to_efs.run_subprocess_async", new_callable=AsyncMock
-        ) as mock_run:
-            mock_run.return_value = (0, "")
-
+        with patch("services.git.git_clone_to_efs.run_subprocess") as mock_run:
             fresh_url = "https://x-access-token:fresh_token@github.com/owner/repo.git"
             # FETCH_HEAD exists, HEAD already on main → checkout -B skipped
             with patch(
@@ -145,7 +130,7 @@ async def test_git_clone_updates_origin_url_before_fetch(mock_os_makedirs):
                     else "ref: refs/heads/main"
                 ),
             ):
-                result = await git_clone_to_efs("/mnt/efs/repo", fresh_url, "main")
+                result = git_clone_to_efs("/mnt/efs/repo", fresh_url, "main")
 
             assert result == "/mnt/efs/repo"
             # safe.directory + get-url + set-url + fetch + reset (no checkout -B, branch unchanged)
@@ -165,17 +150,12 @@ async def test_git_clone_updates_origin_url_before_fetch(mock_os_makedirs):
             assert calls[4] == ["git", "reset", "--hard", "FETCH_HEAD"]
 
 
-@pytest.mark.asyncio
-async def test_git_clone_switches_branch_when_target_changes(mock_os_makedirs):
+def test_git_clone_switches_branch_when_target_changes(mock_os_makedirs):
     """When target branch changed (e.g. master → release/20260408), checkout -B updates HEAD."""
     with patch("services.git.git_clone_to_efs.os.path.exists") as mock_exists:
         mock_exists.return_value = True
 
-        with patch(
-            "services.git.git_clone_to_efs.run_subprocess_async", new_callable=AsyncMock
-        ) as mock_run:
-            mock_run.return_value = (0, "")
-
+        with patch("services.git.git_clone_to_efs.run_subprocess") as mock_run:
             clone_url = "https://github.com/owner/repo.git"
             # HEAD on master, but fetching release/20260408 → checkout -B runs
             with patch(
@@ -186,7 +166,7 @@ async def test_git_clone_switches_branch_when_target_changes(mock_os_makedirs):
                     else "ref: refs/heads/master"
                 ),
             ):
-                result = await git_clone_to_efs(
+                result = git_clone_to_efs(
                     "/mnt/efs/repo", clone_url, "release/20260408"
                 )
 
@@ -204,22 +184,19 @@ async def test_git_clone_switches_branch_when_target_changes(mock_os_makedirs):
             ]
 
 
-@pytest.mark.asyncio
-async def test_git_clone_adds_origin_when_missing(mock_os_makedirs):
+def test_git_clone_adds_origin_when_missing(mock_os_makedirs):
     """When .git exists but origin remote is missing, add origin instead of set-url."""
     with patch("services.git.git_clone_to_efs.os.path.exists") as mock_exists:
         mock_exists.return_value = True
 
-        with patch(
-            "services.git.git_clone_to_efs.run_subprocess_async", new_callable=AsyncMock
-        ) as mock_run:
+        with patch("services.git.git_clone_to_efs.run_subprocess") as mock_run:
             # safe.directory succeeds, get-url fails (no origin), add succeeds, fetch succeeds, reset succeeds
             mock_run.side_effect = [
-                (0, ""),
-                (1, "error: No such remote 'origin'"),
-                (0, ""),
-                (0, ""),
-                (0, ""),
+                None,
+                ValueError("No such remote 'origin'"),
+                None,
+                None,
+                None,
             ]
 
             clone_url = "https://github.com/owner/repo.git"
@@ -232,7 +209,7 @@ async def test_git_clone_adds_origin_when_missing(mock_os_makedirs):
                     else "ref: refs/heads/main"
                 ),
             ):
-                result = await git_clone_to_efs("/mnt/efs/repo", clone_url, "main")
+                result = git_clone_to_efs("/mnt/efs/repo", clone_url, "main")
 
             assert result == "/mnt/efs/repo"
             # safe.directory + get-url + add + fetch + reset (no checkout -B, branch unchanged)

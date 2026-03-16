@@ -3,7 +3,6 @@ import os
 
 from config import UTF8
 from services.aws.run_install_via_codebuild import run_install_via_codebuild
-from services.git.git_clone_to_efs import clone_tasks
 from services.node.detect_package_manager import detect_package_manager
 from utils.files.read_local_file import read_local_file
 from utils.error.handle_exceptions import handle_exceptions
@@ -11,20 +10,10 @@ from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
-async def ensure_node_packages(
+def ensure_node_packages(
     owner_id: int,
     efs_dir: str,
 ):
-    # Wait for clone to complete before installing
-    clone_task = clone_tasks.get(efs_dir)
-    if clone_task:
-        logger.info("node: Waiting for clone task: %s", efs_dir)
-        result = await clone_task
-        if result:
-            logger.info("node: Clone task completed: %s", efs_dir)
-        else:
-            logger.warning("node: Clone task failed: %s", efs_dir)
-
     package_json_content = read_local_file("package.json", base_dir=efs_dir)
     if not package_json_content:
         logger.info("node: No package.json found, skipping installation")

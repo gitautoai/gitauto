@@ -2,7 +2,7 @@
 # pyright: reportUnusedVariable=false
 import os
 from typing import cast
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from anthropic.types import MessageParam
@@ -46,7 +46,7 @@ INSTALLATION = {"owner_id": 1, "installation_id": 123, "owner_type": "Organizati
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
+@patch(f"{MODULE}.git_clone_to_efs")
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
@@ -107,7 +107,7 @@ async def test_not_completed_closes_pr_and_deletes_branch(
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
+@patch(f"{MODULE}.git_clone_to_efs")
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
@@ -167,7 +167,7 @@ async def test_completed_keeps_pr(
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
+@patch(f"{MODULE}.git_clone_to_efs")
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(
@@ -234,7 +234,7 @@ async def test_uses_target_branch_when_set(
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
+@patch(f"{MODULE}.git_clone_to_efs")
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
@@ -303,7 +303,7 @@ async def test_passes_existing_workflows_to_claude(
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
+@patch(f"{MODULE}.git_clone_to_efs")
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
@@ -403,7 +403,7 @@ async def test_empty_repo_skips(mock_installation, mock_repo, mock_default_branc
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
+@patch(f"{MODULE}.git_clone_to_efs")
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
@@ -463,7 +463,7 @@ async def test_system_message_mentions_coverage(
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs", new_callable=AsyncMock)
+@patch(f"{MODULE}.git_clone_to_efs")
 @patch(f"{MODULE}.get_efs_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)

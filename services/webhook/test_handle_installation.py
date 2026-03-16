@@ -2,7 +2,7 @@
 """Unit tests for handle_installation.py"""
 
 # Standard imports
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 # Third-party imports
 import pytest
@@ -125,7 +125,6 @@ def mock_process_repositories():
     """Mock process_repositories function."""
     with patch(
         "services.webhook.handle_installation.process_repositories",
-        new_callable=AsyncMock,
     ) as mock:
         yield mock
 

@@ -30,12 +30,11 @@ def _setup_node_modules(
             f.write(npmrc)
 
 
-@pytest.mark.asyncio
-async def test_returns_false_when_no_package_json():
+def test_returns_false_when_no_package_json():
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         mock_get.return_value = None
 
-        result = await ensure_node_packages(
+        result = ensure_node_packages(
             owner_id=123,
             efs_dir="/mnt/efs/owner/repo",
         )
@@ -43,8 +42,7 @@ async def test_returns_false_when_no_package_json():
         assert result is False
 
 
-@pytest.mark.asyncio
-async def test_reuses_when_content_matches(efs_dir):
+def test_reuses_when_content_matches(efs_dir):
     _setup_node_modules(efs_dir)
 
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
@@ -54,7 +52,7 @@ async def test_reuses_when_content_matches(efs_dir):
         ):
             mock_get.side_effect = ['{"name": "test"}', None]
             with patch("services.node.ensure_node_packages.fcntl.flock"):
-                result = await ensure_node_packages(
+                result = ensure_node_packages(
                     owner_id=123,
                     efs_dir=efs_dir,
                 )
@@ -62,8 +60,7 @@ async def test_reuses_when_content_matches(efs_dir):
                 assert result is True
 
 
-@pytest.mark.asyncio
-async def test_triggers_codebuild_when_no_node_modules(efs_dir):
+def test_triggers_codebuild_when_no_node_modules(efs_dir):
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
@@ -74,7 +71,7 @@ async def test_triggers_codebuild_when_no_node_modules(efs_dir):
                 with patch(
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ) as mock_codebuild:
-                    result = await ensure_node_packages(
+                    result = ensure_node_packages(
                         owner_id=123,
                         efs_dir=efs_dir,
                     )
@@ -83,8 +80,7 @@ async def test_triggers_codebuild_when_no_node_modules(efs_dir):
                     assert result is False
 
 
-@pytest.mark.asyncio
-async def test_triggers_codebuild_when_content_differs(efs_dir):
+def test_triggers_codebuild_when_content_differs(efs_dir):
     _setup_node_modules(efs_dir, package_json='{"name": "old"}')
 
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
@@ -97,7 +93,7 @@ async def test_triggers_codebuild_when_content_differs(efs_dir):
                 with patch(
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ) as mock_codebuild:
-                    result = await ensure_node_packages(
+                    result = ensure_node_packages(
                         owner_id=123,
                         efs_dir=efs_dir,
                     )
@@ -106,8 +102,7 @@ async def test_triggers_codebuild_when_content_differs(efs_dir):
                     assert result is False
 
 
-@pytest.mark.asyncio
-async def test_triggers_codebuild_when_bin_missing(efs_dir):
+def test_triggers_codebuild_when_bin_missing(efs_dir):
     # node_modules exists but no .bin
     os.makedirs(os.path.join(efs_dir, "node_modules"))
     with open(os.path.join(efs_dir, "package.json"), "w", encoding=UTF8) as f:
@@ -123,7 +118,7 @@ async def test_triggers_codebuild_when_bin_missing(efs_dir):
                 with patch(
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ) as mock_codebuild:
-                    result = await ensure_node_packages(
+                    result = ensure_node_packages(
                         owner_id=123,
                         efs_dir=efs_dir,
                     )
@@ -132,8 +127,7 @@ async def test_triggers_codebuild_when_bin_missing(efs_dir):
                     assert result is False
 
 
-@pytest.mark.asyncio
-async def test_triggers_codebuild_when_bin_empty(efs_dir):
+def test_triggers_codebuild_when_bin_empty(efs_dir):
     os.makedirs(os.path.join(efs_dir, "node_modules", ".bin"))
     with open(os.path.join(efs_dir, "package.json"), "w", encoding=UTF8) as f:
         f.write('{"name": "test"}')
@@ -148,7 +142,7 @@ async def test_triggers_codebuild_when_bin_empty(efs_dir):
                 with patch(
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ) as mock_codebuild:
-                    result = await ensure_node_packages(
+                    result = ensure_node_packages(
                         owner_id=123,
                         efs_dir=efs_dir,
                     )
@@ -157,8 +151,7 @@ async def test_triggers_codebuild_when_bin_empty(efs_dir):
                     assert result is False
 
 
-@pytest.mark.asyncio
-async def test_reuses_when_npmrc_matches(efs_dir):
+def test_reuses_when_npmrc_matches(efs_dir):
     _setup_node_modules(efs_dir, npmrc="//registry.npmjs.org/:_authToken=${NPM_TOKEN}")
 
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
@@ -171,7 +164,7 @@ async def test_reuses_when_npmrc_matches(efs_dir):
                 "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
             ]
             with patch("services.node.ensure_node_packages.fcntl.flock"):
-                result = await ensure_node_packages(
+                result = ensure_node_packages(
                     owner_id=123,
                     efs_dir=efs_dir,
                 )
@@ -179,8 +172,7 @@ async def test_reuses_when_npmrc_matches(efs_dir):
                 assert result is True
 
 
-@pytest.mark.asyncio
-async def test_triggers_codebuild_when_npmrc_differs(efs_dir):
+def test_triggers_codebuild_when_npmrc_differs(efs_dir):
     _setup_node_modules(efs_dir, npmrc="//registry.npmjs.org/:_authToken=${NPM_TOKEN}")
 
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
@@ -196,7 +188,7 @@ async def test_triggers_codebuild_when_npmrc_differs(efs_dir):
                 with patch(
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ) as mock_codebuild:
-                    result = await ensure_node_packages(
+                    result = ensure_node_packages(
                         owner_id=123,
                         efs_dir=efs_dir,
                     )
@@ -205,8 +197,7 @@ async def test_triggers_codebuild_when_npmrc_differs(efs_dir):
                     assert result is False
 
 
-@pytest.mark.asyncio
-async def test_sanitizes_http_to_https_in_npmrc(efs_dir):
+def test_sanitizes_http_to_https_in_npmrc(efs_dir):
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
@@ -220,7 +211,7 @@ async def test_sanitizes_http_to_https_in_npmrc(efs_dir):
                 with patch(
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ):
-                    await ensure_node_packages(
+                    ensure_node_packages(
                         owner_id=123,
                         efs_dir=efs_dir,
                     )
@@ -231,8 +222,7 @@ async def test_sanitizes_http_to_https_in_npmrc(efs_dir):
                         assert f.read() == "registry=https://registry.npmjs.org/"
 
 
-@pytest.mark.asyncio
-async def test_preserves_https_in_npmrc(efs_dir):
+def test_preserves_https_in_npmrc(efs_dir):
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
@@ -246,7 +236,7 @@ async def test_preserves_https_in_npmrc(efs_dir):
                 with patch(
                     "services.node.ensure_node_packages.run_install_via_codebuild"
                 ):
-                    await ensure_node_packages(
+                    ensure_node_packages(
                         owner_id=123,
                         efs_dir=efs_dir,
                     )

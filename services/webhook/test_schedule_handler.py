@@ -146,6 +146,8 @@ def test_get_all_coverages_contract():
 @patch("services.webhook.schedule_handler.add_labels")
 @patch("services.webhook.schedule_handler.create_pull_request")
 @patch("services.webhook.schedule_handler.create_empty_commit")
+@patch("services.webhook.schedule_handler.git_checkout")
+@patch("services.webhook.schedule_handler.git_fetch")
 @patch("services.webhook.schedule_handler.create_remote_branch")
 @patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
 @patch("services.webhook.schedule_handler.generate_branch_name")
@@ -175,6 +177,8 @@ def test_schedule_handler_skips_export_only_files(
     mock_generate_branch_name,
     mock_get_latest_sha,
     mock_create_remote_branch,
+    _mock_git_fetch,
+    _mock_git_checkout,
     mock_create_empty_commit,
     mock_create_pr,
     mock_add_labels,
@@ -242,6 +246,8 @@ def test_schedule_handler_skips_export_only_files(
 @patch("services.webhook.schedule_handler.add_labels")
 @patch("services.webhook.schedule_handler.create_pull_request")
 @patch("services.webhook.schedule_handler.create_empty_commit")
+@patch("services.webhook.schedule_handler.git_checkout")
+@patch("services.webhook.schedule_handler.git_fetch")
 @patch("services.webhook.schedule_handler.create_remote_branch")
 @patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
 @patch("services.webhook.schedule_handler.generate_branch_name")
@@ -269,6 +275,8 @@ def test_schedule_handler_skips_empty_files(
     mock_generate_branch_name,
     mock_get_latest_sha,
     mock_create_remote_branch,
+    _mock_git_fetch,
+    _mock_git_checkout,
     mock_create_empty_commit,
     mock_create_pr,
     mock_add_labels,
@@ -320,6 +328,8 @@ def test_schedule_handler_skips_empty_files(
 @patch("services.webhook.schedule_handler.add_labels")
 @patch("services.webhook.schedule_handler.create_pull_request")
 @patch("services.webhook.schedule_handler.create_empty_commit")
+@patch("services.webhook.schedule_handler.git_checkout")
+@patch("services.webhook.schedule_handler.git_fetch")
 @patch("services.webhook.schedule_handler.create_remote_branch")
 @patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
 @patch("services.webhook.schedule_handler.generate_branch_name")
@@ -349,6 +359,8 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
     mock_generate_branch_name,
     mock_get_latest_sha,
     mock_create_remote_branch,
+    _mock_git_fetch,
+    _mock_git_checkout,
     mock_create_empty_commit,
     mock_create_pr,
     mock_add_labels,
@@ -470,6 +482,8 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
 @patch("services.webhook.schedule_handler.add_labels")
 @patch("services.webhook.schedule_handler.create_pull_request")
 @patch("services.webhook.schedule_handler.create_empty_commit")
+@patch("services.webhook.schedule_handler.git_checkout")
+@patch("services.webhook.schedule_handler.git_fetch")
 @patch("services.webhook.schedule_handler.create_remote_branch")
 @patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
 @patch("services.webhook.schedule_handler.generate_branch_name")
@@ -499,6 +513,8 @@ def test_schedule_handler_skips_ai_eval_when_tests_exist(
     mock_generate_branch_name,
     mock_get_latest_sha,
     mock_create_remote_branch,
+    _mock_git_fetch,
+    _mock_git_checkout,
     mock_create_empty_commit,
     mock_create_pr,
     mock_add_labels,
@@ -839,6 +855,8 @@ def test_schedule_handler_skips_none_coverage_as_fully_covered(
 @patch("services.webhook.schedule_handler.add_labels")
 @patch("services.webhook.schedule_handler.create_pull_request")
 @patch("services.webhook.schedule_handler.create_empty_commit")
+@patch("services.webhook.schedule_handler.git_checkout")
+@patch("services.webhook.schedule_handler.git_fetch")
 @patch("services.webhook.schedule_handler.create_remote_branch")
 @patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
 @patch("services.webhook.schedule_handler.generate_branch_name")
@@ -868,6 +886,8 @@ def test_schedule_handler_all_none_coverage_treated_as_candidate(
     mock_generate_branch_name,
     mock_get_latest_sha,
     mock_create_remote_branch,
+    _mock_git_fetch,
+    _mock_git_checkout,
     mock_create_empty_commit,
     mock_create_pr,
     mock_add_labels,

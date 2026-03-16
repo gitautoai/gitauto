@@ -91,7 +91,7 @@ async def setup_handler(
 
     efs_dir = get_efs_dir(owner_name, repo_name)
     clone_url = get_clone_url(owner_name, repo_name, token)
-    await git_clone_to_efs(efs_dir=efs_dir, clone_url=clone_url, branch=target_branch)
+    git_clone_to_efs(efs_dir=efs_dir, clone_url=clone_url, branch=target_branch)
     root_files = [
         f for f in os.listdir(efs_dir) if os.path.isfile(os.path.join(efs_dir, f))
     ]
