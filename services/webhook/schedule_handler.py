@@ -8,12 +8,14 @@ from payloads.aws.event_bridge_scheduler.event_types import EventBridgeScheduler
 from schemas.supabase.types import Coverages, CoveragesInsert
 from services.claude.evaluate_condition import evaluate_condition
 from services.aws.delete_scheduler import delete_scheduler
+from services.efs.copy_repo_from_efs_to_tmp import copy_repo_from_efs_to_tmp
+from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_empty_commit import create_empty_commit
 from services.git.create_remote_branch import create_remote_branch
+from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.get_default_branch import get_default_branch
 from services.git.get_latest_remote_commit_sha import get_latest_remote_commit_sha
-from services.efs.get_efs_dir import get_efs_dir
 from services.git.get_file_tree import get_file_tree
 from services.github.files.get_raw_content import get_raw_content
 from services.github.labels.add_labels import add_labels
@@ -374,6 +376,10 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             owner=owner_name, repo=repo_name, username=user_name, token=token
         )
 
+    # Copy EFS to /tmp for git operations (EFS is shared, don't operate on it directly)
+    clone_dir = get_clone_dir(owner_name, repo_name, pr_number=None)
+    copy_repo_from_efs_to_tmp(efs_dir, clone_dir)
+
     # Create a PR
     new_branch = generate_branch_name(trigger="schedule")
     base_args: BaseArgs = {
@@ -395,7 +401,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         "reviewers": [user_name],
         "github_urls": [],
         "other_urls": [],
-        "clone_dir": efs_dir,
+        "clone_dir": clone_dir,
         "pr_number": 0,  # Set after create_pull_request below
         "pr_title": "",  # Set after create_pull_request below
         "pr_body": "",  # Set after create_pull_request below
