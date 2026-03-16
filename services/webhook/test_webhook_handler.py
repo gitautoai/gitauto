@@ -1160,10 +1160,20 @@ class TestHandleWebhookEvent:
 
     @pytest.mark.asyncio
     @patch("services.webhook.webhook_handler.adapt_pr_review_to_review_payload")
-    @patch("services.webhook.webhook_handler.get_review_inline_comments", return_value=[])
-    @patch("services.webhook.webhook_handler.get_installation_access_token", return_value="token")
+    @patch(
+        "services.webhook.webhook_handler.get_review_inline_comments", return_value=[]
+    )
+    @patch(
+        "services.webhook.webhook_handler.get_installation_access_token",
+        return_value="token",
+    )
     async def test_pr_review_changes_requested_calls_review_handler(
-        self, _mock_get_token, _mock_get_inline, mock_adapt, mock_handle_review_run, mock_slack_notify
+        self,
+        _mock_get_token,
+        _mock_get_inline,
+        mock_adapt,
+        mock_handle_review_run,
+        mock_slack_notify,
     ):
         adapted = {"action": "submitted", "comment": {"body": "change target branch"}}
         mock_adapt.return_value = adapted
@@ -1228,10 +1238,20 @@ class TestHandleWebhookEvent:
 
     @pytest.mark.asyncio
     @patch("services.webhook.webhook_handler.adapt_pr_review_to_review_payload")
-    @patch("services.webhook.webhook_handler.get_review_inline_comments", return_value=[])
-    @patch("services.webhook.webhook_handler.get_installation_access_token", return_value="token")
+    @patch(
+        "services.webhook.webhook_handler.get_review_inline_comments", return_value=[]
+    )
+    @patch(
+        "services.webhook.webhook_handler.get_installation_access_token",
+        return_value="token",
+    )
     async def test_pr_review_commented_with_body_calls_review_handler(
-        self, _mock_get_token, _mock_get_inline, mock_adapt, mock_handle_review_run, mock_slack_notify
+        self,
+        _mock_get_token,
+        _mock_get_inline,
+        mock_adapt,
+        mock_handle_review_run,
+        mock_slack_notify,
     ):
         adapted = {"action": "submitted", "comment": {"body": "what about this?"}}
         mock_adapt.return_value = adapted

@@ -10,8 +10,16 @@ def create_remote_branch(sha: str, base_args: BaseArgs) -> None:
     Requires clone_dir to be a valid git repo (EFS clone or local clone).
     """
     clone_url = base_args["clone_url"]
+    base_branch = base_args["base_branch"]
     branch_name = base_args["new_branch"]
     clone_dir = base_args["clone_dir"]
+
+    # EFS repos are shallow (--depth 1) so the SHA from ls-remote may not exist locally.
+    # Fetch the base branch first to ensure the latest commit object is available.
+    run_subprocess(
+        args=["git", "fetch", clone_url, base_branch],
+        cwd=clone_dir,
+    )
 
     run_subprocess(
         args=["git", "push", clone_url, f"{sha}:refs/heads/{branch_name}"],
