@@ -1,5 +1,7 @@
 import re
 
+from utils.logging.logging_config import logger
+
 
 def should_skip_javascript(content: str) -> bool:
     """
@@ -17,6 +19,11 @@ def should_skip_javascript(content: str) -> bool:
     - Class implementations with methods
     - Any executable code beyond declarations
     """
+    # Skip files explicitly excluded from coverage via istanbul/c8 pragma
+    if "/* istanbul ignore file */" in content or "/* c8 ignore file */" in content:
+        logger.info("Skipping file: coverage ignore pragma found")
+        return True
+
     lines = content.split("\n")
     code_lines: list[str] = []
 
@@ -79,6 +86,14 @@ def should_skip_javascript(content: str) -> bool:
             # export function or export class with body = real logic
             if rest.startswith(("function ", "async function ")):
                 return False
+            # export interface (multi-line) - set flag to skip body lines
+            if rest.startswith("interface "):
+                in_interface_or_type = True
+                continue
+            # export enum (multi-line) - set flag to skip body lines
+            if rest.startswith("enum "):
+                in_enum = True
+                continue
             if rest.startswith("class ") and "{}" not in rest:
                 # Non-empty class - check if it has methods
                 if re.match(r"^class\s+\w+(\s+extends\s+\w+)?\s*\{\s*\}$", rest):
@@ -87,7 +102,7 @@ def should_skip_javascript(content: str) -> bool:
                     in_class_definition = True
                     continue
                 return False
-            # Simple export (const X = value, enum, interface, etc.)
+            # Simple export (const X = value, etc.)
             continue
         # Skip module.exports (including object literals)
         if line.startswith("module.exports") or line.startswith("exports."):
