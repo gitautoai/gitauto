@@ -2,7 +2,7 @@ import json
 
 import jsonc
 
-from services.git.replace_remote_file import replace_remote_file_content
+from services.git.write_and_commit_file import write_and_commit_file
 from services.types.base_args import BaseArgs
 from utils.files.read_local_file import read_local_file
 from utils.error.handle_exceptions import handle_exceptions
@@ -92,7 +92,7 @@ def ensure_eslint_relaxed_for_tests(eslint_config: dict[str, str], base_args: Ba
                 logger.warning("Could not parse package.json for ESLint update")
                 return None
 
-    result = replace_remote_file_content(
+    result = write_and_commit_file(
         file_content=updated_content,
         file_path=filename,
         base_args=base_args,

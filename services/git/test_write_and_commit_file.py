@@ -6,9 +6,9 @@ from unittest.mock import patch
 import pytest
 
 from services.claude.tools.file_modify_result import FileWriteResult
-from services.git.replace_remote_file import (
-    REPLACE_REMOTE_FILE_CONTENT,
-    replace_remote_file_content,
+from services.git.write_and_commit_file import (
+    WRITE_AND_COMMIT_FILE,
+    write_and_commit_file,
 )
 from services.types.base_args import BaseArgs
 
@@ -30,9 +30,9 @@ def sample_base_args(tmp_path):
 
 def test_replace_creates_new_file(sample_base_args, tmp_path):
     with patch(
-        "services.git.replace_remote_file.git_show_head_file", return_value=None
+        "services.git.write_and_commit_file.git_show_head_file", return_value=None
     ):
-        result = replace_remote_file_content(
+        result = write_and_commit_file(
             file_content="print('hello')",
             file_path="src/test.py",
             base_args=sample_base_args,
@@ -54,10 +54,10 @@ def test_replace_existing_file(sample_base_args, tmp_path):
     (file_dir / "test.py").write_text("old content\n")
 
     with patch(
-        "services.git.replace_remote_file.git_show_head_file",
+        "services.git.write_and_commit_file.git_show_head_file",
         return_value="old content\n",
     ):
-        result = replace_remote_file_content(
+        result = write_and_commit_file(
             file_content="new content",
             file_path="src/test.py",
             base_args=sample_base_args,
@@ -75,10 +75,10 @@ def test_skip_when_content_identical(sample_base_args, tmp_path):
     (file_dir / "test.py").write_text("same content\n")
 
     with patch(
-        "services.git.replace_remote_file.git_show_head_file",
+        "services.git.write_and_commit_file.git_show_head_file",
         return_value="same content\n",
     ):
-        result = replace_remote_file_content(
+        result = write_and_commit_file(
             file_content="same content\n",
             file_path="src/test.py",
             base_args=sample_base_args,
@@ -99,10 +99,10 @@ def test_detects_changes_when_disk_modified_by_formatter(sample_base_args, tmp_p
 
     # But git HEAD has the original committed content
     with patch(
-        "services.git.replace_remote_file.git_show_head_file",
+        "services.git.write_and_commit_file.git_show_head_file",
         return_value="original content\n",
     ):
-        result = replace_remote_file_content(
+        result = write_and_commit_file(
             file_content="formatted content",
             file_path="src/test.py",
             base_args=sample_base_args,
@@ -117,7 +117,7 @@ def test_directory_path_error(sample_base_args, tmp_path):
     dir_path = tmp_path / "src"
     dir_path.mkdir()
 
-    result = replace_remote_file_content(
+    result = write_and_commit_file(
         file_content="content",
         file_path="src",
         base_args=sample_base_args,
@@ -134,10 +134,10 @@ def test_preserve_crlf_line_endings(sample_base_args, tmp_path):
     (file_dir / "test.ts").write_text("line1\r\nline2\r\n")
 
     with patch(
-        "services.git.replace_remote_file.git_show_head_file",
+        "services.git.write_and_commit_file.git_show_head_file",
         return_value="line1\r\nline2\r\n",
     ):
-        result = replace_remote_file_content(
+        result = write_and_commit_file(
             file_content="line1\nline2_modified\n",
             file_path="src/test.ts",
             base_args=sample_base_args,
@@ -155,10 +155,10 @@ def test_skip_when_content_identical_after_crlf_conversion(sample_base_args, tmp
     (file_dir / "test.ts").write_text("line1\r\nline2\r\n")
 
     with patch(
-        "services.git.replace_remote_file.git_show_head_file",
+        "services.git.write_and_commit_file.git_show_head_file",
         return_value="line1\r\nline2\r\n",
     ):
-        result = replace_remote_file_content(
+        result = write_and_commit_file(
             file_content="line1\nline2\n",
             file_path="src/test.ts",
             base_args=sample_base_args,
@@ -171,9 +171,9 @@ def test_skip_when_content_identical_after_crlf_conversion(sample_base_args, tmp
 
 def test_ensures_final_newline(sample_base_args, tmp_path):
     with patch(
-        "services.git.replace_remote_file.git_show_head_file", return_value=None
+        "services.git.write_and_commit_file.git_show_head_file", return_value=None
     ):
-        result = replace_remote_file_content(
+        result = write_and_commit_file(
             file_content="no trailing newline",
             file_path="test.py",
             base_args=sample_base_args,
@@ -186,9 +186,9 @@ def test_ensures_final_newline(sample_base_args, tmp_path):
 
 def test_extra_kwargs_ignored(sample_base_args, tmp_path):
     with patch(
-        "services.git.replace_remote_file.git_show_head_file", return_value=None
+        "services.git.write_and_commit_file.git_show_head_file", return_value=None
     ):
-        result = replace_remote_file_content(
+        result = write_and_commit_file(
             file_content="content",
             file_path="test.py",
             base_args=sample_base_args,
@@ -202,9 +202,9 @@ def test_extra_kwargs_ignored(sample_base_args, tmp_path):
 
 def test_nested_file_path(sample_base_args, tmp_path):
     with patch(
-        "services.git.replace_remote_file.git_show_head_file", return_value=None
+        "services.git.write_and_commit_file.git_show_head_file", return_value=None
     ):
-        result = replace_remote_file_content(
+        result = write_and_commit_file(
             file_content="# deep file",
             file_path="src/utils/helpers/deep/nested/file.py",
             base_args=sample_base_args,
@@ -217,9 +217,9 @@ def test_nested_file_path(sample_base_args, tmp_path):
 
 def test_unicode_content(sample_base_args, tmp_path):
     with patch(
-        "services.git.replace_remote_file.git_show_head_file", return_value=None
+        "services.git.write_and_commit_file.git_show_head_file", return_value=None
     ):
-        result = replace_remote_file_content(
+        result = write_and_commit_file(
             file_content="print('Hello 世界! 🌍 émojis')",
             file_path="test.py",
             base_args=sample_base_args,
@@ -231,12 +231,12 @@ def test_unicode_content(sample_base_args, tmp_path):
 
 
 def test_tool_definition_structure():
-    assert REPLACE_REMOTE_FILE_CONTENT["name"] == "replace_remote_file_content"
-    assert "description" in REPLACE_REMOTE_FILE_CONTENT
-    assert "input_schema" in REPLACE_REMOTE_FILE_CONTENT
-    assert REPLACE_REMOTE_FILE_CONTENT.get("strict") is True
+    assert WRITE_AND_COMMIT_FILE["name"] == "write_and_commit_file"
+    assert "description" in WRITE_AND_COMMIT_FILE
+    assert "input_schema" in WRITE_AND_COMMIT_FILE
+    assert WRITE_AND_COMMIT_FILE.get("strict") is True
 
-    params = REPLACE_REMOTE_FILE_CONTENT["input_schema"]
+    params = WRITE_AND_COMMIT_FILE["input_schema"]
     if isinstance(params, dict):
         assert params.get("type") == "object"
         properties = params.get("properties", {})

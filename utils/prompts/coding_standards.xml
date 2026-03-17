@@ -37,6 +37,7 @@
     <rule>NEVER create multiple test files like test_get_user_new.py, test_get_user_temp.py, test_get_user.py.deprecated</rule>
     <rule>All test cases for a single source file should be consolidated into one test file</rule>
     <rule>Use descriptive test method names within the single test file to organize different test scenarios</rule>
+    <rule>Co-location is best practice, but follow the repo's dominant pattern. If the repo consistently uses a separate directory (test/, tests/, __tests__/, spec/, etc.), follow that. If patterns are mixed, prioritize co-location. If no pattern exists, prioritize co-location. When duplicate test files exist, merge unique test cases into the preferred version and delete the other. Never discard test cases.</rule>
   </test_file_organization>
 
   <anti_patterns>
@@ -151,7 +152,7 @@ raise "Data missing" if data.nil?
     <rule>Keep entries concise - one line per rule when possible</rule>
     <rule>Group rules by topic using markdown headers (## Testing, ## Code Style, ## Architecture, ## Build, etc.)</rule>
     <rule>Only persist reusable patterns, not one-off fixes specific to a single file or PR</rule>
-    <rule>Use the replace_remote_file_content tool to create or update GITAUTO.md at the repo root</rule>
+    <rule>Use the write_and_commit_file tool to create or update GITAUTO.md at the repo root</rule>
     <rule>When updating, preserve existing rules and append new ones under the appropriate topic header</rule>
     <critical_thinking>
       <rule>Think DEEPLY before adding a rule. Human feedback can be contradictory - a reviewer might say "use mocks" on one PR and "don't use mocks" on another. Do not blindly persist every piece of feedback.</rule>

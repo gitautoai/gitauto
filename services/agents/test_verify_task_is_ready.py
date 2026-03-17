@@ -14,7 +14,7 @@ from services.tsc.run_tsc_check import TscResult
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.replace_remote_file_content")
+@patch("services.agents.verify_task_is_ready.write_and_commit_file")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
@@ -50,7 +50,7 @@ async def test_valid_file_returns_success(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.replace_remote_file_content")
+@patch("services.agents.verify_task_is_ready.write_and_commit_file")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
@@ -88,7 +88,7 @@ async def test_prettier_fails_returns_errors(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.replace_remote_file_content")
+@patch("services.agents.verify_task_is_ready.write_and_commit_file")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
@@ -177,7 +177,7 @@ async def test_empty_file_list():
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.replace_remote_file_content")
+@patch("services.agents.verify_task_is_ready.write_and_commit_file")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
@@ -208,7 +208,7 @@ async def test_file_not_found_skipped(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.replace_remote_file_content")
+@patch("services.agents.verify_task_is_ready.write_and_commit_file")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
@@ -248,7 +248,7 @@ async def test_fixes_applied_and_pushed(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.replace_remote_file_content")
+@patch("services.agents.verify_task_is_ready.write_and_commit_file")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
@@ -291,7 +291,7 @@ async def test_eslint_partial_fix_pushes_and_reports_errors(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.replace_remote_file_content")
+@patch("services.agents.verify_task_is_ready.write_and_commit_file")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
@@ -334,7 +334,7 @@ async def test_no_explicit_any_ignored(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_ready.run_tsc_check")
-@patch("services.agents.verify_task_is_ready.replace_remote_file_content")
+@patch("services.agents.verify_task_is_ready.write_and_commit_file")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
@@ -382,7 +382,7 @@ async def test_run_tsc_reports_type_errors(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_ready.run_jest_test")
-@patch("services.agents.verify_task_is_ready.replace_remote_file_content")
+@patch("services.agents.verify_task_is_ready.write_and_commit_file")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")

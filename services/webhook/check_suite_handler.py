@@ -57,9 +57,9 @@ from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.check_older_active_test_failure import (
     check_older_active_test_failure_request,
 )
-from services.supabase.usage.get_retry_pairs import get_retry_workflow_id_hash_pairs
-from services.supabase.usage.update_retry_pairs import (
-    update_retry_workflow_id_hash_pairs,
+from services.supabase.usage.get_retry_error_hashes import get_retry_error_hashes
+from services.supabase.usage.update_retry_error_hashes import (
+    update_retry_error_hashes,
 )
 from services.supabase.usage.update_usage import update_usage
 from services.types.base_args import BaseArgs
@@ -138,7 +138,6 @@ async def handle_check_suite(
     is_side8 = "side8.io" in details_url if details_url else False
     circleci_project_slug = ""
     circleci_workflow_id = ""
-    codecov_check_run_id = ""
     github_run_id = 0
 
     if is_circleci:
@@ -147,7 +146,7 @@ async def handle_check_suite(
         url_parts = details_url.split("/pipelines/")[1].split("/")
         circleci_project_slug = f"{url_parts[0]}/{url_parts[1]}/{url_parts[2]}"
     elif is_codecov:
-        codecov_check_run_id = str(check_run.get("id", ""))
+        pass
     elif is_deepsource:
         # DeepSource: https://app.deepsource.com/gh/guibranco/projects-monitor-ui/
         return
@@ -540,28 +539,21 @@ async def handle_check_suite(
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
-    # Create a pair of workflow ID and error log hash
+    # Hash the error log to detect duplicate errors across CI runs
     error_log_hash = hashlib.sha256(error_log.encode(encoding=UTF8)).hexdigest()
-    if is_circleci:
-        workflow_id = circleci_workflow_id
-    elif is_codecov:
-        workflow_id = codecov_check_run_id
-    else:
-        workflow_id = str(github_run_id)
-    current_pair = f"{workflow_id}:{error_log_hash}"
-    logger.info("Workflow ID and error log hash pair: %s", current_pair)
+    logger.info("Error log hash: %s", error_log_hash)
     logger.info("Error log content for PR #%s:", pr_number)
     logger.info(error_log)
 
     # Clean logs using the complete pipeline
     minimized_log = clean_logs(error_log)
 
-    # Check if this exact pair exists
-    existing_pairs = get_retry_workflow_id_hash_pairs(
+    # Check if this error hash has been attempted before (scoped to this PR). Compare by error hash only - workflow_id changes every CI run but the error is the same.
+    existing_hashes = get_retry_error_hashes(
         owner_id=owner_id, repo_id=repo_id, pr_number=pr_number
     )
-    if existing_pairs and current_pair in existing_pairs:
-        msg = f"Skipping `{check_run_name}` because GitAuto has already tried to fix this exact error before `{current_pair}`."
+    if error_log_hash in existing_hashes:
+        msg = f"Skipping `{check_run_name}` because GitAuto has already tried to fix this error before."
         add_log_message(msg, log_messages)
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
@@ -574,7 +566,7 @@ async def handle_check_suite(
                 total_seconds=int(time.time() - current_time),
                 is_completed=True,
                 pr_number=pr_number,
-                retry_workflow_id_hash_pairs=existing_pairs,
+                retry_error_hashes=existing_hashes,
                 original_error_log=error_log,
                 minimized_error_log=minimized_log,
             )
@@ -584,10 +576,10 @@ async def handle_check_suite(
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
-    # Save the pair to avoid infinite loops
-    existing_pairs.append(current_pair)
-    update_retry_workflow_id_hash_pairs(
-        owner_id=owner_id, repo_id=repo_id, pr_number=pr_number, pairs=existing_pairs
+    # Save the error hash to avoid retrying the same error
+    existing_hashes.append(error_log_hash)
+    update_retry_error_hashes(
+        owner_id=owner_id, repo_id=repo_id, pr_number=pr_number, hashes=existing_hashes
     )
 
     # Build allowed_to_edit_files from PR changed files, validation errors, and impl file
@@ -747,7 +739,7 @@ async def handle_check_suite(
             total_seconds=int(end_time - current_time),
             pr_number=pr_number,
             is_completed=True,
-            retry_workflow_id_hash_pairs=existing_pairs,
+            retry_error_hashes=existing_hashes,
             original_error_log=error_log,
             minimized_error_log=minimized_log,
         )

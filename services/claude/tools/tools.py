@@ -12,9 +12,9 @@ from services.git.apply_diff_to_file import apply_diff_to_file
 from services.git.create_directory import CREATE_DIRECTORY, create_directory
 from services.git.delete_file import delete_file
 from services.git.move_file import move_file
-from services.git.replace_remote_file import (
-    REPLACE_REMOTE_FILE_CONTENT,
-    replace_remote_file_content,
+from services.git.write_and_commit_file import (
+    WRITE_AND_COMMIT_FILE,
+    write_and_commit_file,
 )
 from services.github.comments.create_comment import CREATE_COMMENT, create_comment
 from services.github.comments.reply_to_comment import (
@@ -124,7 +124,7 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     DELETE_FILE,
     GET_LOCAL_FILE_TREE,
     MOVE_FILE,
-    REPLACE_REMOTE_FILE_CONTENT,
+    WRITE_AND_COMMIT_FILE,
     SEARCH_LOCAL_FILE_CONTENT,
     VERIFY_TASK_IS_COMPLETE,
 ]
@@ -153,7 +153,7 @@ TOOLS_FOR_SETUP: list[ToolUnionParam] = _TOOLS_BASE + [
 
 FILE_EDIT_TOOLS = [
     "apply_diff_to_file",
-    "replace_remote_file_content",
+    "write_and_commit_file",
     "move_file",
     "delete_file",
 ]
@@ -169,7 +169,7 @@ tools_to_call: dict[str, Any] = {
     "get_local_file_content": get_local_file_content,
     "get_local_file_tree": get_local_file_tree,
     "move_file": move_file,
-    "replace_remote_file_content": replace_remote_file_content,
+    "write_and_commit_file": write_and_commit_file,
     "reply_to_review_comment": reply_to_comment,
     "search_local_file_contents": search_local_file_contents,
     "set_env": set_env,

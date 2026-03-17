@@ -63,7 +63,7 @@ def test_jsonc_handles_complex_tsconfig():
     assert result["compilerOptions"]["noUnusedLocals"] is False
 
 
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
 def test_creates_file_when_no_variants_exist(
     mock_get_raw: MagicMock, mock_replace: MagicMock
@@ -79,7 +79,7 @@ def test_creates_file_when_no_variants_exist(
     mock_replace.assert_called_once()
 
 
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
 def test_skips_when_variant_has_correct_settings(
     mock_get_raw: MagicMock, mock_replace: MagicMock
@@ -96,7 +96,7 @@ def test_skips_when_variant_has_correct_settings(
     mock_replace.assert_not_called()
 
 
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
 def test_updates_variant_when_missing_settings(
     mock_get_raw: MagicMock, mock_replace: MagicMock
@@ -121,7 +121,7 @@ def test_updates_variant_when_missing_settings(
     assert '"noUnusedParameters": false' in call_kwargs["file_content"]
 
 
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
 def test_updates_existing_tsconfig_test(
     mock_get_raw: MagicMock, mock_replace: MagicMock
@@ -155,7 +155,7 @@ def test_updates_existing_tsconfig_test(
     assert updated_content["compilerOptions"]["strict"] is True
 
 
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
 def test_ignores_nested_tsconfig_files(
     mock_get_raw: MagicMock, mock_replace: MagicMock
@@ -170,7 +170,7 @@ def test_ignores_nested_tsconfig_files(
     assert status == "added"
 
 
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
 def test_creates_when_only_main_tsconfig_exists(
     mock_get_raw: MagicMock, mock_replace: MagicMock
@@ -185,7 +185,7 @@ def test_creates_when_only_main_tsconfig_exists(
     assert status == "added"
 
 
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
 def test_skips_non_typescript_repo(mock_get_raw: MagicMock, mock_replace: MagicMock):
     root_files = ["package.json", "index.js"]
@@ -199,7 +199,7 @@ def test_skips_non_typescript_repo(mock_get_raw: MagicMock, mock_replace: MagicM
     mock_replace.assert_not_called()
 
 
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
 def test_skips_when_variant_has_invalid_json(
     mock_get_raw: MagicMock, mock_replace: MagicMock
@@ -221,7 +221,7 @@ def test_skips_when_variant_has_invalid_json(
     mock_replace.assert_not_called()
 
 
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
 def test_handles_tsconfig_with_comments(
     mock_get_raw: MagicMock, mock_replace: MagicMock

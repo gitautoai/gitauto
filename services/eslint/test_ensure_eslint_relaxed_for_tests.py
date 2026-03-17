@@ -115,7 +115,7 @@ def test_skips_when_override_exists_with_numeric_off():
     assert result is None
 
 
-@patch("services.eslint.ensure_eslint_relaxed_for_tests.replace_remote_file_content")
+@patch("services.eslint.ensure_eslint_relaxed_for_tests.write_and_commit_file")
 def test_adds_override_to_eslintrc_json(mock_replace: MagicMock):
     existing_config = {"rules": {"semi": "error"}}
     config = {"filename": ".eslintrc.json", "content": json.dumps(existing_config)}
@@ -135,7 +135,7 @@ def test_adds_override_to_eslintrc_json(mock_replace: MagicMock):
     assert updated["overrides"][0]["rules"] == RELAXED_RULES
 
 
-@patch("services.eslint.ensure_eslint_relaxed_for_tests.replace_remote_file_content")
+@patch("services.eslint.ensure_eslint_relaxed_for_tests.write_and_commit_file")
 def test_adds_override_to_eslintrc(mock_replace: MagicMock):
     existing_config = {"extends": "eslint:recommended"}
     config = {"filename": ".eslintrc", "content": json.dumps(existing_config)}
@@ -150,7 +150,7 @@ def test_adds_override_to_eslintrc(mock_replace: MagicMock):
     assert call_kwargs["file_path"] == ".eslintrc"
 
 
-@patch("services.eslint.ensure_eslint_relaxed_for_tests.replace_remote_file_content")
+@patch("services.eslint.ensure_eslint_relaxed_for_tests.write_and_commit_file")
 def test_appends_to_existing_overrides(mock_replace: MagicMock):
     existing_config = {
         "rules": {},
@@ -174,7 +174,7 @@ def test_appends_to_existing_overrides(mock_replace: MagicMock):
 
 
 @patch("services.eslint.ensure_eslint_relaxed_for_tests.read_local_file")
-@patch("services.eslint.ensure_eslint_relaxed_for_tests.replace_remote_file_content")
+@patch("services.eslint.ensure_eslint_relaxed_for_tests.write_and_commit_file")
 def test_wraps_in_package_json(mock_replace: MagicMock, mock_read: MagicMock):
     eslint_config_content = {"rules": {"semi": "error"}}
     config = {"filename": "package.json", "content": json.dumps(eslint_config_content)}
@@ -201,7 +201,7 @@ def test_wraps_in_package_json(mock_replace: MagicMock, mock_read: MagicMock):
     assert updated["eslintConfig"]["overrides"][0]["rules"] == RELAXED_RULES
 
 
-@patch("services.eslint.ensure_eslint_relaxed_for_tests.replace_remote_file_content")
+@patch("services.eslint.ensure_eslint_relaxed_for_tests.write_and_commit_file")
 def test_returns_none_when_replace_fails(mock_replace: MagicMock):
     existing_config = {"rules": {}}
     config = {"filename": ".eslintrc.json", "content": json.dumps(existing_config)}
@@ -216,7 +216,7 @@ def test_returns_none_when_replace_fails(mock_replace: MagicMock):
     assert result is None
 
 
-@patch("services.eslint.ensure_eslint_relaxed_for_tests.replace_remote_file_content")
+@patch("services.eslint.ensure_eslint_relaxed_for_tests.write_and_commit_file")
 def test_real_foxquilt_eslintrc(mock_replace: MagicMock):
     """Test with real Foxquilt foxcom-payment-frontend .eslintrc that caused the original bug.
     It extends @typescript-eslint/recommended (which enables no-explicit-any as warn)
@@ -257,9 +257,9 @@ def test_does_not_match_override_without_test_glob():
     }
     config = {"filename": ".eslintrc.json", "content": json.dumps(existing_config)}
     # Should NOT skip - the override is for *.js, not test files
-    # But it will try to modify, which needs a mock for replace_remote_file_content
+    # But it will try to modify, which needs a mock for write_and_commit_file
     with patch(
-        "services.eslint.ensure_eslint_relaxed_for_tests.replace_remote_file_content"
+        "services.eslint.ensure_eslint_relaxed_for_tests.write_and_commit_file"
     ) as mock_replace:
         mock_replace.return_value = _mock_success_result()
         result = ensure_eslint_relaxed_for_tests(
