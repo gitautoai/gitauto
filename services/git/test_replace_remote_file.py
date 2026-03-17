@@ -1,6 +1,7 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
 from typing import cast
+from unittest.mock import patch
 
 import pytest
 
@@ -28,11 +29,14 @@ def sample_base_args(tmp_path):
 
 
 def test_replace_creates_new_file(sample_base_args, tmp_path):
-    result = replace_remote_file_content(
-        file_content="print('hello')",
-        file_path="src/test.py",
-        base_args=sample_base_args,
-    )
+    with patch(
+        "services.git.replace_remote_file.git_show_head_file", return_value=None
+    ):
+        result = replace_remote_file_content(
+            file_content="print('hello')",
+            file_path="src/test.py",
+            base_args=sample_base_args,
+        )
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
@@ -44,16 +48,20 @@ def test_replace_creates_new_file(sample_base_args, tmp_path):
 
 
 def test_replace_existing_file(sample_base_args, tmp_path):
-    # Create existing file
+    # Create existing file on disk so os.path.exists returns True
     file_dir = tmp_path / "src"
     file_dir.mkdir()
     (file_dir / "test.py").write_text("old content\n")
 
-    result = replace_remote_file_content(
-        file_content="new content",
-        file_path="src/test.py",
-        base_args=sample_base_args,
-    )
+    with patch(
+        "services.git.replace_remote_file.git_show_head_file",
+        return_value="old content\n",
+    ):
+        result = replace_remote_file_content(
+            file_content="new content",
+            file_path="src/test.py",
+            base_args=sample_base_args,
+        )
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
@@ -66,15 +74,43 @@ def test_skip_when_content_identical(sample_base_args, tmp_path):
     file_dir.mkdir()
     (file_dir / "test.py").write_text("same content\n")
 
-    result = replace_remote_file_content(
-        file_content="same content\n",
-        file_path="src/test.py",
-        base_args=sample_base_args,
-    )
+    with patch(
+        "services.git.replace_remote_file.git_show_head_file",
+        return_value="same content\n",
+    ):
+        result = replace_remote_file_content(
+            file_content="same content\n",
+            file_path="src/test.py",
+            base_args=sample_base_args,
+        )
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
     assert "No changes" in result.message
+
+
+def test_detects_changes_when_disk_modified_by_formatter(sample_base_args, tmp_path):
+    """When a formatter modifies the file on disk, we should still detect changes
+    because we compare against git HEAD (committed version), not disk."""
+    file_dir = tmp_path / "src"
+    file_dir.mkdir()
+    # Disk has formatter-modified content
+    (file_dir / "test.py").write_text("formatted content\n")
+
+    # But git HEAD has the original committed content
+    with patch(
+        "services.git.replace_remote_file.git_show_head_file",
+        return_value="original content\n",
+    ):
+        result = replace_remote_file_content(
+            file_content="formatted content",
+            file_path="src/test.py",
+            base_args=sample_base_args,
+        )
+
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert "Updated" in result.message
 
 
 def test_directory_path_error(sample_base_args, tmp_path):
@@ -97,11 +133,15 @@ def test_preserve_crlf_line_endings(sample_base_args, tmp_path):
     file_dir.mkdir()
     (file_dir / "test.ts").write_text("line1\r\nline2\r\n")
 
-    result = replace_remote_file_content(
-        file_content="line1\nline2_modified\n",
-        file_path="src/test.ts",
-        base_args=sample_base_args,
-    )
+    with patch(
+        "services.git.replace_remote_file.git_show_head_file",
+        return_value="line1\r\nline2\r\n",
+    ):
+        result = replace_remote_file_content(
+            file_content="line1\nline2_modified\n",
+            file_path="src/test.ts",
+            base_args=sample_base_args,
+        )
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
@@ -114,11 +154,15 @@ def test_skip_when_content_identical_after_crlf_conversion(sample_base_args, tmp
     file_dir.mkdir()
     (file_dir / "test.ts").write_text("line1\r\nline2\r\n")
 
-    result = replace_remote_file_content(
-        file_content="line1\nline2\n",
-        file_path="src/test.ts",
-        base_args=sample_base_args,
-    )
+    with patch(
+        "services.git.replace_remote_file.git_show_head_file",
+        return_value="line1\r\nline2\r\n",
+    ):
+        result = replace_remote_file_content(
+            file_content="line1\nline2\n",
+            file_path="src/test.ts",
+            base_args=sample_base_args,
+        )
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
@@ -126,11 +170,14 @@ def test_skip_when_content_identical_after_crlf_conversion(sample_base_args, tmp
 
 
 def test_ensures_final_newline(sample_base_args, tmp_path):
-    result = replace_remote_file_content(
-        file_content="no trailing newline",
-        file_path="test.py",
-        base_args=sample_base_args,
-    )
+    with patch(
+        "services.git.replace_remote_file.git_show_head_file", return_value=None
+    ):
+        result = replace_remote_file_content(
+            file_content="no trailing newline",
+            file_path="test.py",
+            base_args=sample_base_args,
+        )
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
@@ -138,24 +185,30 @@ def test_ensures_final_newline(sample_base_args, tmp_path):
 
 
 def test_extra_kwargs_ignored(sample_base_args, tmp_path):
-    result = replace_remote_file_content(
-        file_content="content",
-        file_path="test.py",
-        base_args=sample_base_args,
-        extra_param="should_be_ignored",
-        another_param=123,
-    )
+    with patch(
+        "services.git.replace_remote_file.git_show_head_file", return_value=None
+    ):
+        result = replace_remote_file_content(
+            file_content="content",
+            file_path="test.py",
+            base_args=sample_base_args,
+            extra_param="should_be_ignored",
+            another_param=123,
+        )
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
 
 
 def test_nested_file_path(sample_base_args, tmp_path):
-    result = replace_remote_file_content(
-        file_content="# deep file",
-        file_path="src/utils/helpers/deep/nested/file.py",
-        base_args=sample_base_args,
-    )
+    with patch(
+        "services.git.replace_remote_file.git_show_head_file", return_value=None
+    ):
+        result = replace_remote_file_content(
+            file_content="# deep file",
+            file_path="src/utils/helpers/deep/nested/file.py",
+            base_args=sample_base_args,
+        )
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
@@ -163,11 +216,14 @@ def test_nested_file_path(sample_base_args, tmp_path):
 
 
 def test_unicode_content(sample_base_args, tmp_path):
-    result = replace_remote_file_content(
-        file_content="print('Hello 世界! 🌍 émojis')",
-        file_path="test.py",
-        base_args=sample_base_args,
-    )
+    with patch(
+        "services.git.replace_remote_file.git_show_head_file", return_value=None
+    ):
+        result = replace_remote_file_content(
+            file_content="print('Hello 世界! 🌍 émojis')",
+            file_path="test.py",
+            base_args=sample_base_args,
+        )
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True

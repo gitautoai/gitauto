@@ -27,10 +27,15 @@ def sample_base_args(tmp_path):
 
 
 def test_successful_file_update(sample_base_args, tmp_path):
-    # Create existing file
     (tmp_path / "test.py").write_text("print('hello world')\n")
 
-    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
+    with (
+        patch(
+            "services.git.apply_diff_to_file.git_show_head_file",
+            return_value="print('hello world')\n",
+        ),
+        patch("services.git.apply_diff_to_file.apply_patch") as mock_patch,
+    ):
         mock_patch.return_value = PatchResult(
             content="print('hello modified world')\n", error=""
         )
@@ -48,7 +53,10 @@ def test_successful_file_update(sample_base_args, tmp_path):
 
 
 def test_new_file_creation(sample_base_args, tmp_path):
-    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
+    with (
+        patch("services.git.apply_diff_to_file.git_show_head_file", return_value=None),
+        patch("services.git.apply_diff_to_file.apply_patch") as mock_patch,
+    ):
         mock_patch.return_value = PatchResult(content="print('new file')\n", error="")
 
         result = apply_diff_to_file(
@@ -65,7 +73,13 @@ def test_new_file_creation(sample_base_args, tmp_path):
 def test_deletion_diff(sample_base_args, tmp_path):
     (tmp_path / "to_delete.py").write_text("# delete me\n")
 
-    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
+    with (
+        patch(
+            "services.git.apply_diff_to_file.git_show_head_file",
+            return_value="# delete me\n",
+        ),
+        patch("services.git.apply_diff_to_file.apply_patch") as mock_patch,
+    ):
         mock_patch.return_value = PatchResult(content="", error="")
 
         result = apply_diff_to_file(
@@ -97,7 +111,13 @@ def test_directory_path_error(sample_base_args, tmp_path):
 def test_patch_error(sample_base_args, tmp_path):
     (tmp_path / "test.py").write_text("original\n")
 
-    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
+    with (
+        patch(
+            "services.git.apply_diff_to_file.git_show_head_file",
+            return_value="original\n",
+        ),
+        patch("services.git.apply_diff_to_file.apply_patch") as mock_patch,
+    ):
         mock_patch.return_value = PatchResult(content="", error="Failed to apply diff.")
 
         result = apply_diff_to_file(
@@ -115,7 +135,13 @@ def test_no_changes_returns_success_false(sample_base_args, tmp_path):
     original_content = "print('hello world')\n"
     (tmp_path / "test.py").write_text(original_content)
 
-    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
+    with (
+        patch(
+            "services.git.apply_diff_to_file.git_show_head_file",
+            return_value=original_content,
+        ),
+        patch("services.git.apply_diff_to_file.apply_patch") as mock_patch,
+    ):
         mock_patch.return_value = PatchResult(content=original_content, error="")
 
         result = apply_diff_to_file(
@@ -129,8 +155,38 @@ def test_no_changes_returns_success_false(sample_base_args, tmp_path):
         assert "No changes" in result.message
 
 
+def test_detects_changes_when_disk_modified_by_formatter(sample_base_args, tmp_path):
+    """When a formatter modifies the file on disk, we should still detect changes
+    because we compare against git HEAD (committed version), not disk."""
+    # Disk has formatter-modified content
+    (tmp_path / "test.py").write_text("formatted content\n")
+
+    # git HEAD has the original committed content
+    with (
+        patch(
+            "services.git.apply_diff_to_file.git_show_head_file",
+            return_value="original content\n",
+        ),
+        patch("services.git.apply_diff_to_file.apply_patch") as mock_patch,
+    ):
+        mock_patch.return_value = PatchResult(content="formatted content\n", error="")
+
+        result = apply_diff_to_file(
+            diff="--- test.py\n+++ test.py\n@@ -1 +1 @@\n-original content\n+formatted content",
+            file_path="test.py",
+            base_args=sample_base_args,
+        )
+
+        assert isinstance(result, FileWriteResult)
+        assert result.success is True
+        assert "Updated" in result.message
+
+
 def test_extra_kwargs_ignored(sample_base_args, tmp_path):
-    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
+    with (
+        patch("services.git.apply_diff_to_file.git_show_head_file", return_value=None),
+        patch("services.git.apply_diff_to_file.apply_patch") as mock_patch,
+    ):
         mock_patch.return_value = PatchResult(content="new\n", error="")
 
         result = apply_diff_to_file(
@@ -149,7 +205,12 @@ def test_nested_file_path(sample_base_args, tmp_path):
     nested_dir.mkdir(parents=True)
     (nested_dir / "helper.py").write_text("old\n")
 
-    with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
+    with (
+        patch(
+            "services.git.apply_diff_to_file.git_show_head_file", return_value="old\n"
+        ),
+        patch("services.git.apply_diff_to_file.apply_patch") as mock_patch,
+    ):
         mock_patch.return_value = PatchResult(content="new\n", error="")
 
         result = apply_diff_to_file(

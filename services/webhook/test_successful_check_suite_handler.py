@@ -1,4 +1,4 @@
-# pylint: disable=unused-argument
+# pylint: disable=too-many-lines,unused-argument
 # pyright: reportUnusedVariable=false
 import json
 from typing import cast
@@ -20,7 +20,10 @@ def load_payload(filename: str):
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
 @patch("services.webhook.successful_check_suite_handler.get_repository_features")
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
@@ -124,7 +127,10 @@ def test_handle_successful_check_suite_without_pr():
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request_files")
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
@@ -189,7 +195,10 @@ def test_handle_successful_check_suite_no_usage_record_found(
         mock_table.update.assert_not_called()
 
 
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
@@ -222,7 +231,10 @@ def test_handle_successful_check_suite_with_exception(
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
@@ -310,7 +322,10 @@ def test_auto_merge_success(
         )
 
 
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
@@ -361,7 +376,10 @@ def test_auto_merge_disabled(
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
@@ -446,7 +464,10 @@ def test_auto_merge_multiple_test_files_changed(
 
 
 @patch("services.webhook.successful_check_suite_handler.create_comment")
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
@@ -523,7 +544,10 @@ def test_auto_merge_mixed_test_and_non_test_files(
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
@@ -664,7 +688,10 @@ def test_auto_merge_skipped_for_human_pr(
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
@@ -745,7 +772,10 @@ def test_auto_merge_blocked_skips_notification_when_checks_in_progress(
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
@@ -817,7 +847,10 @@ def test_auto_merge_with_blocked_state(
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
@@ -906,7 +939,10 @@ def test_auto_merge_with_unstable_state(
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
@@ -978,7 +1014,10 @@ def test_auto_merge_with_unknown_state_no_comment(
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch("services.webhook.successful_check_suite_handler.get_clone_dir", return_value="/tmp/test-owner/test-repo/pr-1")
+@patch(
+    "services.webhook.successful_check_suite_handler.get_clone_dir",
+    return_value="/tmp/test-owner/test-repo/pr-1",
+)
 @patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
