@@ -72,7 +72,10 @@ def test_resolve_sentry_issue_url_construction_with_custom_org(mock_put):
     resolve_sentry_issue("MY-ISSUE-42", MOCK_HEADERS, "custom-org")
 
     call_url = mock_put.call_args[0][0]
-    assert call_url == "https://sentry.io/api/0/organizations/custom-org/issues/MY-ISSUE-42/"
+    assert (
+        call_url
+        == "https://sentry.io/api/0/organizations/custom-org/issues/MY-ISSUE-42/"
+    )
 
 
 @patch("scripts.sentry.resolve_issue.requests.put")
@@ -156,10 +159,14 @@ def test_main_missing_env_vars_exits_with_error():
         "PATH": os.environ.get("PATH", ""),
         "PYTHONPATH": ".",
         "HOME": os.environ.get("HOME", ""),
+        # Set empty values so load_dotenv(override=False) won't load from .env
+        "SENTRY_PERSONAL_TOKEN": "",
+        "SENTRY_ORG_SLUG": "",
     }
     result = subprocess.run(
         [sys.executable, "-m", "scripts.sentry.resolve_issue", "AGENT-1"],
         capture_output=True,
+        check=False,
         text=True,
         env=clean_env,
         timeout=10,
@@ -173,6 +180,7 @@ def test_main_no_args_exits_with_error():
     result = subprocess.run(
         [sys.executable, "-m", "scripts.sentry.resolve_issue"],
         capture_output=True,
+        check=False,
         text=True,
         timeout=10,
     )
