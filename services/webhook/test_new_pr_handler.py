@@ -1180,7 +1180,7 @@ async def test_non_test_file_skipped_in_header_merge(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
 )
-@patch("services.webhook.new_pr_handler.replace_remote_file_content")
+@patch("services.webhook.new_pr_handler.write_and_commit_file")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
 @patch("services.webhook.new_pr_handler.get_raw_content")
 @patch("services.webhook.new_pr_handler.is_test_file")
@@ -1283,7 +1283,7 @@ async def test_test_file_header_merge(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
 )
-@patch("services.webhook.new_pr_handler.replace_remote_file_content")
+@patch("services.webhook.new_pr_handler.write_and_commit_file")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
 @patch("services.webhook.new_pr_handler.get_raw_content")
 @patch("services.webhook.new_pr_handler.is_test_file")
@@ -1385,7 +1385,7 @@ async def test_test_file_header_merge_no_content(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
 )
-@patch("services.webhook.new_pr_handler.replace_remote_file_content")
+@patch("services.webhook.new_pr_handler.write_and_commit_file")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
 @patch("services.webhook.new_pr_handler.get_raw_content")
 @patch("services.webhook.new_pr_handler.is_test_file")

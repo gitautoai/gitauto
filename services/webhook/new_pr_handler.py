@@ -23,7 +23,7 @@ from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_efs import git_clone_to_efs
 from services.git.prepare_repo_for_work import prepare_repo_for_work
-from services.git.replace_remote_file import replace_remote_file_content
+from services.git.write_and_commit_file import write_and_commit_file
 from services.github.comments.create_comment import create_comment
 from services.github.comments.get_comments import get_comments
 from services.github.comments.update_comment import update_comment
@@ -573,7 +573,7 @@ async def handle_new_pr(
         if not updated_content or updated_content == file_content:
             continue
 
-        replace_remote_file_content(
+        write_and_commit_file(
             file_content=updated_content,
             file_path=file_path,
             base_args=base_args,

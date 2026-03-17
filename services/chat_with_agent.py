@@ -136,24 +136,25 @@ async def chat_with_agent(
                 and "diff" not in tool_args
                 and "file_content" in tool_args
             ):
-                corrected_tool = ("replace_remote_file_content", tool_args)
+                corrected_tool = ("write_and_commit_file", tool_args)
             elif (
-                tool_name == "replace_remote_file_content"
+                tool_name == "write_and_commit_file"
                 and isinstance(tool_args, dict)
                 and "diff" in tool_args
             ):
                 corrected_tool = ("apply_diff_to_file", tool_args)
         else:
             similar_functions = {
-                "create_remote_file": "replace_remote_file_content",
-                "update_remote_file": "replace_remote_file_content",
-                "modify_remote_file": "replace_remote_file_content",
+                "create_remote_file": "write_and_commit_file",
+                "update_remote_file": "write_and_commit_file",
+                "modify_remote_file": "write_and_commit_file",
+                "replace_remote_file_content": "write_and_commit_file",
             }
             if similar_name := similar_functions.get(tool_name):
                 corrected_tool = (similar_name, tool_args)
 
         if (
-            tool_name == "replace_remote_file_content"
+            tool_name == "write_and_commit_file"
             and isinstance(tool_args, dict)
             and "new_content" in tool_args
         ):
@@ -410,7 +411,7 @@ async def chat_with_agent(
                 msg = "Root directory is empty or not found."
 
         elif (
-            tool_name in ["apply_diff_to_file", "replace_remote_file_content"]
+            tool_name in ["apply_diff_to_file", "write_and_commit_file"]
             and isinstance(tool_args, dict)
             and isinstance((file_path := tool_args.get("file_path")), str)
             and file_path

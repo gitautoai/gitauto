@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from constants.files import PHP_TEST_FILE_EXTENSIONS
 from services.eslint.run_eslint_fix import run_eslint_fix
-from services.git.replace_remote_file import replace_remote_file_content
+from services.git.write_and_commit_file import write_and_commit_file
 from services.github.files.get_raw_content import get_raw_content
 from services.types.base_args import BaseArgs
 from services.jest.run_jest_test import run_jest_test
@@ -66,7 +66,7 @@ async def verify_task_is_ready(
                 "Prettier failed on %s: %s", file_path, prettier_result.error
             )
         elif prettier_result.content and prettier_result.content != content:
-            replace_remote_file_content(
+            write_and_commit_file(
                 file_content=prettier_result.content,
                 file_path=file_path,
                 base_args=base_args,
@@ -82,7 +82,7 @@ async def verify_task_is_ready(
         )
         # Push partial fixes even if errors remain
         if eslint_result.content and eslint_result.content != content:
-            replace_remote_file_content(
+            write_and_commit_file(
                 file_content=eslint_result.content,
                 file_path=file_path,
                 base_args=base_args,

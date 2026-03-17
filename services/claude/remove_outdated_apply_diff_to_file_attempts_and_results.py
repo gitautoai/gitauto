@@ -39,11 +39,11 @@ def remove_outdated_apply_diff_to_file_attempts_and_results(
                 file_latest_positions[filename] = (i, "input")
                 continue
 
-            # Check for tool_use with replace_remote_file_content (assistant replacing file)
+            # Check for tool_use with write_and_commit_file (assistant replacing file)
             if (
                 msg.get("role") == "assistant"
                 and item.get("type") == "tool_use"
-                and item.get("name") == "replace_remote_file_content"
+                and item.get("name") == "write_and_commit_file"
             ):
 
                 input_data = item.get("input", {})

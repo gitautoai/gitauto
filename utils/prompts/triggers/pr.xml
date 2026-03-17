@@ -9,12 +9,12 @@
 
   IF NO TEST FILE EXISTS:
   - Create a new test file with comprehensive tests for the source file
-  - Use replace_remote_file_content to create the new file (apply_diff_to_file is error-prone for new files because the unified diff /dev/null format requires exact line counts)
+  - Use write_and_commit_file to create the new file (apply_diff_to_file is error-prone for new files because the unified diff /dev/null format requires exact line counts)
 
   IF TEST FILE ALREADY EXISTS:
   - The issue body specifies EXACTLY which lines, functions, and branches are uncovered
   - Write tests that specifically target those uncovered items (e.g., "Uncovered Lines: 6, 7" means write tests that execute lines 6 and 7)
-  - Use apply_diff_to_file to ADD new test cases - do NOT use replace_remote_file_content
+  - Use apply_diff_to_file to ADD new test cases - do NOT use write_and_commit_file
   - Preserve ALL existing content including headers (eslint-disable, pylint: disable, etc.)
 
   COMMON MISTAKES TO AVOID:

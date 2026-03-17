@@ -3,7 +3,7 @@ import re
 
 import jsonc
 
-from services.git.replace_remote_file import replace_remote_file_content
+from services.git.write_and_commit_file import write_and_commit_file
 from services.github.files.get_raw_content import get_raw_content
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
@@ -41,7 +41,7 @@ def ensure_tsconfig_relaxed_for_tests(root_files: list[str], base_args: BaseArgs
             "compilerOptions": REQUIRED_OPTIONS,
         }
         content = json.dumps(default_config, indent=2)
-        result = replace_remote_file_content(
+        result = write_and_commit_file(
             file_content=content,
             file_path=TSCONFIG_TEST_PATH,
             base_args=base_args,
@@ -79,7 +79,7 @@ def ensure_tsconfig_relaxed_for_tests(root_files: list[str], base_args: BaseArgs
                 config["compilerOptions"][key] = value
 
             updated_content = json.dumps(config, indent=2)
-            result = replace_remote_file_content(
+            result = write_and_commit_file(
                 file_content=updated_content,
                 file_path=variant_path,
                 base_args=base_args,

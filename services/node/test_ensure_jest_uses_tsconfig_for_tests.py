@@ -29,7 +29,7 @@ def _make_base_args():
     )
 
 
-@patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
 def test_pattern1_ts_jest_string(mock_get_raw: MagicMock, mock_replace: MagicMock):
     """Pattern 1: ts-jest as string in transform.
@@ -55,7 +55,7 @@ def test_pattern1_ts_jest_string(mock_get_raw: MagicMock, mock_replace: MagicMoc
     assert "tsconfig.test.json" in call_kwargs["file_content"]
 
 
-@patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
 def test_pattern2_ts_jest_array(mock_get_raw: MagicMock, mock_replace: MagicMock):
     """Pattern 2: ts-jest as array with options in transform.
@@ -82,7 +82,7 @@ def test_pattern2_ts_jest_array(mock_get_raw: MagicMock, mock_replace: MagicMock
     assert "isolatedModules: true" in call_kwargs["file_content"]
 
 
-@patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
 def test_skips_when_already_uses_test_tsconfig(
     mock_get_raw: MagicMock, mock_replace: MagicMock
@@ -104,7 +104,7 @@ def test_skips_when_already_uses_test_tsconfig(
     mock_replace.assert_not_called()
 
 
-@patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
 def test_skips_when_any_tsconfig_configured(
     mock_get_raw: MagicMock, mock_replace: MagicMock
@@ -126,7 +126,7 @@ def test_skips_when_any_tsconfig_configured(
     mock_replace.assert_not_called()
 
 
-@patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
 def test_pattern3_preset_only(mock_get_raw: MagicMock, mock_replace: MagicMock):
     """Pattern 3: preset only, no transform block.
@@ -154,7 +154,7 @@ def test_pattern3_preset_only(mock_get_raw: MagicMock, mock_replace: MagicMock):
     assert "preset" not in call_kwargs["file_content"]
 
 
-@patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
 def test_pattern4_preset_with_existing_transform(
     mock_get_raw: MagicMock, mock_replace: MagicMock
@@ -186,7 +186,7 @@ def test_pattern4_preset_with_existing_transform(
     assert "preset" not in call_kwargs["file_content"]
 
 
-@patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
 def test_returns_none_when_no_pattern(mock_get_raw: MagicMock, mock_replace: MagicMock):
     """Test that None is returned when no ts-jest pattern found."""
@@ -204,7 +204,7 @@ def test_returns_none_when_no_pattern(mock_get_raw: MagicMock, mock_replace: Mag
     mock_replace.assert_not_called()
 
 
-@patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
 def test_handles_double_quotes(mock_get_raw: MagicMock, mock_replace: MagicMock):
     """Test handling double quotes in Jest config."""
@@ -224,7 +224,7 @@ def test_handles_double_quotes(mock_get_raw: MagicMock, mock_replace: MagicMock)
     assert status == "modified"
 
 
-@patch("services.node.ensure_jest_uses_tsconfig_for_tests.replace_remote_file_content")
+@patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.get_raw_content")
 def test_skips_when_no_jest_config(mock_get_raw: MagicMock, mock_replace: MagicMock):
     """Test that None is returned when no Jest config exists."""

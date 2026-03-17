@@ -194,7 +194,7 @@ async def test_verify_task_is_complete_api_error_returns_default(
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
-@patch("services.agents.verify_task_is_complete.replace_remote_file_content")
+@patch("services.agents.verify_task_is_complete.write_and_commit_file")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_autofixes_missing_braces_in_test_file(
@@ -386,7 +386,7 @@ async def test_verify_ignores_all_non_js_test_files(
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
-@patch("services.agents.verify_task_is_complete.replace_remote_file_content")
+@patch("services.agents.verify_task_is_complete.write_and_commit_file")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
@@ -435,7 +435,7 @@ async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
-@patch("services.agents.verify_task_is_complete.replace_remote_file_content")
+@patch("services.agents.verify_task_is_complete.write_and_commit_file")
 @patch("services.agents.verify_task_is_complete.get_raw_content")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
@@ -711,7 +711,7 @@ async def test_baseline_tsc_errors_in_pr_files_still_reported(
     "services.agents.verify_task_is_complete.read_local_file",
     return_value="// snapshot content",
 )
-@patch("services.agents.verify_task_is_complete.replace_remote_file_content")
+@patch("services.agents.verify_task_is_complete.write_and_commit_file")
 @patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_raw_content")

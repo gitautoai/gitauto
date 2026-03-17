@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class FileWriteResult:
-    """Result from file write operations (apply_diff, replace_remote_file_content)."""
+    """Result from file write operations (apply_diff, write_and_commit_file)."""
 
     success: bool
     message: str

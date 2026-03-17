@@ -95,7 +95,7 @@
       {
         "type": "tool_use",
         "id": "toolu_01783z1Lrhbs38GvsnvGEX8o",
-        "name": "replace_remote_file_content",
+        "name": "write_and_commit_file",
         "input": {
           "file_path": "services/anthropic/test_client.py",
           "file_content": "import pytest\nfrom unittest.mock import patch, MagicMock\n\nfrom anthropic import Anthropic\n"

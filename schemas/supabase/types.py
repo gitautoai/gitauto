@@ -617,7 +617,7 @@ class Usage(TypedDict):
     source: str
     pr_number: int | None
     is_test_passed: bool
-    retry_workflow_id_hash_pairs: list[str] | None
+    retry_error_hashes: list[str] | None
     is_merged: bool
     trigger: str
     original_error_log: str | None
@@ -644,7 +644,7 @@ class UsageInsert(TypedDict):
     source: str
     pr_number: NotRequired[int | None]
     is_test_passed: bool
-    retry_workflow_id_hash_pairs: NotRequired[list[str] | None]
+    retry_error_hashes: NotRequired[list[str] | None]
     is_merged: bool
     trigger: str
     original_error_log: NotRequired[str | None]

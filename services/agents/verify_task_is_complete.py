@@ -11,7 +11,7 @@ from services.eslint.ensure_eslint_relaxed_for_tests import (
 )
 from services.eslint.run_eslint_fix import run_eslint_fix
 from services.github.comments.create_comment import create_comment
-from services.git.replace_remote_file import replace_remote_file_content
+from services.git.write_and_commit_file import write_and_commit_file
 from services.eslint.get_eslint_config import get_eslint_config
 from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
@@ -125,7 +125,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
             file_content=content,
         )
         if prettier_result.content and prettier_result.content != content:
-            replace_remote_file_content(
+            write_and_commit_file(
                 file_content=prettier_result.content,
                 file_path=file_path,
                 base_args=base_args,
@@ -143,7 +143,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
             file_content=content,
         )
         if eslint_result.content and eslint_result.content != content:
-            replace_remote_file_content(
+            write_and_commit_file(
                 file_content=eslint_result.content,
                 file_path=file_path,
                 base_args=base_args,
@@ -229,7 +229,7 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
         snap_content = read_local_file(file_path=snap_path, base_dir=clone_dir)
         if not snap_content:
             continue
-        replace_remote_file_content(
+        write_and_commit_file(
             file_content=snap_content,
             file_path=snap_path,
             base_args=base_args,

@@ -230,8 +230,8 @@ async def test_handle_check_suite_skips_when_comment_exists(
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.get_workflow_run_logs")
 @patch("services.webhook.check_suite_handler.clean_logs")
-@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_retry_error_hashes")
 @patch("services.webhook.check_suite_handler.check_older_active_test_failure_request")
 @patch("services.webhook.check_suite_handler.should_bail")
 @patch("services.webhook.check_suite_handler.update_comment")
@@ -253,8 +253,8 @@ async def test_handle_check_suite_race_condition_prevention(
     mock_update_comment,
     mock_should_bail,
     mock_check_older_active,
-    mock_update_retry_pairs,
-    mock_get_retry_pairs,
+    mock_update_retry_hashes,
+    mock_get_retry_hashes,
     mock_clean_logs,
     mock_get_workflow_logs,
     mock_get_pr_files,
@@ -299,8 +299,8 @@ async def test_handle_check_suite_race_condition_prevention(
     mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
     mock_get_workflow_logs.return_value = "Error: Test failure"
     mock_clean_logs.return_value = "Cleaned error log"
-    mock_get_retry_pairs.return_value = []
-    mock_update_retry_pairs.return_value = None
+    mock_get_retry_hashes.return_value = []
+    mock_update_retry_hashes.return_value = None
 
     # Let execution loop proceed to race condition check
     mock_should_bail.return_value = False
@@ -329,7 +329,7 @@ async def test_handle_check_suite_race_condition_prevention(
     assert kwargs["is_completed"] is True
     assert kwargs["pr_number"] == 1
     assert isinstance(kwargs["total_seconds"], int)  # Should be small integer
-    assert "retry_workflow_id_hash_pairs" in kwargs
+    assert "retry_error_hashes" in kwargs
     assert "original_error_log" in kwargs
     assert "minimized_error_log" in kwargs
 
@@ -351,8 +351,8 @@ async def test_handle_check_suite_race_condition_prevention(
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.get_workflow_run_logs")
 @patch("services.webhook.check_suite_handler.update_comment")
-@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_retry_error_hashes")
 @patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.chat_with_agent")
 @patch("services.webhook.check_suite_handler.create_empty_commit")
@@ -370,8 +370,8 @@ async def test_handle_check_suite_full_workflow(
     _mock_create_empty_commit,
     mock_chat_agent,
     _mock_should_bail,
-    _mock_update_retry_pairs,
-    mock_get_retry_pairs,
+    _mock_update_retry_hashes,
+    mock_get_retry_hashes,
     _mock_update_comment,
     mock_get_logs,
     mock_get_changes,
@@ -419,7 +419,7 @@ async def test_handle_check_suite_full_workflow(
         }
     ]
     mock_get_logs.return_value = "Test failure log content"
-    mock_get_retry_pairs.return_value = []
+    mock_get_retry_hashes.return_value = []
 
     mock_chat_agent.side_effect = [
         AgentResult(
@@ -453,7 +453,7 @@ async def test_handle_check_suite_full_workflow(
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
-    mock_get_retry_pairs.assert_called_once()
+    mock_get_retry_hashes.assert_called_once()
     assert mock_chat_agent.call_count == 2
 
     # Verify execution call has system_message and baseline_tsc_errors
@@ -658,8 +658,8 @@ async def test_handle_check_suite_with_none_logs(
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.get_workflow_run_logs")
 @patch("services.webhook.check_suite_handler.update_comment")
-@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_retry_error_hashes")
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.clean_logs")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
@@ -673,8 +673,8 @@ async def test_handle_check_suite_with_existing_retry_pair(
     _mock_start_async,
     mock_clean_logs,
     mock_update_usage,
-    _mock_update_retry_pairs,
-    mock_get_retry_pairs,
+    _mock_update_retry_hashes,
+    mock_get_retry_hashes,
     mock_update_comment,
     mock_get_logs,
     mock_get_changes,
@@ -724,10 +724,9 @@ async def test_handle_check_suite_with_existing_retry_pair(
     mock_get_logs.return_value = "Test failure log content"
     mock_clean_logs.return_value = "Cleaned test failure log"
 
-    # Mock that this workflow/error pair has been seen before
-    # Calculate the expected hash: workflow_id is "runs" from URL, error_log is "Test failure log content"
+    # Mock that this error hash has been seen before
     expected_hash = hashlib.sha256("Test failure log content".encode(UTF8)).hexdigest()
-    mock_get_retry_pairs.return_value = [f"runs:{expected_hash}"]
+    mock_get_retry_hashes.return_value = [expected_hash]
 
     # Execute
     await handle_check_suite(payload)
@@ -740,7 +739,7 @@ async def test_handle_check_suite_with_existing_retry_pair(
     mock_get_pr.assert_called_once()
     mock_get_changes.assert_called_once()
     mock_get_logs.assert_called_once()
-    mock_get_retry_pairs.assert_called_once()
+    mock_get_retry_hashes.assert_called_once()
     mock_clean_logs.assert_called_once_with("Test failure log content")
 
     # Verify update_usage was called with error logs
@@ -766,8 +765,8 @@ async def test_handle_check_suite_with_existing_retry_pair(
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.get_workflow_run_logs")
 @patch("services.webhook.check_suite_handler.update_comment")
-@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_retry_error_hashes")
 @patch("services.webhook.check_suite_handler.should_bail", return_value=True)
 @patch("services.webhook.check_suite_handler.create_empty_commit")
 @patch("services.webhook.check_suite_handler.update_usage")
@@ -783,8 +782,8 @@ async def test_handle_check_suite_with_closed_pr(
     _mock_update_usage,
     _mock_create_empty_commit,
     mock_should_bail,
-    _mock_update_retry_pairs,
-    mock_get_retry_pairs,
+    _mock_update_retry_hashes,
+    mock_get_retry_hashes,
     mock_update_comment,
     mock_get_logs,
     mock_get_changes,
@@ -832,7 +831,7 @@ async def test_handle_check_suite_with_closed_pr(
         }
     ]
     mock_get_logs.return_value = "Test failure log content"
-    mock_get_retry_pairs.return_value = []
+    mock_get_retry_hashes.return_value = []
 
     # Execute
     await handle_check_suite(payload)
@@ -864,8 +863,8 @@ async def test_handle_check_suite_with_closed_pr(
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.get_workflow_run_logs")
 @patch("services.webhook.check_suite_handler.update_comment")
-@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_retry_error_hashes")
 @patch("services.webhook.check_suite_handler.should_bail", return_value=True)
 @patch("services.webhook.check_suite_handler.create_empty_commit")
 @patch("services.webhook.check_suite_handler.update_usage")
@@ -881,8 +880,8 @@ async def test_handle_check_suite_with_deleted_branch(
     _mock_update_usage,
     _mock_create_empty_commit,
     mock_should_bail,
-    _mock_update_retry_pairs,
-    mock_get_retry_pairs,
+    _mock_update_retry_hashes,
+    mock_get_retry_hashes,
     mock_update_comment,
     mock_get_logs,
     mock_get_changes,
@@ -930,7 +929,7 @@ async def test_handle_check_suite_with_deleted_branch(
         }
     ]
     mock_get_logs.return_value = "Test failure log content"
-    mock_get_retry_pairs.return_value = []
+    mock_get_retry_hashes.return_value = []
 
     # Execute
     await handle_check_suite(payload)
@@ -962,8 +961,8 @@ async def test_handle_check_suite_with_deleted_branch(
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.get_workflow_run_logs")
 @patch("services.webhook.check_suite_handler.update_comment")
-@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_retry_error_hashes")
 @patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.chat_with_agent")
 @patch("services.webhook.check_suite_handler.create_empty_commit")
@@ -981,8 +980,8 @@ async def test_check_run_handler_token_accumulation(
     _mock_create_empty_commit,
     mock_chat_agent,
     _mock_should_bail,
-    _mock_update_retry_pairs,
-    mock_get_retry_pairs,
+    _mock_update_retry_hashes,
+    mock_get_retry_hashes,
     _mock_update_comment,
     mock_get_logs,
     mock_get_changes,
@@ -1030,7 +1029,7 @@ async def test_check_run_handler_token_accumulation(
         }
     ]
     mock_get_logs.return_value = "Test failure log content"
-    mock_get_retry_pairs.return_value = []
+    mock_get_retry_hashes.return_value = []
 
     mock_chat_agent.side_effect = [
         AgentResult(
@@ -1080,7 +1079,7 @@ async def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.get_workflow_run_logs")
 @patch("services.webhook.check_suite_handler.update_comment")
-@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
 @patch("services.webhook.check_suite_handler.clean_logs")
 @patch("services.webhook.check_suite_handler.check_older_active_test_failure_request")
 @patch("services.webhook.check_suite_handler.update_usage")
@@ -1102,7 +1101,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
     mock_update_usage,
     mock_check_older_active,
     mock_clean_logs,
-    mock_get_retry_pairs,
+    mock_get_retry_hashes,
     _mock_update_comment,
     mock_get_logs,
     mock_get_changes,
@@ -1151,7 +1150,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
         }
     ]
     mock_get_logs.return_value = "Test failure log content"
-    mock_get_retry_pairs.return_value = []
+    mock_get_retry_hashes.return_value = []
     mock_clean_logs.return_value = "Cleaned test failure log"
     mock_check_older_active.return_value = {
         "id": 888,
@@ -1198,8 +1197,8 @@ async def test_handle_check_suite_skips_duplicate_older_request(
 @patch("services.webhook.check_suite_handler.get_pull_request")
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.update_comment")
-@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_retry_error_hashes")
 @pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.chat_with_agent")
@@ -1222,8 +1221,8 @@ async def test_handle_check_suite_codecov_failure(
     _mock_create_empty_commit,
     mock_chat_agent,
     _mock_should_bail,
-    _mock_update_retry_pairs,
-    mock_get_retry_pairs,
+    _mock_update_retry_hashes,
+    mock_get_retry_hashes,
     _mock_update_comment,
     mock_get_changes,
     mock_get_pr,
@@ -1273,7 +1272,7 @@ async def test_handle_check_suite_codecov_failure(
             "deletions": 5,
         }
     ]
-    mock_get_retry_pairs.return_value = []
+    mock_get_retry_hashes.return_value = []
     mock_get_codecov_token.return_value = "codecov_token_123"
     mock_get_codecov_coverage.return_value = [
         {
@@ -1328,8 +1327,8 @@ async def test_handle_check_suite_codecov_failure(
 @patch("services.webhook.check_suite_handler.get_pull_request")
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.update_comment")
-@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_retry_error_hashes")
 @pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.chat_with_agent")
@@ -1350,8 +1349,8 @@ async def test_handle_check_suite_codecov_no_token(
     _mock_create_empty_commit,
     mock_chat_agent,
     _mock_should_bail,
-    _mock_update_retry_pairs,
-    mock_get_retry_pairs,
+    _mock_update_retry_hashes,
+    mock_get_retry_hashes,
     _mock_update_comment,
     mock_get_changes,
     mock_get_pr,
@@ -1401,7 +1400,7 @@ async def test_handle_check_suite_codecov_no_token(
             "deletions": 5,
         }
     ]
-    mock_get_retry_pairs.return_value = []
+    mock_get_retry_hashes.return_value = []
     mock_get_codecov_token.return_value = None
     mock_chat_agent.side_effect = [
         AgentResult(
@@ -1444,8 +1443,8 @@ async def test_handle_check_suite_codecov_no_token(
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.get_workflow_run_logs")
 @patch("services.webhook.check_suite_handler.update_comment")
-@patch("services.webhook.check_suite_handler.get_retry_workflow_id_hash_pairs")
-@patch("services.webhook.check_suite_handler.update_retry_workflow_id_hash_pairs")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_retry_error_hashes")
 @patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.chat_with_agent")
 @patch("services.webhook.check_suite_handler.create_empty_commit")
@@ -1464,8 +1463,8 @@ async def test_handle_check_suite_max_iterations_forces_verification(
     _mock_create_empty_commit,
     mock_chat_agent,
     _mock_should_bail,
-    _mock_update_retry_pairs,
-    mock_get_retry_pairs,
+    _mock_update_retry_hashes,
+    mock_get_retry_hashes,
     _mock_update_comment,
     mock_get_logs,
     mock_get_changes,
@@ -1513,7 +1512,7 @@ async def test_handle_check_suite_max_iterations_forces_verification(
         }
     ]
     mock_get_logs.return_value = "Test failure log content"
-    mock_get_retry_pairs.return_value = []
+    mock_get_retry_hashes.return_value = []
     mock_verify_task_is_complete.return_value = VerifyTaskIsCompleteResult(
         success=True,
         message="Task completed.",
@@ -1544,3 +1543,101 @@ async def test_handle_check_suite_max_iterations_forces_verification(
 
     assert mock_chat_agent.call_count == 2
     mock_verify_task_is_complete.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.prepare_repo_for_work")
+@patch("services.webhook.check_suite_handler.git_clone_to_efs")
+async def test_handle_check_suite_skips_same_error_hash_across_workflow_ids(
+    _mock_git_clone,
+    _mock_prepare_repo,
+    _mock_ensure_php,
+    _mock_start_async,
+    mock_update_usage,
+    _mock_update_retry_hashes,
+    mock_get_retry_hashes,
+    _mock_update_comment,
+    mock_get_logs,
+    mock_get_changes,
+    mock_get_pr,
+    _mock_cancel_workflow_runs,
+    mock_create_user_request,
+    mock_create_comment,
+    mock_get_all_comments,
+    mock_slack_notify,
+    mock_get_repo,
+    mock_get_token,
+    mock_get_failed_runs,
+    mock_check_run_payload,
+):
+    """Test that handler skips when same error hash already exists, even with a different workflow ID."""
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
+    mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/99999/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_all_comments.return_value = []
+    mock_create_comment.return_value = "http://comment-url"
+    mock_slack_notify.return_value = "thread-123"
+    mock_create_user_request.return_value = 777
+    mock_get_pr.return_value = {
+        "title": "Fix failing tests",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+        "base": {"ref": "main"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
+
+    # Same error log content every time - hash will be identical
+    error_log = "OOM killed: process used too much memory"
+    mock_get_logs.return_value = error_log
+    error_hash = hashlib.sha256(error_log.encode(encoding=UTF8)).hexdigest()
+
+    # One previous run with the same error hash
+    mock_get_retry_hashes.return_value = [error_hash]
+
+    await handle_check_suite(payload)
+
+    # Should skip - no chat_with_agent call, just update_usage and return
+    mock_update_usage.assert_called_once()
+    call_kwargs = mock_update_usage.call_args.kwargs
+    assert call_kwargs["usage_id"] == 777
+    assert call_kwargs["token_input"] == 0
+    assert call_kwargs["token_output"] == 0
+    assert call_kwargs["is_completed"] is True
+
+    # Verify the skip message mentions the error was already tried
+    slack_calls = [call[0][0] for call in mock_slack_notify.call_args_list]
+    assert any("already tried to fix this error" in msg for msg in slack_calls)

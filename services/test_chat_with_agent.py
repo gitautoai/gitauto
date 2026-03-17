@@ -265,7 +265,7 @@ async def test_move_file_logging(
 @pytest.mark.asyncio
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
-async def test_replace_remote_file_content_handles_new_content_arg_name(
+async def test_write_and_commit_file_handles_new_content_arg_name(
     mock_chat_with_claude, mock_get_model
 ):
     mock_get_model.return_value = ClaudeModelId.SONNET_4_6
@@ -276,7 +276,7 @@ async def test_replace_remote_file_content_handles_new_content_arg_name(
                 {
                     "type": "tool_use",
                     "id": "test_id",
-                    "name": "replace_remote_file_content",
+                    "name": "write_and_commit_file",
                     "input": {
                         "file_path": "test.py",
                         "new_content": "updated content",
@@ -287,7 +287,7 @@ async def test_replace_remote_file_content_handles_new_content_arg_name(
         [
             ToolCall(
                 id="test_id",
-                name="replace_remote_file_content",
+                name="write_and_commit_file",
                 args={"file_path": "test.py", "new_content": "updated content"},
             )
         ],
@@ -1122,7 +1122,7 @@ async def test_gitauto_md_edit_always_allowed(
                 {
                     "type": "tool_use",
                     "id": "test_id",
-                    "name": "replace_remote_file_content",
+                    "name": "write_and_commit_file",
                     "input": {
                         "file_path": "GITAUTO.md",
                         "file_content": "## Testing\n- Use factories",
@@ -1133,7 +1133,7 @@ async def test_gitauto_md_edit_always_allowed(
         [
             ToolCall(
                 id="test_id",
-                name="replace_remote_file_content",
+                name="write_and_commit_file",
                 args={
                     "file_path": "GITAUTO.md",
                     "file_content": "## Testing\n- Use factories",

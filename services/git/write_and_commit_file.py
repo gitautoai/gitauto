@@ -19,8 +19,8 @@ from utils.text.sort_imports import sort_imports
 from utils.text.strip_trailing_spaces import strip_trailing_spaces
 
 # See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
-REPLACE_REMOTE_FILE_CONTENT: ToolUnionParam = {
-    "name": "replace_remote_file_content",
+WRITE_AND_COMMIT_FILE: ToolUnionParam = {
+    "name": "write_and_commit_file",
     "description": "Replaces the entire content of a file and commits the change to the PR branch. Use this to create NEW files or when the entire file needs to be rewritten. For minor modifications to existing files, use apply_diff_to_file instead.",
     "input_schema": {
         "type": "object",
@@ -47,7 +47,7 @@ REPLACE_REMOTE_FILE_CONTENT: ToolUnionParam = {
     ),
     raise_on_error=False,
 )
-def replace_remote_file_content(
+def write_and_commit_file(
     file_content: str,
     file_path: str,
     base_args: BaseArgs,
