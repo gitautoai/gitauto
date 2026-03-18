@@ -28,7 +28,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client bc
 
-      - name: Check database size and cleanup if needed
+      - name: Cleanup llm_requests table
         env:
           SUPABASE_DB_PASSWORD_PRD: ${{ secrets.PROD_SUPABASE_DB_PASSWORD }}
           SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
@@ -57,6 +57,47 @@ jobs:
               print("❌ Failed to clear old content (check logs for details)")
               exit(1)
           print(f"✓ Cleared content from {result} records older than 14 days")
+          EOF
+
+            .github/scripts/vacuum_table.sh "$TABLE_NAME"
+
+            SIZE_AFTER=$(.github/scripts/check_table_size.sh "$TABLE_NAME")
+            FREED=$(echo "$SIZE_BEFORE - $SIZE_AFTER" | bc)
+            echo "✓ New size: $SIZE_AFTER MB (freed $FREED MB)"
+
+            if [ $(echo "$SIZE_AFTER > $THRESHOLD_MB" | bc -l) -eq 1 ]; then
+              echo "❌ WARNING: Size still exceeds threshold after cleanup!"
+              exit 1
+            fi
+          else
+            echo "✓ Size is under threshold ($THRESHOLD_MB MB). No cleanup needed."
+          fi
+
+      - name: Cleanup usage table
+        env:
+          SUPABASE_DB_PASSWORD_PRD: ${{ secrets.PROD_SUPABASE_DB_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          THRESHOLD_MB=50
+          TABLE_NAME=usage
+
+          SIZE_MB=$(.github/scripts/check_table_size.sh "$TABLE_NAME")
+          echo "Current $TABLE_NAME table size: $SIZE_MB MB"
+
+          if [ $(echo "$SIZE_MB > $THRESHOLD_MB" | bc -l) -eq 1 ]; then
+            echo "⚠️  Size exceeds threshold ($THRESHOLD_MB MB). Starting cleanup..."
+
+            SIZE_BEFORE=$SIZE_MB
+
+            echo "Clearing old error logs via Python..."
+            python3 << 'EOF'
+          from services.supabase.usage.clear_old_error_logs import clear_old_error_logs
+          result = clear_old_error_logs(retention_days=14)
+          if result is None:
+              print("❌ Failed to clear old error logs (check logs for details)")
+              exit(1)
+          print(f"✓ Cleared error logs from {result} records older than 14 days")
           EOF
 
             .github/scripts/vacuum_table.sh "$TABLE_NAME"
