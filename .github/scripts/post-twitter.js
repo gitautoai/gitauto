@@ -100,19 +100,19 @@ async function postTwitter({ context }) {
     }
   }
 
-  // Send to Slack webhook
-  if (process.env.SLACK_WEBHOOK_URL) {
+  // Send to Slack
+  if (process.env.SLACK_BOT_TOKEN) {
     const links = [
       companyTweetResult ? `https://x.com/gitautoai/status/${companyTweetResult.data.id}` : null,
       wesTweetResult ? `https://x.com/hiroshinishio/status/${wesTweetResult.data.id}` : null,
     ].filter(Boolean).join(" and ");
-    await fetch(process.env.SLACK_WEBHOOK_URL, {
+    await fetch("https://slack.com/api/chat.postMessage", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ msg: `Posted to X! ${links}` }),
+      headers: { "Authorization": `Bearer ${process.env.SLACK_BOT_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ channel: "C08PHH352S3", text: `Posted to X! ${links}` }),
     });
   } else {
-    console.log("SLACK_WEBHOOK_URL not set, skipping Slack notification");
+    console.log("SLACK_BOT_TOKEN not set, skipping Slack notification");
   }
 
 }

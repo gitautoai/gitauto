@@ -10,6 +10,9 @@ permissions:
   pull-requests: read
   contents: read
 
+env:
+  SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
 jobs:
   check-python-changes:
     if: github.event.pull_request.merged == true
@@ -60,7 +63,6 @@ jobs:
           X_OAUTH1_CONSUMER_KEY_SECRET_WES: ${{ secrets.X_OAUTH1_CONSUMER_KEY_SECRET_WES }}
           X_OAUTH1_ACCESS_TOKEN_WES: ${{ secrets.X_OAUTH1_ACCESS_TOKEN_WES }}
           X_OAUTH1_ACCESS_TOKEN_SECRET_WES: ${{ secrets.X_OAUTH1_ACCESS_TOKEN_SECRET_WES }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   post-linkedin:
     needs: check-python-changes
@@ -113,4 +115,3 @@ jobs:
         env:
           HN_USERNAME: ${{ secrets.HN_USERNAME }}
           HN_PASSWORD: ${{ secrets.HN_PASSWORD }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
