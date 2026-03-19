@@ -13,7 +13,8 @@ from mangum import Mangum
 import pytest
 
 # Local imports
-from config import GITHUB_WEBHOOK_SECRET, PRODUCT_NAME
+from config import GITHUB_WEBHOOK_SECRET
+from constants.general import PRODUCT_NAME
 import main
 from main import (
     app,

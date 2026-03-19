@@ -30,6 +30,7 @@ jobs:
 
       - name: Cleanup llm_requests table
         env:
+          ENV: github-actions
           SUPABASE_DB_PASSWORD_PRD: ${{ secrets.PROD_SUPABASE_DB_PASSWORD }}
           SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
@@ -75,6 +76,7 @@ jobs:
 
       - name: Cleanup usage table
         env:
+          ENV: github-actions
           SUPABASE_DB_PASSWORD_PRD: ${{ secrets.PROD_SUPABASE_DB_PASSWORD }}
           SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}

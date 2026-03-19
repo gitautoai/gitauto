@@ -1,4 +1,4 @@
-from config import PRODUCT_NAME
+from constants.general import PRODUCT_NAME
 
 
 def create_reset_command_message(branch_name: str) -> str:

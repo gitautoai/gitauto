@@ -11,7 +11,8 @@ import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
 # Local imports
-from config import ENV, GITHUB_WEBHOOK_SECRET, PRODUCT_NAME, SENTRY_DSN, UTF8
+from config import ENV, GITHUB_WEBHOOK_SECRET, SENTRY_DSN, UTF8
+from constants.general import PRODUCT_NAME
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 from services.aws.cleanup_tmp import cleanup_tmp
 from services.efs.cleanup_stale_repos_on_efs import cleanup_stale_repos_on_efs
