@@ -1,11 +1,16 @@
-# pylint: disable=redefined-outer-name, unused-argument
+# pylint: disable=import-outside-toplevel, redefined-outer-name, unused-argument
 import importlib
 import sys
 from unittest.mock import MagicMock, patch
 
-from utils.logging.logging_config import (clear_state, set_event_action,
-                                          set_owner_repo, set_pr_number,
-                                          set_request_id, set_trigger)
+from utils.logging.logging_config import (
+    clear_state,
+    set_event_action,
+    set_owner_repo,
+    set_pr_number,
+    set_request_id,
+    set_trigger,
+)
 
 
 @patch("utils.logging.logging_config.IS_PRD", True)
@@ -101,9 +106,7 @@ def test_set_pr_number_does_nothing_when_zero(mock_logger):
 def test_set_event_action_calls_append_keys_in_prd(mock_logger):
     mock_logger.append_keys = MagicMock()
     set_event_action("pull_request", "opened")
-    mock_logger.append_keys.assert_called_once_with(
-        event_action="pull_request_opened"
-    )
+    mock_logger.append_keys.assert_called_once_with(event_action="pull_request_opened")
 
 
 @patch("utils.logging.logging_config.IS_PRD", False)

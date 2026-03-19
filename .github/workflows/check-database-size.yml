@@ -6,6 +6,14 @@ on:
     - cron: "0 2 * * *"
   workflow_dispatch:
 
+env:
+  ENV: github-actions
+  SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+  SLACK_CHANNEL: C08PHH352S3
+  SUPABASE_DB_PASSWORD_PRD: ${{ secrets.PROD_SUPABASE_DB_PASSWORD }}
+  SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
+
 jobs:
   check-and-cleanup:
     runs-on: ubuntu-latest
@@ -29,15 +37,9 @@ jobs:
           sudo apt-get install -y postgresql-client bc
 
       - name: Cleanup llm_requests table
-        env:
-          ENV: github-actions
-          SUPABASE_DB_PASSWORD_PRD: ${{ secrets.PROD_SUPABASE_DB_PASSWORD }}
-          SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          THRESHOLD_MB=200
+          THRESHOLD_MB=100
           TABLE_NAME=llm_requests
-          RETENTION_DAYS=14
 
           chmod +x .github/scripts/check_table_size.sh
           chmod +x .github/scripts/vacuum_table.sh
@@ -67,19 +69,18 @@ jobs:
             echo "✓ New size: $SIZE_AFTER MB (freed $FREED MB)"
 
             if [ $(echo "$SIZE_AFTER > $THRESHOLD_MB" | bc -l) -eq 1 ]; then
-              echo "❌ WARNING: Size still exceeds threshold after cleanup!"
-              exit 1
+              echo "❌ WARNING: $TABLE_NAME still ${SIZE_AFTER} MB after cleanup (threshold: $THRESHOLD_MB MB)"
+              curl -s -X POST \
+                -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"channel\":\"$SLACK_CHANNEL\",\"text\":\"<!channel> DB cleanup: $TABLE_NAME still ${SIZE_AFTER} MB after cleanup (threshold: ${THRESHOLD_MB} MB, freed: ${FREED} MB)\"}" \
+                https://slack.com/api/chat.postMessage
             fi
           else
             echo "✓ Size is under threshold ($THRESHOLD_MB MB). No cleanup needed."
           fi
 
       - name: Cleanup usage table
-        env:
-          ENV: github-actions
-          SUPABASE_DB_PASSWORD_PRD: ${{ secrets.PROD_SUPABASE_DB_PASSWORD }}
-          SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           THRESHOLD_MB=50
           TABLE_NAME=usage
@@ -109,8 +110,12 @@ jobs:
             echo "✓ New size: $SIZE_AFTER MB (freed $FREED MB)"
 
             if [ $(echo "$SIZE_AFTER > $THRESHOLD_MB" | bc -l) -eq 1 ]; then
-              echo "❌ WARNING: Size still exceeds threshold after cleanup!"
-              exit 1
+              echo "❌ WARNING: $TABLE_NAME still ${SIZE_AFTER} MB after cleanup (threshold: $THRESHOLD_MB MB)"
+              curl -s -X POST \
+                -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"channel\":\"$SLACK_CHANNEL\",\"text\":\"<!channel> DB cleanup: $TABLE_NAME still ${SIZE_AFTER} MB after cleanup (threshold: ${THRESHOLD_MB} MB, freed: ${FREED} MB)\"}" \
+                https://slack.com/api/chat.postMessage
             fi
           else
             echo "✓ Size is under threshold ($THRESHOLD_MB MB). No cleanup needed."
@@ -119,6 +124,8 @@ jobs:
       - name: Notify Slack on failure
         if: failure()
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"msg":"Database cleanup failed! Check workflow logs."}' \
-            ${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD }}
+          curl -s -X POST \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"channel\":\"$SLACK_CHANNEL\",\"text\":\"<!channel> Database cleanup workflow failed! Check workflow logs.\"}" \
+            https://slack.com/api/chat.postMessage
