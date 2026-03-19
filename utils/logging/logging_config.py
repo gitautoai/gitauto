@@ -5,8 +5,7 @@ from typing import cast
 
 from aws_lambda_powertools import Logger
 
-from config import PRODUCT_NAME
-from constants.general import IS_PRD
+from constants.general import IS_PRD, PRODUCT_NAME
 from constants.triggers import Trigger
 
 if IS_PRD:

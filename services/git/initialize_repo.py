@@ -5,9 +5,9 @@ import os
 from config import (
     GITHUB_APP_GIT_EMAIL,
     GITHUB_APP_USER_NAME,
-    PRODUCT_NAME,
     UTF8,
 )
+from constants.general import PRODUCT_NAME
 from constants.urls import (
     BLOG_URL,
     PRODUCT_DEMO_URL,

@@ -41,7 +41,9 @@ def test_clear_old_error_logs_single_batch(mock_datetime, mock_supabase):
     mock_select.lt.assert_called_with("created_at", expected_cutoff)
     mock_lt_select.neq.assert_called_with("original_error_log", "")
     mock_neq.limit.assert_called_with(SUPABASE_BATCH_SIZE)
-    mock_table.update.assert_called_with({"original_error_log": ""})
+    mock_table.update.assert_called_with(
+        {"original_error_log": "", "minimized_error_log": ""}
+    )
     mock_update.in_.assert_called_with("id", [1, 2, 3])
 
 

@@ -84,7 +84,6 @@ CREDIT_AMOUNTS_USD = {
 MAX_RETRIES = 3
 PER_PAGE = 100
 PRODUCT_ID = get_env_var(name="PRODUCT_ID")
-PRODUCT_NAME = "GitAuto"
 TIMEOUT = 120  # seconds
 TZ = timezone.utc
 UTF8 = "utf-8"
