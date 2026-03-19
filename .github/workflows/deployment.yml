@@ -18,6 +18,7 @@ concurrency:
 
 env:
   AWS_REGION: us-west-1
+  SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
 jobs:
   deploy_lambda:
@@ -44,7 +45,6 @@ jobs:
           {
             echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}"
             echo "IMAGE_TAG=${{ github.sha }}"
-            echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL_FOR_PRD }}"
           } >> $GITHUB_ENV
 
       - name: Build, tag, and push image to Amazon ECR
@@ -97,4 +97,8 @@ jobs:
             PR_TITLE="${{ github.event.pull_request.title }}"
             PR_INFO=" for <${PR_URL}|${PR_TITLE}>"
           fi
-          curl -X POST -H 'Content-type: application/json' --data "{\"msg\":\"${SLACK_MESSAGE}${PR_INFO}\"}" $SLACK_WEBHOOK_URL
+          curl -s -X POST \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"channel\":\"C08PHH352S3\",\"text\":\"${SLACK_MESSAGE}${PR_INFO}\"}" \
+            https://slack.com/api/chat.postMessage
