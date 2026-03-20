@@ -37,7 +37,9 @@
     <rule>NEVER create multiple test files like test_get_user_new.py, test_get_user_temp.py, test_get_user.py.deprecated</rule>
     <rule>All test cases for a single source file should be consolidated into one test file</rule>
     <rule>Use descriptive test method names within the single test file to organize different test scenarios</rule>
-    <rule>Co-location is best practice, but follow the repo's dominant pattern. If the repo consistently uses a separate directory (test/, tests/, __tests__/, spec/, etc.), follow that. If patterns are mixed, prioritize co-location. If no pattern exists, prioritize co-location. When duplicate test files exist, merge unique test cases into the preferred version and delete the other. Never discard test cases.</rule>
+    <rule>If a test file already exists for the source file (at ANY path), add tests to that EXISTING file. Do NOT create a new test file at a different path.</rule>
+    <rule>Co-location means placing the test file in the SAME directory as the source file (e.g., src/utils/foo.test.ts next to src/utils/foo.ts). A __tests__/ subdirectory is NOT co-location.</rule>
+    <rule>If the repo has a dominant pattern (80%+ of tests in one location), follow that. If patterns are mixed (no 80%+ majority), prioritize co-location. If no pattern exists, prioritize co-location.</rule>
   </test_file_organization>
 
   <anti_patterns>

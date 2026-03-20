@@ -402,3 +402,136 @@ def test_parse_lcov_ts_foxden_tools():
     assert common_file["statement_coverage"] == 100.0
     assert common_file["function_coverage"] == 100.0
     assert common_file["branch_coverage"] == 100.0
+
+
+def test_tool_measures_all_metrics_zero_branches_upgraded_to_100():
+    """Jest: tool measures branches (other files have branches), but this file has 0 branches → 100%"""
+    test_lcov = """TN:
+SF:src/utils/isJestRunning.ts
+FN:1,isJestRunning
+FNDA:1,isJestRunning
+FNF:1
+FNH:1
+DA:1,1
+DA:2,1
+LF:2
+LH:2
+BRF:0
+BRH:0
+end_of_record
+SF:src/utils/other.ts
+FN:1,otherFunc
+FNDA:1,otherFunc
+FNF:1
+FNH:1
+DA:1,1
+DA:2,1
+LF:2
+LH:2
+BRDA:1,0,0,1
+BRF:1
+BRH:1
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov, set())
+    jest_file = next(
+        r for r in result if r["full_path"] == "src/utils/isJestRunning.ts"
+    )
+
+    assert jest_file["line_coverage"] == 100.0
+    assert jest_file["function_coverage"] == 100.0
+    assert (
+        jest_file["branch_coverage"] == 100
+    )  # Upgraded from None because tool measures branches
+
+
+def test_tool_does_not_measure_branches_stays_none():
+    """PHP: tool doesn't measure branches (no file has branch data) → None"""
+    test_lcov = """TN:
+SF:src/handler.php
+FN:1,handle
+FNDA:1,handle
+FNF:1
+FNH:1
+DA:1,1
+DA:2,0
+LF:2
+LH:1
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov, set())
+    php_file = next(r for r in result if r["full_path"] == "src/handler.php")
+
+    assert php_file["line_coverage"] == 50.0
+    assert php_file["function_coverage"] == 100.0
+    assert php_file["branch_coverage"] is None  # Tool doesn't measure branches
+
+
+def test_tool_measures_all_metrics_empty_file_all_100():
+    """Tool measures all metrics but file has 0 of each → all 100%"""
+    test_lcov = """TN:
+SF:src/empty.ts
+LF:0
+LH:0
+FNF:0
+FNH:0
+BRF:0
+BRH:0
+end_of_record
+SF:src/real.ts
+FN:1,realFunc
+FNDA:1,realFunc
+FNF:1
+FNH:1
+DA:1,1
+LF:1
+LH:1
+BRDA:1,0,0,1
+BRF:1
+BRH:1
+end_of_record"""
+
+    result = parse_lcov_coverage(test_lcov, set())
+    empty_file = next(r for r in result if r["full_path"] == "src/empty.ts")
+
+    assert empty_file["line_coverage"] == 100
+    assert empty_file["function_coverage"] == 100
+    assert empty_file["branch_coverage"] == 100
+
+
+def test_parse_lcov_php_real_branches_none():
+    """PHP (phpunit): tool doesn't measure branches → all files have branch_coverage=None"""
+    with open("payloads/lcov/lcov-php-spiderplus.info", "r", encoding=UTF8) as f:
+        lcov_content = f.read()
+
+    result = parse_lcov_coverage(lcov_content, set())
+
+    repo = [r for r in result if r["level"] == "repository"][0]
+    assert repo["line_coverage"] == 15.1
+    assert repo["function_coverage"] == 31.3
+    assert repo["branch_coverage"] is None  # phpunit doesn't measure branches
+    assert repo["branches_total"] == 0
+
+    files = [r for r in result if r["level"] == "file"]
+    assert all(f["branch_coverage"] is None for f in files)
+
+
+def test_parse_lcov_jest_foxquilt_zero_branches_upgraded():
+    """Jest (Foxquilt): tool measures branches → files with 0 branches get 100%"""
+    with open("payloads/lcov/lcov-js-foxquilt.info", "r", encoding=UTF8) as f:
+        lcov_content = f.read()
+
+    result = parse_lcov_coverage(lcov_content, set())
+
+    repo = [r for r in result if r["level"] == "repository"][0]
+    assert repo["branch_coverage"] == 69.0
+    assert repo["branches_total"] > 0  # Jest measures branches
+
+    files = [r for r in result if r["level"] == "file"]
+    # No file should have None branch_coverage because Jest measures branches
+    assert all(f["branch_coverage"] is not None for f in files)
+
+    # Files with 0 branches_total should have branch_coverage=100 (nothing to cover)
+    zero_branch_files = [f for f in files if f["branches_total"] == 0]
+    assert len(zero_branch_files) > 0
+    assert all(f["branch_coverage"] == 100 for f in zero_branch_files)

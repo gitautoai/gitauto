@@ -102,14 +102,18 @@ def parse_lcov_coverage(lcov_content: str, repo_files: set[str]):
             except ValueError:
                 continue  # Skip malformed lines
             if execution_count > 0:
-                current_stats["functions_covered"] += 1
+                current_stats["functions_covered"] = (
+                    current_stats["functions_covered"] or 0
+                ) + 1
                 # Remove function from uncovered set by matching function name
                 current_stats["uncovered_functions"] = {
                     func
                     for func in current_stats["uncovered_functions"]
                     if (func[1] if len(func) == 2 else func[2]) != function_name
                 }
-            current_stats["functions_total"] += 1
+            current_stats["functions_total"] = (
+                current_stats["functions_total"] or 0
+            ) + 1
 
         elif line.startswith("FNF:"):  # FNF: Functions Found
             current_stats["functions_total"] = int(line[4:])
@@ -151,9 +155,13 @@ def parse_lcov_coverage(lcov_content: str, repo_files: set[str]):
                 current_stats["uncovered_branches"].add(branch_info)
 
                 if taken != "-" and int(taken) > 0:
-                    current_stats["branches_covered"] += 1
+                    current_stats["branches_covered"] = (
+                        current_stats["branches_covered"] or 0
+                    ) + 1
                     current_stats["uncovered_branches"].discard(branch_info)
-                current_stats["branches_total"] += 1
+                current_stats["branches_total"] = (
+                    current_stats["branches_total"] or 0
+                ) + 1
             except (ValueError, IndexError):
                 logger.error("Error parsing line: %s", line)
                 continue  # Skip malformed lines
@@ -167,9 +175,11 @@ def parse_lcov_coverage(lcov_content: str, repo_files: set[str]):
         elif line.startswith("DA:"):  # DA: Line coverage data
             # Line coverage data: DA:<line number>,<execution count>
             line_num, execution_count = map(int, line[3:].split(","))
-            current_stats["lines_total"] += 1
+            current_stats["lines_total"] = (current_stats["lines_total"] or 0) + 1
             if execution_count > 0:
-                current_stats["lines_covered"] += 1
+                current_stats["lines_covered"] = (
+                    current_stats["lines_covered"] or 0
+                ) + 1
             else:
                 current_stats["uncovered_lines"].add(line_num)
 
@@ -197,20 +207,21 @@ def parse_lcov_coverage(lcov_content: str, repo_files: set[str]):
             for key, value in current_stats.items():
                 if isinstance(value, set):
                     dir_stats[dir_path][key].update(value)
-                else:
-                    dir_stats[dir_path][key] += value
+                elif isinstance(value, int):
+                    existing = dir_stats[dir_path][key]
+                    dir_stats[dir_path][key] = (existing if isinstance(existing, int) else 0) + value
 
             # Update repository stats
             for key, value in current_stats.items():
                 if isinstance(value, set):
                     repo_stats[key].update(value)
-                else:
-                    repo_stats[key] += value
+                elif isinstance(value, int):
+                    existing = repo_stats[key]
+                    repo_stats[key] = (existing if isinstance(existing, int) else 0) + value
 
     # Second pass: generate all reports
     reports: list[CoverageReport] = []
 
-    # Use create_coverage_report function
     for path, stats in file_stats.items():
         reports.append(create_coverage_report(path, stats, "file"))
 
