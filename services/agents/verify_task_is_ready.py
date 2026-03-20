@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from constants.files import PHP_TEST_FILE_EXTENSIONS
 from services.eslint.run_eslint_fix import run_eslint_fix
-from services.git.write_and_commit_file import write_and_commit_file
+from services.git.git_commit_and_push import git_commit_and_push
 from services.github.files.get_raw_content import get_raw_content
 from services.types.base_args import BaseArgs
 from services.jest.run_jest_test import run_jest_test
@@ -66,11 +66,10 @@ async def verify_task_is_ready(
                 "Prettier failed on %s: %s", file_path, prettier_result.error
             )
         elif prettier_result.content and prettier_result.content != content:
-            write_and_commit_file(
-                file_content=prettier_result.content,
-                file_path=file_path,
+            git_commit_and_push(
                 base_args=base_args,
-                commit_message=f"Format {file_path} with Prettier",
+                message=f"Format {file_path} with Prettier",
+                files=[file_path],
             )
             content = prettier_result.content
             formatting_applied.append(f"- {file_path}: Prettier")
@@ -82,11 +81,10 @@ async def verify_task_is_ready(
         )
         # Push partial fixes even if errors remain
         if eslint_result.content and eslint_result.content != content:
-            write_and_commit_file(
-                file_content=eslint_result.content,
-                file_path=file_path,
+            git_commit_and_push(
                 base_args=base_args,
-                commit_message=f"Lint {file_path} with ESLint",
+                message=f"Lint {file_path} with ESLint",
+                files=[file_path],
             )
             formatting_applied.append(f"- {file_path}: ESLint")
         # Report only coverage-relevant errors (dead code, unreachable code, parsing).
