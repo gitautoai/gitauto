@@ -442,21 +442,11 @@ Resources:
                       export NPM_TOKEN="$NPM_TOKEN"
                     fi
                     $PKG_MANAGER install
-                    # Pre-download MongoDB binary to EFS cache for MongoMemoryServer.
-                    # Without this, MongoMemoryServer downloads ~100MB at test runtime,
-                    # eating into Jest's 600s timeout on Lambda. By caching the binary on EFS
-                    # during CodeBuild install, tests start instantly.
-                    if node -e "require.resolve('mongodb-memory-server-core')" 2>/dev/null; then
-                      echo "Pre-downloading MongoDB binary for MongoMemoryServer..."
-                      export MONGOMS_DOWNLOAD_DIR="$EFS_DIR/.cache/mongodb-binaries"
-                      node -e "
-                        const pkg = require('./package.json');
-                        const v = (pkg.config && pkg.config.mongodbMemoryServer && pkg.config.mongodbMemoryServer.version) || '';
-                        if (v && parseInt(v.split('.')[0]) < 7) process.env.MONGOMS_DISTRO = 'ubuntu-22.04';
-                        require('mongodb-memory-server-core').MongoBinary.getPath()
-                          .then(p => console.log('MongoDB binary cached at:', p))
-                          .catch(e => console.error('MongoDB download failed:', e.message));
-                      " || true
+                    # Pre-download MongoDB binary to EFS cache if repo uses MongoMemoryServer.
+                    # Script is copied to EFS by Lambda before starting CodeBuild.
+                    MONGOD_SCRIPT="/mnt/efs/.scripts/download_mongod_binary.mjs"
+                    if [ -f "$MONGOD_SCRIPT" ] && node -e "require.resolve('mongodb-memory-server-core')" 2>/dev/null; then
+                      MONGOMS_DOWNLOAD_DIR="$EFS_DIR/.cache/mongodb-binaries" node "$MONGOD_SCRIPT" || true
                     fi
                     rm -f "$EFS_DIR/node_modules.tar.gz"
                     tar -czf "$EFS_DIR/node_modules.tar.gz" -C "$LOCAL_DIR" node_modules
