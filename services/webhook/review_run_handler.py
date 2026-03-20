@@ -304,7 +304,7 @@ async def handle_review_run(
         file_paths=files_to_validate,
         run_tsc=True,
         run_jest=True,
-        run_phpunit=True,
+        run_phpunit=False,
     )
     base_args["baseline_tsc_errors"] = set(validation_result.tsc_errors)
     pre_existing_errors = ""

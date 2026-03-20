@@ -1,7 +1,10 @@
 # pylint: disable=import-outside-toplevel, redefined-outer-name, unused-argument
 import importlib
 import sys
+from typing import cast
 from unittest.mock import MagicMock, patch
+
+from constants.triggers import Trigger
 
 from utils.logging.logging_config import (
     clear_state,
@@ -153,7 +156,7 @@ def test_set_trigger_does_nothing_in_non_prd(mock_logger):
 @patch("utils.logging.logging_config.logger")
 def test_set_trigger_does_nothing_when_trigger_empty(mock_logger):
     mock_logger.append_keys = MagicMock()
-    set_trigger("")
+    set_trigger(cast(Trigger, ""))
     mock_logger.append_keys.assert_not_called()
 
 
