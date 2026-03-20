@@ -25,14 +25,14 @@ def test_create_empty_stats_has_all_required_keys():
 
 
 def test_create_empty_stats_numeric_values():
-    """Test that numeric fields are initialized to zero"""
+    """Test that numeric fields are initialized to None (not yet seen in LCOV)"""
     result = create_empty_stats()
-    assert result["lines_total"] == 0
-    assert result["lines_covered"] == 0
-    assert result["functions_total"] == 0
-    assert result["functions_covered"] == 0
-    assert result["branches_total"] == 0
-    assert result["branches_covered"] == 0
+    assert result["lines_total"] is None
+    assert result["lines_covered"] is None
+    assert result["functions_total"] is None
+    assert result["functions_covered"] is None
+    assert result["branches_total"] is None
+    assert result["branches_covered"] is None
 
 
 def test_create_empty_stats_set_values():
@@ -58,7 +58,7 @@ def test_create_empty_stats_immutability():
     result1["lines_total"] = 100
     result1["uncovered_lines"].add(5)
 
-    assert result2["lines_total"] == 0
+    assert result2["lines_total"] is None
     assert result2["uncovered_lines"] == set()
 
 
@@ -66,12 +66,12 @@ def test_create_empty_stats_complete_structure():
     """Test the complete structure matches expected format"""
     result = create_empty_stats()
     expected = {
-        "lines_total": 0,
-        "lines_covered": 0,
-        "functions_total": 0,
-        "functions_covered": 0,
-        "branches_total": 0,
-        "branches_covered": 0,
+        "lines_total": None,
+        "lines_covered": None,
+        "functions_total": None,
+        "functions_covered": None,
+        "branches_total": None,
+        "branches_covered": None,
         "uncovered_lines": set(),
         "uncovered_functions": set(),
         "uncovered_branches": set(),
@@ -90,13 +90,13 @@ def test_create_empty_stats_return_type_consistency():
     """Test that return types are consistent across calls"""
     result = create_empty_stats()
 
-    # Test integer types
-    assert isinstance(result["lines_total"], int)
-    assert isinstance(result["lines_covered"], int)
-    assert isinstance(result["functions_total"], int)
-    assert isinstance(result["functions_covered"], int)
-    assert isinstance(result["branches_total"], int)
-    assert isinstance(result["branches_covered"], int)
+    # Test None types (not yet seen in LCOV)
+    assert result["lines_total"] is None
+    assert result["lines_covered"] is None
+    assert result["functions_total"] is None
+    assert result["functions_covered"] is None
+    assert result["branches_total"] is None
+    assert result["branches_covered"] is None
 
     # Test set types
     assert isinstance(result["uncovered_lines"], set)
