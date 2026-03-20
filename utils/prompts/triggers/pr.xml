@@ -23,4 +23,5 @@
   - Do NOT remove or modify existing test file headers
   - Do NOT just reformat existing tests - you must ADD new ones
   - Do NOT write tautological tests: mocking a data source's return value then asserting the output matches the mock proves nothing. For data-access methods, use real test data or verify mock call parameters instead.
+  - Do NOT write duplicate tests. Before writing a new test case, read ALL existing test cases in the file and check if the same behavior is already being tested under a different describe block or test name. Two tests that set up the same inputs and assert the same outcome are duplicates, even if they have different test names or are in different describe blocks.
 </trigger_instruction> 
