@@ -10,6 +10,7 @@
   IF NO TEST FILE EXISTS:
   - Create a new test file with comprehensive tests for the source file
   - Use write_and_commit_file to create the new file (apply_diff_to_file is error-prone for new files because the unified diff /dev/null format requires exact line counts)
+  - CRITICAL: Check the "test_naming_convention" field in the user input. It describes the repo's naming pattern with an example. Follow it exactly. Never invent suffixes like ".early.test." - match the repo's existing convention.
 
   IF TEST FILE ALREADY EXISTS:
   - The issue body specifies EXACTLY which lines, functions, and branches are uncovered

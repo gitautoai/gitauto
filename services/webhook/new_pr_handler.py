@@ -60,6 +60,7 @@ from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.should_bail import should_bail
+from utils.files.detect_test_naming_convention import detect_test_naming_convention
 from utils.files.find_test_files import find_test_files
 from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title
 from utils.files.get_local_file_tree import get_local_file_tree
@@ -441,6 +442,11 @@ async def handle_new_pr(
             f"No test file found by searching the repo for '{Path(impl_file_path).stem}'. "
             "A test file may exist elsewhere in the repo. Search for it before creating a new one."
         )
+
+    # Detect repo's test naming convention (e.g. .spec.ts, .test.ts, test_foo.py, FooTest.php)
+    test_naming = detect_test_naming_convention(clone_dir)
+    if test_naming:
+        user_input_obj["test_naming_convention"] = test_naming
 
     user_input = dumps(user_input_obj)
     messages: list[MessageParam] = [{"role": "user", "content": user_input}]
