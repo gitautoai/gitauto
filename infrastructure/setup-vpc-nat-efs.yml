@@ -421,14 +421,20 @@ Resources:
                 - mkdir -p "$LOCAL_DIR"
                 - |
                   if [ "$PKG_MANAGER" = "composer" ]; then
-                    tar -cf - -C "$EFS_DIR" --exclude vendor . | tar -xf - -C "$LOCAL_DIR"
+                    tar -cf - -C "$EFS_DIR" --exclude vendor --exclude 'vendor-bin/*/vendor' . | tar -xf - -C "$LOCAL_DIR"
                     cd "$LOCAL_DIR"
                     # Same PHP packages as Dockerfile - see comments there for details
                     yum install -y php-cli php-json php-mbstring php-xml php-pdo
                     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-                    composer install --no-interaction --no-dev
+                    composer install --no-interaction
+                    # Install bamarni/composer-bin-plugin namespaces (e.g. vendor-bin/dev74) if present
+                    for vb_dir in vendor-bin/*/; do
+                      if [ -f "${vb_dir}composer.json" ]; then
+                        composer install --no-interaction --working-dir="$vb_dir"
+                      fi
+                    done
                     rm -f "$EFS_DIR/vendor.tar.gz"
-                    tar -czf "$EFS_DIR/vendor.tar.gz" -C "$LOCAL_DIR" vendor
+                    tar -czf "$EFS_DIR/vendor.tar.gz" -C "$LOCAL_DIR" vendor vendor-bin
                   else
                     tar -cf - -C "$EFS_DIR" --exclude node_modules . | tar -xf - -C "$LOCAL_DIR"
                     cd "$LOCAL_DIR"
@@ -436,6 +442,22 @@ Resources:
                       export NPM_TOKEN="$NPM_TOKEN"
                     fi
                     $PKG_MANAGER install
+                    # Pre-download MongoDB binary to EFS cache for MongoMemoryServer.
+                    # Without this, MongoMemoryServer downloads ~100MB at test runtime,
+                    # eating into Jest's 600s timeout on Lambda. By caching the binary on EFS
+                    # during CodeBuild install, tests start instantly.
+                    if node -e "require.resolve('mongodb-memory-server-core')" 2>/dev/null; then
+                      echo "Pre-downloading MongoDB binary for MongoMemoryServer..."
+                      export MONGOMS_DOWNLOAD_DIR="$EFS_DIR/.cache/mongodb-binaries"
+                      node -e "
+                        const pkg = require('./package.json');
+                        const v = (pkg.config && pkg.config.mongodbMemoryServer && pkg.config.mongodbMemoryServer.version) || '';
+                        if (v && parseInt(v.split('.')[0]) < 7) process.env.MONGOMS_DISTRO = 'ubuntu-22.04';
+                        require('mongodb-memory-server-core').MongoBinary.getPath()
+                          .then(p => console.log('MongoDB binary cached at:', p))
+                          .catch(e => console.error('MongoDB download failed:', e.message));
+                      " || true
+                    fi
                     rm -f "$EFS_DIR/node_modules.tar.gz"
                     tar -czf "$EFS_DIR/node_modules.tar.gz" -C "$LOCAL_DIR" node_modules
                   fi

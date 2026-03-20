@@ -49,7 +49,9 @@ class VerifyTaskIsCompleteResult:
     ),
     raise_on_error=False,
 )
-async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
+async def verify_task_is_complete(
+    base_args: BaseArgs, run_phpunit: bool = False, **_kwargs
+):
     owner = base_args.get("owner", "")
     repo = base_args.get("repo", "")
     pr_number = base_args.get("pr_number")
@@ -237,20 +239,22 @@ async def verify_task_is_complete(base_args: BaseArgs, **_kwargs):
         )
         formatting_applied.append(f"- {snap_path}: Snapshot updated")
 
-    # Run PHPUnit tests on PHP test files
-    php_test_files = [
-        f["filename"]
-        for f in pr_files
-        if f["filename"].endswith(PHP_TEST_FILE_EXTENSIONS) and f["status"] != "removed"
-    ]
-    phpunit_result = await run_phpunit_test(
-        base_args=base_args,
-        test_file_paths=php_test_files,
-    )
-    if phpunit_result.errors:
-        for err in phpunit_result.errors:
-            remaining_errors.append(f"- phpunit: {err}")
-        error_files.update(phpunit_result.error_files)
+    # PHPUnit disabled by default: tests fail due to Lambda environment limitations
+    if run_phpunit:
+        php_test_files = [
+            f["filename"]
+            for f in pr_files
+            if f["filename"].endswith(PHP_TEST_FILE_EXTENSIONS)
+            and f["status"] != "removed"
+        ]
+        phpunit_result = await run_phpunit_test(
+            base_args=base_args,
+            test_file_paths=php_test_files,
+        )
+        if phpunit_result.errors:
+            for err in phpunit_result.errors:
+                remaining_errors.append(f"- phpunit: {err}")
+            error_files.update(phpunit_result.error_files)
 
     if remaining_errors:
         error_msg = "\n".join(remaining_errors)
