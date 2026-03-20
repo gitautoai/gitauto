@@ -44,7 +44,7 @@ class ReviewComment(TypedDict):
     side: str
     original_position: int
     position: int
-    subject_type: str
+    subject_type: Literal["line", "file"]
 
 
 class PullRequestReviewCommentPayload(TypedDict):

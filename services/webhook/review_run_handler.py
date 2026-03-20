@@ -178,7 +178,8 @@ async def handle_review_run(
     start_msg = f"Review handler started: `{trigger}` by `{sender_name}` for `{pr_number}:{pr_title}` in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
     if not review_author_is_bot:
-        slack_notify(f"💬 {sender_name}: {review_body}", thread_ts)
+        display_name = sender_info.display_name or sender_name
+        slack_notify(f"<!channel> {display_name}: {review_body}", thread_ts)
 
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args: ReviewBaseArgs = {

@@ -2,6 +2,7 @@ from typing import TypedDict
 from typing_extensions import NotRequired
 
 from schemas.supabase.types import OwnerType
+from services.github.types.webhook.review_run_payload import ReviewSubjectType
 
 
 class BaseArgs(TypedDict):
@@ -46,7 +47,7 @@ class ReviewBaseArgs(BaseArgs):
     pr_url: str
     pr_file_url: str
     review_path: str
-    review_subject_type: str
+    review_subject_type: ReviewSubjectType
     review_line: int
     review_side: str
     review_body: str

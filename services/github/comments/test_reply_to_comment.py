@@ -401,3 +401,76 @@ def test_reply_to_comment_with_none_body(mock_base_args, mock_create_headers):
         mock_base_args, None  # pyright: ignore[reportArgumentType]
     )
     assert result is None
+
+
+def test_pr_review_uses_issue_comments_api(mock_post_response, mock_create_headers):
+    """Test that review_subject_type='pr_review' uses the issue comments API."""
+    base_args = {
+        "owner": "test-owner",
+        "repo": "test-repo",
+        "token": "test-token",
+        "pr_number": 123,
+        "review_subject_type": "pr_review",
+    }
+
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
+        mock_post.return_value = mock_post_response
+
+        # Intentionally passing partial dict to test runtime behavior
+        reply_to_comment(
+            base_args, "PR-level reply"  # pyright: ignore[reportArgumentType]
+        )
+
+        mock_post.assert_called_once()
+        call_url = mock_post.call_args[1]["url"]
+        assert (
+            call_url
+            == "https://api.github.com/repos/test-owner/test-repo/issues/123/comments"
+        )
+
+
+def test_inline_review_without_review_id_returns_none(mock_create_headers):
+    """Test that inline review (not pr_review) without review_id returns None via error handler."""
+    base_args = {
+        "owner": "test-owner",
+        "repo": "test-repo",
+        "token": "test-token",
+        "pr_number": 123,
+        "review_subject_type": "line",
+        # No review_id
+    }
+
+    # Intentionally passing partial dict to test runtime behavior
+    result = reply_to_comment(
+        base_args, "Test body"  # pyright: ignore[reportArgumentType]
+    )
+    assert result is None
+
+
+def test_inline_review_with_review_id_uses_replies_api(
+    mock_post_response, mock_create_headers
+):
+    """Test that inline review with review_id uses the pull comment replies API."""
+    base_args = {
+        "owner": "test-owner",
+        "repo": "test-repo",
+        "token": "test-token",
+        "pr_number": 123,
+        "review_id": 456,
+        "review_subject_type": "line",
+    }
+
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
+        mock_post.return_value = mock_post_response
+
+        # Intentionally passing partial dict to test runtime behavior
+        reply_to_comment(
+            base_args, "Inline reply"  # pyright: ignore[reportArgumentType]
+        )
+
+        mock_post.assert_called_once()
+        call_url = mock_post.call_args[1]["url"]
+        assert (
+            call_url
+            == "https://api.github.com/repos/test-owner/test-repo/pulls/123/comments/456/replies"
+        )
