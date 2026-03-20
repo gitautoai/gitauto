@@ -527,7 +527,7 @@ When the user explicitly says "LGTM" (Looks Good To Me), execute this workflow:
    - For test files with many mock parameters, pyright will warn about unused variables (e.g., `_mock_update_usage is not accessed`)
    - This is expected - test files often have mock parameters that are required by the decorator order but not used in the test
    - Suppress these warnings by adding `# pyright: reportUnusedVariable=false` at the top of the test file (after pylint disables)
-10. Run pytest on the test files identified in step 6 (excluding deleted files): `python -m pytest test_file1.py test_file2.py` - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**
+10. Run ALL tests, not just the changed test files: `python -m pytest` - **IF ANY TESTS FAIL, FIX THEM ALL BEFORE CONTINUING**. Running only changed files misses breakage in other tests caused by your changes (e.g. changing a shared type from `int` to `int | None` breaks tests in other files that assert `== 0`).
 11. Check current branch is not main: `git branch --show-current`
 12. Merge latest main: `git fetch origin main && git merge origin/main`
 13. **CRITICAL**: Review `git status` again to ensure ALL changes are staged:

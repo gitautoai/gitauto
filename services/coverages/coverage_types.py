@@ -2,12 +2,14 @@ from typing import Union, TypedDict, Literal
 
 
 class CoverageStats(TypedDict):
-    lines_covered: int
-    lines_total: int
-    functions_covered: int
-    functions_total: int
-    branches_covered: int
-    branches_total: int
+    """None = tool doesn't report this metric (e.g. phpunit doesn't report branches). 0 = tool measures it but found 0 (e.g. Jest BRF:0, nothing to cover)."""
+
+    lines_covered: int | None
+    lines_total: int | None
+    functions_covered: int | None
+    functions_total: int | None
+    branches_covered: int | None
+    branches_total: int | None
     uncovered_lines: set[int]
     uncovered_functions: set[tuple[int, str] | tuple[int, int, str]]
     uncovered_branches: set[str]

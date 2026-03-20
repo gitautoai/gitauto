@@ -143,8 +143,29 @@ def test_create_coverage_report_repository_level():
     assert "branch_20" in result["uncovered_branches"]
 
 
-def test_create_coverage_report_zero_totals():
-    """Test edge case with zero totals - line/function default to 100%, branch defaults to None"""
+def test_create_coverage_report_none_totals_not_measured():
+    """Tool doesn't measure any metric (None) → all coverage None"""
+    stats: CoverageStats = {
+        "lines_total": None,
+        "lines_covered": None,
+        "functions_total": None,
+        "functions_covered": None,
+        "branches_total": None,
+        "branches_covered": None,
+        "uncovered_lines": set(),
+        "uncovered_functions": set(),
+        "uncovered_branches": set(),
+    }
+
+    result = create_coverage_report("empty.py", stats, "file")
+
+    assert result["line_coverage"] is None
+    assert result["function_coverage"] is None
+    assert result["branch_coverage"] is None
+
+
+def test_create_coverage_report_zero_totals_nothing_to_cover():
+    """Tool measures metrics but found 0 of each (0 total) → all 100%"""
     stats: CoverageStats = {
         "lines_total": 0,
         "lines_covered": 0,
@@ -157,17 +178,32 @@ def test_create_coverage_report_zero_totals():
         "uncovered_branches": set(),
     }
 
-    result = create_coverage_report("empty.py", stats, "file")
+    result = create_coverage_report("empty.ts", stats, "file")
 
-    assert result["full_path"] == "empty.py"
-    assert result["level"] == "file"
-    assert result["line_coverage"] is None
-    assert result["statement_coverage"] is None
-    assert result["function_coverage"] is None
+    assert result["line_coverage"] == 100
+    assert result["function_coverage"] == 100
+    assert result["branch_coverage"] == 100
+
+
+def test_create_coverage_report_php_no_branches():
+    """PHP: measures lines/functions but not branches (None) → branch_coverage=None"""
+    stats: CoverageStats = {
+        "lines_total": 10,
+        "lines_covered": 8,
+        "functions_total": 2,
+        "functions_covered": 2,
+        "branches_total": None,
+        "branches_covered": None,
+        "uncovered_lines": {9, 10},
+        "uncovered_functions": set(),
+        "uncovered_branches": set(),
+    }
+
+    result = create_coverage_report("handler.php", stats, "file")
+
+    assert result["line_coverage"] == 80.0
+    assert result["function_coverage"] == 100.0
     assert result["branch_coverage"] is None
-    assert result["uncovered_lines"] == ""
-    assert result["uncovered_functions"] == ""
-    assert result["uncovered_branches"] == ""
 
 
 def test_create_coverage_report_mixed_function_formats():
