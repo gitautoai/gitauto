@@ -5,7 +5,6 @@ source .env
 
 # Configuration
 PORT=8000
-NGROK_DOMAIN="gitauto.ngrok.dev"
 LOG_LEVEL=${1:-warning}  # Default to warning, but allow override with first argument
 
 # Colors for output
@@ -34,10 +33,10 @@ python3 schemas/supabase/generate_types.py
 # Function to cleanup background processes
 cleanup() {
     echo -e "\nShutting down services..."
-    # Kill ngrok (background job)
-    if [ ! -z "$NGROK_PID" ] && kill -0 "$NGROK_PID" 2>/dev/null; then
-        echo -e "Stopping ngrok..."
-        kill "$NGROK_PID"
+    # Kill smee-client (background job)
+    if [ ! -z "$SMEE_PID" ] && kill -0 "$SMEE_PID" 2>/dev/null; then
+        echo -e "Stopping smee-client..."
+        kill "$SMEE_PID"
     fi
     deactivate 2>/dev/null || true
     exit 0
@@ -46,22 +45,23 @@ cleanup() {
 # Set trap to cleanup on script exit
 trap cleanup SIGINT SIGTERM
 
-# Start ngrok in background (logs hidden)
-echo -e "Starting ngrok tunnel..."
-ngrok http --config=ngrok.yml --domain=${NGROK_DOMAIN} ${PORT} > /dev/null 2>&1 &
-NGROK_PID=$!
+# Check SMEE_URL is set
+if [ -z "$SMEE_URL" ]; then
+    echo -e "Error: SMEE_URL is not set in .env"
+    echo -e "Go to https://smee.io and click 'Start a new channel' to get a URL"
+    exit 1
+fi
 
-# Wait for ngrok to be ready (check API endpoint)
-echo -e "Waiting for ngrok to be ready..."
-for i in {1..30}; do
-    if curl -s http://localhost:4040/api/tunnels > /dev/null 2>&1; then
-        break
-    fi
-    sleep 0.5
-done
+# Start smee-client in background (forwards GitHub webhooks to localhost)
+echo -e "Starting smee-client..."
+npx smee-client --url ${SMEE_URL} --target http://localhost:${PORT}/webhook > /dev/null 2>&1 &
+SMEE_PID=$!
 
-echo -e "${GREEN}ngrok started!${NC}"
-echo -e "ngrok: https://${NGROK_DOMAIN}"
+# Wait for smee-client to start
+sleep 2
+
+echo -e "${GREEN}smee-client started!${NC}"
+echo -e "Smee: ${SMEE_URL}"
 echo -e "FastAPI: http://localhost:${PORT}"
 echo -e "\n${GREEN}Starting FastAPI server (logs below)...${NC}"
 echo -e "Press Ctrl+C to stop both services\n"

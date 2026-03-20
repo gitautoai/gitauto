@@ -16,7 +16,6 @@ coverage.*
 coverage/
 infrastructure/lambda-env-backup.json
 mcp.json
-ngrok.yml
 pylint_results.txt
 tmp
 venv

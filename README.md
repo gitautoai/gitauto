@@ -8,7 +8,7 @@
 2. Click `New GitHub App`.
 3. Fill in `GitHub App name` like `GitAuto Dev {Your Name}` e.g. `GitAuto Dev John`.
 4. Fill in `Homepage URL` like `http://localhost:8000`.
-5. Fill in `Webhook URL` like `https://your-name.ngrok.dev/webhook`. GitHub requires HTTPS for the webhook URL, so we need to use ngrok or something similar instead of `localhost`. GitHub sends webhook events (e.g. a PR is created) to the webhook URL and ngrok tunnels to localhost. You can update this URL later after setting up the ngrok tunnel.
+5. Fill in `Webhook URL` with your Smee channel URL (e.g. `https://smee.io/your-channel-id`). GitHub requires HTTPS for the webhook URL. Smee.io is GitHub's recommended webhook proxy for local development - it forwards webhook payloads to your localhost via the smee-client. See section 3-3 for setup.
 6. Fill in `Webhook secret` with your preferred secret.
 7. Fill in `Repository permissions`
    - `Actions`: Read & Write
@@ -46,14 +46,16 @@
 3. Install the app to the repository where you want to test.
 4. Or directly go to `https://github.com/settings/apps/{your-github-app-name}/installations` such as `https://github.com/settings/apps/gitauto-for-dev/installations`.
 
-### 3-3. Set up ngrok configuration
+### 3-3. Set up Smee.io webhook proxy
 
-GitHub allows only a HTTPS URL for webhook events, so we need to use ngrok or something similar service to tunnel/forward the GitHub webhook events to your localhost.
+GitHub requires HTTPS for webhook events. We use [Smee.io](https://smee.io) (GitHub's recommended webhook proxy) to forward webhook payloads to your localhost.
 
-1. Create a new ngrok configuration file `ngrok.yml` in the root directory. It should contain `authtoken: YOUR_NGROK_AUTH_TOKEN` and `version: 2`.
-2. Get your own auth token from [Your Authtoken on the dashboard](https://dashboard.ngrok.com/get-started/your-authtoken) or ask [@hiroshinishio](https://github.com/hiroshinishio) about the paid ngrok auth token.
-3. Get your own endpoint URL from [Endpoints on the dashboard](https://dashboard.ngrok.com/endpoints). **Each developer needs their own unique domain** (e.g., `wes.ngrok.dev`, `john.ngrok.dev`) to avoid conflicts.
-4. Update the `start.sh` script to use your specific ngrok domain.
+1. Go to <https://smee.io> and click `Start a new channel`.
+2. Copy the channel URL (e.g. `https://smee.io/abc123xyz`).
+3. Add `SMEE_URL="https://smee.io/abc123xyz"` to your `.env` file.
+4. Set this same URL as the `Webhook URL` in your GitHub App settings (section 3-1, step 5).
+
+Each developer gets their own unique Smee channel URL - no conflicts, no paid plans needed.
 
 ### 3-4. Managing Git branches
 
@@ -96,20 +98,13 @@ In `.env` file, you need to set your own `GH_PRIVATE_KEY`. Here's the step:
 
 ### 3-7. How to run the code
 
-1. **Update the start script** with your ngrok domain:
-
-   ```bash
-   # Edit start.sh and change this line:
-   ngrok http --config=ngrok.yml --domain=your-name.ngrok.dev 8000
-   ```
-
-2. **Make the start script executable:**
+1. **Make the start script executable:**
 
    ```bash
    chmod +x start.sh
    ```
 
-3. **Run the development environment:**
+2. **Run the development environment:**
 
    ```bash
    ./start.sh
@@ -119,14 +114,9 @@ This script will automatically:
 
 - Create and activate virtual environment (if needed)
 - Install dependencies (if needed)
-- Start ngrok tunnel with your specific domain
+- Start Smee.io webhook proxy (forwards GitHub webhooks to localhost)
 - Start FastAPI server with visible logs
 - Clean up both services when you press Ctrl+C
-
-**Important for multiple developers**: Each developer must use a different ngrok domain in their `start.sh` script to avoid conflicts. For example:
-
-- Developer 1: `wes.ngrok.dev`
-- Developer 2: `john.ngrok.dev`
 
 ### 3-8. Success indicators
 
@@ -135,7 +125,7 @@ When everything is working correctly, you should see:
 **From start.sh:**
 
 - ✅ Virtual environment activation
-- ✅ ngrok tunnel started with your domain
+- ✅ Smee.io webhook proxy started
 - ✅ FastAPI server starting with logs below
 
 **FastAPI server:**
@@ -146,9 +136,7 @@ When everything is working correctly, you should see:
 
 If you see any errors, check:
 
-- `.env` file is present and configured
-- `ngrok.yml` is configured with your auth token
-- Your ngrok domain is available
+- `.env` file is present and configured with `SMEE_URL`
 - Port 8000 is not already in use
 
 ### 3-9. How to view AWS Lambda logs
