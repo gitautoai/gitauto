@@ -14,12 +14,12 @@ from services.tsc.run_tsc_check import TscResult
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.write_and_commit_file")
+@patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
 async def test_valid_file_returns_success(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_replace
+    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
 ):
     mock_get_raw_content.return_value = "function foo() { return 1; }"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
@@ -46,16 +46,16 @@ async def test_valid_file_returns_success(
     assert result.errors == []
     assert result.fixes_applied == []
     assert result.files_with_errors == set()
-    mock_replace.assert_not_called()
+    mock_commit.assert_not_called()
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.write_and_commit_file")
+@patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
 async def test_prettier_fails_returns_errors(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_replace
+    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
 ):
     mock_get_raw_content.return_value = "function foo() { return 1;"
     mock_prettier.return_value = PrettierResult(
@@ -88,12 +88,12 @@ async def test_prettier_fails_returns_errors(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.write_and_commit_file")
+@patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
 async def test_eslint_fails_returns_errors(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_replace
+    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
 ):
     mock_get_raw_content.return_value = "function foo() { return 1; }"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
@@ -177,12 +177,12 @@ async def test_empty_file_list():
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.write_and_commit_file")
+@patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
 async def test_file_not_found_skipped(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_replace
+    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
 ):
     mock_get_raw_content.return_value = None
     base_args = cast(
@@ -208,12 +208,12 @@ async def test_file_not_found_skipped(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.write_and_commit_file")
+@patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
 async def test_fixes_applied_and_pushed(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_replace
+    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
 ):
     original = "function foo() { return 1; }"
     formatted = "function foo() {\n  return 1;\n}"
@@ -244,16 +244,16 @@ async def test_fixes_applied_and_pushed(
     assert result.errors == []
     assert result.fixes_applied == ["- src/index.ts: Prettier"]
     assert result.files_with_errors == set()
-    mock_replace.assert_called_once()
+    mock_commit.assert_called_once()
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.write_and_commit_file")
+@patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
 async def test_eslint_partial_fix_pushes_and_reports_errors(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_replace
+    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
 ):
     original = "const x = 1\nconst unused = 2;"
     fixed = "const x = 1;\nconst unused = 2;"
@@ -287,16 +287,16 @@ async def test_eslint_partial_fix_pushes_and_reports_errors(
     assert result.errors == []
     assert result.fixes_applied == ["- src/index.ts: ESLint"]
     assert result.files_with_errors == set()
-    mock_replace.assert_called_once()
+    mock_commit.assert_called_once()
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.write_and_commit_file")
+@patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
 async def test_no_explicit_any_ignored(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_replace
+    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
 ):
     mock_get_raw_content.return_value = (
         "export async function getUsers(): Promise<any[]> { return []; }"
@@ -329,17 +329,17 @@ async def test_no_explicit_any_ignored(
     assert result.success is True
     assert result.errors == []
     assert result.files_with_errors == set()
-    mock_replace.assert_not_called()
+    mock_commit.assert_not_called()
 
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_ready.run_tsc_check")
-@patch("services.agents.verify_task_is_ready.write_and_commit_file")
+@patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
 async def test_run_tsc_reports_type_errors(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_replace, mock_tsc
+    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit, mock_tsc
 ):
     mock_get_raw_content.return_value = "const x: number = 'hello';"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
@@ -382,12 +382,12 @@ async def test_run_tsc_reports_type_errors(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_ready.run_jest_test")
-@patch("services.agents.verify_task_is_ready.write_and_commit_file")
+@patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.get_raw_content")
 async def test_run_jest_reports_test_failures(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_replace, mock_jest
+    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit, mock_jest
 ):
     mock_get_raw_content.return_value = (
         "describe('test', () => { it('fails', () => { expect(true).toBe(false); }); });"
