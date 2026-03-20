@@ -441,6 +441,33 @@ When making architectural decisions, ask "why" 5 times:
 4. Think about OPTIMIZATIONS (parallel execution, caching, copying from nearby resources)
 5. Consider EACH HANDLER's specific context (new PR vs existing PR, empty EFS vs populated EFS)
 
+## Think Multiple Angles Simultaneously
+
+**CRITICAL**: When something is slow or problematic, think BOTH "can we skip/avoid it?" AND "can we make it faster?" in parallel, not sequentially. Don't fixate on one approach.
+
+### Example: Jest Tests Timing Out Due to MongoDB Memory Server
+
+The problem: Jest tests timed out after 600s on Lambda. MongoDB Memory Server downloads a ~100MB mongod binary at test runtime, eating into the timeout budget.
+
+**Bad (single angle, sequential)**:
+1. "MongoDB is slow, skip it" → Skip globalSetup, mock MongoDB
+2. User: "What about tests that NEED MongoDB?"
+3. "Oh wait, maybe we could make it faster..." → Only after being pushed 3 times
+
+**Good (multiple angles, parallel)**:
+1. "Can we avoid it?" → For tests that don't need MongoDB, skip globalSetup (valid for some cases)
+2. "Can we make it faster?" → Pre-download the mongod binary to EFS during CodeBuild install, so it's cached when tests run (fixes ALL cases)
+
+Both angles are valid. The fix was adding a pre-download step in the CodeBuild buildspec - the binary is cached on EFS before tests ever run.
+
+### Rule
+
+When diagnosing a performance or reliability problem, always ask BOTH:
+1. "Can we skip/avoid this entirely?" (elimination)
+2. "Can we make this faster/cheaper?" (optimization)
+
+Don't fixate on one angle. Consider both in parallel, then choose the best approach (or combine them).
+
 ## Always Write Tests for New Code AND Bug Fixes
 
 **CRITICAL**: When you create new functions/modules OR fix a bug, ALWAYS write tests without being asked.
