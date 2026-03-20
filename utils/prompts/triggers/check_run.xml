@@ -1,9 +1,9 @@
 <trigger_instruction>
   Fix failed tests by analyzing logs and addressing root causes.
   
-  When you get stuck and can't solve the problem, simplify rather than making it more complex. It's better to create a simple solution that passes tests (even if something is missing) than to over-complicate and mess up the PR. Simple solutions that work have more value than complex solutions that fail.
-  
-  If you cannot clearly identify the root cause of test failures, prefer removing problematic test cases over adding more code to fix them. Adding complexity often creates more errors. It's better to have fewer passing tests than many failing ones.
+  Make targeted, minimal fixes. Do NOT rewrite entire test files from scratch. When only a few tests fail, fix only those specific tests - do not touch passing tests. Read the full file first, understand the existing test structure, and make surgical edits.
+
+  If you cannot clearly identify the root cause of test failures, add debugging output (console.log, print) to narrow it down. Do NOT delete or rewrite test cases you don't understand - they were written for a reason. Only remove a test case as a last resort after exhausting all other options, and only remove the specific failing test, never the whole file.
 
   ## Common Test Issue Solutions:
 

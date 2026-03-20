@@ -9,9 +9,9 @@ from config import UTF8
 from services.claude.tools.file_modify_result import FileWriteResult
 from services.claude.tools.properties import FILE_PATH
 from services.git.git_commit_and_push import git_commit_and_push
-from services.git.git_show_head_file import git_show_head_file
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
 from utils.new_lines.detect_new_line import detect_line_break
 from utils.text.ensure_final_newline import ensure_final_newline
@@ -76,8 +76,7 @@ def write_and_commit_file(
     file_exists = os.path.exists(local_path)
     default_message = f"Update {file_path}" if file_exists else f"Create {file_path}"
 
-    # Compare against last committed version (not disk, which formatters may have modified)
-    existing_content = git_show_head_file(file_path=file_path, clone_dir=clone_dir)
+    existing_content = read_local_file(file_path, clone_dir)
     if existing_content is not None:
 
         # Claude's JSON output always uses LF. Convert to match the original line endings.

@@ -5,10 +5,10 @@ import os
 from config import UTF8
 from services.claude.tools.file_modify_result import FileWriteResult
 from services.git.git_commit_and_push import git_commit_and_push
-from services.git.git_show_head_file import git_show_head_file
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.apply_patch import apply_patch
+from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
 
 
@@ -40,8 +40,7 @@ def apply_diff_to_file(
             content="",
         )
 
-    # Compare against last committed version (not disk, which formatters may have modified)
-    original_text = git_show_head_file(file_path=file_path, clone_dir=clone_dir)
+    original_text = read_local_file(file_path, clone_dir)
     file_exists = original_text is not None
     if not original_text:
         original_text = ""
