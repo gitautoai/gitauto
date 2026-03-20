@@ -64,7 +64,9 @@
     <description>When a linter, type checker, or coverage tool identifies code as unreachable or unnecessary, fix the root cause by removing the dead code rather than suppressing the warning or trying to test unreachable paths.</description>
     <rule>If a conditional is flagged as always-true or always-false, simplify the code by removing the unnecessary branch</rule>
     <rule>If coverage shows an unreachable branch caused by a redundant condition, remove the redundant condition from the implementation instead of trying to write a test that covers it</rule>
+    <rule>If code is unreachable, REMOVE IT. Do not preserve it as a "defensive safety net" - unreachable safety nets provide zero protection. Replace verbose guard patterns with simpler equivalents (e.g., replace `const el = getEl(); if (el) { el.method(x); }` with `getEl()?.method(x);`)</rule>
     <rule>Only use coverage exclusion comments (istanbul ignore, pragma: no cover) as a LAST RESORT when the code is genuinely reachable at runtime but untestable due to framework limitations</rule>
+    <rule>NEVER use istanbul ignore on unreachable code. If you identify code as unreachable (e.g., "name is always defined", "ref is always attached after render"), that means the code should be DELETED, not ignored. Istanbul ignore on unreachable code is always wrong.</rule>
     <examples>
       <wrong><![CDATA[
 // WRONG: Suppressing dead code warning with istanbul ignore
@@ -75,6 +77,22 @@
 // RIGHT: Remove the dead branch entirely
 <Component />
       ]]></right>
+      <wrong_defensive><![CDATA[
+// WRONG: Using istanbul ignore on unreachable "defensive" guards instead of removing them
+/* istanbul ignore if -- name is always defined */
+if (!name) { throw new Error('unreachable: name should be defined'); }
+// And:
+/* istanbul ignore else -- element is always defined at this point */
+const element = getElement();
+if (element) { element.doSomething(msg); }
+      ]]></wrong_defensive>
+      <right_defensive><![CDATA[
+// RIGHT: Remove the unreachable guard entirely (if name is always defined, no check needed)
+// Just use name directly
+handleChange({ target: { name, value } });
+// And: Replace verbose null check with optional chaining
+getElement()?.doSomething(msg);
+      ]]></right_defensive>
       <wrong_coverage><![CDATA[
 // WRONG: Redundant condition inside else block creates unreachable V8 branch
 if (!cachedVal) {
