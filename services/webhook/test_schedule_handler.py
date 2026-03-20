@@ -1,4 +1,4 @@
-# pylint: disable=unused-argument
+# pylint: disable=unused-argument,too-many-lines
 # pyright: reportUnusedVariable=false
 
 # Standard imports
@@ -461,10 +461,10 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
         assert coverage_record["updated_by"] == "test-user"
         assert coverage_record["level"] == "file"
         assert coverage_record["file_size"] == 75
-        assert coverage_record["statement_coverage"] == 0
-        assert coverage_record["function_coverage"] == 0
-        assert coverage_record["branch_coverage"] == 0
-        assert coverage_record["line_coverage"] == 0
+        assert coverage_record["statement_coverage"] is None
+        assert coverage_record["function_coverage"] is None
+        assert coverage_record["branch_coverage"] is None
+        assert coverage_record["line_coverage"] is None
         assert coverage_record["package_name"] is None
         assert coverage_record["language"] is None
         assert (
@@ -955,4 +955,129 @@ def test_schedule_handler_all_none_coverage_treated_as_candidate(
     assert result["status"] == "success"
     mock_create_pr.assert_called_once()
     call_kwargs = mock_create_pr.call_args.kwargs
+    # No existing test file in file tree → "Add unit tests to" (not "Achieve 100%")
+    assert "Add unit tests to" in call_kwargs["title"]
     assert "web/pickup/finishp.php" in call_kwargs["title"]
+    # Body should show "No coverage data available" — no metric bullet points
+    assert "No coverage data available." in call_kwargs["body"]
+    assert "Line Coverage:" not in call_kwargs["body"]
+    assert "Statement Coverage:" not in call_kwargs["body"]
+    assert "Function Coverage:" not in call_kwargs["body"]
+    assert "Branch Coverage:" not in call_kwargs["body"]
+
+
+@patch("services.webhook.schedule_handler.add_labels")
+@patch("services.webhook.schedule_handler.create_pull_request")
+@patch("services.webhook.schedule_handler.create_empty_commit")
+@patch("services.webhook.schedule_handler.git_checkout")
+@patch("services.webhook.schedule_handler.git_fetch")
+@patch("services.webhook.schedule_handler.create_remote_branch")
+@patch("services.webhook.schedule_handler.get_latest_remote_commit_sha")
+@patch("services.webhook.schedule_handler.generate_branch_name")
+@patch("services.webhook.schedule_handler.get_open_pull_requests")
+@patch("services.webhook.schedule_handler.evaluate_condition")
+@patch("services.webhook.schedule_handler.should_skip_test")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.check_availability")
+@patch("services.webhook.schedule_handler.get_default_branch")
+@patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_all_coverages")
+@patch("services.webhook.schedule_handler.get_raw_content")
+def test_schedule_handler_partial_none_coverage_omits_none_metric(
+    mock_get_raw_content,
+    mock_get_all_coverages,
+    mock_get_file_tree,
+    mock_get_default_branch,
+    mock_check_availability,
+    mock_get_repository,
+    mock_get_token,
+    mock_is_paused,
+    mock_should_skip_test,
+    mock_evaluate_condition,
+    mock_get_open_pull_requests,
+    mock_generate_branch_name,
+    mock_get_latest_sha,
+    mock_create_remote_branch,
+    _mock_git_fetch,
+    _mock_git_checkout,
+    mock_create_empty_commit,
+    mock_create_pr,
+    mock_add_labels,
+    mock_event,
+):
+    """PHP file with stmt=50, func=50, branch=None, existing test file.
+    Title should be 'Achieve 100%' (has existing tests), body should omit branch metric.
+    """
+    mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = False
+    mock_get_repository.return_value = {"trigger_on_schedule": True}
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "exception",
+        "requests_left": None,
+        "credit_balance_usd": 0,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Exception owner - unlimited access.",
+    }
+    mock_get_default_branch.return_value = "main"
+    # File tree includes both source and test file
+    mock_get_file_tree.return_value = [
+        {"path": "src/services/payment.php", "type": "blob", "size": 300},
+        {"path": "tests/services/paymentTest.php", "type": "blob", "size": 200},
+    ]
+    mock_get_all_coverages.return_value = [
+        {
+            "id": 1,
+            "full_path": "src/services/payment.php",
+            "owner_id": 123,
+            "repo_id": 456,
+            "branch_name": "main",
+            "created_by": "test-user",
+            "updated_by": "test-user",
+            "level": "file",
+            "file_size": 300,
+            "statement_coverage": 50.0,
+            "function_coverage": 50.0,
+            "branch_coverage": None,
+            "line_coverage": 50.0,
+            "package_name": None,
+            "language": "php",
+            "uncovered_lines": "10, 15, 20",
+            "uncovered_functions": "processRefund",
+            "uncovered_branches": None,
+            "created_at": "2024-01-01",
+            "updated_at": "2024-01-01",
+            "github_issue_url": None,
+            "is_excluded_from_testing": False,
+        },
+    ]
+    mock_get_raw_content.return_value = (
+        "<?php\nclass PaymentService {\n"
+        "    public function processPayment() { return true; }\n"
+        "    public function processRefund() { return false; }\n"
+        "}"
+    )
+    mock_should_skip_test.return_value = False
+    mock_evaluate_condition.return_value = EvaluationResult(True, "has testable logic")
+    mock_get_open_pull_requests.return_value = []
+    mock_generate_branch_name.return_value = "gitauto/schedule-20240101-120000-ABCD"
+    mock_get_latest_sha.return_value = "abc123"
+    mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
+
+    with patch("services.webhook.schedule_handler.update_issue_url"):
+        result = schedule_handler(mock_event)
+
+    assert result["status"] == "success"
+    mock_create_pr.assert_called_once()
+    call_kwargs = mock_create_pr.call_args.kwargs
+    # Existing test file found → "Achieve 100% test coverage for"
+    assert "Achieve 100% test coverage for" in call_kwargs["title"]
+    assert "src/services/payment.php" in call_kwargs["title"]
+    # Body should show line/statement/function metrics but NOT branch (None = not measured)
+    assert "Line Coverage: 50%" in call_kwargs["body"]
+    assert "Statement Coverage: 50%" in call_kwargs["body"]
+    assert "Function Coverage: 50%" in call_kwargs["body"]
+    assert "Branch Coverage:" not in call_kwargs["body"]

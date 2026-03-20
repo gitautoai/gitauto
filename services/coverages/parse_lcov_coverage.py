@@ -209,7 +209,9 @@ def parse_lcov_coverage(lcov_content: str, repo_files: set[str]):
                     dir_stats[dir_path][key].update(value)
                 elif isinstance(value, int):
                     existing = dir_stats[dir_path][key]
-                    dir_stats[dir_path][key] = (existing if isinstance(existing, int) else 0) + value
+                    dir_stats[dir_path][key] = (
+                        existing if isinstance(existing, int) else 0
+                    ) + value
 
             # Update repository stats
             for key, value in current_stats.items():
@@ -217,7 +219,9 @@ def parse_lcov_coverage(lcov_content: str, repo_files: set[str]):
                     repo_stats[key].update(value)
                 elif isinstance(value, int):
                     existing = repo_stats[key]
-                    repo_stats[key] = (existing if isinstance(existing, int) else 0) + value
+                    repo_stats[key] = (
+                        existing if isinstance(existing, int) else 0
+                    ) + value
 
     # Second pass: generate all reports
     reports: list[CoverageReport] = []
