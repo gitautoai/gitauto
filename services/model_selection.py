@@ -1,15 +1,8 @@
 # pylint: disable=global-statement
 # pylint: disable=invalid-name
 
-from constants.claude import ClaudeModelId
+from constants.claude import MODEL_CHAIN
 from utils.logging.logging_config import logger
-
-MODEL_CHAIN = [
-    ClaudeModelId.OPUS_4_6,
-    ClaudeModelId.SONNET_4_6,
-    ClaudeModelId.SONNET_4_5,
-    ClaudeModelId.SONNET_4_0,
-]
 
 _current_model = MODEL_CHAIN[0]
 

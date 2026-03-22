@@ -10,6 +10,7 @@ from services.claude.tools.file_modify_result import FileWriteResult
 from services.claude.tools.properties import FILE_PATH
 from services.git.git_commit_and_push import git_commit_and_push
 from services.types.base_args import BaseArgs
+from utils.diff.compute_unified_diff import compute_unified_diff
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
@@ -93,6 +94,11 @@ def write_and_commit_file(
                 content=file_content,
             )
 
+    # Compute unified diff to include in the tool result so the agent sees its changes
+    diff_text = ""
+    if existing_content is not None:
+        diff_text = compute_unified_diff(existing_content, file_content, file_path)
+
     # Write file to local clone (newline="" preserves CRLF if present)
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
     with open(local_path, "w", encoding=UTF8, newline="") as f:
@@ -103,9 +109,10 @@ def write_and_commit_file(
     message = commit_message if commit_message else default_message
     git_commit_and_push(base_args=base_args, message=message, files=[file_path])
 
+    diff_section = f"\n\nDiff:\n```\n{diff_text}```" if diff_text else ""
     return FileWriteResult(
         success=True,
-        message=f"{'Updated' if file_exists else 'Created'} {file_path}.",
+        message=f"{'Updated' if file_exists else 'Created'} {file_path}.{diff_section}",
         file_path=file_path,
         content=file_content,
     )

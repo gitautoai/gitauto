@@ -12,9 +12,9 @@ from services.eslint.eslint_config_has_parser_project import (
     eslint_config_has_parser_project,
 )
 from services.eslint.get_eslint_config import get_eslint_config
-from services.types.base_args import BaseArgs
-from services.node.get_npm_cache_dir import set_npm_cache_env
 from services.node.get_dependency_major_version import get_dependency_major_version
+from services.node.get_npm_cache_dir import set_npm_cache_env
+from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_source_file import is_source_file
 from utils.logging.logging_config import logger
@@ -33,7 +33,7 @@ class ESLintFileResult(TypedDict):
 
 
 # Rules relevant to coverage/testability (dead code, unreachable code, parsing errors).
-# Style-only rules like no-explicit-any that --fix can't resolve don't affect coverage.
+# Other unfixable rules (no-explicit-any, explicit-module-boundary-types) are lint_errors that don't affect coverage but DO fail CI builds with CI=true.
 COVERAGE_RELEVANT_RULES = {
     "@typescript-eslint/no-unnecessary-condition",
     "no-unreachable",
@@ -127,7 +127,10 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
     eslint_major_version = get_dependency_major_version(clone_dir, "eslint")
 
     # Build ESLint command
-    cmd = ["npx", "--yes", "eslint", "--fix", "--format", "json"]
+    # --max-warnings 0: Treat warnings as errors (exit code 1) to match CI behavior.
+    # CRA/craco builds set CI=true which promotes all ESLint warnings to errors.
+    # Without this, ESLint returns exit code 0 for warnings-only, and we skip JSON parsing, missing unfixable warnings like @typescript-eslint/no-explicit-any.
+    cmd = ["npx", "--yes", "eslint", "--fix", "--max-warnings", "0", "--format", "json"]
     # --no-warn-ignored: Suppress "File ignored because of a matching ignore pattern" warnings.
     # Without this, ignored files produce a JSON message with no ruleId that gets
     # misclassified as a lint error, causing the agent to loop trying to fix it.
@@ -189,10 +192,12 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
             eslint_output: list[ESLintFileResult] = json.loads(result.stdout)
             for file_result in eslint_output:
                 for message in file_result.get("messages", []):
+                    rule_id = message.get("ruleId") or ""
+                    if not rule_id:
+                        continue  # Skip infrastructure messages (e.g., "File ignored")
                     line = message.get("line", "?")
                     msg = message.get("message", "Unknown error")
-                    rule_id = message.get("ruleId", "")
-                    rule_suffix = f" ({rule_id})" if rule_id else ""
+                    rule_suffix = f" ({rule_id})"
                     error_str = f"Line {line}: {msg}{rule_suffix}"
                     if rule_id in COVERAGE_RELEVANT_RULES:
                         coverage_errors.append(error_str)

@@ -173,6 +173,63 @@ def test_unicode_content(sample_base_args, tmp_path):
     assert "🌍" in (tmp_path / "test.py").read_text()
 
 
+def test_diff_included_for_existing_file(sample_base_args, tmp_path):
+    """When updating an existing file, the result message should include the unified diff."""
+    file_dir = tmp_path / "src"
+    file_dir.mkdir()
+    original = "\n".join(f"line {i}" for i in range(20)) + "\n"
+    (file_dir / "big.py").write_text(original)
+
+    new_content = "\n".join(f"replaced {i}" for i in range(15)) + "\n"
+    result = write_and_commit_file(
+        file_content=new_content,
+        file_path="src/big.py",
+        base_args=sample_base_args,
+    )
+
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert "Diff:" in result.message
+    assert "-line " in result.message
+    assert "+replaced " in result.message
+
+
+def test_diff_included_for_small_change(sample_base_args, tmp_path):
+    """Even small changes should include the diff."""
+    file_dir = tmp_path / "src"
+    file_dir.mkdir()
+    lines = [f"line {i}" for i in range(20)]
+    original = "\n".join(lines) + "\n"
+    (file_dir / "small.py").write_text(original)
+
+    lines[5] = "modified line 5"
+    new_content = "\n".join(lines) + "\n"
+    result = write_and_commit_file(
+        file_content=new_content,
+        file_path="src/small.py",
+        base_args=sample_base_args,
+    )
+
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert "Diff:" in result.message
+    assert "-line 5" in result.message
+    assert "+modified line 5" in result.message
+
+
+def test_no_diff_for_new_files(sample_base_args, tmp_path):
+    """New files should not include a diff since there's nothing to diff against."""
+    result = write_and_commit_file(
+        file_content="\n".join(f"line {i}" for i in range(50)),
+        file_path="src/brand_new.py",
+        base_args=sample_base_args,
+    )
+
+    assert isinstance(result, FileWriteResult)
+    assert result.success is True
+    assert "Diff:" not in result.message
+
+
 def test_tool_definition_structure():
     assert WRITE_AND_COMMIT_FILE["name"] == "write_and_commit_file"
     assert "description" in WRITE_AND_COMMIT_FILE

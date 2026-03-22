@@ -4,7 +4,6 @@ import subprocess
 from dataclasses import dataclass, field
 
 from constants.aws import EFS_TIMEOUT_SECONDS
-from constants.files import JS_TEST_FILE_EXTENSIONS
 from services.efs.get_efs_dir import get_efs_dir
 from services.jest.get_mongoms_distro import get_mongoms_distro
 from services.jest.parse_coverage_json import Coverage, parse_coverage_json
@@ -34,13 +33,11 @@ async def run_jest_test(
     *,
     base_args: BaseArgs,
     test_file_paths: list[str],
+    source_file_paths: list[str],
     impl_file_to_collect_coverage_from: str,
 ):
-    js_ts_test_files = [
-        f for f in test_file_paths if f.endswith(JS_TEST_FILE_EXTENSIONS)
-    ]
-    if not js_ts_test_files:
-        logger.info("test: No test files to run")
+    if not test_file_paths and not source_file_paths:
+        logger.info("test: No test or source files to run")
         return JestResult()
 
     clone_dir = base_args.get("clone_dir", "")
@@ -94,7 +91,9 @@ async def run_jest_test(
     # Run all test files in a single invocation so Jest/vitest produces a single merged coverage report.
     # -u (--updateSnapshot) auto-updates stale .snap files instead of failing
     # --forceExit: Force jest to exit after tests complete, preventing hangs from uncleaned resources (e.g. MongoDB connections) that survive globalTeardown.
-    cmd = base_cmd + js_ts_test_files + ["-u", "--forceExit"]
+    find_flag = "--related" if runner_name == "vitest" else "--findRelatedTests"
+    all_files = test_file_paths + source_file_paths
+    cmd = base_cmd + [find_flag] + all_files + ["-u", "--forceExit"]
     if use_coverage and runner_name == "jest":
         cmd.extend(
             [
@@ -115,7 +114,7 @@ async def run_jest_test(
                 f"--coverage.include={impl_file_to_collect_coverage_from}",
             ]
         )
-    logger.info("%s: Running %s...", runner_name, ", ".join(js_ts_test_files))
+    logger.info("%s: Running %s...", runner_name, ", ".join(test_file_paths))
     all_errors: list[str] = []
     error_files: set[str] = set()
     result = subprocess.run(
@@ -138,12 +137,12 @@ async def run_jest_test(
             )
         else:
             # Parse which specific files failed from Jest output (e.g. "FAIL src/a.test.ts")
-            for test_file in js_ts_test_files:
+            for test_file in test_file_paths:
                 if f"FAIL {test_file}" in result.stdout:
                     error_files.add(test_file)
             # If no specific files detected, mark all as failed
             if not error_files:
-                error_files.update(js_ts_test_files)
+                error_files.update(test_file_paths)
             all_errors.append(output.strip())
             logger.warning("%s: tests failed:\n%s", runner_name, output.strip())
 
