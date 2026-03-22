@@ -71,6 +71,7 @@ from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.logs.clean_logs import clean_logs
 from utils.logs.detect_infra_failure import detect_infra_failure
+from utils.logs.normalize_log_for_hashing import normalize_log_for_hashing
 from utils.memory.gc_collect_and_log import gc_collect_and_log
 from utils.progress_bar.progress_bar import create_progress_bar
 
@@ -539,8 +540,9 @@ async def handle_check_suite(
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
-    # Hash the error log to detect duplicate errors across CI runs
-    error_log_hash = hashlib.sha256(error_log.encode(encoding=UTF8)).hexdigest()
+    # Hash the normalized error log to detect duplicate errors across CI runs (raw logs contain commit SHAs that change with each empty commit)
+    normalized_log = normalize_log_for_hashing(error_log)
+    error_log_hash = hashlib.sha256(normalized_log.encode(encoding=UTF8)).hexdigest()
     logger.info("Error log hash: %s", error_log_hash)
     logger.info("Error log content for PR #%s:", pr_number)
     logger.info(error_log)
@@ -722,9 +724,12 @@ async def handle_check_suite(
     update_comment(body=comment_body, base_args=base_args)
     create_empty_commit(base_args=base_args)
 
-    # Create final message based on verification result
+    # Update final comment. Do NOT include CHECK_RUN_FAILED_MESSAGE here — that marker
+    # is a concurrency lock set at line 317 when processing starts. Clearing it here
+    # releases the lock so the next check_suite webhook can proceed. The error hash
+    # dedup at line 557 prevents re-attempting the same error.
     if is_completed:
-        final_msg = f"Finished fixing the `{check_run_name}` check run error!"
+        final_msg = f"Created an empty commit to re-trigger the `{check_run_name}` CI. Waiting for results."
     else:
         final_msg = f"I tried to fix `{check_run_name}` but verification still shows errors. Please review the changes."
     update_comment(body=final_msg, base_args=base_args)

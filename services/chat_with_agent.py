@@ -222,14 +222,15 @@ async def chat_with_agent(
 
                 # Always allow editing GITAUTO.md (repo-level learning file)
                 is_gitauto_md = file_path.endswith("GITAUTO.md")
+                is_markdown = file_path.endswith(".md") or file_path.endswith(".mdx")
 
                 validation_error = None
                 is_in_allowed_to_edit_files = any(
                     file_path.endswith(f) for f in allowed_to_edit_files
                 )
                 is_target = is_target_test_file(file_path, base_args)
-                if is_gitauto_md:
-                    pass  # Always allowed
+                if is_gitauto_md or is_markdown:
+                    pass  # Always allowed — .md files are harmless documentation/evidence
                 elif (
                     file_path
                     and restrict_edit_to_target_test_file_only
