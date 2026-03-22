@@ -3,9 +3,9 @@ import sys
 
 import pytest
 
-from constants.claude import ClaudeModelId
+from constants.claude import ClaudeModelId, MODEL_CHAIN
 from services import model_selection
-from services.model_selection import MODEL_CHAIN, get_model, try_next_model
+from services.model_selection import get_model, try_next_model
 
 
 @pytest.fixture
@@ -27,20 +27,22 @@ def test_model_chain_contains_expected_models():
     """Test that MODEL_CHAIN contains the expected models in correct order."""
     expected_models = [
         ClaudeModelId.OPUS_4_6,
+        ClaudeModelId.OPUS_4_5,
         ClaudeModelId.SONNET_4_6,
         ClaudeModelId.SONNET_4_5,
         ClaudeModelId.SONNET_4_0,
     ]
     assert MODEL_CHAIN == expected_models
-    assert len(MODEL_CHAIN) == 4
+    assert len(MODEL_CHAIN) == 5
 
 
 def test_model_chain_order():
     """Test that models are in the expected priority order."""
     assert MODEL_CHAIN[0] == ClaudeModelId.OPUS_4_6  # Highest priority
-    assert MODEL_CHAIN[1] == ClaudeModelId.SONNET_4_6
-    assert MODEL_CHAIN[2] == ClaudeModelId.SONNET_4_5
-    assert MODEL_CHAIN[3] == ClaudeModelId.SONNET_4_0  # Lowest priority
+    assert MODEL_CHAIN[1] == ClaudeModelId.OPUS_4_5
+    assert MODEL_CHAIN[2] == ClaudeModelId.SONNET_4_6
+    assert MODEL_CHAIN[3] == ClaudeModelId.SONNET_4_5
+    assert MODEL_CHAIN[4] == ClaudeModelId.SONNET_4_0  # Lowest priority
 
 
 def test_get_model_returns_current_model(_):
@@ -63,27 +65,27 @@ def test_try_next_model_from_first_model(_, caplog):
     success, new_model = try_next_model()
 
     assert success is True
-    assert new_model == ClaudeModelId.SONNET_4_6
-    assert get_model() == ClaudeModelId.SONNET_4_6
+    assert new_model == ClaudeModelId.OPUS_4_5
+    assert get_model() == ClaudeModelId.OPUS_4_5
 
     assert (
-        f"Switching from {ClaudeModelId.OPUS_4_6} to {ClaudeModelId.SONNET_4_6}"
+        f"Switching from {ClaudeModelId.OPUS_4_6} to {ClaudeModelId.OPUS_4_5}"
         in caplog.text
     )
 
 
 def test_try_next_model_from_second_model(_, caplog):
     """Test switching from second model to third model."""
-    model_selection._current_model = ClaudeModelId.SONNET_4_6
+    model_selection._current_model = ClaudeModelId.OPUS_4_5
 
     success, new_model = try_next_model()
 
     assert success is True
-    assert new_model == ClaudeModelId.SONNET_4_5
-    assert get_model() == ClaudeModelId.SONNET_4_5
+    assert new_model == ClaudeModelId.SONNET_4_6
+    assert get_model() == ClaudeModelId.SONNET_4_6
 
     assert (
-        f"Switching from {ClaudeModelId.SONNET_4_6} to {ClaudeModelId.SONNET_4_5}"
+        f"Switching from {ClaudeModelId.OPUS_4_5} to {ClaudeModelId.SONNET_4_6}"
         in caplog.text
     )
 
@@ -107,25 +109,25 @@ def test_try_next_model_sequential_calls(_, caplog):
 
     success1, model1 = try_next_model()
     assert success1 is True
-    assert model1 == ClaudeModelId.SONNET_4_6
-    assert get_model() == ClaudeModelId.SONNET_4_6
+    assert model1 == ClaudeModelId.OPUS_4_5
 
     success2, model2 = try_next_model()
     assert success2 is True
-    assert model2 == ClaudeModelId.SONNET_4_5
-    assert get_model() == ClaudeModelId.SONNET_4_5
+    assert model2 == ClaudeModelId.SONNET_4_6
 
     success3, model3 = try_next_model()
     assert success3 is True
-    assert model3 == ClaudeModelId.SONNET_4_0
-    assert get_model() == ClaudeModelId.SONNET_4_0
+    assert model3 == ClaudeModelId.SONNET_4_5
 
     success4, model4 = try_next_model()
-    assert success4 is False
+    assert success4 is True
     assert model4 == ClaudeModelId.SONNET_4_0
-    assert get_model() == ClaudeModelId.SONNET_4_0
 
-    assert caplog.text.count("Switching from") == 3
+    success5, model5 = try_next_model()
+    assert success5 is False
+    assert model5 == ClaudeModelId.SONNET_4_0
+
+    assert caplog.text.count("Switching from") == 4
 
 
 def test_try_next_model_return_types():
@@ -142,12 +144,12 @@ def test_model_selection_state_persistence(_):
     assert get_model() == ClaudeModelId.OPUS_4_6
 
     try_next_model()
-    assert get_model() == ClaudeModelId.SONNET_4_6
-    assert get_model() == ClaudeModelId.SONNET_4_6
+    assert get_model() == ClaudeModelId.OPUS_4_5
+    assert get_model() == ClaudeModelId.OPUS_4_5
 
     try_next_model()
-    assert get_model() == ClaudeModelId.SONNET_4_5
-    assert get_model() == ClaudeModelId.SONNET_4_5
+    assert get_model() == ClaudeModelId.SONNET_4_6
+    assert get_model() == ClaudeModelId.SONNET_4_6
 
 
 def test_try_next_model_with_invalid_current_model(_):
@@ -186,7 +188,7 @@ def test_module_level_constants():
     assert len(MODEL_CHAIN) == len(set(MODEL_CHAIN))
 
 
-@pytest.mark.parametrize("model_index", [0, 1, 2, 3])
+@pytest.mark.parametrize("model_index", [0, 1, 2, 3, 4])
 def test_try_next_model_from_each_position(_, model_index):
     """Test try_next_model behavior when starting from each model position."""
     model_selection._current_model = MODEL_CHAIN[model_index]

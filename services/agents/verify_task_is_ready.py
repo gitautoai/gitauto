@@ -122,6 +122,7 @@ async def verify_task_is_ready(
         jest_result = await run_jest_test(
             base_args=base_args,
             test_file_paths=js_ts_files,
+            source_file_paths=[],
             impl_file_to_collect_coverage_from="",
         )
         if jest_result.errors:
