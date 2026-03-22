@@ -624,3 +624,126 @@ async def test_run_eslint_fix_excludes_no_warn_ignored_for_v8(base_args):
 
                         cmd = mock_run.call_args[0][0]
                         assert "--no-warn-ignored" not in cmd
+
+
+@pytest.mark.asyncio
+async def test_run_eslint_fix_includes_max_warnings_zero(base_args):
+    """--max-warnings 0 makes ESLint treat warnings as errors (exit code 1)
+    to match CI behavior where CI=true promotes warnings to errors."""
+    eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
+
+    with patch(
+        "services.eslint.run_eslint_fix.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch("services.eslint.run_eslint_fix.os.makedirs"):
+            with patch("builtins.open", mock_open(read_data="formatted")):
+                with patch("services.eslint.run_eslint_fix.subprocess.run") as mock_run:
+                    mock_run.return_value = MagicMock(
+                        returncode=0, stdout=eslint_output, stderr=""
+                    )
+
+                    coro = run_eslint_fix(
+                        base_args=base_args,
+                        file_path="test.ts",
+                        file_content="const x = 1;",
+                    )
+                    assert coro is not None
+                    await coro
+
+                    cmd = mock_run.call_args[0][0]
+                    assert "--max-warnings" in cmd
+                    max_warnings_idx = cmd.index("--max-warnings")
+                    assert cmd[max_warnings_idx + 1] == "0"
+
+
+@pytest.mark.asyncio
+async def test_run_eslint_fix_catches_unfixable_warnings(base_args):
+    """Unfixable warnings like no-explicit-any should be reported as lint_errors
+    for SOURCE files. With --max-warnings 0, ESLint returns exit code 1 for
+    warnings, triggering JSON parsing that catches these unfixable warnings."""
+    file_content = "export const foo = (x: any) => x;\n"
+    eslint_output = json.dumps(
+        [
+            {
+                "filePath": "src/utils.ts",
+                "messages": [
+                    {
+                        "line": 1,
+                        "column": 23,
+                        "message": "Unexpected any. Specify a different type",
+                        "ruleId": "@typescript-eslint/no-explicit-any",
+                        "severity": 1,
+                    }
+                ],
+            }
+        ]
+    )
+
+    with patch(
+        "services.eslint.run_eslint_fix.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch("services.eslint.run_eslint_fix.os.makedirs"):
+            with patch("builtins.open", mock_open(read_data=file_content)):
+                with patch("services.eslint.run_eslint_fix.subprocess.run") as mock_run:
+                    mock_run.return_value = MagicMock(
+                        returncode=1, stdout=eslint_output, stderr=""
+                    )
+
+                    coro = run_eslint_fix(
+                        base_args=base_args,
+                        file_path="src/utils.ts",
+                        file_content=file_content,
+                    )
+                    assert coro is not None
+                    result = await coro
+
+    assert result.success is False
+    assert result.lint_errors is not None
+    assert "no-explicit-any" in result.lint_errors
+
+
+@pytest.mark.asyncio
+async def test_run_eslint_fix_skips_messages_without_rule_id(base_args):
+    """Messages without ruleId (e.g., 'File ignored') are infrastructure messages,
+    not code violations. They should be skipped even when --max-warnings 0 causes
+    exit code 1."""
+    file_content = "const x = 1;\n"
+    eslint_output = json.dumps(
+        [
+            {
+                "filePath": "test.ts",
+                "messages": [
+                    {
+                        "fatal": False,
+                        "severity": 1,
+                        "message": "File ignored because of a matching ignore pattern.",
+                    }
+                ],
+            }
+        ]
+    )
+
+    with patch(
+        "services.eslint.run_eslint_fix.get_eslint_config",
+        return_value={"filename": ".eslintrc.json", "content": "{}"},
+    ):
+        with patch("services.eslint.run_eslint_fix.os.makedirs"):
+            with patch("builtins.open", mock_open(read_data=file_content)):
+                with patch("services.eslint.run_eslint_fix.subprocess.run") as mock_run:
+                    mock_run.return_value = MagicMock(
+                        returncode=1, stdout=eslint_output, stderr=""
+                    )
+
+                    coro = run_eslint_fix(
+                        base_args=base_args,
+                        file_path="test.ts",
+                        file_content=file_content,
+                    )
+                    assert coro is not None
+                    result = await coro
+
+    assert result.success is True
+    assert result.lint_errors is None
+    assert result.coverage_errors is None

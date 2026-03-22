@@ -30,6 +30,7 @@ from services.tsc.create_tsc_issue import create_tsc_issue
 from services.tsc.run_tsc_check import run_tsc_check
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.filter_js_ts_files import filter_js_ts_files
+from utils.files.is_source_file import is_source_file
 from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
 
@@ -52,6 +53,7 @@ class VerifyTaskIsCompleteResult:
 async def verify_task_is_complete(
     base_args: BaseArgs, run_phpunit: bool = False, **_kwargs
 ):
+    clone_dir = base_args.get("clone_dir", "")
     owner = base_args.get("owner", "")
     repo = base_args.get("repo", "")
     pr_number = base_args.get("pr_number")
@@ -83,7 +85,6 @@ async def verify_task_is_complete(
 
     ts_test_files = [f for f in js_test_files if f.endswith(TS_TEST_FILE_EXTENSIONS)]
     if ts_test_files:
-        clone_dir = base_args.get("clone_dir", "")
         root_files = [
             f
             for f in os.listdir(clone_dir)
@@ -193,10 +194,12 @@ async def verify_task_is_complete(
         "impl_file_to_collect_coverage_from", ""
     )
 
-    # Run jest/vitest tests on test files (with -u to auto-update stale snapshots)
+    # Always pass source files so jest --findRelatedTests can discover dependent tests
+    # (e.g., dead code removal from a source file may break tests not in the PR).
     jest_result = await run_jest_test(
         base_args=base_args,
         test_file_paths=js_test_files,
+        source_file_paths=[f for f in js_ts_files if is_source_file(f)],
         impl_file_to_collect_coverage_from=impl_file_to_collect_coverage_from,
     )
     if jest_result.errors:
@@ -226,7 +229,6 @@ async def verify_task_is_complete(
                 error_files.update(js_test_files)
 
     # Commit any snapshot files updated by jest -u
-    clone_dir = base_args.get("clone_dir", "")
     for snap_path in jest_result.updated_snapshots:
         snap_content = read_local_file(file_path=snap_path, base_dir=clone_dir)
         if not snap_content:

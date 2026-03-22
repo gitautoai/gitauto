@@ -1,4 +1,5 @@
 # Standard imports
+import asyncio
 from dataclasses import dataclass
 from difflib import unified_diff
 import inspect
@@ -10,6 +11,7 @@ from anthropic.types import MessageParam, ToolResultBlockParam, ToolUnionParam
 from constants.claude import ClaudeModelId
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.claude.chat_with_claude import chat_with_claude
+from services.claude.exceptions import ClaudeOverloadedError
 from services.claude.replace_old_file_content import replace_old_file_content
 from services.claude.sanitize_tool_args import sanitize_tool_args
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
@@ -59,6 +61,8 @@ async def chat_with_agent(
     if log_messages is None:
         log_messages = []
 
+    max_overload_retries = 2
+    overload_retries = 0
     while True:
         current_model = model_id or get_model()
         logger.info("Using model: %s", current_model)
@@ -79,10 +83,39 @@ async def chat_with_agent(
             )
             break
 
-        except Exception:  # pylint: disable=broad-except
-            has_next, _ = try_next_model()
+        except ClaudeOverloadedError:
+            overload_retries += 1
+            if overload_retries <= max_overload_retries:
+                delay = overload_retries * 5
+                logger.warning(
+                    "Overloaded (529), retrying %s in %ds (attempt %d/%d)",
+                    current_model,
+                    delay,
+                    overload_retries,
+                    max_overload_retries,
+                )
+                await asyncio.sleep(delay)
+                continue
+
+            overload_retries = 0
+            has_next, next_model = try_next_model()
             if not has_next:
+                logger.error("All models exhausted after overload retries, raising")
                 raise
+            logger.warning(
+                "Overload retries exhausted for %s, falling back to %s",
+                current_model,
+                next_model,
+            )
+
+        except Exception:  # pylint: disable=broad-except
+            has_next, next_model = try_next_model()
+            if not has_next:
+                logger.error("All models exhausted, raising")
+                raise
+            logger.warning(
+                "Error with %s, falling back to %s", current_model, next_model
+            )
 
     # Return if no tool calls (agent returned text without calling a tool)
     if not tool_calls:

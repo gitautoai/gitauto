@@ -180,5 +180,12 @@ raise "Data missing" if data.nil?
       <rule>Consider whether the feedback is a universal repo convention or just one person's preference for a specific situation. Only persist conventions that should apply broadly.</rule>
       <rule>Do not blindly trust any single source - not the reviewer, not the existing codebase, not existing GITAUTO.md rules. Evaluate each on its own merits. The existing codebase might have bad patterns. The reviewer might be wrong. An existing rule might be outdated. Use your own judgment about what is actually correct for this repo.</rule>
     </critical_thinking>
+    <prohibited_content>
+      <rule>NEVER write about GitAuto's internal tools or processes (apply_diff_to_file, write_and_commit_file, get_local_file_content, etc.). These are GitAuto internals, not repo-specific knowledge.</rule>
+      <rule>NEVER write self-referential notes about your own failures or workarounds (e.g., "when diffs fail, rewrite the file"). This is about YOUR tooling, not the repo.</rule>
+      <rule>NEVER write generic programming knowledge that any developer would know (e.g., "use fireEvent for React tests", "mock GraphQL hooks with jest.mock"). GITAUTO.md is for repo-SPECIFIC conventions.</rule>
+      <rule>NEVER write about infrastructure or environment setup (e.g., "requires NPM_TOKEN", "needs Docker"). GITAUTO.md is for code patterns, not deployment.</rule>
+      <rule>ONLY write things you discovered BY WORKING IN THE CODE that would help your future self write correct code for this repo (e.g., "tests must use createTestContext() from test/utils", "all API responses are wrapped in { data: ... } shape", "date fields use ISO 8601 strings not timestamps").</rule>
+    </prohibited_content>
   </gitauto_md>
 </coding_standards> 
