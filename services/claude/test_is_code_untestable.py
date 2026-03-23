@@ -1,29 +1,47 @@
+import json
 from unittest.mock import patch
 
 import pytest
 
-from services.claude.evaluate_condition import EvaluationResult
 from services.claude.is_code_untestable import is_code_untestable
 
 
 @pytest.fixture
-def mock_evaluate():
-    with patch("services.claude.is_code_untestable.evaluate_condition") as mock:
+def mock_claude():
+    with patch("services.claude.is_code_untestable.claude") as mock:
         yield mock
 
 
-def test_returns_false_when_no_uncovered_code(mock_evaluate):
-    eval_result = is_code_untestable(
+def _set_mock_response(mock_claude, result: bool, category: str, reason: str):
+    """Configure the mock Claude client to return a CodeAnalysisResult."""
+
+    mock_claude.beta.messages.create.return_value.content = [
+        type(
+            "TextBlock",
+            (),
+            {
+                "text": json.dumps(
+                    {"result": result, "category": category, "reason": reason}
+                )
+            },
+        )()
+    ]
+
+
+def test_returns_testable_when_no_uncovered_code(mock_claude):
+    result = is_code_untestable(
         file_path="src/app.tsx",
         file_content="const x = 1;",
     )
-    assert eval_result.result is False
-    assert eval_result.reason == "No uncovered code provided"
-    mock_evaluate.assert_not_called()
+    assert result is not None
+    assert result.result is False
+    assert result.category == "testable"
+    assert result.reason == "No uncovered code provided"
+    mock_claude.beta.messages.create.assert_not_called()
 
 
-def test_extracts_uncovered_lines_from_file_content(mock_evaluate):
-    mock_evaluate.return_value = EvaluationResult(True, "async error handler")
+def test_extracts_uncovered_lines_from_file_content(mock_claude):
+    _set_mock_response(mock_claude, True, "dead_code", "Line 3 is dead code")
     file_content = """line 1
 line 2
 throw new Error('test');
@@ -35,13 +53,13 @@ line 4"""
         uncovered_lines="3",
     )
 
-    call_args = mock_evaluate.call_args
-    content = call_args.kwargs["content"]
+    call_args = mock_claude.beta.messages.create.call_args
+    content = call_args.kwargs["messages"][0]["content"]
     assert "3: throw new Error('test');" in content
 
 
-def test_handles_multiple_uncovered_lines(mock_evaluate):
-    mock_evaluate.return_value = EvaluationResult(False, "testable")
+def test_handles_multiple_uncovered_lines(mock_claude):
+    _set_mock_response(mock_claude, False, "testable", "testable")
     file_content = "line1\nline2\nline3\nline4\nline5"
 
     is_code_untestable(
@@ -50,14 +68,14 @@ def test_handles_multiple_uncovered_lines(mock_evaluate):
         uncovered_lines="2, 4",
     )
 
-    call_args = mock_evaluate.call_args
-    content = call_args.kwargs["content"]
+    call_args = mock_claude.beta.messages.create.call_args
+    content = call_args.kwargs["messages"][0]["content"]
     assert "2: line2" in content
     assert "4: line4" in content
 
 
-def test_includes_uncovered_functions(mock_evaluate):
-    mock_evaluate.return_value = EvaluationResult(False, "testable")
+def test_includes_uncovered_functions(mock_claude):
+    _set_mock_response(mock_claude, False, "testable", "testable")
 
     is_code_untestable(
         file_path="src/app.py",
@@ -65,13 +83,13 @@ def test_includes_uncovered_functions(mock_evaluate):
         uncovered_functions="handleClick, onSubmit",
     )
 
-    call_args = mock_evaluate.call_args
-    content = call_args.kwargs["content"]
+    call_args = mock_claude.beta.messages.create.call_args
+    content = call_args.kwargs["messages"][0]["content"]
     assert "Uncovered functions: handleClick, onSubmit" in content
 
 
-def test_includes_uncovered_branches(mock_evaluate):
-    mock_evaluate.return_value = EvaluationResult(False, "testable")
+def test_includes_uncovered_branches(mock_claude):
+    _set_mock_response(mock_claude, False, "testable", "testable")
 
     is_code_untestable(
         file_path="src/app.go",
@@ -79,13 +97,13 @@ def test_includes_uncovered_branches(mock_evaluate):
         uncovered_branches="if@10, else@15",
     )
 
-    call_args = mock_evaluate.call_args
-    content = call_args.kwargs["content"]
+    call_args = mock_claude.beta.messages.create.call_args
+    content = call_args.kwargs["messages"][0]["content"]
     assert "Uncovered branches: if@10, else@15" in content
 
 
-def test_includes_all_uncovered_types(mock_evaluate):
-    mock_evaluate.return_value = EvaluationResult(True, "untestable")
+def test_includes_all_uncovered_types(mock_claude):
+    _set_mock_response(mock_claude, True, "untestable", "async error handler")
     file_content = "line1\nthrow error\nline3"
 
     is_code_untestable(
@@ -96,30 +114,52 @@ def test_includes_all_uncovered_types(mock_evaluate):
         uncovered_branches="catch@5",
     )
 
-    call_args = mock_evaluate.call_args
-    content = call_args.kwargs["content"]
+    call_args = mock_claude.beta.messages.create.call_args
+    content = call_args.kwargs["messages"][0]["content"]
     assert "Uncovered lines:" in content
     assert "Uncovered functions: handleError" in content
     assert "Uncovered branches: catch@5" in content
 
 
-def test_returns_evaluation_result(mock_evaluate):
-    mock_evaluate.return_value = EvaluationResult(
-        True, "async error in onClick handler"
+def test_returns_dead_code_result(mock_claude):
+    _set_mock_response(
+        mock_claude,
+        True,
+        "dead_code",
+        "Line 38 is dead - !x already catches empty strings",
     )
 
-    eval_result = is_code_untestable(
+    result = is_code_untestable(
         file_path="src/app.tsx",
         file_content="const handleClick = async () => {}",
         uncovered_functions="handleClick",
     )
 
-    assert eval_result.result is True
-    assert eval_result.reason == "async error in onClick handler"
+    assert result is not None
+    assert result.result is True
+    assert result.category == "dead_code"
+    assert "dead" in result.reason.lower()
 
 
-def test_skips_invalid_line_numbers(mock_evaluate):
-    mock_evaluate.return_value = EvaluationResult(False, "testable")
+def test_returns_untestable_result(mock_claude):
+    _set_mock_response(
+        mock_claude, True, "untestable", "async error in onClick handler"
+    )
+
+    result = is_code_untestable(
+        file_path="src/app.tsx",
+        file_content="const handleClick = async () => {}",
+        uncovered_functions="handleClick",
+    )
+
+    assert result is not None
+    assert result.result is True
+    assert result.category == "untestable"
+    assert result.reason == "async error in onClick handler"
+
+
+def test_skips_invalid_line_numbers(mock_claude):
+    _set_mock_response(mock_claude, False, "testable", "testable")
     file_content = "line1\nline2"
 
     is_code_untestable(
@@ -128,16 +168,35 @@ def test_skips_invalid_line_numbers(mock_evaluate):
         uncovered_lines="1, 999",  # 999 is out of range
     )
 
-    call_args = mock_evaluate.call_args
-    content = call_args.kwargs["content"]
+    call_args = mock_claude.beta.messages.create.call_args
+    content = call_args.kwargs["messages"][0]["content"]
     assert "1: line1" in content
     assert "999" not in content
+
+
+def test_schema_includes_category_enum(mock_claude):
+    _set_mock_response(mock_claude, True, "dead_code", "unreachable")
+
+    is_code_untestable(
+        file_path="src/app.tsx",
+        file_content="code",
+        uncovered_lines="1",
+    )
+
+    call_args = mock_claude.beta.messages.create.call_args
+    schema = call_args.kwargs["output_config"]["format"]["schema"]
+    assert "category" in schema["properties"]
+    assert schema["properties"]["category"]["enum"] == [
+        "dead_code",
+        "untestable",
+        "testable",
+    ]
 
 
 # Skip: Calls real Claude API - run manually to verify dead code detection works
 @pytest.mark.skip(reason="Integration test - calls Claude API, costs money")
 def test_detects_logic_based_dead_code():
-    """Test if Claude detects logic-based dead code as untestable.
+    """Test if Claude detects logic-based dead code with correct category.
 
     This is the actual code from foxden-shared-lib PR #564:
     - Line 35: if (!resourceParts[2] || !targetParts[2]) return false;
@@ -195,9 +254,14 @@ export class AgencyAuthorizationHandler implements AuthorizationHandler {
         uncovered_lines="38",
     )
 
+    assert result is not None
     assert result.result is True, (
-        f"Expected Claude to detect dead code as untestable. "
+        f"Expected Claude to detect dead code. "
         f"Got result={result.result}, reason={result.reason}"
+    )
+    assert result.category == "dead_code", (
+        f"Expected category 'dead_code' but got '{result.category}'. "
+        f"Reason: {result.reason}"
     )
 
 
@@ -217,6 +281,11 @@ def test_detects_logic_based_dead_code_simple():
         uncovered_lines="3",
     )
 
+    assert result is not None
     assert (
         result.result is True
     ), f"Expected dead code detection. Got result={result.result}, reason={result.reason}"
+    assert result.category == "dead_code", (
+        f"Expected category 'dead_code' but got '{result.category}'. "
+        f"Reason: {result.reason}"
+    )

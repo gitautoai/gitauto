@@ -51,7 +51,7 @@ def evaluate_condition(
         system=system_prompt,
         messages=[{"role": "user", "content": content}],
         betas=["structured-outputs-2025-11-13"],
-        output_format=RESPONSE_SCHEMA,
+        output_config={"format": RESPONSE_SCHEMA},
     )
 
     text_attr = getattr(response.content[0], "text", "")
