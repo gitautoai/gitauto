@@ -78,7 +78,7 @@ class TestEvaluateCondition:
         call_args = mock_claude.beta.messages.create.call_args
         assert call_args.kwargs["system"] == "Check this code."
         assert call_args.kwargs["betas"] == ["structured-outputs-2025-11-13"]
-        assert "output_format" in call_args.kwargs
+        assert "output_config" in call_args.kwargs
 
 
 @pytest.mark.skip(reason="Integration test - calls real API")

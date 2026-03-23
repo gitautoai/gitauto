@@ -11,6 +11,7 @@ on:
       - requirements.txt
       - pyproject.toml
       - setup.cfg
+      - '!.github/workflows/**'
   # Run tests after merge and collect coverage as canonical source of truth
   push:
     # Your production branch. If not the default, update here and set Target Branch at https://gitauto.ai/settings/rules to match
