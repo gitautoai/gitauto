@@ -87,7 +87,7 @@ def apply_patch(original_text: str, diff_text: str, clone_dir: str, file_path: s
         diff_display = (
             diff_text.replace(" ", "·").replace("\t", "→").replace("\\t", "→")
         )
-        msg = f"Failed to apply diff. Fix the diff and try again.\n\ndiff_text:\n{diff_display}\n\nstderr:\n{stderr}\n"
+        msg = f"Failed to apply diff. Fix the diff and try again.\n\ndiff_text:\n```\n{diff_display}\n```\n\nstderr:\n```\n{stderr}\n```\n"
         return PatchResult(content="", error=msg)
 
     except FileNotFoundError as e:
