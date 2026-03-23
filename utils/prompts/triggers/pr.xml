@@ -6,6 +6,8 @@
   - For each method, determine: is it primarily a data-access wrapper (its main job is a DB query, API call, or data retrieval)? Or does it contain business logic?
   - Search the repo for existing test infrastructure (factories, seeders, test DB helpers, fixtures) using search_local_file_contents with terms like "Factory", "Seeder", "fixture", "TestHelper", "createTest", "faker", "getDbForTest", etc.
   - If the repo has test DB infrastructure, use it for data-access methods instead of mocking
+  - After understanding the code, think about what inputs could break it: empty/missing values, wrong types, malformed JSON, API error responses, boundary values, Unicode edge cases, concurrent or duplicate calls
+  - Write tests that try to BREAK the code, not just confirm it works with simple valid inputs
 
   IF NO TEST FILE EXISTS:
   - Create a new test file with comprehensive tests for the source file
