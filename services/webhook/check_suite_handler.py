@@ -71,6 +71,7 @@ from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.logs.clean_logs import clean_logs
 from utils.logs.detect_infra_failure import detect_infra_failure
+from utils.logs.extract_failing_test_files import extract_failing_test_files
 from utils.logs.normalize_log_for_hashing import normalize_log_for_hashing
 from utils.memory.gc_collect_and_log import gc_collect_and_log
 from utils.progress_bar.progress_bar import create_progress_bar
@@ -591,6 +592,12 @@ async def handle_check_suite(
     impl_file_path = get_impl_file_from_pr_title(pr_title)
     if impl_file_path:
         allowed_to_edit_files.add(impl_file_path)
+
+    # Parse CI error log for failing test files (e.g. "FAIL testing/services/a.test.ts") so the agent can edit them even if they're not part of the PR's changed files
+    ci_failing_files = extract_failing_test_files(error_log)
+    if ci_failing_files:
+        logger.info("CI failing test files detected: %s", ci_failing_files)
+        allowed_to_edit_files.update(ci_failing_files)
 
     p += 5
     add_log_message("Checked out the error log from the workflow run.", log_messages)

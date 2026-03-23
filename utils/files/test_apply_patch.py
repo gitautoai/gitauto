@@ -1,3 +1,4 @@
+# pylint: disable=implicit-str-concat
 # pyright: reportUnusedVariable=false
 import os
 import subprocess
@@ -242,11 +243,7 @@ def test_zero_context_pure_deletion_mid_file(clone_dir):
     # Pure deletion hunk (no context lines) removing lines from the middle of a file.
     original = "line1\nline2\nline3\nline4\nline5\n"
     diff = (
-        "--- a/file.txt\n"
-        "+++ b/file.txt\n"
-        "@@ -3,2 +3,0 @@\n"
-        "-line3\n"
-        "-line4\n"
+        "--- a/file.txt\n" "+++ b/file.txt\n" "@@ -3,2 +3,0 @@\n" "-line3\n" "-line4\n"
     )
     result = apply_patch(original, diff, clone_dir, "file.txt")
     assert result.error == ""
