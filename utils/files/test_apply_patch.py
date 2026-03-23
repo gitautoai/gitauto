@@ -166,3 +166,90 @@ def test_error_message_wraps_diff_in_code_fences(clone_dir):
     result = apply_patch(original, diff, clone_dir, "file.txt")
     assert result.error != ""
     assert "```" in result.error
+
+
+def test_zero_context_import_reorder_mid_file(clone_dir):
+    # Reproduces exact failure from sample-calculator PR #10: Claude wrote a test file
+    # then tried to reorder imports via apply_diff_to_file. The diff had only 1 trailing
+    # context line and removed/added empty lines between import groups. Without
+    # --unidiff-zero, git apply fails because it requires ~3 context lines to locate hunks.
+    original = (
+        "import math\n"
+        "from unittest.mock import patch\n"
+        "\n"
+        "from calculator import add, divide, main, multiply, subtract\n"
+        "\n"
+        "import pytest\n"
+        "\n"
+        "\n"
+        "class TestAdd:\n"
+        "    def test_positive_integers(self):\n"
+        "        assert True\n"
+    )
+    diff = (
+        "--- a/test_calculator.py\n"
+        "+++ b/test_calculator.py\n"
+        "@@ -4,3 +4,3 @@\n"
+        "-from calculator import add, divide, main, multiply, subtract\n"
+        "-\n"
+        " import pytest\n"
+        "+\n"
+        "+from calculator import add, divide, main, multiply, subtract\n"
+    )
+    result = apply_patch(original, diff, clone_dir, "test_calculator.py")
+    assert result.error == ""
+    # pytest should now come before calculator imports
+    pytest_pos = result.content.index("import pytest")
+    calc_pos = result.content.index("from calculator import")
+    assert pytest_pos < calc_pos
+
+
+def test_zero_context_empty_line_removal_mid_file(clone_dir):
+    # Hunk removes an empty line (just "-\n" in diff) in the middle of a file.
+    # Without --unidiff-zero, git apply can't locate the hunk among nearby empty lines.
+    original = "line1\nline2\nline3\naaa\n\nbbb\n\nline8\nline9\n"
+    diff = (
+        "--- a/file.txt\n"
+        "+++ b/file.txt\n"
+        "@@ -4,3 +4,3 @@\n"
+        "-aaa\n"
+        "-\n"
+        " bbb\n"
+        "+\n"
+        "+aaa\n"
+    )
+    result = apply_patch(original, diff, clone_dir, "file.txt")
+    assert result.error == ""
+    assert "bbb\n\naaa\n" in result.content
+
+
+def test_zero_context_pure_addition_mid_file(clone_dir):
+    # Pure addition hunk (no context lines at all) inserted in the middle of a file.
+    original = "line1\nline2\nline3\n"
+    diff = (
+        "--- a/file.txt\n"
+        "+++ b/file.txt\n"
+        "@@ -2,0 +3,2 @@\n"
+        "+added1\n"
+        "+added2\n"
+    )
+    result = apply_patch(original, diff, clone_dir, "file.txt")
+    assert result.error == ""
+    assert "line2\nadded1\nadded2\nline3\n" in result.content
+
+
+def test_zero_context_pure_deletion_mid_file(clone_dir):
+    # Pure deletion hunk (no context lines) removing lines from the middle of a file.
+    original = "line1\nline2\nline3\nline4\nline5\n"
+    diff = (
+        "--- a/file.txt\n"
+        "+++ b/file.txt\n"
+        "@@ -3,2 +3,0 @@\n"
+        "-line3\n"
+        "-line4\n"
+    )
+    result = apply_patch(original, diff, clone_dir, "file.txt")
+    assert result.error == ""
+    assert "line3" not in result.content
+    assert "line4" not in result.content
+    assert "line2\nline5\n" in result.content
