@@ -30,7 +30,20 @@
     <rule>Assert on meaningful outcomes, not intermediate steps</rule>
     <rule>Keep tests independent and focused on single responsibilities</rule>
     <rule>Verify test interactions actually trigger the code paths being tested - different frameworks and DOM structures may require different approaches (React example: userEvent.click() may not trigger onChange on non-form parent elements like tr/div - use Simulate.change() from react-dom/test-utils instead)</rule>
+    <rule>Every test function/method MUST have a short inline comment (above the assertion or at the top of the test body) explaining WHAT it tests and WHY that case matters. The test name alone is not enough - a reader should understand the intent without reading the implementation. Example: "# Verify that missing 'email' key raises ValidationError, not KeyError" or "// Empty array input should return empty result, not throw"</rule>
   </test_design_principles>
+
+  <adversarial_test_design>
+    <description>Write tests that try to BREAK the code, not just confirm it works with clean inputs. Think like a QA engineer, not the developer who wrote it.</description>
+    <rule>Test boundary and special values relevant to the code's domain: empty strings and collections, None/null/undefined, zero-length or single-element inputs, maximum-size payloads, Unicode and emoji in string fields, dates at epoch/year boundaries, deeply nested or circular objects</rule>
+    <rule>Test type abuse when the language allows it (no type annotations, duck typing, Any): wrong types for parameters, None where objects are expected, unexpected container types (list where dict is expected), missing required keys in dicts/objects</rule>
+    <rule>For numeric code: test infinity, NaN, max/min limits, floating point precision traps (0.1 + 0.2), negative zero, overflow, underflow</rule>
+    <rule>Test malformed external input: if the code accepts input from HTTP params, JSON bodies, file contents, environment variables, or CLI args, test missing fields, extra unexpected fields, wrong types in JSON, empty strings, extremely long strings, special string values like "null" or "undefined"</rule>
+    <rule>Test error and failure paths: network timeouts, API 4xx/5xx responses, empty API responses, malformed JSON, permission denied, file not found, database connection failures - whatever failure modes the code's dependencies can produce</rule>
+    <rule>Test concurrency and ordering assumptions: duplicate calls, out-of-order events, concurrent modifications to shared state, re-entrant calls, empty batches vs single-item vs multi-item batches</rule>
+    <rule>If a test reveals unhandled exceptions or unexpected behavior, that is a GOOD test - document it with pytest.raises, expect().toThrow(), or the language equivalent. Do not skip it or remove it because "the code doesn't handle that case"</rule>
+    <rule>Do not ONLY write happy-path tests with simple valid inputs. Every test file should include at least a few adversarial cases targeting edge behaviors relevant to the code under test</rule>
+  </adversarial_test_design>
 
   <test_file_organization>
     <rule>Create exactly ONE test file per source file</rule>
