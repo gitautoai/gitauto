@@ -59,9 +59,10 @@ def apply_patch(original_text: str, diff_text: str, clone_dir: str, file_path: s
         else:
             logger.info("File does not exist before git apply: %s", target_path)
 
+        # --unidiff-zero: the diff prompt instructs the LLM to generate diffs with zero context lines (diff -U0). Without this flag, git apply requires ~3 context lines and fails on minimal-context diffs.
         # See https://git-scm.com/docs/git-apply
         subprocess.run(
-            args=["git", "apply", "--verbose", diff_fname],
+            args=["git", "apply", "--verbose", "--unidiff-zero", diff_fname],
             cwd=clone_dir,
             text=True,
             encoding=UTF8,
