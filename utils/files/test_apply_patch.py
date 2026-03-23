@@ -149,3 +149,20 @@ def test_nested_file_path(clone_dir):
     assert result.error == ""
     assert "new_content" in result.content
     assert os.path.exists(os.path.join(clone_dir, "src/components/App.tsx"))
+
+
+def test_error_message_wraps_diff_in_code_fences(clone_dir):
+    # Diff output contains --- and +++ which render as Markdown headings if not fenced
+    original = "line1\nline2\nline3\n"
+    diff = (
+        "--- a/file.txt\n"
+        "+++ b/file.txt\n"
+        "@@ -1,3 +1,3 @@\n"
+        " WRONG_CONTEXT\n"
+        "-line2\n"
+        "+line2_modified\n"
+        " line3\n"
+    )
+    result = apply_patch(original, diff, clone_dir, "file.txt")
+    assert result.error != ""
+    assert "```" in result.error
