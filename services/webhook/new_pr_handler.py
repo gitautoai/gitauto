@@ -14,8 +14,7 @@ from constants.triggers import Trigger
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.chat_with_agent import chat_with_agent
-from services.claude.evaluate_condition import EvaluationResult
-from services.claude.is_code_untestable import is_code_untestable
+from services.claude.is_code_untestable import CodeAnalysisResult, is_code_untestable
 from services.claude.tools.tools import TOOLS_FOR_ISSUES
 from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_empty_commit import create_empty_commit
@@ -347,8 +346,8 @@ async def handle_new_pr(
         close_pull_request(pr_number=base_args["pr_number"], base_args=base_args)
         return
 
-    # Check if uncovered code is untestable (for schedule-triggered coverage issues)
-    untestable_code_info: EvaluationResult | None = None
+    # Check if uncovered code is dead or untestable (for schedule-triggered coverage issues)
+    untestable_code_info: CodeAnalysisResult | None = None
     coverage_dict = get_coverages(owner_id, repo_id, [impl_file_path])
     coverage_data = coverage_dict.get(impl_file_path)
     if coverage_data and impl_file_content:
@@ -364,12 +363,14 @@ async def handle_new_pr(
                 uncovered_branches=uncovered_branches,
             )
             logger.info(
-                "Untestable code check for %s: %s", impl_file_path, untestable_code_info
+                "Dead/untestable code check for %s: %s",
+                impl_file_path,
+                untestable_code_info,
             )
-            if untestable_code_info.result:
+            if untestable_code_info and untestable_code_info.result:
                 p += 5
                 add_log_message(
-                    f"Detected untestable code in `{impl_file_path}`", log_messages
+                    f"Detected dead/untestable code in `{impl_file_path}`", log_messages
                 )
                 update_comment(
                     body=create_progress_bar(p=p, msg="\n".join(log_messages)),
@@ -482,12 +483,24 @@ async def handle_new_pr(
     allowed_to_edit_files = set(validation_result.files_with_errors)
     allowed_to_edit_files.add(impl_file_path)
 
-    # If uncovered code is untestable, notify agent
+    # If uncovered code is dead or untestable, notify agent with category-specific action
     if untestable_code_info and untestable_code_info.result:
-        untestable_reason = untestable_code_info.reason
-        untestable_msg = f"Untestable code in `{impl_file_path}`: {untestable_reason}"
+        if untestable_code_info.category == "dead_code":
+            untestable_msg = (
+                f"DEAD CODE detected in `{impl_file_path}`: {untestable_code_info.reason}\n\n"
+                "ACTION REQUIRED: REMOVE this dead/unreachable code entirely (e.g., use optional chaining, remove redundant guards). "
+                "Do NOT use istanbul ignore or coverage exclusion comments. Dead code must be deleted, not excluded."
+            )
+        else:
+            untestable_msg = (
+                f"Genuinely untestable code detected in `{impl_file_path}`: {untestable_code_info.reason}\n\n"
+                "This code is reachable at runtime but untestable due to framework limitations. "
+                "You may use coverage exclusion comments (istanbul ignore / pragma: no cover) with a reason explaining why."
+            )
         messages.append({"role": "user", "content": untestable_msg})
-        logger.info("Added untestable code message for %s", impl_file_path)
+        logger.info(
+            "Added %s message for %s", untestable_code_info.category, impl_file_path
+        )
 
     if fixes_applied or pre_existing_errors:
         parts = ["## Prettier/ESLint Results\n"]

@@ -1,14 +1,28 @@
-from services.claude.evaluate_condition import EvaluationResult, evaluate_condition
+import json
+from dataclasses import dataclass
+from typing import Literal
+
+from constants.claude import CLAUDE_MAX_TOKENS, ClaudeModelId
+from services.claude.client import claude
+from services.claude.evaluate_condition import OutputFormat
+from utils.error.handle_exceptions import handle_exceptions
 from utils.formatting.format_with_line_numbers import format_content_with_line_numbers
+from utils.logging.logging_config import logger
 
-SYSTEM_PROMPT = """You are a code analysis expert. Determine if the given uncovered code is UNTESTABLE or DEAD CODE that should be removed.
+SYSTEM_PROMPT = """You are a code analysis expert. Determine if the given uncovered code is DEAD CODE (should be removed) or GENUINELY UNTESTABLE (needs coverage exclusion).
 
-Code is UNTESTABLE or DEAD (return true) if:
+Return true if the code falls into EITHER category:
+
+DEAD CODE (must be REMOVED, not excluded from coverage):
+1. Logically unreachable code due to earlier conditions already handling the case (e.g., checking `x === ''` after `!x` already returned, since empty string is falsy)
+2. Code after unconditional return/throw/break statements
+3. Branches that can never execute given the type system or prior logic
+
+GENUINELY UNTESTABLE (may use coverage exclusion as last resort):
 1. Async error handlers in React/Vue/Angular event handlers (onClick, onSubmit) that throw errors - become unhandled promise rejections
 2. Error throws inside callbacks that test frameworks cannot catch
 3. Code paths only executing in specific runtime environments tests cannot simulate
 4. Race condition handlers depending on timing
-5. DEAD CODE: Logically unreachable code due to earlier conditions already handling the case (e.g., checking `x === ''` after `!x` already returned, since empty string is falsy)
 
 Code is TESTABLE (return false) if:
 1. Can be tested by mocking dependencies
@@ -17,11 +31,40 @@ Code is TESTABLE (return false) if:
 4. Simply missing test coverage but technically testable
 
 Return:
-- result: true if genuinely untestable due to testing library constraints OR if dead/unreachable code that should be removed
-- reason: include which line numbers are untestable/dead and why
+- result: true if dead code OR genuinely untestable, false if testable
+- category: "dead_code" if unreachable/redundant, "untestable" if genuinely untestable, "testable" if testable
+- reason: which line numbers are affected and why
 """
 
+RESPONSE_SCHEMA: OutputFormat = {
+    "type": "json_schema",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "result": {"type": "boolean"},
+            "category": {
+                "type": "string",
+                "enum": ["dead_code", "untestable", "testable"],
+            },
+            "reason": {"type": "string"},
+        },
+        "required": ["result", "category", "reason"],
+        "additionalProperties": False,
+    },
+}
 
+
+@dataclass
+class CodeAnalysisResult:
+    result: bool
+    category: Literal["dead_code", "untestable", "testable"]
+    reason: str
+
+
+@handle_exceptions(
+    default_return_value=None,
+    raise_on_error=False,
+)
 def is_code_untestable(
     file_path: str,
     file_content: str,
@@ -49,7 +92,7 @@ def is_code_untestable(
         parts.append(f"Uncovered branches: {uncovered_branches}")
 
     if not parts:
-        return EvaluationResult(False, "No uncovered code provided")
+        return CodeAnalysisResult(False, "testable", "No uncovered code provided")
 
     numbered_file = format_content_with_line_numbers(
         file_path=file_path, content=file_content
@@ -59,6 +102,21 @@ def is_code_untestable(
 
 {numbered_file}
 
-Is this code untestable due to testing library constraints?"""
+Is this code dead (unreachable/redundant) or genuinely untestable (reachable at runtime but impossible to test)?"""
 
-    return evaluate_condition(content=content, system_prompt=SYSTEM_PROMPT)
+    response = claude.beta.messages.create(
+        model=ClaudeModelId.OPUS_4_6,
+        max_tokens=CLAUDE_MAX_TOKENS,
+        temperature=0,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": content}],
+        betas=["structured-outputs-2025-11-13"],
+        output_config={"format": RESPONSE_SCHEMA},
+    )
+
+    text_attr = getattr(response.content[0], "text", "")
+    if not isinstance(text_attr, str):
+        logger.error("Expected str but got %s: %s", type(text_attr), text_attr)
+        return None
+
+    return CodeAnalysisResult(**json.loads(text_attr.strip()))
