@@ -7,6 +7,7 @@ import pytest
 from services.duckduckgo.search_urls import DDG_URL, NUM_RESULTS_DEFAULT, search_urls
 
 
+@pytest.mark.skip(reason="DDG serves CAPTCHAs to automated requests, search_web disabled")
 class TestSearchUrls:
     """Test cases for search_urls function."""
 

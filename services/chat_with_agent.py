@@ -464,13 +464,7 @@ async def chat_with_agent(
             else:
                 msg = f"Committed changes to `{file_path}`."
 
-        elif (
-            tool_name == "search_web"
-            and isinstance(tool_args, dict)
-            and isinstance((query := tool_args.get("query")), str)
-            and query.strip()
-        ):
-            msg = f"Searched `{query}` and found results."
+        # search_web handler removed: DDG CAPTCHAs bots, tool disabled in tools.py
 
         elif (
             tool_name == "fetch_url"

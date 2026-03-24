@@ -30,6 +30,9 @@ def web_search(
     query: str,
     **_kwargs,
 ):
+    """Disabled: DuckDuckGo serves CAPTCHAs to automated requests, making scraping unreliable.
+    Claude already knows most documentation URLs from training data and can call fetch_url
+    directly. If we need search in the future, use a paid API (e.g. Brave Search)."""
     if not query:
         return []
 

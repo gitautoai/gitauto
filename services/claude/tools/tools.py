@@ -8,7 +8,6 @@ from anthropic.types import ToolUnionParam
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.claude.tools.properties import FILE_PATH
 from services.duckduckgo.fetch_url import FETCH_URL, fetch_url
-from services.duckduckgo.web_search import SEARCH_WEB, web_search
 from services.env.set_env import SET_ENV, set_env
 from services.git.apply_diff_to_file import apply_diff_to_file
 from services.git.create_directory import CREATE_DIRECTORY, create_directory
@@ -128,7 +127,7 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     GET_LOCAL_FILE_TREE,
     MOVE_FILE,
     SEARCH_LOCAL_FILE_CONTENT,
-    SEARCH_WEB,
+    # SEARCH_WEB disabled: DDG CAPTCHAs bots. Use paid API (e.g. Brave Search) if needed.
     VERIFY_TASK_IS_COMPLETE,
     WRITE_AND_COMMIT_FILE,
 ]
@@ -175,7 +174,7 @@ tools_to_call: dict[str, Any] = {
     "move_file": move_file,
     "reply_to_review_comment": reply_to_comment,
     "search_local_file_contents": search_local_file_contents,
-    "search_web": web_search,
+    # "search_web": web_search,  # Disabled: DDG CAPTCHAs bots
     "set_env": set_env,
     "verify_task_is_complete": verify_task_is_complete,
     "write_and_commit_file": write_and_commit_file,

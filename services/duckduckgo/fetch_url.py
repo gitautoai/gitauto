@@ -30,7 +30,7 @@ UNNECESSARY_TAGS = [
 
 FETCH_URL: ToolUnionParam = {
     "name": "fetch_url",
-    "description": "Fetch a webpage and return its content as markdown. Use this after search_web to read the full content of a specific URL from the search results. Only fetch URLs that are relevant to the task.",
+    "description": "Fetch a webpage and return its content as markdown. Use this to read documentation, API references, or any URL relevant to the task. Only fetch URLs that are relevant to the task.",
     "input_schema": {
         "type": "object",
         "properties": {
