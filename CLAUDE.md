@@ -266,6 +266,42 @@ def test_function_accumulates_tokens():
 
 **Remember**: Tests should provide confidence that the code works, not just that it compiles.
 
+### CRITICAL: Use real captured output in tests, not synthetic data
+
+When testing code that parses external tool output (Jest, ESLint, git, CI logs, etc.), **always capture real output** from the actual tool and use it as test fixture data.
+
+**Why**: Synthetic test data can mask bugs. Example: We assumed Jest writes PASS/FAIL to stdout and wrote tests with `stdout="PASS ..."`. In reality, Jest writes PASS/FAIL to **stderr**. The bug went undetected because synthetic data matched our (wrong) assumption.
+
+**Process**:
+1. Run the real tool and capture stdout/stderr separately: `tool 1>/tmp/stdout.txt 2>/tmp/stderr.txt`
+2. Verify which stream contains what (don't assume)
+3. Use the real captured output as fixture constants in test files
+4. Document where/when the output was captured (tool version, date, repo)
+
+**Example of BAD test** (synthetic data that hides the real bug):
+
+```python
+mock_subprocess.return_value = MagicMock(
+    returncode=1,
+    stdout="PASS src/index.test.ts\nTest Suites: 1 passed",  # Wrong! PASS is in stderr
+    stderr="",
+)
+```
+
+**Example of GOOD test** (real captured output):
+
+```python
+# Real Jest output captured from foxden-rating-quoting-backend 2026-03-23.
+# Jest writes PASS/FAIL to stderr, coverage tables to stdout.
+REAL_JEST_PASS_STDERR = "PASS unit src/services/query/getQuote/fetchQuote.test.ts\n..."
+
+mock_subprocess.return_value = MagicMock(
+    returncode=1,
+    stdout="",  # Real: stdout only has coverage tables
+    stderr=REAL_JEST_PASS_STDERR,  # Real: PASS/FAIL goes to stderr
+)
+```
+
 ## CRITICAL: NEVER Dismiss Test Failures When Fixing PRs
 
 **NEVER say "this test is not part of this PR" or "our PR's test passed fine" or "this is a pre-existing issue on the base branch".**

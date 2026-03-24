@@ -430,6 +430,61 @@ async def test_run_jest_test_sets_mongoms_download_dir(
     assert env["MONGOMS_DOWNLOAD_DIR"].endswith(".cache/mongodb-binaries")
 
 
+# Real Jest output captured from foxden-rating-quoting-backend on 2026-03-23.
+# Jest writes PASS/FAIL to stderr, coverage tables to stdout.
+# This was the root cause of a bug where run_jest_test checked only result.stdout.
+REAL_JEST_PASS_STDERR = (
+    "PASS unit src/services/query/getQuote/fetchQuote.test.ts\n"
+    "  fetchQuote\n"
+    "    \u2713 throws when response typename is not GetQuoteOk (5 ms)\n"
+    "    \u2713 returns quote with carrierPartner when truthy (1 ms)\n"
+    "    \u2713 defaults carrierName to Munich when carrierPartner is falsy\n"
+    "    \u2713 defaults carrierName to Munich when carrierPartner is empty string\n"
+    "\n"
+    "Test Suites: 1 passed, 1 total\n"
+    "Tests:       4 passed, 4 total\n"
+    "Snapshots:   0 total\n"
+    "Time:        4.308 s, estimated 6 s\n"
+    "Ran all test suites within paths "
+    '"src/services/query/getQuote/fetchQuote.test.ts".\n'
+)
+
+REAL_JEST_FAIL_STDERR = (
+    "FAIL unit src/fail_test.test.ts\n"
+    "  intentional failure\n"
+    "    \u2717 fails (1 ms)\n"
+    "\n"
+    "  \u25cf intentional failure \u203a fails\n"
+    "\n"
+    "    expect(received).toBe(expected) // Object.is equality\n"
+    "\n"
+    "    Expected: 2\n"
+    "    Received: 1\n"
+    "\n"
+    "Test Suites: 1 failed, 1 total\n"
+    "Tests:       1 failed, 1 total\n"
+    "Snapshots:   0 total\n"
+    "Time:        5.93 s\n"
+    'Ran all test suites within paths "src/fail_test.test.ts".\n'
+)
+
+REAL_JEST_FORCEXIT_STDERR = (
+    "PASS integration test/testing/foxden_quoting/fetchQuote.test.ts\n"
+    "  fetchQuote tests\n"
+    "    \u2713 quote response typename is not GetQuoteOk (2 ms)\n"
+    "    \u2713 able to return the quotes successfully  (1 ms)\n"
+    "\n"
+    "Test Suites: 1 passed, 1 total\n"
+    "Tests:       2 passed, 2 total\n"
+    "Snapshots:   1 passed, 1 total\n"
+    "Time:        6.502 s, estimated 7 s\n"
+    "Ran all test suites within paths "
+    '"test/testing/foxden_quoting/fetchQuote.test.ts".\n'
+    "Force exiting Jest: Have you considered using "
+    "`--detectOpenHandles` to detect async operations that kept "
+    "running after all tests finished?\n"
+)
+
 # Real Jest error output from SPIDERPLUS-web PR #13518
 REAL_JEST_ESM_ERROR = """FAIL unit tests/js/unit/annotation/print_dialog.kyuden.test.js
   ● Test suite failed to run
@@ -557,17 +612,17 @@ async def test_run_jest_test_uses_test_unit_script(
 @patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_exit_code_1_all_pass_treated_as_success(
+async def test_run_jest_test_exit_code_1_all_pass_in_stderr_treated_as_success(
     mock_exists, mock_subprocess, _mock_distro
 ):
-    """When jest exits with code 1 but stdout shows all tests PASS (no FAIL),
-    treat as success. Without this, the agent loops for 900s trying to fix it,
-    and CI failure re-triggers GitAuto - burning more Lambda time and cost."""
+    """Real Jest output: PASS goes to stderr, not stdout (captured from
+    foxden-rating-quoting-backend 2026-03-23). When --forceExit causes exit
+    code 1 but all tests passed, treat as success."""
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
-        stdout="PASS src/index.test.ts\n  Test suite\n    ✓ test 1\n    ✓ test 2\n\nTest Suites: 1 passed, 1 total",
-        stderr="",
+        stdout="",
+        stderr=REAL_JEST_PASS_STDERR,
     )
 
     base_args = cast(
@@ -580,7 +635,7 @@ async def test_run_jest_test_exit_code_1_all_pass_treated_as_success(
     )
     result = await run_jest_test(
         base_args=base_args,
-        test_file_paths=["src/index.test.ts"],
+        test_file_paths=["src/services/query/getQuote/fetchQuote.test.ts"],
         source_file_paths=[],
         impl_file_to_collect_coverage_from="",
     )
@@ -593,15 +648,17 @@ async def test_run_jest_test_exit_code_1_all_pass_treated_as_success(
 @patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_exit_code_1_with_fail_treated_as_failure(
+async def test_run_jest_test_forcexit_pass_in_stderr_treated_as_success(
     mock_exists, mock_subprocess, _mock_distro
 ):
-    """When jest exits with code 1 and stdout contains FAIL, treat as real failure."""
+    """Real Jest --forceExit output: tests pass but exit code 1 because of
+    uncleaned resources (MongoDB connections). PASS and forceExit message both
+    in stderr, stdout has only coverage tables."""
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
-        stdout="FAIL src/index.test.ts\n  ● Test suite failed to run\n\nTest Suites: 1 failed, 1 total",
-        stderr="",
+        stdout="",
+        stderr=REAL_JEST_FORCEXIT_STDERR,
     )
 
     base_args = cast(
@@ -614,13 +671,48 @@ async def test_run_jest_test_exit_code_1_with_fail_treated_as_failure(
     )
     result = await run_jest_test(
         base_args=base_args,
-        test_file_paths=["src/index.test.ts"],
+        test_file_paths=["test/testing/foxden_quoting/fetchQuote.test.ts"],
+        source_file_paths=[],
+        impl_file_to_collect_coverage_from="",
+    )
+    assert result.success is True
+    assert result.errors == []
+    assert result.error_files == set()
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_jest_test.get_mongoms_distro", return_value=None)
+@patch("services.jest.run_jest_test.subprocess.run")
+@patch("services.jest.run_jest_test.os.path.exists")
+async def test_run_jest_test_real_fail_in_stderr_treated_as_failure(
+    mock_exists, mock_subprocess, _mock_distro
+):
+    """Real Jest FAIL output (captured 2026-03-23): FAIL goes to stderr.
+    Verifies the combined stdout+stderr check correctly detects failures."""
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(
+        returncode=1,
+        stdout="",
+        stderr=REAL_JEST_FAIL_STDERR,
+    )
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    result = await run_jest_test(
+        base_args=base_args,
+        test_file_paths=["src/fail_test.test.ts"],
         source_file_paths=[],
         impl_file_to_collect_coverage_from="",
     )
     assert result.success is False
     assert len(result.errors) > 0
-    assert "src/index.test.ts" in result.error_files
+    assert "src/fail_test.test.ts" in result.error_files
 
 
 @pytest.mark.asyncio
