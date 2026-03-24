@@ -567,11 +567,11 @@ def test_handle_exceptions_403_remaining_positive_raises():
         mock_sentry.assert_called_once()
 
 
-def test_handle_exceptions_google_429_raises():
+def test_handle_exceptions_web_search_429_raises():
     @handle_exceptions(
-        default_return_value=None, raise_on_error=False, api_type="google"
+        default_return_value=None, raise_on_error=False, api_type="web_search"
     )
-    def func_google_429():
+    def func_web_search_429():
         response = MagicMock()
         response.status_code = 429
         response.reason = "Too Many Requests"
@@ -582,7 +582,7 @@ def test_handle_exceptions_google_429_raises():
         raise error
 
     with pytest.raises(requests.exceptions.HTTPError):
-        func_google_429()
+        func_web_search_429()
 
 
 def test_handle_exceptions_http_error_non_rate_limit_raise_on_error():

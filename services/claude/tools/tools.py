@@ -7,6 +7,7 @@ from anthropic.types import ToolUnionParam
 # Local imports
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.claude.tools.properties import FILE_PATH
+from services.duckduckgo.fetch_url import FETCH_URL, fetch_url
 from services.env.set_env import SET_ENV, set_env
 from services.git.apply_diff_to_file import apply_diff_to_file
 from services.git.create_directory import CREATE_DIRECTORY, create_directory
@@ -122,11 +123,13 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     CREATE_COMMENT,
     CREATE_DIRECTORY,
     DELETE_FILE,
+    FETCH_URL,
     GET_LOCAL_FILE_TREE,
     MOVE_FILE,
-    WRITE_AND_COMMIT_FILE,
     SEARCH_LOCAL_FILE_CONTENT,
+    # SEARCH_WEB disabled: DDG CAPTCHAs bots. Use paid API (e.g. Brave Search) if needed.
     VERIFY_TASK_IS_COMPLETE,
+    WRITE_AND_COMMIT_FILE,
 ]
 
 TOOLS_FOR_ISSUES: list[ToolUnionParam] = _TOOLS_BASE + [
@@ -160,18 +163,19 @@ FILE_EDIT_TOOLS = [
 
 # Define tools to call
 tools_to_call: dict[str, Any] = {
-    # GitHub
     "apply_diff_to_file": apply_diff_to_file,
     "change_pr_base_branch": change_pr_base_branch,
     "create_comment": create_comment,
     "create_directory": create_directory,
     "delete_file": delete_file,
+    "fetch_url": fetch_url,
     "get_local_file_content": get_local_file_content,
     "get_local_file_tree": get_local_file_tree,
     "move_file": move_file,
-    "write_and_commit_file": write_and_commit_file,
     "reply_to_review_comment": reply_to_comment,
     "search_local_file_contents": search_local_file_contents,
+    # "search_web": web_search,  # Disabled: DDG CAPTCHAs bots
     "set_env": set_env,
     "verify_task_is_complete": verify_task_is_complete,
+    "write_and_commit_file": write_and_commit_file,
 }

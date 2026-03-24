@@ -121,8 +121,8 @@ def _handle_http_error(
         if raise_on_error:
             raise err
 
-    elif api_type == "google" and status_code == 429:
-        err_msg = f"Google Search Rate Limit in {func_name}()"
+    elif api_type == "web_search" and status_code == 429:
+        err_msg = f"Web Search Rate Limit in {func_name}()"
         logger.error(err_msg)
         logger.error("err.response.headers: %s", err.response.headers)
         raise err
