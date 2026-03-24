@@ -290,6 +290,14 @@ async def chat_with_agent(
             ):
                 is_completed = tool_result.success
                 tool_result_content = tool_result.message
+
+                # Allow agent to edit config files modified by verify (e.g. jest.config.ts with testTimeout)
+                if tool_result.modified_files:
+                    for f in tool_result.modified_files:
+                        logger.info(
+                            "Added %s to allowed_to_edit_files (modified by verify)", f
+                        )
+                    allowed_to_edit_files.update(tool_result.modified_files)
                 if is_completed:
                     msg = tool_result.message
                 else:
