@@ -39,7 +39,6 @@ fastapi==0.128.0
 fastapi-cli==0.0.5
 filelock==3.20.3
 flake8==7.3.0
-googlesearch-python==1.2.5
 gotrue==2.6.1
 gql==3.5.0
 graphql-core==3.2.6
@@ -47,6 +46,7 @@ greenlet==3.1.1
 h11==0.16.0
 h2==4.3.0
 hpack==4.1.0
+html2text==2025.4.15
 httpcore==1.0.9
 httptools==0.6.4
 httpx==0.27.0
@@ -131,8 +131,11 @@ tomlkit==0.13.0
 tqdm==4.66.5
 typer==0.12.3
 types-awscrt==0.27.5
+types-beautifulsoup4==4.12.0.20250516
+types-html5lib==1.1.11.20251117
 types-psycopg2==2.9.21.20250516
 types-s3transfer==0.13.0
+types-webencodings==0.5.0.20251108
 typing_extensions==4.14.1
 ujson==5.10.0
 urllib3==2.6.3
