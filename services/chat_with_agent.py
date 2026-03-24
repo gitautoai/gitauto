@@ -465,12 +465,20 @@ async def chat_with_agent(
                 msg = f"Committed changes to `{file_path}`."
 
         elif (
-            tool_name == "search_google"
+            tool_name == "search_web"
             and isinstance(tool_args, dict)
             and isinstance((query := tool_args.get("query")), str)
             and query.strip()
         ):
-            msg = f"Googled `{query}` and went through the results."
+            msg = f"Searched `{query}` and found results."
+
+        elif (
+            tool_name == "fetch_url"
+            and isinstance(tool_args, dict)
+            and isinstance((url := tool_args.get("url")), str)
+            and url.strip()
+        ):
+            msg = f"Fetched content from `{url}`."
 
         elif (
             tool_name == "delete_file"
