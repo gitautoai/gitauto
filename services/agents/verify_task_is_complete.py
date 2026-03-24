@@ -13,17 +13,18 @@ from services.eslint.run_eslint_fix import run_eslint_fix
 from services.github.comments.create_comment import create_comment
 from services.git.write_and_commit_file import write_and_commit_file
 from services.eslint.get_eslint_config import get_eslint_config
-from services.github.files.get_raw_content import get_raw_content
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.types.base_args import BaseArgs
 from services.jest.format_coverage_comment import format_coverage_comment
 from services.jest.run_jest_test import run_jest_test
+from services.node.ensure_jest_timeout_for_ci import ensure_jest_timeout_for_ci
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
     ensure_jest_uses_tsconfig_for_tests,
 )
 from services.node.ensure_tsconfig_relaxed_for_tests import (
     ensure_tsconfig_relaxed_for_tests,
 )
+from services.node.ensure_vitest_timeout_for_ci import ensure_vitest_timeout_for_ci
 from services.phpunit.run_phpunit_test import run_phpunit_test
 from services.prettier.run_prettier_fix import run_prettier_fix
 from services.tsc.create_tsc_issue import create_tsc_issue
@@ -41,6 +42,7 @@ class VerifyTaskIsCompleteResult:
     message: str
     fixes_applied: list[str] = field(default_factory=list)
     error_files: set[str] = field(default_factory=set)
+    modified_files: set[str] = field(default_factory=set)
 
 
 @handle_exceptions(
@@ -58,7 +60,6 @@ async def verify_task_is_complete(
     repo = base_args.get("repo", "")
     pr_number = base_args.get("pr_number")
     token = base_args.get("token", "")
-    new_branch = base_args.get("new_branch", "")
 
     if not pr_number:
         raise ValueError(
@@ -83,31 +84,44 @@ async def verify_task_is_complete(
         if f["filename"].endswith(JS_TEST_FILE_EXTENSIONS) and f["status"] != "removed"
     ]
 
-    ts_test_files = [f for f in js_test_files if f.endswith(TS_TEST_FILE_EXTENSIONS)]
-    if ts_test_files:
+    modified_files: set[str] = set()
+    if js_test_files:
         root_files = [
             f
             for f in os.listdir(clone_dir)
             if os.path.isfile(os.path.join(clone_dir, f))
         ]
 
-        tsconfig_path, _ = ensure_tsconfig_relaxed_for_tests(
-            root_files=root_files,
-            base_args=base_args,
-        )
-        if tsconfig_path:
-            ensure_jest_uses_tsconfig_for_tests(
+        ts_test_files = [
+            f for f in js_test_files if f.endswith(TS_TEST_FILE_EXTENSIONS)
+        ]
+        if ts_test_files:
+            tsconfig_path, _ = ensure_tsconfig_relaxed_for_tests(
                 root_files=root_files,
                 base_args=base_args,
-                tsconfig_path=tsconfig_path,
             )
+            if tsconfig_path:
+                ensure_jest_uses_tsconfig_for_tests(
+                    root_files=root_files,
+                    base_args=base_args,
+                    tsconfig_path=tsconfig_path,
+                )
 
-    if js_test_files:
         eslint_config = get_eslint_config(base_args)
         if eslint_config:
             ensure_eslint_relaxed_for_tests(
                 eslint_config=eslint_config, base_args=base_args
             )
+        jest_config = ensure_jest_timeout_for_ci(
+            root_files=root_files, base_args=base_args
+        )
+        if jest_config:
+            modified_files.add(jest_config)
+        vitest_config = ensure_vitest_timeout_for_ci(
+            root_files=root_files, base_args=base_args
+        )
+        if vitest_config:
+            modified_files.add(vitest_config)
 
     non_removed_files = [f["filename"] for f in pr_files if f["status"] != "removed"]
     js_ts_files = filter_js_ts_files(non_removed_files)
@@ -116,9 +130,7 @@ async def verify_task_is_complete(
     remaining_errors: list[str] = []
     error_files: set[str] = set()
     for file_path in js_ts_files:
-        content = get_raw_content(
-            owner=owner, repo=repo, file_path=file_path, ref=new_branch, token=token
-        )
+        content = read_local_file(file_path=file_path, base_dir=clone_dir)
         if not content:
             continue
 
@@ -266,10 +278,12 @@ async def verify_task_is_complete(
             message=f"Task NOT complete. Fix these errors:\n{error_msg}",
             fixes_applied=formatting_applied,
             error_files=error_files,
+            modified_files=modified_files,
         )
 
     return VerifyTaskIsCompleteResult(
         success=True,
         message="Task completed.",
         fixes_applied=formatting_applied,
+        modified_files=modified_files,
     )

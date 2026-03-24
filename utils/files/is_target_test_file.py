@@ -10,9 +10,7 @@ from utils.logging.logging_config import logger
 @handle_exceptions(default_return_value=True, raise_on_error=False)
 def is_target_test_file(file_path: str, base_args: BaseArgs):
     if not is_test_file(file_path):
-        logger.info(
-            "is_target_test_file: %s is not a test file, blocking edit", file_path
-        )
+        logger.info("is_target_test_file: %s is not a test file", file_path)
         return False
 
     pr_title = base_args.get("pr_title", "")

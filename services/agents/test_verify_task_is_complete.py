@@ -118,7 +118,7 @@ async def test_verify_task_is_complete_success_with_changes(mock_get_files, base
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.run_eslint_fix")
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_partial_fix_with_remaining_errors(
     mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
@@ -195,7 +195,7 @@ async def test_verify_task_is_complete_api_error_returns_default(
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
 @patch("services.agents.verify_task_is_complete.write_and_commit_file")
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_autofixes_missing_braces_in_test_file(
     mock_get_files,
@@ -232,7 +232,7 @@ async def test_verify_autofixes_missing_braces_in_test_file(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_passes_with_correct_test_syntax(
     mock_get_files, mock_get_raw, base_args
@@ -255,7 +255,7 @@ async def test_verify_passes_with_correct_test_syntax(
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.run_eslint_fix")
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_ignores_non_test_files(
     mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
@@ -275,7 +275,7 @@ async def test_verify_ignores_non_test_files(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_ignores_removed_test_files(
     mock_get_files, mock_get_raw, base_args
@@ -295,7 +295,7 @@ async def test_verify_ignores_removed_test_files(
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_checks_both_ts_test_files(
     mock_get_files,
@@ -332,7 +332,7 @@ async def test_verify_checks_both_ts_test_files(
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_checks_only_ts_when_mixed_with_py(
     mock_get_files,
@@ -365,7 +365,7 @@ async def test_verify_checks_only_ts_when_mixed_with_py(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_ignores_all_non_js_test_files(
     mock_get_files, mock_get_raw, base_args
@@ -387,7 +387,7 @@ async def test_verify_ignores_all_non_js_test_files(
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
 @patch("services.agents.verify_task_is_complete.write_and_commit_file")
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
     mock_get_files,
@@ -436,7 +436,7 @@ async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
 @patch("services.agents.verify_task_is_complete.ensure_jest_uses_tsconfig_for_tests")
 @patch("services.agents.verify_task_is_complete.ensure_tsconfig_relaxed_for_tests")
 @patch("services.agents.verify_task_is_complete.write_and_commit_file")
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
     mock_get_files,
@@ -477,7 +477,7 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_fails_when_jest_tests_fail(
     mock_get_files, mock_get_raw, mock_tsc, mock_jest, base_args
@@ -509,7 +509,7 @@ async def test_verify_fails_when_jest_tests_fail(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_eslint_fix")
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_error_files_collected_from_eslint_and_jest(
     mock_get_files,
@@ -714,10 +714,12 @@ async def test_baseline_tsc_errors_in_pr_files_still_reported(
 @patch("services.agents.verify_task_is_complete.write_and_commit_file")
 @patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
+@patch("services.agents.verify_task_is_complete.os.listdir", return_value=[])
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_commits_updated_snapshots(
     mock_get_files,
+    _mock_listdir,
     mock_get_raw,
     mock_tsc,
     mock_jest,
@@ -1242,7 +1244,7 @@ async def test_review_run_new_non_pr_file_error_reported(
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.ensure_eslint_relaxed_for_tests")
 @patch("services.agents.verify_task_is_complete.get_eslint_config")
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_ensure_eslint_relaxed_called_for_js_test_files(
     mock_get_files, mock_get_raw, mock_get_eslint, mock_ensure_eslint, base_args
@@ -1287,7 +1289,7 @@ async def test_ensure_eslint_relaxed_not_called_for_non_test_files(
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.run_eslint_fix")
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_coverage_error_no_unnecessary_condition_blocks_completion(
     mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
@@ -1323,7 +1325,7 @@ async def test_coverage_error_no_unnecessary_condition_blocks_completion(
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.run_eslint_fix")
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
-@patch("services.agents.verify_task_is_complete.get_raw_content")
+@patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_lint_only_errors_still_block_completion(
     mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args

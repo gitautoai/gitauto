@@ -1,17 +1,11 @@
 import re
 
+from constants.files import JEST_CONFIG_FILES
 from services.git.write_and_commit_file import write_and_commit_file
-from services.github.files.get_raw_content import get_raw_content
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
-
-JEST_CONFIG_FILES = [
-    "jest.config.js",
-    "jest.config.ts",
-    "jest.config.mjs",
-    "jest.config.cjs",
-]
 
 # Pattern 1: transform: { '^.+\.tsx?$': 'ts-jest' }
 # Before: '^.+\.tsx?$': 'ts-jest'
@@ -46,10 +40,7 @@ def ensure_jest_uses_tsconfig_for_tests(
     Find and update Jest config to use the specified tsconfig file.
     Returns (path, status) where status is 'modified' or None if no update was made.
     """
-    owner = base_args["owner"]
-    repo = base_args["repo"]
-    token = base_args["token"]
-    new_branch = base_args["new_branch"]
+    clone_dir = base_args["clone_dir"]
 
     logger.info("Ensuring Jest uses tsconfig with relaxed settings for test files")
     jest_config_file = None
@@ -63,11 +54,9 @@ def ensure_jest_uses_tsconfig_for_tests(
         return None, None
 
     logger.info("Found Jest config: %s", jest_config_file)
-    content = get_raw_content(
-        owner=owner, repo=repo, file_path=jest_config_file, ref=new_branch, token=token
-    )
+    content = read_local_file(file_path=jest_config_file, base_dir=clone_dir)
     if not content:
-        logger.warning("Could not fetch content for %s", jest_config_file)
+        logger.warning("Could not read content for %s", jest_config_file)
         return None, None
 
     # Check if already using the test tsconfig
