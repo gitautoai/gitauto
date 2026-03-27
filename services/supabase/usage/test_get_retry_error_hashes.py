@@ -1,35 +1,55 @@
-import json
 from unittest.mock import Mock, patch
 from services.supabase.usage.get_retry_error_hashes import get_retry_error_hashes
 
 
-def test_get_retry_error_hashes_with_valid_data():
+def _setup_mock_table(mock_supabase, mock_response):
+    mock_table = Mock()
+    mock_supabase.table.return_value = mock_table
+    mock_table.select.return_value = mock_table
+    mock_table.eq.return_value = mock_table
+    # .not_.is_() chain: not_ is a property returning a filter builder, is_() continues the chain
+    mock_table.not_.is_.return_value = mock_table
+    mock_table.execute.return_value = mock_response
+    return mock_table
+
+
+def test_get_retry_error_hashes_aggregates_from_all_records():
     mock_response = Mock()
-    mock_response.data = [{"retry_error_hashes": ["hash1", "hash2", "hash3"]}]
+    mock_response.data = [
+        {"retry_error_hashes": ["hash1", "hash2"]},
+        {"retry_error_hashes": ["hash3"]},
+        {"retry_error_hashes": ["hash2", "hash4"]},
+    ]
 
     with patch(
         "services.supabase.usage.get_retry_error_hashes.supabase"
     ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        mock_table = _setup_mock_table(mock_supabase, mock_response)
 
         result = get_retry_error_hashes(123, 456, 789)
 
-        assert result == ["hash1", "hash2", "hash3"]
+        assert result == ["hash1", "hash2", "hash3", "hash4"]
         mock_supabase.table.assert_called_once_with("usage")
         mock_table.select.assert_called_once_with("retry_error_hashes")
         assert mock_table.eq.call_count == 3
         mock_table.eq.assert_any_call("owner_id", 123)
         mock_table.eq.assert_any_call("repo_id", 456)
         mock_table.eq.assert_any_call("pr_number", 789)
-        mock_table.order.assert_called_once_with("created_at", desc=True)
-        mock_table.limit.assert_called_once_with(1)
-        mock_table.execute.assert_called_once()
+        mock_table.not_.is_.assert_called_once_with("retry_error_hashes", "null")
+
+
+def test_get_retry_error_hashes_with_single_record():
+    mock_response = Mock()
+    mock_response.data = [{"retry_error_hashes": ["hash1", "hash2", "hash3"]}]
+
+    with patch(
+        "services.supabase.usage.get_retry_error_hashes.supabase"
+    ) as mock_supabase:
+        _setup_mock_table(mock_supabase, mock_response)
+
+        result = get_retry_error_hashes(123, 456, 789)
+
+        assert result == ["hash1", "hash2", "hash3"]
 
 
 def test_get_retry_error_hashes_with_empty_response_data():
@@ -39,13 +59,7 @@ def test_get_retry_error_hashes_with_empty_response_data():
     with patch(
         "services.supabase.usage.get_retry_error_hashes.supabase"
     ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        _setup_mock_table(mock_supabase, mock_response)
 
         result = get_retry_error_hashes(123, 456, 789)
 
@@ -59,57 +73,46 @@ def test_get_retry_error_hashes_with_none_response_data():
     with patch(
         "services.supabase.usage.get_retry_error_hashes.supabase"
     ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        _setup_mock_table(mock_supabase, mock_response)
 
         result = get_retry_error_hashes(123, 456, 789)
 
         assert not result
 
 
-def test_get_retry_error_hashes_with_none_retry_pairs():
+def test_get_retry_error_hashes_with_empty_hashes_in_records():
     mock_response = Mock()
-    mock_response.data = [{"retry_error_hashes": None}]
+    mock_response.data = [
+        {"retry_error_hashes": []},
+        {"retry_error_hashes": ["hash1"]},
+    ]
 
     with patch(
         "services.supabase.usage.get_retry_error_hashes.supabase"
     ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        _setup_mock_table(mock_supabase, mock_response)
 
         result = get_retry_error_hashes(123, 456, 789)
 
-        assert not result
+        assert result == ["hash1"]
 
 
-def test_get_retry_error_hashes_with_missing_key():
+def test_get_retry_error_hashes_deduplicates_across_records():
     mock_response = Mock()
-    mock_response.data = [{}]
+    mock_response.data = [
+        {"retry_error_hashes": ["hash1", "hash2"]},
+        {"retry_error_hashes": ["hash1", "hash2"]},
+        {"retry_error_hashes": ["hash1", "hash3"]},
+    ]
 
     with patch(
         "services.supabase.usage.get_retry_error_hashes.supabase"
     ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        _setup_mock_table(mock_supabase, mock_response)
 
         result = get_retry_error_hashes(123, 456, 789)
 
-        assert not result
+        assert result == ["hash1", "hash2", "hash3"]
 
 
 def test_get_retry_error_hashes_with_exception():
@@ -123,30 +126,21 @@ def test_get_retry_error_hashes_with_exception():
         assert not result
 
 
-def test_get_retry_error_hashes_with_empty_list():
+def test_get_retry_error_hashes_with_missing_key():
     mock_response = Mock()
-    mock_response.data = [{"retry_error_hashes": []}]
+    mock_response.data = [{}]
 
     with patch(
         "services.supabase.usage.get_retry_error_hashes.supabase"
     ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
+        _setup_mock_table(mock_supabase, mock_response)
 
         result = get_retry_error_hashes(123, 456, 789)
 
         assert not result
 
 
-def test_get_retry_error_hashes_with_single_hash():
-    mock_response = Mock()
-    mock_response.data = [{"retry_error_hashes": ["single_hash"]}]
-
+def test_get_retry_error_hashes_with_execute_exception():
     with patch(
         "services.supabase.usage.get_retry_error_hashes.supabase"
     ) as mock_supabase:
@@ -154,185 +148,9 @@ def test_get_retry_error_hashes_with_single_hash():
         mock_supabase.table.return_value = mock_table
         mock_table.select.return_value = mock_table
         mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
-
-        result = get_retry_error_hashes(123, 456, 789)
-
-        assert result == ["single_hash"]
-
-
-def test_get_retry_error_hashes_with_attribute_error():
-    with patch(
-        "services.supabase.usage.get_retry_error_hashes.supabase"
-    ) as mock_supabase:
-        mock_supabase.table.side_effect = AttributeError("Attribute error")
-
-        result = get_retry_error_hashes(123, 456, 789)
-
-        assert not result
-
-
-def test_get_retry_error_hashes_with_key_error():
-    with patch(
-        "services.supabase.usage.get_retry_error_hashes.supabase"
-    ) as mock_supabase:
-        mock_supabase.table.side_effect = KeyError("Key error")
-
-        result = get_retry_error_hashes(123, 456, 789)
-
-        assert not result
-
-
-def test_get_retry_error_hashes_with_type_error():
-    with patch(
-        "services.supabase.usage.get_retry_error_hashes.supabase"
-    ) as mock_supabase:
-        mock_supabase.table.side_effect = TypeError("Type error")
-
-        result = get_retry_error_hashes(123, 456, 789)
-
-        assert not result
-
-
-def test_get_retry_error_hashes_with_json_decode_error():
-    with patch(
-        "services.supabase.usage.get_retry_error_hashes.supabase"
-    ) as mock_supabase:
-        mock_supabase.table.side_effect = json.JSONDecodeError("JSON error", "", 0)
-
-        result = get_retry_error_hashes(123, 456, 789)
-
-        assert not result
-
-
-def test_get_retry_error_hashes_with_zero_values():
-    mock_response = Mock()
-    mock_response.data = [{"retry_error_hashes": ["hash1", "hash2"]}]
-
-    with patch(
-        "services.supabase.usage.get_retry_error_hashes.supabase"
-    ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
-
-        result = get_retry_error_hashes(0, 0, 0)
-
-        assert result == ["hash1", "hash2"]
-        mock_table.eq.assert_any_call("owner_id", 0)
-        mock_table.eq.assert_any_call("repo_id", 0)
-        mock_table.eq.assert_any_call("pr_number", 0)
-
-
-def test_get_retry_error_hashes_with_negative_values():
-    mock_response = Mock()
-    mock_response.data = [{"retry_error_hashes": ["hash1"]}]
-
-    with patch(
-        "services.supabase.usage.get_retry_error_hashes.supabase"
-    ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
-
-        result = get_retry_error_hashes(-1, -2, -3)
-
-        assert result == ["hash1"]
-        mock_table.eq.assert_any_call("owner_id", -1)
-        mock_table.eq.assert_any_call("repo_id", -2)
-        mock_table.eq.assert_any_call("pr_number", -3)
-
-
-def test_get_retry_error_hashes_with_large_values():
-    mock_response = Mock()
-    mock_response.data = [{"retry_error_hashes": ["hash_large"]}]
-
-    with patch(
-        "services.supabase.usage.get_retry_error_hashes.supabase"
-    ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
-
-        result = get_retry_error_hashes(999999999, 888888888, 777777777)
-
-        assert result == ["hash_large"]
-        mock_table.eq.assert_any_call("owner_id", 999999999)
-        mock_table.eq.assert_any_call("repo_id", 888888888)
-        mock_table.eq.assert_any_call("pr_number", 777777777)
-
-
-def test_get_retry_error_hashes_with_response_data_multiple_records():
-    mock_response = Mock()
-    mock_response.data = [
-        {"retry_error_hashes": ["hash1", "hash2"]},
-        {"retry_error_hashes": ["hash3", "hash4"]},
-    ]
-
-    with patch(
-        "services.supabase.usage.get_retry_error_hashes.supabase"
-    ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
-
-        result = get_retry_error_hashes(123, 456, 789)
-
-        assert result == ["hash1", "hash2"]
-
-
-def test_get_retry_error_hashes_with_response_execute_exception():
-    with patch(
-        "services.supabase.usage.get_retry_error_hashes.supabase"
-    ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
+        mock_table.not_.is_.return_value = mock_table
         mock_table.execute.side_effect = Exception("Execute error")
 
         result = get_retry_error_hashes(123, 456, 789)
 
-        assert not result
-
-
-def test_get_retry_error_hashes_with_response_data_access_exception():
-    mock_response = Mock()
-    # Create a mock object that raises KeyError when get() is called
-    mock_dict = Mock()
-    mock_dict.get.side_effect = KeyError("Key error")
-    mock_response.data = [mock_dict]
-
-    with patch(
-        "services.supabase.usage.get_retry_error_hashes.supabase"
-    ) as mock_supabase:
-        mock_table = Mock()
-        mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_table
-        mock_table.eq.return_value = mock_table
-        mock_table.order.return_value = mock_table
-        mock_table.limit.return_value = mock_table
-        mock_table.execute.return_value = mock_response
-
-        result = get_retry_error_hashes(123, 456, 789)
         assert not result
