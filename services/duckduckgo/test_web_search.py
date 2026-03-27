@@ -67,7 +67,9 @@ class TestWebSearch:
             assert not result, f"Expected [] for falsy query value: {falsy_value}"
 
 
-@pytest.mark.skip(reason="DDG serves CAPTCHAs to automated requests, search_web disabled")
+@pytest.mark.skip(
+    reason="DDG serves CAPTCHAs to automated requests, search_web disabled"
+)
 class TestWebSearchIntegration:
     """Integration tests with real DuckDuckGo search, only mocking slack_notify."""
 

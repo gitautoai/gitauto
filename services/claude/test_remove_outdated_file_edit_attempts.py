@@ -5,17 +5,17 @@ from unittest.mock import patch
 
 from anthropic.types import MessageParam
 
-from services.claude.remove_outdated_apply_diff_to_file_attempts_and_results import (
-    remove_outdated_apply_diff_to_file_attempts_and_results,
+from services.claude.remove_outdated_file_edit_attempts import (
+    remove_outdated_file_edit_attempts,
 )
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_empty_list():
-    result = remove_outdated_apply_diff_to_file_attempts_and_results([])
+def test_remove_outdated_file_edit_attempts_empty_list():
+    result = remove_outdated_file_edit_attempts([])
     assert not result
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_no_diff_results():
+def test_remove_outdated_file_edit_attempts_no_diff_results():
     messages: list[MessageParam] = cast(
         list[MessageParam],
         [
@@ -23,11 +23,11 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_no_diff_results
             {"role": "user", "content": [{"type": "text", "text": "Hi there"}]},
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
     assert result == messages
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_successful_diff_ignored():
+def test_remove_outdated_file_edit_attempts_successful_diff_ignored():
     messages: list[MessageParam] = cast(
         list[MessageParam],
         [
@@ -42,12 +42,12 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_successful_diff
             }
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
     # Successful diffs should be ignored (not deduplicated)
     assert result == messages
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_multiple_failed_same_file():
+def test_remove_outdated_file_edit_attempts_multiple_failed_same_file():
     failed_diff_content = 'diff partially applied to the file: test.py. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\ndiff="--- a/test.py\\n+++ b/test.py\\n@@ -1,3 +1,3 @@\\n-old line\\n+new line"\n\nrej_text="Failed to apply patch"'
 
     messages: list[MessageParam] = cast(
@@ -73,7 +73,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_multiple_failed
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = [
         {
@@ -99,7 +99,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_multiple_failed
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_different_failed_files():
+def test_remove_outdated_file_edit_attempts_different_failed_files():
     failed_diff1 = 'diff partially applied to the file: test1.py. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\ndiff="--- a/test1.py\\n+++ b/test1.py"\n\nrej_text="Failed"'
     failed_diff2 = 'diff partially applied to the file: test2.py. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\ndiff="--- a/test2.py\\n+++ b/test2.py"\n\nrej_text="Failed"'
 
@@ -126,13 +126,13 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_different_faile
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = messages  # Both should remain unchanged since they're different files
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_mixed_content():
+def test_remove_outdated_file_edit_attempts_mixed_content():
     failed_diff = 'diff partially applied to the file: utils.py. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\ndiff="--- a/utils.py\\n+++ b/utils.py"\n\nrej_text="Failed"'
 
     messages: list[MessageParam] = cast(
@@ -161,7 +161,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_mixed_content()
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = [
         {
@@ -189,7 +189,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_mixed_content()
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_non_tool_result_content():
+def test_remove_outdated_file_edit_attempts_non_tool_result_content():
     messages: list[MessageParam] = cast(
         list[MessageParam],
         [
@@ -204,13 +204,13 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_non_tool_result
             }
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     # Should remain unchanged since it's not a tool_result
     assert result == messages
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_partial_match():
+def test_remove_outdated_file_edit_attempts_partial_match():
     messages: list[MessageParam] = cast(
         list[MessageParam],
         [
@@ -225,13 +225,13 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_partial_match()
             }
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     # Should remain unchanged since it doesn't match the full pattern
     assert result == messages
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_three_failed_occurrences():
+def test_remove_outdated_file_edit_attempts_three_failed_occurrences():
     failed_diff = 'diff partially applied to the file: main.py. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\ndiff="--- a/main.py\\n+++ b/main.py"\n\nrej_text="Failed"'
 
     messages: list[MessageParam] = cast(
@@ -266,7 +266,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_three_failed_oc
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = [
         {
@@ -300,7 +300,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_three_failed_oc
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_preserves_other_tool_results():
+def test_remove_outdated_file_edit_attempts_preserves_other_tool_results():
     failed_diff = 'diff partially applied to the file: test.py. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\ndiff="--- a/test.py\\n+++ b/test.py"\n\nrej_text="Failed"'
 
     messages: list[MessageParam] = cast(
@@ -330,7 +330,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_preserves_other
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = [
         {
@@ -359,7 +359,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_preserves_other
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_failed_then_successful():
+def test_remove_outdated_file_edit_attempts_failed_then_successful():
     failed_diff = 'diff partially applied to the file: test.py. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\ndiff="--- a/test.py\\n+++ b/test.py"\n\nrej_text="Failed"'
     successful_diff = (
         "diff applied to the file: test.py successfully by apply_diff_to_file()."
@@ -388,7 +388,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_failed_then_suc
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = [
         {
@@ -413,7 +413,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_failed_then_suc
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_successful_then_failed():
+def test_remove_outdated_file_edit_attempts_successful_then_failed():
     successful_diff = (
         "diff applied to the file: test.py successfully by apply_diff_to_file()."
     )
@@ -442,14 +442,14 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_successful_then
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     # When successful → failed, keep BOTH (successful is tiny, failed shows what went wrong)
     expected = messages
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_then_failed():
+def test_remove_outdated_file_edit_attempts_tool_use_then_failed():
     """Test that tool_use diffs are removed when followed by failed result"""
     diff_content = (
         "--- a/test.py\\n+++ b/test.py\\n@@ -1,3 +1,3 @@\\n-old line\\n+new line"
@@ -485,7 +485,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_then_f
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = [
         {
@@ -516,7 +516,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_then_f
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_then_successful():
+def test_remove_outdated_file_edit_attempts_tool_use_then_successful():
     """Test that tool_use diffs are removed when followed by successful result"""
     diff_content = (
         "--- a/test.py\\n+++ b/test.py\\n@@ -1,3 +1,3 @@\\n-old line\\n+new line"
@@ -554,7 +554,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_then_s
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = [
         {
@@ -585,7 +585,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_then_s
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_multiple_tool_use_same_file():
+def test_remove_outdated_file_edit_attempts_multiple_tool_use_same_file():
     """Test multiple tool_use diffs for the same file"""
     diff_content_1 = "--- a/test.py\\n+++ b/test.py\\n@@ -1,3 +1,3 @@\\n-old1\\n+new1"
     diff_content_2 = "--- a/test.py\\n+++ b/test.py\\n@@ -5,3 +5,3 @@\\n-old2\\n+new2"
@@ -638,7 +638,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_multiple_tool_u
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = [
         {
@@ -687,7 +687,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_multiple_tool_u
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_different_files():
+def test_remove_outdated_file_edit_attempts_tool_use_different_files():
     """Test tool_use diffs for different files should all be kept"""
     diff_content_1 = "--- a/file1.py\\n+++ b/file1.py\\n@@ -1,3 +1,3 @@\\n-old\\n+new"
     diff_content_2 = "--- a/file2.py\\n+++ b/file2.py\\n@@ -1,3 +1,3 @@\\n-old\\n+new"
@@ -725,14 +725,14 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_differ
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     # Different files, so both should be kept
     expected = messages
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_mixed_with_failed():
+def test_remove_outdated_file_edit_attempts_tool_use_mixed_with_failed():
     """Test tool_use followed by failed, then another tool_use"""
     diff_content_1 = "--- a/test.py\\n+++ b/test.py\\n@@ -1,3 +1,3 @@\\n-old1\\n+new1"
     failed_diff = 'diff partially applied to the file: test.py. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\ndiff="--- a/test.py\\n+++ b/test.py"\n\nrej_text="Failed"'
@@ -780,7 +780,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_mixed_
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = [
         {
@@ -824,7 +824,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_mixed_
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_without_diff_field():
+def test_remove_outdated_file_edit_attempts_tool_use_without_diff_field():
     """Test tool_use without diff field should be kept as-is"""
     messages: list[MessageParam] = cast(
         list[MessageParam],
@@ -859,14 +859,14 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_tool_use_withou
             },
         ],
     )
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     # First one has no diff field, so only its structure is preserved
     expected = messages
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_complex_pattern_1():
+def test_remove_outdated_file_edit_attempts_complex_pattern_1():
     """Test pattern: tool_use → failed → successful → tool_use"""
     diff_content_1 = "--- a/test.py\\n+++ b/test.py\\n@@ -1,3 +1,3 @@\\n-old1\\n+new1"
     failed_diff = 'diff partially applied to the file: test.py. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\ndiff="--- a/test.py\\n+++ b/test.py"\n\nrej_text="Failed"'
@@ -911,7 +911,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_complex_pattern
         ],
     )
 
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = [
         {
@@ -964,7 +964,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_complex_pattern
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_complex_pattern_2():
+def test_remove_outdated_file_edit_attempts_complex_pattern_2():
     """Test pattern with irrelevant content mixed in"""
     diff_content = "--- a/test.py\\n+++ b/test.py\\n@@ -1,3 +1,3 @@\\n-old\\n+new"
     failed_diff = 'diff partially applied to the file: test.py. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\ndiff="--- a/test.py\\n+++ b/test.py"\n\nrej_text="Failed"'
@@ -1010,7 +1010,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_complex_pattern
         ],
     )
 
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     # Only the diff-related content should be affected
     expected = [
@@ -1040,7 +1040,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_complex_pattern
     assert result == expected
 
 
-def test_remove_outdated_apply_diff_to_file_attempts_and_results_interleaved_files():
+def test_remove_outdated_file_edit_attempts_interleaved_files():
     """Test pattern: file1 → file2 → file1 → file2 (interleaved)"""
     diff_1a = "--- a/file1.py\\n+++ b/file1.py\\n@@ -1,3 +1,3 @@\\n-1a\\n+new1a"
     diff_2a = "--- a/file2.py\\n+++ b/file2.py\\n@@ -1,3 +1,3 @@\\n-2a\\n+new2a"
@@ -1097,7 +1097,7 @@ def test_remove_outdated_apply_diff_to_file_attempts_and_results_interleaved_fil
         ],
     )
 
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
 
     expected = [
         {
@@ -1168,10 +1168,10 @@ def test_handles_exception_gracefully():
     )
 
     with patch(
-        "services.claude.remove_outdated_apply_diff_to_file_attempts_and_results.enumerate",
+        "services.claude.remove_outdated_file_edit_attempts.enumerate",
         side_effect=RuntimeError("Simulated failure"),
     ):
-        result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+        result = remove_outdated_file_edit_attempts(messages)
         # Should return original messages unchanged when exception occurs
         assert result == messages
 
@@ -1188,6 +1188,195 @@ def test_handles_runtime_exception():
 
     messages: list[MessageParam] = cast(list[MessageParam], [BadDict()])
 
-    result = remove_outdated_apply_diff_to_file_attempts_and_results(messages)
+    result = remove_outdated_file_edit_attempts(messages)
     # Should return original messages unchanged when exception occurs
     assert result == messages
+
+
+def test_search_and_replace_multiple_same_file():
+    """Older search_and_replace for same file gets pruned, latest kept."""
+    messages: list[MessageParam] = cast(
+        list[MessageParam],
+        [
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_1",
+                        "name": "search_and_replace",
+                        "input": {
+                            "file_path": "test.py",
+                            "old_string": "old_code_1",
+                            "new_string": "new_code_1",
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_2",
+                        "name": "search_and_replace",
+                        "input": {
+                            "file_path": "test.py",
+                            "old_string": "old_code_2",
+                            "new_string": "new_code_2",
+                        },
+                    }
+                ],
+            },
+        ],
+    )
+    result = remove_outdated_file_edit_attempts(messages)
+
+    expected = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "toolu_1",
+                    "name": "search_and_replace",
+                    "input": {
+                        "file_path": "test.py",
+                        "old_string": "[Outdated search text removed]",
+                        "new_string": "[Outdated replacement text removed]",
+                    },
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "toolu_2",
+                    "name": "search_and_replace",
+                    "input": {
+                        "file_path": "test.py",
+                        "old_string": "old_code_2",
+                        "new_string": "new_code_2",
+                    },
+                }
+            ],
+        },
+    ]
+    assert result == expected
+
+
+def test_search_and_replace_different_files():
+    """search_and_replace for different files are both kept."""
+    messages: list[MessageParam] = cast(
+        list[MessageParam],
+        [
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_1",
+                        "name": "search_and_replace",
+                        "input": {
+                            "file_path": "file1.py",
+                            "old_string": "old1",
+                            "new_string": "new1",
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_2",
+                        "name": "search_and_replace",
+                        "input": {
+                            "file_path": "file2.py",
+                            "old_string": "old2",
+                            "new_string": "new2",
+                        },
+                    }
+                ],
+            },
+        ],
+    )
+    result = remove_outdated_file_edit_attempts(messages)
+
+    # Different files, both should be kept unchanged
+    assert result == messages
+
+
+def test_search_and_replace_mixed_with_apply_diff():
+    """Cross-tool pruning: apply_diff followed by search_and_replace for same file."""
+    messages: list[MessageParam] = cast(
+        list[MessageParam],
+        [
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_1",
+                        "name": "apply_diff_to_file",
+                        "input": {
+                            "file_path": "test.py",
+                            "diff": "--- a/test.py\n+++ b/test.py\n@@ -1 +1 @@\n-old\n+new",
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_2",
+                        "name": "search_and_replace",
+                        "input": {
+                            "file_path": "test.py",
+                            "old_string": "old_code",
+                            "new_string": "new_code",
+                        },
+                    }
+                ],
+            },
+        ],
+    )
+    result = remove_outdated_file_edit_attempts(messages)
+
+    expected = [
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "toolu_1",
+                    "name": "apply_diff_to_file",
+                    "input": {
+                        "file_path": "test.py",
+                        "diff": "[Outdated diff input removed]",
+                    },
+                }
+            ],
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "toolu_2",
+                    "name": "search_and_replace",
+                    "input": {
+                        "file_path": "test.py",
+                        "old_string": "old_code",
+                        "new_string": "new_code",
+                    },
+                }
+            ],
+        },
+    ]
+    assert result == expected

@@ -2,12 +2,37 @@
 import os
 import shutil
 
+# Third party imports
+from anthropic.types import ToolUnionParam
+
 # Local imports
 from services.claude.tools.file_modify_result import FileMoveResult
 from services.git.git_commit_and_push import git_commit_and_push
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
+
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+MOVE_FILE: ToolUnionParam = {
+    "name": "move_file",
+    "description": "Moves a file to a new location in the GitHub repository. This is useful for resolving naming conflicts, improving code organization, or fixing pytest import collisions caused by duplicate filenames.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "old_file_path": {
+                "type": "string",
+                "description": "The current path of the file to be moved. For example, 'src/old_name.py'.",
+            },
+            "new_file_path": {
+                "type": "string",
+                "description": "The new path for the file. For example, 'src/new_name.py'. Must be different from old_file_path.",
+            },
+        },
+        "required": ["old_file_path", "new_file_path"],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
 
 
 @handle_exceptions(

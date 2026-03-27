@@ -121,15 +121,13 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
     mock_insert_llm_request.assert_called_once()
 
 
-@patch(
-    "services.claude.chat_with_claude.remove_outdated_apply_diff_to_file_attempts_and_results"
-)
+@patch("services.claude.chat_with_claude.remove_outdated_file_edit_attempts")
 @patch("services.claude.chat_with_claude.insert_llm_request")
 @patch("services.claude.chat_with_claude.claude")
 def test_chat_with_claude_calls_optimization_functions(
     mock_claude,
     _mock_insert_llm_request,
-    mock_remove_outdated_apply_diff_to_file_attempts_and_results,
+    mock_remove_outdated_file_edit_attempts,
 ):
     mock_response = Mock()
     mock_response.content = [Mock(type="text", text="Response")]
@@ -138,9 +136,7 @@ def test_chat_with_claude_calls_optimization_functions(
     mock_claude.messages.count_tokens.return_value = Mock(input_tokens=15)
 
     original_messages = [{"role": "user", "content": "test"}]
-    mock_remove_outdated_apply_diff_to_file_attempts_and_results.return_value = (
-        original_messages
-    )
+    mock_remove_outdated_file_edit_attempts.return_value = original_messages
 
     chat_with_claude(
         messages=cast(list[MessageParam], original_messages),
@@ -151,4 +147,4 @@ def test_chat_with_claude_calls_optimization_functions(
         created_by="4:test-user",
     )
 
-    mock_remove_outdated_apply_diff_to_file_attempts_and_results.assert_called_once()
+    mock_remove_outdated_file_edit_attempts.assert_called_once()
