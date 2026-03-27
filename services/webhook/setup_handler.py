@@ -106,6 +106,7 @@ async def setup_handler(
 
     # Create a branch for the coverage workflow PR
     new_branch = generate_branch_name(trigger="setup")
+    # Must match: website/app/actions/github/get-open-setup-pr.ts
     title = "Set up test coverage workflow"
     base_args: BaseArgs = {
         "owner": owner_name,

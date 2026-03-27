@@ -182,6 +182,7 @@ async def chat_with_agent(
                 "update_remote_file": "write_and_commit_file",
                 "modify_remote_file": "write_and_commit_file",
                 "replace_remote_file_content": "write_and_commit_file",
+                "search_replace": "search_and_replace",
             }
             if similar_name := similar_functions.get(tool_name):
                 corrected_tool = (similar_name, tool_args)
@@ -453,7 +454,8 @@ async def chat_with_agent(
                 msg = "Root directory is empty or not found."
 
         elif (
-            tool_name in ["apply_diff_to_file", "write_and_commit_file"]
+            tool_name
+            in ["apply_diff_to_file", "search_and_replace", "write_and_commit_file"]
             and isinstance(tool_args, dict)
             and isinstance((file_path := tool_args.get("file_path")), str)
             and file_path
