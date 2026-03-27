@@ -1,6 +1,8 @@
 import os
 from dataclasses import dataclass, field
 
+from anthropic.types import ToolUnionParam
+
 from constants.files import (
     JS_TEST_FILE_EXTENSIONS,
     PHP_TEST_FILE_EXTENSIONS,
@@ -34,6 +36,22 @@ from utils.files.filter_js_ts_files import filter_js_ts_files
 from utils.files.is_source_file import is_source_file
 from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
+
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+# No parameters needed - agent calls with empty {} (JSON Schema requires the object structure)
+# In API payload: verify_task_is_complete({}) - the empty object must be explicitly sent
+# Conceptually equivalent to verify_task_is_complete() - a function with no arguments
+VERIFY_TASK_IS_COMPLETE: ToolUnionParam = {
+    "name": "verify_task_is_complete",
+    "description": "Call this when you have finished making all required changes for the ENTIRE original issue - not after just one step. You MUST call this to complete the task - do not just stop calling tools.",
+    "input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
 
 
 @dataclass

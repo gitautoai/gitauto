@@ -1,11 +1,30 @@
 # Standard imports
 import os
 
+# Third party imports
+from anthropic.types import ToolUnionParam
+
 # Local imports
+from services.claude.tools.properties import FILE_PATH
 from services.git.git_commit_and_push import git_commit_and_push
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
+
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+DELETE_FILE: ToolUnionParam = {
+    "name": "delete_file",
+    "description": "Deletes a file from the GitHub repository. Use this to remove unused or duplicate files that cause conflicts.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "file_path": FILE_PATH,
+        },
+        "required": ["file_path"],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)

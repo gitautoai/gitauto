@@ -6,7 +6,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=lambda messages: messages)
-def remove_outdated_apply_diff_to_file_attempts_and_results(
+def remove_outdated_file_edit_attempts(
     messages: list[MessageParam],
 ):
     if not messages:
@@ -37,6 +37,21 @@ def remove_outdated_apply_diff_to_file_attempts_and_results(
 
                 filename = input_data["file_path"]
                 file_latest_positions[filename] = (i, "input")
+                continue
+
+            # Check for tool_use with search_and_replace (assistant editing file)
+            if (
+                msg.get("role") == "assistant"
+                and item.get("type") == "tool_use"
+                and item.get("name") == "search_and_replace"
+            ):
+
+                input_data = item.get("input", {})
+                if not isinstance(input_data, dict) or "file_path" not in input_data:
+                    continue
+
+                filename = input_data["file_path"]
+                file_latest_positions[filename] = (i, "search_replace")
                 continue
 
             # Check for tool_use with write_and_commit_file (assistant replacing file)
@@ -128,6 +143,33 @@ def remove_outdated_apply_diff_to_file_attempts_and_results(
                 new_input = dict(input_data)
                 if "diff" in new_input:
                     new_input["diff"] = "[Outdated diff input removed]"
+                new_item["input"] = new_input
+                new_content.append(new_item)
+                continue
+
+            # Handle assistant search_and_replace
+            if (
+                msg.get("role") == "assistant"
+                and item.get("type") == "tool_use"
+                and item.get("name") == "search_and_replace"
+            ):
+                input_data = item.get("input", {})
+                if not isinstance(input_data, dict) or "file_path" not in input_data:
+                    new_content.append(item)
+                    continue
+
+                filename = input_data["file_path"]
+                latest_info = file_latest_positions.get(filename)
+                if not latest_info or i >= latest_info[0]:
+                    new_content.append(item)
+                    continue
+
+                new_item = dict(item)
+                new_input = dict(input_data)
+                if "old_string" in new_input:
+                    new_input["old_string"] = "[Outdated search text removed]"
+                if "new_string" in new_input:
+                    new_input["new_string"] = "[Outdated replacement text removed]"
                 new_item["input"] = new_input
                 new_content.append(new_item)
                 continue

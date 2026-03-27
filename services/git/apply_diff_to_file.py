@@ -1,15 +1,38 @@
 # Standard imports
 import os
 
+# Third party imports
+from anthropic.types import ToolUnionParam
+
 # Local imports
 from config import UTF8
 from services.claude.tools.file_modify_result import FileWriteResult
+from services.claude.tools.properties import FILE_PATH
 from services.git.git_commit_and_push import git_commit_and_push
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.apply_patch import apply_patch
 from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
+from utils.prompts.diff import DIFF_DESCRIPTION
+
+DIFF: dict[str, str] = {
+    "type": "string",
+    "description": DIFF_DESCRIPTION,
+}
+
+# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
+APPLY_DIFF_TO_FILE: ToolUnionParam = {
+    "name": "apply_diff_to_file",
+    "description": "Applies a diff to an EXISTING file in the local clone and commits the change to the PR branch. Do NOT use this to create new files - use replace_remote_file_content instead. For targeted edits, prefer search_and_replace which uses content matching instead of line numbers.",
+    "input_schema": {
+        "type": "object",
+        "properties": {"file_path": FILE_PATH, "diff": DIFF},
+        "required": ["file_path", "diff"],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
 
 
 @handle_exceptions(

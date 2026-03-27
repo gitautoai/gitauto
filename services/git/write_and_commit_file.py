@@ -22,7 +22,7 @@ from utils.text.strip_trailing_spaces import strip_trailing_spaces
 # See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
 WRITE_AND_COMMIT_FILE: ToolUnionParam = {
     "name": "write_and_commit_file",
-    "description": "Replaces the entire content of a file and commits the change to the PR branch. Use this to create NEW files or when the entire file needs to be rewritten. For minor modifications to existing files, use apply_diff_to_file instead.",
+    "description": "Replaces the entire content of a file and commits the change to the PR branch. Use this to create NEW files or when the entire file needs to be rewritten. For targeted edits to existing files, prefer search_and_replace instead.",
     "input_schema": {
         "type": "object",
         "properties": {

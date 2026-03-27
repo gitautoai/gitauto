@@ -5,14 +5,23 @@ from typing import Any
 from anthropic.types import ToolUnionParam
 
 # Local imports
-from services.agents.verify_task_is_complete import verify_task_is_complete
-from services.claude.tools.properties import FILE_PATH
+from services.agents.verify_task_is_complete import (
+    VERIFY_TASK_IS_COMPLETE,
+    verify_task_is_complete,
+)
 from services.duckduckgo.fetch_url import FETCH_URL, fetch_url
 from services.env.set_env import SET_ENV, set_env
-from services.git.apply_diff_to_file import apply_diff_to_file
+from services.git.apply_diff_to_file import (
+    APPLY_DIFF_TO_FILE,
+    apply_diff_to_file,
+)
 from services.git.create_directory import CREATE_DIRECTORY, create_directory
-from services.git.delete_file import delete_file
-from services.git.move_file import move_file
+from services.git.delete_file import DELETE_FILE, delete_file
+from services.git.search_and_replace import (
+    SEARCH_AND_REPLACE,
+    search_and_replace,
+)
+from services.git.move_file import MOVE_FILE, move_file
 from services.git.write_and_commit_file import (
     WRITE_AND_COMMIT_FILE,
     write_and_commit_file,
@@ -39,90 +48,18 @@ from utils.files.search_local_file_contents import (
     SEARCH_LOCAL_FILE_CONTENT,
     search_local_file_contents,
 )
-from utils.prompts.diff import DIFF_DESCRIPTION
 
 # Tool description best practices (Anthropic):
 # - What the tool does, when it should be used, parameter meanings, caveats
 # https://docs.anthropic.com/en/docs/build-with-claude/tool-use
 # https://www.anthropic.com/engineering/writing-tools-for-agents
 
-DIFF: dict[str, str] = {
-    "type": "string",
-    "description": DIFF_DESCRIPTION,
-}
-
-# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
-APPLY_DIFF_TO_FILE: ToolUnionParam = {
-    "name": "apply_diff_to_file",
-    "description": "Applies a diff to an EXISTING file in the local clone and commits the change to the PR branch. Do NOT use this to create new files - use replace_remote_file_content instead.",
-    "input_schema": {
-        "type": "object",
-        "properties": {"file_path": FILE_PATH, "diff": DIFF},
-        "required": ["file_path", "diff"],
-        "additionalProperties": False,
-    },
-    "strict": True,
-}
-
-# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
-MOVE_FILE: ToolUnionParam = {
-    "name": "move_file",
-    "description": "Moves a file to a new location in the GitHub repository. This is useful for resolving naming conflicts, improving code organization, or fixing pytest import collisions caused by duplicate filenames.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "old_file_path": {
-                "type": "string",
-                "description": "The current path of the file to be moved. For example, 'src/old_name.py'.",
-            },
-            "new_file_path": {
-                "type": "string",
-                "description": "The new path for the file. For example, 'src/new_name.py'. Must be different from old_file_path.",
-            },
-        },
-        "required": ["old_file_path", "new_file_path"],
-        "additionalProperties": False,
-    },
-    "strict": True,
-}
-
-# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
-DELETE_FILE: ToolUnionParam = {
-    "name": "delete_file",
-    "description": "Deletes a file from the GitHub repository. Use this to remove unused or duplicate files that cause conflicts.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "file_path": FILE_PATH,
-        },
-        "required": ["file_path"],
-        "additionalProperties": False,
-    },
-    "strict": True,
-}
-
-# See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
-# No parameters needed - agent calls with empty {} (JSON Schema requires the object structure)
-# In API payload: verify_task_is_complete({}) - the empty object must be explicitly sent
-# Conceptually equivalent to verify_task_is_complete() - a function with no arguments
-VERIFY_TASK_IS_COMPLETE: ToolUnionParam = {
-    "name": "verify_task_is_complete",
-    "description": "Call this when you have finished making all required changes for the ENTIRE original issue - not after just one step. You MUST call this to complete the task - do not just stop calling tools.",
-    "input_schema": {
-        "type": "object",
-        "properties": {},
-        "required": [],
-        "additionalProperties": False,
-    },
-    "strict": True,
-}
-
-
 _TOOLS_BASE: list[ToolUnionParam] = [
     APPLY_DIFF_TO_FILE,
     CREATE_COMMENT,
     CREATE_DIRECTORY,
     DELETE_FILE,
+    SEARCH_AND_REPLACE,
     FETCH_URL,
     GET_LOCAL_FILE_TREE,
     MOVE_FILE,
@@ -156,6 +93,7 @@ TOOLS_FOR_SETUP: list[ToolUnionParam] = _TOOLS_BASE + [
 
 FILE_EDIT_TOOLS = [
     "apply_diff_to_file",
+    "search_and_replace",
     "write_and_commit_file",
     "move_file",
     "delete_file",
@@ -173,6 +111,7 @@ tools_to_call: dict[str, Any] = {
     "get_local_file_tree": get_local_file_tree,
     "move_file": move_file,
     "reply_to_review_comment": reply_to_comment,
+    "search_and_replace": search_and_replace,
     "search_local_file_contents": search_local_file_contents,
     # "search_web": web_search,  # Disabled: DDG CAPTCHAs bots
     "set_env": set_env,
