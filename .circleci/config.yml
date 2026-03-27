@@ -6,7 +6,7 @@ orbs:
 jobs:
   test-pass:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.13
     steps:
       - checkout
       - python/install-packages:
@@ -23,7 +23,7 @@ jobs:
 
   test-fail:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.13
     steps:
       - checkout
       - python/install-packages:
