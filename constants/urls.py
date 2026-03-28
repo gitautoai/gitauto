@@ -5,11 +5,11 @@ PARAMS = "?utm_source=github&utm_medium=referral"
 PRODUCT_URL = f"{BASE_URL}{PARAMS}"
 BLOG_URL = f"{BASE_URL}/blog{PARAMS}"
 CONTACT_URL = f"{BASE_URL}/contact{PARAMS}"
-DASHBOARD_COVERAGE_URL = f"{BASE_URL}/dashboard/coverage{PARAMS}"
+DASHBOARD_COVERAGE_URL = f"{BASE_URL}/dashboard/file-coverage{PARAMS}"
 DASHBOARD_CREDITS_URL = f"{BASE_URL}/dashboard/credits"
 PRICING_URL = f"{BASE_URL}/pricing{PARAMS}"
-SETTINGS_RULES_URL = f"{BASE_URL}/settings/rules{PARAMS}"
-SETTINGS_TRIGGERS_URL = f"{BASE_URL}/settings/triggers{PARAMS}"
+DASHBOARD_RULES_URL = f"{BASE_URL}/dashboard/rules{PARAMS}"
+DASHBOARD_TRIGGERS_URL = f"{BASE_URL}/dashboard/triggers{PARAMS}"
 
 # GitAuto documentation URLs
 DOC_URLS = {

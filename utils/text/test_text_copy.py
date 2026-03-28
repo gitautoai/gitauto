@@ -8,7 +8,7 @@ from utils.text.text_copy import (
     UPDATE_COMMENT_FOR_RAISED_ERRORS_NO_CHANGES_MADE,
 )
 from config import EMAIL_LINK, PRODUCT_ID
-from constants.urls import SETTINGS_TRIGGERS_URL
+from constants.urls import DASHBOARD_TRIGGERS_URL
 from constants.messages import COMPLETED_PR
 from constants.urls import DASHBOARD_CREDITS_URL
 
@@ -94,7 +94,7 @@ def test_build_pr_completion_comment_automation_true():
     sender_name = "test-user"
     result = build_pr_completion_comment(pr_creator, sender_name, trigger="schedule")
 
-    expected = f"@{pr_creator} {COMPLETED_PR}\n\nI autonomously open pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+    expected = f"@{pr_creator} {COMPLETED_PR}\n\nI autonomously open pull requests on a schedule. You can manage your schedule [here]({DASHBOARD_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
@@ -242,7 +242,7 @@ def test_build_pr_completion_comment_automation_bot_creator_bot_sender():
     sender_name = "gitauto-ai[bot]"
     result = build_pr_completion_comment(pr_creator, sender_name, trigger="schedule")
 
-    expected = f"{COMPLETED_PR}\n\nI autonomously open pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+    expected = f"{COMPLETED_PR}\n\nI autonomously open pull requests on a schedule. You can manage your schedule [here]({DASHBOARD_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
@@ -252,7 +252,7 @@ def test_build_pr_completion_comment_automation_different_users():
     sender_name = "test-user2"
     result = build_pr_completion_comment(pr_creator, sender_name, trigger="schedule")
 
-    expected = f"@{pr_creator} @{sender_name} {COMPLETED_PR}\n\nI autonomously open pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+    expected = f"@{pr_creator} @{sender_name} {COMPLETED_PR}\n\nI autonomously open pull requests on a schedule. You can manage your schedule [here]({DASHBOARD_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     assert result == expected
 
