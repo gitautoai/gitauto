@@ -1,7 +1,7 @@
 from config import EMAIL_LINK, PRODUCT_ID
 from constants.messages import COMPLETED_PR
 from constants.triggers import Trigger
-from constants.urls import SETTINGS_TRIGGERS_URL
+from constants.urls import DASHBOARD_TRIGGERS_URL
 
 
 def build_pr_completion_comment(
@@ -26,7 +26,7 @@ def build_pr_completion_comment(
         user_part = f"@{pr_creator} @{sender_name} "
 
     if trigger == "schedule":
-        return f"{user_part}{COMPLETED_PR}\n\nI autonomously open pull requests on a schedule. You can manage your schedule [here]({SETTINGS_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
+        return f"{user_part}{COMPLETED_PR}\n\nI autonomously open pull requests on a schedule. You can manage your schedule [here]({DASHBOARD_TRIGGERS_URL}). Should you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."
 
     # For user triggers
     return f"{user_part}{COMPLETED_PR}\nShould you have any questions or wish to change settings or limits, please feel free to contact {EMAIL_LINK} or invite us to Slack Connect."

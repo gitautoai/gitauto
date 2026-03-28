@@ -2,13 +2,13 @@ from config import EMAIL_LINK
 from constants.urls import (
     CONTACT_URL,
     DASHBOARD_COVERAGE_URL,
-    SETTINGS_RULES_URL,
-    SETTINGS_TRIGGERS_URL,
+    DASHBOARD_RULES_URL,
+    DASHBOARD_TRIGGERS_URL,
 )
 
 COMPLETED_PR = "Pull request completed! 🚀"
 
-SETTINGS_LINKS = f"You can [turn off triggers]({SETTINGS_TRIGGERS_URL}), [update coding rules]({SETTINGS_RULES_URL}), or [exclude files]({DASHBOARD_COVERAGE_URL}).\nFor contact, email us at {EMAIL_LINK} or visit [our contact page]({CONTACT_URL})"
+SETTINGS_LINKS = f"You can [turn off triggers]({DASHBOARD_TRIGGERS_URL}), [update coding rules]({DASHBOARD_RULES_URL}), or [exclude files]({DASHBOARD_COVERAGE_URL}).\nFor contact, email us at {EMAIL_LINK} or visit [our contact page]({CONTACT_URL})"
 
 PERMISSION_DENIED_MESSAGE = (
     "Approve permission(s) to allow GitAuto to access the check run logs here:"
