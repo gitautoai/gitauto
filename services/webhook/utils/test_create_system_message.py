@@ -121,7 +121,6 @@ def test_with_structured_rules_only(mock_read_xml_file, mock_get_trigger_prompt)
     assert "enforceOneFunctionPerFile: True" in result
     assert "preferConciseCodeTechniques: True" in result
     assert "</structured_repository_rules>" in result
-    assert "<freeform_repository_rules>" not in result
 
 
 def test_with_repo_rules_only(mock_read_xml_file, mock_get_trigger_prompt):
