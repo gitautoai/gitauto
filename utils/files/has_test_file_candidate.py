@@ -1,29 +1,9 @@
 from pathlib import Path
 
+from constants.files import TEST_DIR_NAMES
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_test_file import is_test_file
 from utils.logging.logging_config import logger
-
-# Common test directory names used as child subdirs or root-level mirror prefixes
-TEST_DIR_NAMES = {
-    "__tests__",  # Jest/Vitest convention
-    "tests",  # Python, PHP, general
-    "test",  # Java/Maven, Go
-    "spec",  # RSpec (Ruby), Jasmine
-    "e2e",  # End-to-end tests
-    "cypress",  # Cypress E2E
-    "playwright",  # Playwright E2E
-    "testing",  # Python, general
-    "__mocks__",  # Jest manual mocks
-    "__snapshots__",  # Jest/Vitest snapshots
-    "__fixtures__",  # Test fixtures
-    "fixtures",  # Test fixtures (Django, Rails)
-    "test-utils",  # Test utilities (kebab-case)
-    "test_utils",  # Test utilities (snake_case)
-    "test-helpers",  # Test helpers (kebab-case)
-    "test_helper",  # Test helpers (snake_case, Rails)
-    "stories",  # Storybook visual tests
-}
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
