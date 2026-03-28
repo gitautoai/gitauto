@@ -32,7 +32,6 @@ def sample_structured_rules():
         "customIntegrationTestFileSuffix": "",
         "enforceOneResponsibilityPerFile": True,
         "includeJSDocOrDocstringComments": False,
-        "placeTestFilesNextToSourceFiles": True,
         "separateUnitAndIntegrationTests": True,
         "testConstantsManagementStrategy": "Auto-detect from existing tests",
         "allowTodoCommentsInGeneratedCode": False,

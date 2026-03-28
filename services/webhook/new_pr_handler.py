@@ -59,6 +59,7 @@ from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.should_bail import should_bail
+from utils.files.detect_test_location_convention import detect_test_location_convention
 from utils.files.detect_test_naming_convention import detect_test_naming_convention
 from utils.files.find_test_files import find_test_files
 from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title
@@ -448,6 +449,11 @@ async def handle_new_pr(
     test_naming = detect_test_naming_convention(clone_dir)
     if test_naming:
         user_input_obj["test_naming_convention"] = test_naming
+
+    # Detect repo's test location convention (co-located, __tests__, separate dir)
+    test_location = detect_test_location_convention(clone_dir)
+    if test_location:
+        user_input_obj["test_location_convention"] = test_location
 
     user_input = dumps(user_input_obj)
     messages: list[MessageParam] = [{"role": "user", "content": user_input}]
