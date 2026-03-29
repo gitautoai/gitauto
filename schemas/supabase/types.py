@@ -3,16 +3,7 @@ from typing import Any, Literal
 from typing_extensions import TypedDict, NotRequired
 
 
-CreditTransactionType = Literal[
-    "purchase",
-    "usage",
-    "expiration",
-    "refund",
-    "auto_reload",
-    "trial",
-    "grant",
-    "salvage",
-]
+CreditTransactionType = Literal["purchase", "usage", "expiration", "refund", "auto_reload", "trial", "grant", "salvage"]
 OwnerType = Literal["User", "Organization"]
 
 
