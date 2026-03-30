@@ -195,7 +195,7 @@ When the user explicitly says "LGTM", execute this workflow:
 12. **If this LGTM fixes a real-world repo failure** (e.g., Foxquilt CI failures, customer repo issues), write a blog post in `../website/app/blog/posts/`:
     - **When to trigger**: Only for real customer/production repo failures - not internal refactoring or feature work
     - **Filename**: `YYYY-MM-DD-kebab-case-title.mdx`
-    - **Content**: Must be useful for developers in general, not just GitAuto internals. Extract the universal engineering lesson (e.g., mutation testing, log deduplication, content-based diffs) and make that the focus. Use the GitAuto story as the vehicle, not the destination. Internal implementation details (scoring algorithms, iteration counts, internal architecture) are not useful to readers.
+    - **Content**: Must be useful for developers in general, not just GitAuto internals. Extract the universal engineering lesson (e.g., mutation testing, log deduplication, content-based diffs) and make that the focus. Use the GitAuto story as the vehicle, not the destination. Exception: highly technical and advanced internal content is acceptable when it showcases deep engineering capability that developers would find interesting (e.g., novel algorithms, unsolved problems, trade-off analysis across approaches).
     - **Title MUST vary**: (1) check `ls ../website/app/blog/posts/ | tail -10`, (2) verify no duplicate: `ls ../website/app/blog/posts/ | grep "your-slug-without-date"`
     - **Tone**: Honest, transparent, technical. Written for developers.
     - **MDX header format**:
