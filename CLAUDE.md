@@ -97,7 +97,7 @@ ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 - **NO ANY**: Always use specific types. `response.json()` must be assigned to a fully typed variable. Break `.get()` chains into separate variables to avoid `Any` propagation.
 - **NO `.get()` DEFAULTS**: Use `.get("key")` and handle `None` explicitly. No `.get("key", {})` or `.get("key", "")`.
 - **No annotations**: Don't use `var: type = value`. Fix root cause of type issues.
-- **SINGLE RESPONSIBILITY**: One file, one function. Inline helpers used once, move to own file if reused.
+- **SINGLE RESPONSIBILITY**: One file, one function. No `_`-prefixed private functions — either inline the logic or give it its own file. Move to own file if reused.
 - **KEEP `main.py` THIN**: Entrypoint for routing only. Logic lives in its own file.
 - **ALWAYS USE `@handle_exceptions` DECORATOR**: From `utils.error.handle_exceptions`. Use `@handle_exceptions(default_return_value=..., raise_on_error=False)`.
 - **NO `__init__.py`**: Python 3.13 implicit namespace packages.
@@ -113,6 +113,14 @@ When you create new functions/modules OR fix a bug, ALWAYS write tests without b
 When testing code that parses external tool output (Jest, ESLint, git, CI logs, etc.), capture real output from the actual tool. Synthetic data can mask bugs (e.g., we assumed Jest writes PASS/FAIL to stdout, but it actually uses stderr).
 
 Process: Run the real tool, capture stdout/stderr separately, verify which stream has what, use as fixture constants with documentation of source.
+
+### Use real cloned repos for integration-style tests
+
+Customer repos are cloned at `../owner/repo` (e.g., `../Foxquilt/foxcom-forms`, `../SPIDERPLUS/SPIDERPLUS-web`). When testing functions that operate on file trees (find_test_files, prioritize_test_files, etc.), run them against real repos to get real data, then use that data in tests. Never make up file paths — verify they exist first.
+
+### No toy tests
+
+Toy tests with 2-3 synthetic items are WORTHLESS — they pass even when the logic is fundamentally broken. Think mutation testing: if an "evil coder" could change a key value and your tests still pass, your tests prove nothing. ALWAYS use real-world data: run the function against real cloned repos, capture actual output, use that as test input. Real data (e.g., 31 files instead of 3) exposes real bugs that toy tests never catch.
 
 ### Write meaningful tests
 

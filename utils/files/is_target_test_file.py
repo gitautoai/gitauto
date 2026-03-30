@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import PurePosixPath
 
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
@@ -26,7 +26,7 @@ def is_target_test_file(file_path: str, base_args: BaseArgs):
         )
         return True
 
-    target_filename = Path(implementation_file).stem
+    target_filename = PurePosixPath(implementation_file).stem
     is_target = target_filename.lower() in file_path.lower()
     logger.info(
         "is_target_test_file: %s, target=%s, file_path=%s",
