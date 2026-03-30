@@ -1,8 +1,9 @@
 # Standard imports
-from typing import Any
+from typing import Sequence
 
 # Third party imports
 from anthropic import Anthropic
+from anthropic.types import MessageParam
 
 # Local imports
 from constants.claude import ClaudeModelId
@@ -11,7 +12,7 @@ from utils.objects.safe_get_attribute import safe_get_attribute
 
 
 def trim_messages_to_token_limit(
-    messages: list[Any],
+    messages: Sequence[MessageParam],
     client: Anthropic,
     max_input: int,
     model: ClaudeModelId,

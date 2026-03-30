@@ -22,60 +22,12 @@ FAIL test/components/NewAccount/NewAccount.test.tsx (22.052 s)
 
       at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:616:29)
 
-  ● <NewAccount /> › Complete User Flows › should complete full B2B2C flow with agency and user selection
 
-    expect(jest.fn()).toHaveBeenCalledWith(...expected)
-
-    Expected: "https://b2b2c-underwriting-url.com"
-
-    Number of calls: 0
-
-      1106 |       // Test Copy URL
-      1107 |       await user.click(screen.getByTitle('Copy Application URL'));
-    > 1108 |       expect(mockWriteText).toHaveBeenCalledWith(testUrl);
-           |                             ^
-      1109 |       expect(mockAlert).toHaveBeenCalledWith('Application URL copied to clipboard.');
-      1110 |     });
-      1111 |
-
-      at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:1108:29)
-
-  ● <NewAccount /> › Complete User Flows › should complete full B2C flow without agency selection
-
-    expect(jest.fn()).toHaveBeenCalledWith(...expected)
-
-    Expected: "https://b2c-underwriting-url.com"
-
-    Number of calls: 0
-
-      1165 |
-      1166 |       await user.click(screen.getByTitle('Copy Application URL'));
-    > 1167 |       expect(mockWriteText).toHaveBeenCalledWith(testUrl);
-           |                             ^
-      1168 |       expect(mockAlert).toHaveBeenCalledWith('Application URL copied to clipboard.');
-      1169 |     });
-      1170 |
-
-      at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:1167:29)
-
-  ● <NewAccount /> › Complete User Flows › should complete enterprise agency flow without user selection
-
-    expect(jest.fn()).toHaveBeenCalledWith(...expected)
-
-    Expected: "https://enterprise-underwriting-url.com"
-
-    Number of calls: 0
-
-      1241 |
-      1242 |       await user.click(screen.getByTitle('Copy Application URL'));
-    > 1243 |       expect(mockWriteText).toHaveBeenCalledWith(testUrl);
-           |                             ^
-      1244 |       expect(mockAlert).toHaveBeenCalledWith('Application URL copied to clipboard.');
-      1245 |     });
-      1246 |   });
-
-      at Object.<anonymous> (test/components/NewAccount/NewAccount.test.tsx:1243:29)
-
+  4 tests failed with this same error:
+    ● <NewAccount /> › Button Functionality › should copy URL to clipboard when copy button is clicked
+    ● <NewAccount /> › Complete User Flows › should complete full B2B2C flow with agency and user selection
+    ● <NewAccount /> › Complete User Flows › should complete full B2C flow without agency selection
+    ● <NewAccount /> › Complete User Flows › should complete enterprise agency flow without user selection
 
 Test Suites: 1 failed, 36 passed, 37 total
 Tests:       4 failed, 505 passed, 509 total

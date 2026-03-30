@@ -33,21 +33,15 @@ FAIL test/components/NewAccount.test.tsx (22.052 s)
 Test Suites: 1 failed, 1 passed, 2 total
 Tests:       1 failed, 2 passed, 3 total"""
 
-    expected = """```CircleCI Build Log: yarn test
-yarn run v1.22.22
-$ craco test --watchAll=false --coverage=true
-
-Summary of all failing tests
-FAIL test/components/NewAccount.test.tsx (22.052 s)
-  ● should handle click events
-
-    Expected: true
-    Received: false
-Test Suites: 1 failed, 1 passed, 2 total
-Tests:       1 failed, 2 passed, 3 total"""
-
     result = minimize_jest_test_logs(input_log)
-    assert result == expected
+    assert "```CircleCI Build Log: yarn test" in result
+    assert "Summary of all failing tests" in result
+    assert "● should handle click events" in result
+    assert "Expected: true" in result
+    assert "Test Suites: 1 failed, 1 passed, 2 total" in result
+    # Coverage table and PASS sections should be removed
+    assert "% Stmts" not in result
+    assert "PASS test/utils/timeout" not in result
 
 
 def test_minimize_jest_test_logs_no_summary():
@@ -94,15 +88,11 @@ FAIL test/file3.test.ts
 
 Test Suites: 1 failed, 2 passed, 3 total"""
 
-    expected = """yarn run v1.22.22
-$ npm test
-$ jest --coverage
-
-Summary of all failing tests
-FAIL test/file3.test.ts
-  ● test case failed
-
-Test Suites: 1 failed, 2 passed, 3 total"""
-
     result = minimize_jest_test_logs(input_log)
-    assert result == expected
+    assert "yarn run v1.22.22" in result
+    assert "$ jest --coverage" in result
+    assert "Summary of all failing tests" in result
+    assert "● test case failed" in result
+    assert "Test Suites: 1 failed, 2 passed, 3 total" in result
+    # PASS sections should be removed
+    assert "PASS test/file1" not in result

@@ -1,10 +1,11 @@
 # pylint: disable=too-few-public-methods,unused-argument
 # Standard imports
-from typing import Any
+from typing import Any, cast
 from unittest.mock import Mock
 
 # Third party imports
 import pytest
+from anthropic.types import MessageParam
 
 # Local imports
 from constants.claude import ClaudeModelId
@@ -13,7 +14,7 @@ from services.claude.trim_messages import trim_messages_to_token_limit
 
 def make_message(role, content="test"):
     """Create a simple message dictionary."""
-    return {"role": role, "content": content}
+    return cast(MessageParam, {"role": role, "content": content})
 
 
 def make_tool_use_message(role, tool_id, tool_name="test_tool", text="test text"):
@@ -28,17 +29,24 @@ def make_tool_use_message(role, tool_id, tool_name="test_tool", text="test text"
                 "input": {"param": "value"},
             }
         )
-    return {"role": role, "content": content}
+    return cast(MessageParam, {"role": role, "content": content})
 
 
 def make_tool_result_message(tool_use_id, result="test result"):
     """Create a message with tool_result content."""
-    return {
-        "role": "user",
-        "content": [
-            {"type": "tool_result", "tool_use_id": tool_use_id, "content": result}
-        ],
-    }
+    return cast(
+        MessageParam,
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tool_use_id,
+                    "content": result,
+                }
+            ],
+        },
+    )
 
 
 class MessageObject:
@@ -374,10 +382,13 @@ def test_tool_result_without_tool_use_id(mock_client):
 
 def test_message_object_conversion(mock_client):
     """Test that message objects are converted to dicts using message_to_dict."""
-    messages = [
-        MessageObject("user", "query"),
-        MessageObject("assistant", "response"),
-    ]
+    messages = cast(
+        list[MessageParam],
+        [
+            MessageObject("user", "query"),
+            MessageObject("assistant", "response"),
+        ],
+    )
 
     trimmed, _ = trim_messages_to_token_limit(
         messages, mock_client, model=ClaudeModelId.SONNET_4_6, max_input=5000
