@@ -1,4 +1,10 @@
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
+from utils.logs.dedup_jest_errors import dedup_jest_errors
+from utils.logs.extract_jest_summary_section import extract_jest_summary_section
+from utils.logs.strip_node_modules_from_stacktrace import (
+    strip_node_modules_from_stacktrace,
+)
 
 
 @handle_exceptions(
@@ -8,40 +14,12 @@ def minimize_jest_test_logs(error_log: str):
     if not error_log:
         return error_log
 
-    # Check if this is Jest output with the summary section
     if "Summary of all failing tests" not in error_log:
+        logger.info("No Jest summary section found, skipping minimization")
         return error_log
 
-    lines = error_log.split("\n")
-    result_lines = []
-
-    # Keep the header (build commands at the beginning)
-    header_complete = False
-    for i, line in enumerate(lines):
-        # Keep command/header lines
-        if any(
-            cmd in line
-            for cmd in [
-                "CircleCI Build Log",
-                "yarn run v",
-                "npm run",
-                "$ craco test",
-                "$ react-scripts test",
-                "$ jest",
-                "$ vitest",
-                "$ npm test",
-                "$ yarn test",
-            ]
-        ):
-            result_lines.append(line)
-        elif "Summary of all failing tests" in line:
-            # Found the summary section, keep everything from here onwards
-            result_lines.append("")  # Add blank line before summary
-            result_lines.extend(lines[i:])  # Keep everything from summary to end
-            break
-        elif result_lines and not header_complete:
-            # After we have header lines, we're done with the header
-            header_complete = True
-
-    result = "\n".join(result_lines)
+    result = extract_jest_summary_section(error_log)
+    result = strip_node_modules_from_stacktrace(result)
+    result = dedup_jest_errors(result)
+    logger.info("Minimized Jest log from %d to %d chars", len(error_log), len(result))
     return result.strip()

@@ -1,10 +1,10 @@
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logs.minimize_jest_test_logs import minimize_jest_test_logs
 from utils.logs.remove_ansi_escape_codes import remove_ansi_escape_codes
 from utils.logs.remove_pytest_sections import remove_pytest_sections
 from utils.logs.remove_repetitive_eslint_warnings import (
     remove_repetitive_eslint_warnings,
 )
-from utils.logs.minimize_jest_test_logs import minimize_jest_test_logs
 
 
 @handle_exceptions(

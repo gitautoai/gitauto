@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 
-from constants.claude import CLAUDE_MAX_TOKENS, ClaudeModelId
+from constants.claude import MAX_OUTPUT_TOKENS, ClaudeModelId
 from services.claude.client import claude
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -46,7 +46,7 @@ def evaluate_condition(
 
     response = claude.beta.messages.create(
         model=ClaudeModelId.OPUS_4_6,
-        max_tokens=CLAUDE_MAX_TOKENS,
+        max_tokens=MAX_OUTPUT_TOKENS[ClaudeModelId.OPUS_4_6],
         temperature=0,
         system=system_prompt,
         messages=[{"role": "user", "content": content}],

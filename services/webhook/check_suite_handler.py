@@ -73,6 +73,11 @@ from utils.logs.clean_logs import clean_logs
 from utils.logs.detect_infra_failure import detect_infra_failure
 from utils.logs.extract_failing_test_files import extract_failing_test_files
 from utils.logs.normalize_log_for_hashing import normalize_log_for_hashing
+from utils.logs.save_ci_log_to_file import (
+    CI_LOG_PATH,
+    MAX_INLINE_LOG_CHARS,
+    save_ci_log_to_file,
+)
 from utils.memory.gc_collect_and_log import gc_collect_and_log
 from utils.progress_bar.progress_bar import create_progress_bar
 
@@ -622,10 +627,29 @@ async def handle_check_suite(
                 base_args=base_args, dir_path=target_dir
             )
 
+    # For large logs, save to file and reference it instead of embedding in the message
+    if len(minimized_log) > MAX_INLINE_LOG_CHARS:
+        save_ci_log_to_file(clone_dir, minimized_log)
+        logger.info(
+            "CI log too large (%d chars > %d), saved to %s",
+            len(minimized_log),
+            MAX_INLINE_LOG_CHARS,
+            CI_LOG_PATH,
+        )
+        preview_chars = 5_000
+        preview = minimized_log[:preview_chars]
+        ci_log_value = (
+            f"CI error log preview (first {preview_chars:,} of {len(minimized_log):,} chars):\n{preview}\n\n"
+            f"Full log saved at: {CI_LOG_PATH}\n"
+            f"Use get_local_file_content to read the full file, or search_local_file_contents to grep for specific errors."
+        )
+    else:
+        ci_log_value = minimized_log
+
     input_message: dict[str, str | list[str] | None] = {
         "pull_request_title": pr_title,
         "changed_files": json.dumps(obj=changed_files),
-        "step_1_ci_error_log": minimized_log,
+        "step_1_ci_error_log": ci_log_value,
         "today": today,
         "root_files": root_files,
         "target_dir": target_dir,
