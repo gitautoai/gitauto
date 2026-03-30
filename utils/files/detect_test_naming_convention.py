@@ -1,6 +1,6 @@
 import os
 
-from constants.files import SKIP_DIRS, TEST_FILE_PATTERNS
+from constants.files import SKIP_DIRS, TEST_NAMING_PATTERNS
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
@@ -17,8 +17,9 @@ def detect_test_naming_convention(clone_dir: str):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
 
         for filename in filenames:
-            for convention, pattern, template in TEST_FILE_PATTERNS:
-                if pattern.search(filename):
+            filename_lower = filename.lower()
+            for convention, pattern, template in TEST_NAMING_PATTERNS:
+                if pattern.search(filename_lower):
                     counts[convention] = counts.get(convention, 0) + 1
                     if convention not in examples:
                         examples[convention] = filename

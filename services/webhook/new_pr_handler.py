@@ -67,6 +67,7 @@ from utils.files.get_local_file_tree import get_local_file_tree
 from utils.files.is_config_file import is_config_file
 from utils.files.is_test_file import is_test_file
 from utils.files.merge_test_file_headers import merge_test_file_headers
+from utils.files.prioritize_test_files import prioritize_test_files
 from utils.files.read_local_file import read_local_file
 from utils.files.should_skip_test import should_skip_test
 from utils.formatting.format_with_line_numbers import format_content_with_line_numbers
@@ -381,35 +382,45 @@ async def handle_new_pr(
     # List file tree from local clone (now that clone_dir is available)
     root_files = get_local_file_tree(base_args=base_args, dir_path="")
 
-    # Search for test files in the local clone (/tmp, fast)
+    # Search for test files related to the impl file
     test_file_paths = find_test_files(
         search_dir=clone_dir, impl_file_path=impl_file_path
     )
+    test_file_paths = prioritize_test_files(test_file_paths, impl_file_path)
     max_test_files_in_prompt = 5
-    include_contents = len(test_file_paths) <= max_test_files_in_prompt
-    if include_contents:
-        for test_path in test_file_paths:
-            content = read_local_file(test_path, base_dir=clone_dir)
-            if not content:
-                continue
 
-            test_files[test_path] = format_content_with_line_numbers(
-                file_path=test_path, content=content
-            )
-            p += 5
-            add_log_message(f"Found existing test file: `{test_path}`", log_messages)
-            update_comment(
-                body=create_progress_bar(p=p, msg="\n".join(log_messages)),
-                base_args=base_args,
-            )
-    else:
-        logger.info(
-            "Too many test files (%d > %d) to include contents in prompt, passing paths only, let agent choose to read",
-            len(test_file_paths),
-            max_test_files_in_prompt,
+    # Include most relevant test files with contents, rest as paths-only
+    most_relevant_test_paths = test_file_paths[:max_test_files_in_prompt]
+    remaining_test_paths = test_file_paths[max_test_files_in_prompt:]
+
+    for test_path in most_relevant_test_paths:
+        content = read_local_file(test_path, base_dir=clone_dir)
+        if not content:
+            continue
+        test_files[test_path] = format_content_with_line_numbers(
+            file_path=test_path, content=content
         )
-        for test_path in test_file_paths:
-            add_log_message(f"Found existing test file: `{test_path}`", log_messages)
+        p += 5
+        add_log_message(
+            f"Found test file matching '{Path(impl_file_path).stem}': `{test_path}`",
+            log_messages,
+        )
+        update_comment(
+            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
+
+    if remaining_test_paths:
+        logger.info(
+            "Including %d test files with contents, %d as paths only",
+            len(most_relevant_test_paths),
+            len(remaining_test_paths),
+        )
+        for test_path in remaining_test_paths:
+            add_log_message(
+                f"Found test file matching '{Path(impl_file_path).stem}': `{test_path}`",
+                log_messages,
+            )
 
     logger.info("Test files found: %s", test_file_paths)
 
@@ -435,13 +446,14 @@ async def handle_new_pr(
         target_dir_files = get_local_file_tree(base_args=base_args, dir_path=target_dir)
         if target_dir_files:
             user_input_obj["target_dir_files"] = target_dir_files
-    if include_contents and test_files:
+    if test_files:
         user_input_obj["test_files"] = test_files
-    elif test_file_paths:
-        user_input_obj["test_file_paths"] = test_file_paths
-    else:
+    if remaining_test_paths:
+        user_input_obj["test_file_paths"] = remaining_test_paths
+    if not test_files and not remaining_test_paths:
+        search_term = Path(impl_file_path).stem
         user_input_obj["test_files_not_found"] = (
-            f"No test file found by searching the repo for '{Path(impl_file_path).stem}'. "
+            f"No test file found by searching the repo for '{search_term}'. "
             "A test file may exist elsewhere in the repo. Search for it before creating a new one."
         )
 

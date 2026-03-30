@@ -1,73 +1,41 @@
-import re
+from constants.files import (
+    TEST_DIR_PATTERNS,
+    TEST_NAMING_PATTERNS,
+    TEST_SUPPORT_PATTERNS,
+)
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def is_test_file(filename: str) -> bool:
-    """
-    Check if a file is a test file based on comprehensive patterns.
-    Returns True if the file is a test file, False otherwise.
-    """
+    """Check if a file is a test file based on comprehensive patterns from constants.files."""
     if not isinstance(filename, str):
+        logger.info("is_test_file: non-string input: %s", type(filename))
         return False
 
-    # Convert to lowercase for case-insensitive matching
     filename_lower = filename.lower()
 
-    # Test file naming patterns (more comprehensive than current)
-    test_patterns = [
-        # Direct test file patterns
-        r"\.test\.",  # Button.test.tsx, utils.test.js
-        r"\.spec\.",  # Button.spec.tsx, api.spec.js
-        r"(?<!vi)test\.",  # ButtonTest.java, UserTest.cs (but not vitest.config.ts)
-        r"(?<!vi)tests\.",  # ButtonTests.java, UserTests.cs
-        r"_test\.",  # button_test.py, user_test.go
-        r"_spec\.",  # button_spec.rb, user_spec.rb
-        r"^test_",  # test_button.py, test_utils.py
-        r"/test_",  # services/claude/test_client.py
-        r"^spec_",  # spec_button.rb, spec_helper.rb
-        r"/spec_",  # services/claude/spec_client.py
-        # Test directories
-        r"(^|/)__tests__/",  # __tests__/Button.tsx, src/__tests__/Button.tsx
-        r"/tests?/",  # src/tests/Button.tsx, src/test/Button.java
-        r"^tests?/",  # tests/constants.py, test/utils.py
-        r"(^|/)e2e/",  # e2e/login.spec.ts, src/e2e/login.spec.ts
-        r"(^|/)cypress/",  # cypress/integration/login.js
-        r"(^|/)playwright/",  # playwright/tests/login.spec.ts
-        r"(^|/)spec/",  # spec/models/user_spec.rb
-        r"(^|/)testing/",  # testing/utils.py, testing/utils/context/getTestSecrets.ts
-        # Mock files
-        r"(^|/)__mocks__/",  # __mocks__/api.js, src/__mocks__/api.js
-        r"\.mock\.",  # api.mock.ts, database.mock.js
-        r"mock\.",  # ApiMock.java, DatabaseMock.cs
-        r"mocks\.",  # ApiMocks.java, DatabaseMocks.cs
-        # Snapshot files (Jest, Vitest, etc.)
-        r"(^|/)__snapshots__/",  # __snapshots__/Button.test.tsx.snap, src/__snapshots__/
-        r"\.snap$",  # any .snap file
-        # Test fixtures and data
-        r"(^|/)__fixtures__/",  # __fixtures__/user.json
-        r"(^|/)fixtures/",  # fixtures/sample_data.json
-        r"\.fixture\.",  # user.fixture.ts
-        # Test helpers and utilities
-        r"(^|/)test[-_]utils?/",  # test-utils/, test_utils/
-        r"(^|/)test[-_]helpers?/",  # test-helpers/, test_helper/
-        r"(^|/)setuptests\.",  # setupTests.js, setupTests.ts
-        r"(^|/)testsetup\.",  # testSetup.js, testSetup.ts
-        r"^testsetup\.",  # testSetup.js at root
-        r"(^|/)test[-_]setup\.",  # test-setup.js, test_setup.py
-        # Storybook files (visual testing)
-        r"\.stories\.",  # Button.stories.tsx
-        r"(^|/)stories/",  # stories/Button.tsx
-        # Common test file names
-        r"^test\.",  # test.js, test.py
-        r"^spec\.",  # spec.rb, spec.js
-        # CI/CD and infrastructure
-        r"^\.github/",  # .github/scripts/*, .github/workflows/*
-    ]
-
-    # Check against all patterns
-    for pattern in test_patterns:
-        if re.search(pattern, filename_lower):
+    for _, pattern, _ in TEST_NAMING_PATTERNS:
+        if pattern.search(filename_lower):
+            logger.info(
+                "is_test_file: %s matched naming pattern %s", filename, pattern.pattern
+            )
             return True
 
+    for pattern in TEST_DIR_PATTERNS:
+        if pattern.search(filename_lower):
+            logger.info(
+                "is_test_file: %s matched dir pattern %s", filename, pattern.pattern
+            )
+            return True
+
+    for pattern in TEST_SUPPORT_PATTERNS:
+        if pattern.search(filename_lower):
+            logger.info(
+                "is_test_file: %s matched support pattern %s", filename, pattern.pattern
+            )
+            return True
+
+    logger.info("is_test_file: %s is not a test file", filename)
     return False
