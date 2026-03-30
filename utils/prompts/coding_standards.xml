@@ -42,6 +42,7 @@
     <rule>Test error and failure paths: network timeouts, API 4xx/5xx responses, empty API responses, malformed JSON, permission denied, file not found, database connection failures - whatever failure modes the code's dependencies can produce</rule>
     <rule>Test concurrency and ordering assumptions: duplicate calls, out-of-order events, concurrent modifications to shared state, re-entrant calls, empty batches vs single-item vs multi-item batches</rule>
     <rule>If a test reveals unhandled exceptions or unexpected behavior, that is a GOOD test - document it with pytest.raises, expect().toThrow(), or the language equivalent. Do not skip it or remove it because "the code doesn't handle that case"</rule>
+    <rule>If your adversarial test exposes a real bug in the implementation (e.g., unhandled null, missing validation, wrong return value), FIX THE IMPLEMENTATION CODE - do NOT weaken, delete, or adjust the test to make it pass. The test is correct; the implementation is wrong.</rule>
     <rule>Do not ONLY write happy-path tests with simple valid inputs. Every test file should include at least a few adversarial cases targeting edge behaviors relevant to the code under test</rule>
   </adversarial_test_design>
 
