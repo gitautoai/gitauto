@@ -2014,7 +2014,7 @@ async def test_few_test_files_include_contents_in_prompt(
     mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 100}
     mock_create_user_request.return_value = 999
 
-    # Return 3 test files (<=5 threshold)
+    # Return 3 test files (<=5 threshold) and no related source files
     mock_find_test_files.return_value = [
         "tests/test_logger.ts",
         "tests/logger.spec.ts",
@@ -2163,7 +2163,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
     mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 100}
     mock_create_user_request.return_value = 999
 
-    # Return 7 test files (>5 threshold)
+    # Return 7 test files (>5 threshold) and no related source files
     mock_find_test_files.return_value = [f"tests/test_logger_{i}.ts" for i in range(7)]
     mock_read_local_file.return_value = (
         "function log(msg: string) { console.log(msg); }"
@@ -2213,12 +2213,13 @@ async def test_many_test_files_include_paths_only_in_prompt(
 
     await handle_new_pr(payload=payload, trigger="dashboard")
 
-    # Verify only paths are included (not contents) when >5 test files
+    # Verify top 5 test files have contents and remaining 2 are paths-only
     call_kwargs = mock_chat_with_agent.call_args.kwargs
     messages = call_kwargs["messages"]
     user_input = json.loads(messages[0]["content"])
+    assert "test_files" in user_input
+    assert len(user_input["test_files"]) == 5
     assert "test_file_paths" in user_input
-    assert "test_files" not in user_input
-    assert len(user_input["test_file_paths"]) == 7
-    # Verify read_local_file was called only once (for impl file, not for test files)
-    mock_read_local_file.assert_called_once()
+    assert len(user_input["test_file_paths"]) == 2
+    # read_local_file called: 1 for impl file + 5 for top test files = 6
+    assert mock_read_local_file.call_count == 6

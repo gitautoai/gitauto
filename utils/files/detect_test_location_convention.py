@@ -1,7 +1,8 @@
 import os
 
-from constants.files import SKIP_DIRS, TEST_FILE_PATTERNS, TOP_LEVEL_TEST_DIRS
+from constants.files import SKIP_DIRS, TOP_LEVEL_TEST_DIRS
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.is_test_file import is_test_file
 from utils.logging.logging_config import logger
 
 
@@ -14,8 +15,7 @@ def detect_test_location_convention(clone_dir: str):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
 
         for filename in filenames:
-            is_test = any(pat.search(filename) for _, pat, _ in TEST_FILE_PATTERNS)
-            if not is_test:
+            if not is_test_file(filename):
                 continue
 
             rel_path = os.path.relpath(os.path.join(dirpath, filename), clone_dir)
