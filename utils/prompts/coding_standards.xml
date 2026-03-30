@@ -44,6 +44,9 @@
     <rule>If a test reveals unhandled exceptions or unexpected behavior, that is a GOOD test - document it with pytest.raises, expect().toThrow(), or the language equivalent. Do not skip it or remove it because "the code doesn't handle that case"</rule>
     <rule>If your adversarial test exposes a real bug in the implementation (e.g., unhandled null, missing validation, wrong return value), FIX THE IMPLEMENTATION CODE - do NOT weaken, delete, or adjust the test to make it pass. The test is correct; the implementation is wrong.</rule>
     <rule>Do not ONLY write happy-path tests with simple valid inputs. Every test file should include at least a few adversarial cases targeting edge behaviors relevant to the code under test</rule>
+    <rule>Test for security vulnerabilities: SQL injection via string concatenation in queries, XSS via unsanitized user input in HTML output, path traversal via ../ in user-supplied file names, missing auth checks on endpoints, hardcoded secrets in source code. If found, fix the implementation.</rule>
+    <rule>Test for performance issues: N+1 queries (a loop making one DB/API call per item instead of batching), unbounded result sets without pagination, synchronous blocking on I/O in async code. If found, fix the implementation.</rule>
+    <rule>Test for SEO issues in frontend code: missing meta tags (title, description, canonical), missing alt text on images, skipped heading levels (h1 to h3), generic div where semantic HTML (nav, main, article, section) is appropriate. If found, fix the implementation.</rule>
   </adversarial_test_design>
 
   <test_file_organization>
