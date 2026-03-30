@@ -8,7 +8,7 @@ from anthropic._exceptions import OverloadedError
 from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 
 # Local imports
-from constants.claude import CLAUDE_MAX_TOKENS, ClaudeModelId
+from constants.claude import CONTEXT_WINDOW, MAX_OUTPUT_TOKENS, ClaudeModelId
 from services.claude.client import claude
 from services.claude.strip_strict_from_tools import strip_strict_from_tools
 from services.claude.exceptions import (
@@ -45,7 +45,9 @@ def chat_with_claude(
 
     # Check token count and delete messages if necessary
     buffer = 4096
-    max_input = 200_000 - CLAUDE_MAX_TOKENS - buffer
+    context_window = CONTEXT_WINDOW.get(model_id, 200_000)
+    max_output = MAX_OUTPUT_TOKENS.get(model_id, 64_000)
+    max_input = context_window - max_output - buffer
     messages, token_input = trim_messages_to_token_limit(
         messages=messages, client=claude, model=model_id, max_input=max_input
     )
@@ -66,8 +68,8 @@ def chat_with_claude(
             system=system_content,
             messages=messages,
             tools=tools,
-            # https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-comparison-table
-            max_tokens=CLAUDE_MAX_TOKENS,
+            # https://platform.claude.com/docs/en/docs/about-claude/models/all-models#model-comparison-table
+            max_tokens=max_output,
             temperature=0.0,
         )
         response_time_ms = int((time.time() - start_time) * 1000)

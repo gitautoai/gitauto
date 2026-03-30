@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 from typing import Literal
 
-from constants.claude import CLAUDE_MAX_TOKENS, ClaudeModelId
+from constants.claude import MAX_OUTPUT_TOKENS, ClaudeModelId
 from services.claude.client import claude
 from services.claude.evaluate_condition import OutputFormat
 from utils.error.handle_exceptions import handle_exceptions
@@ -106,7 +106,7 @@ Is this code dead (unreachable/redundant) or genuinely untestable (reachable at 
 
     response = claude.beta.messages.create(
         model=ClaudeModelId.OPUS_4_6,
-        max_tokens=CLAUDE_MAX_TOKENS,
+        max_tokens=MAX_OUTPUT_TOKENS[ClaudeModelId.OPUS_4_6],
         temperature=0,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": content}],

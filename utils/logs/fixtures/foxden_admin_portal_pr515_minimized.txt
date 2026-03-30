@@ -1,0 +1,1727 @@
+```CircleCI Build Log: yarn test
+
+Summary of all failing tests
+FAIL test/pages/Account/index.test.tsx (26.865 s)
+  ● Account › Initial render and loading states › should render loading spinner when account detail is loading
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:373:7)
+
+  ● Account › Initial render and loading states › should render business name when account detail is loaded
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:380:7)
+
+  ● Account › Initial render and loading states › should render tabs with correct options
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:386:7)
+
+  ● Account › Initial render and loading states › should render refresh button
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:395:7)
+
+  ● Account › Initial render and loading states › should default to Applications tab as active
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:403:7)
+
+  ● Account › Sidebar context integration › should update sidebar context with account detail data
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:419:7)
+
+  ● Account › Sidebar context integration › should handle missing account detail data gracefully
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:442:7)
+
+  ● Account › Sidebar context integration › should set sidebar loading state
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:463:7)
+
+  ● Account › Info components › should show loading state for info components
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:473:7)
+
+  ● Account › Info components › should show error state for info components
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:487:7)
+
+  ● Account › Info components › should render info components with data
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:497:7)
+
+  ● Account › Applications tab with data › should display applications data in table and pagination
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:510:7)
+
+  ● Account › Applications tab with data › should show "No records found" when applications data is empty
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:527:7)
+
+  ● Account › Applications tab with data › should show error state for applications
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:539:7)
+
+  ● Account › Applications tab with data › should show loading state for applications
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:551:7)
+
+  ● Account › Quotes tab › should display quotes data with carrier field omitted
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:565:7)
+
+  ● Account › Quotes tab › should show error state for quotes
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:592:7)
+
+  ● Account › Policies tab › should display policies data with merged styledConfig
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:611:7)
+
+  ● Account › Policies tab › should show error state for policies
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:638:7)
+
+  ● Account › Default tab styledConfig › should use base styledConfig for Applications tab (default case)
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:656:7)
+
+  ● Account › Default tab styledConfig › should not have excludeColumns for Applications tab
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:670:7)
+
+  ● Account › Default tab styledConfig › should not have excludeColumnsIfEmpty for Applications tab
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:683:7)
+
+  ● Account › Refresh button › should call getApplicationsRefetch when refresh is clicked on Applications tab
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:699:7)
+
+  ● Account › Refresh button › should call getQuotesRefetch when refresh is clicked on Quotes tab
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:716:7)
+
+  ● Account › Refresh button › should call getPoliciesRefetch when refresh is clicked on Policies tab
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:738:7)
+
+  ● Account › Refresh button › should handle undefined refetch functions gracefully
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:762:7)
+
+  ● Account › Tab switching triggers queries › should call getApplications on initial render
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:788:7)
+
+  ● Account › Tab switching triggers queries › should call getQuotes when switching to Quotes tab
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:799:7)
+
+  ● Account › Tab switching triggers queries › should call getPolicies when switching to Policies tab
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:814:7)
+
+  ● Account › Pagination › should handle page change via pagination
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:834:7)
+
+  ● Account › Quotes tab styledConfig and excludeColumns › should use base styledConfig for Quotes tab
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:856:7)
+
+  ● Account › Quotes tab styledConfig and excludeColumns › should not have excludeColumnsIfEmpty for Quotes tab
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:877:7)
+
+  ● Account › Policies tab excludeColumns › should not have excludeColumns for Policies tab
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:899:7)
+
+  ● Account › useEffect data change while tab is active › should update table when quotes data arrives while Quotes tab is active
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:922:28)
+
+  ● Account › useEffect data change while tab is active › should update table when policies data arrives while Policies tab is active
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:963:28)
+
+  ● Account › Edge cases › should handle null sidebar context
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:1001:13)
+
+  ● Account › Edge cases › should handle undefined tableData state (no data loaded yet)
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:1015:7)
+
+  ● Account › Edge cases › should handle quotes data with empty array
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:1029:7)
+
+  ● Account › Edge cases › should handle policies data with empty array
+
+    TypeError: Cannot read properties of undefined (reading 'state')
+
+      34 |     Record<string, unknown>[] | undefined
+      35 |   >(undefined);
+    > 36 |   const ocationState, setLocationState] = useState(location.state?.activeTab);
+         |                                                               ^
+      37 |   const { accountId } = useParams<AccountPageParams>();
+      38 |
+      39 |   // query
+
+      at Account (src/pages/Account/index.tsx:36:63)
+      at renderWithHooks (node_modules/react-dom/cjs/react-dom.development.js:14985:18)
+      at mountIndeterminateComponent (node_modules/react-dom/cjs/react-dom.development.js:17811:13)
+      at beginWork (node_modules/react-dom/cjs/react-dom.development.js:19049:16)
+      at HTMLUnknownElement.callCallback (node_modules/react-dom/cjs/react-dom.development.js:3945:14)
+      at HTMLUnknownElement.callTheUserObjectsOperation (node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+      at innerInvokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:338:25)
+      at invokeEventListeners (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:274:3)
+      at HTMLUnknownElementImpl._dispatch (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:221:9)
+      at HTMLUnknownElementImpl.dispatchEvent (node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:94:17)
+      at HTMLUnknownElement.dispatchEvent (node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:231:34)
+      at Object.invokeGuardedCallbackDev (node_modules/react-dom/cjs/react-dom.development.js:3994:16)
+      at invokeGuardedCallback (node_modules/react-dom/cjs/react-dom.development.js:4056:31)
+      at beginWork$1 (node_modules/react-dom/cjs/react-dom.development.js:23964:7)
+      at performUnitOfWork (node_modules/react-dom/cjs/react-dom.development.js:22779:12)
+      at workLoopSync (node_modules/react-dom/cjs/react-dom.development.js:22707:5)
+      at renderRootSync (node_modules/react-dom/cjs/react-dom.development.js:22670:7)
+      at performSyncWorkOnRoot (node_modules/react-dom/cjs/react-dom.development.js:22293:18)
+      at scheduleUpdateOnFiber (node_modules/react-dom/cjs/react-dom.development.js:21881:7)
+      at updateContainer (node_modules/react-dom/cjs/react-dom.development.js:25482:3)
+      at node_modules/react-dom/cjs/react-dom.development.js:26021:7
+      at unbatchedUpdates (node_modules/react-dom/cjs/react-dom.development.js:22431:12)
+      at legacyRenderSubtreeIntoContainer (node_modules/react-dom/cjs/react-dom.development.js:26020:5)
+      at Object.render (node_modules/react-dom/cjs/react-dom.development.js:26103:10)
+      at node_modules/@testing-library/react/dist/pure.js:101:25
+      at batchedUpdates$1 (node_modules/react-dom/cjs/react-dom.development.js:22380:12)
+      at act (node_modules/react-dom/cjs/react-dom-test-utils.development.js:1042:14)
+      at render (node_modules/@testing-library/react/dist/pure.js:97:26)
+      at renderAccount (test/pages/Account/index.test.tsx:354:16)
+      at Object.<anonymous> (test/pages/Account/index.test.tsx:1046:7)
+
+FAIL test/components/DatePicker/DatePicker.test.tsx (53.366 s)
+  ● CustomDatePicker › Performance › should handle rapid user interactions
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Use jest.setTimeout(newTimeout) to increase the timeout value, if this is a long-running test."
+
+      645 |     });
+      646 |
+    > 647 |     it('should handle rapid user interactions', async () => {
+          |     ^
+      648 |       const user = userEvent.setup();
+      649 |       render(<CustomDatePicker {...defaultProps} />);
+      650 |
+
+      at test/components/DatePicker/DatePicker.test.tsx:647:5
+      at test/components/DatePicker/DatePicker.test.tsx:608:3
+      at Object.<anonymous> (test/components/DatePicker/DatePicker.test.tsx:9:1)
+
+FAIL test/components/NewQuote/NewQuote.test.tsx (53.033 s)
+  ● <NewQuote /> › should render new quote modal with select agency and select user dropdowns with agency
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Use jest.setTimeout(newTimeout) to increase the timeout value, if this is a long-running test."
+
+      34 |   });
+      35 |
+    > 36 |   test('should render new quote modal with select agency and select user dropdowns with agency', async () => {
+         |   ^
+      37 |     const windowOpenMock = jest.fn();
+      38 |     global.open = windowOpenMock;
+      39 |
+
+      at test/components/NewQuote/NewQuote.test.tsx:36:3
+      at Object.<anonymous> (test/components/NewQuote/NewQuote.test.tsx:16:1)
+
+
+Test Suites: 3 failed, 50 passed, 53 total
+Tests:       41 failed, 16 skipped, 1119 passed, 1176 total
+Snapshots:   0 total
+Time:        68.343 s
+Ran all test suites.
+error Command failed with exit code 1.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+
+Exited with code exit status 1
+
+```
