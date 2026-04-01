@@ -55,6 +55,7 @@ class TestGetFileTree:
         items = get_file_tree(clone_dir="/nonexistent", ref="main")
 
         assert not items
+        assert isinstance(items, list)
         mock_run_subprocess.assert_not_called()
 
     @patch("os.path.isdir", return_value=True)

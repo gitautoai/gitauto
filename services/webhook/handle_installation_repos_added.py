@@ -52,7 +52,6 @@ def handle_installation_repos_added(
         owner_name=owner_name,
         owner_type=owner_type,
         repositories=repositories,
-        token=token,
         user_id=sender_id,
         user_name=sender_name,
         installation_id=installation_id,

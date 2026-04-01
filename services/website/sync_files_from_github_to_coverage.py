@@ -3,8 +3,13 @@ from typing import cast
 from schemas.supabase.types import CoveragesInsert
 from services.efs.get_efs_dir import get_efs_dir
 from services.git.get_file_tree import get_file_tree
+from services.github.repositories.get_github_file_tree import get_github_file_tree
+from services.github.token.get_installation_token import get_installation_access_token
 from services.supabase.coverages.delete_stale_coverages import delete_stale_coverages
 from services.supabase.coverages.upsert_coverages import upsert_coverages
+from services.supabase.installations.get_installation_by_owner import (
+    get_installation_by_owner,
+)
 from services.website.verify_api_key import verify_api_key
 from utils.files.is_source_file import is_source_file
 from utils.logging.logging_config import logger
@@ -17,7 +22,7 @@ def sync_files_from_github_to_coverage(
     owner_id: int,
     repo_id: int,
     user_name: str,
-    api_key: str | None = None,
+    api_key: str | None,
 ):
     """Sync repository files from local clone to coverage database."""
     if api_key:
@@ -25,9 +30,25 @@ def sync_files_from_github_to_coverage(
 
     logger.info("Starting sync for %s/%s branch=%s", owner, repo, branch)
 
-    # Fetch files from local clone (only code files, excluding test and migration files)
+    # Try local clone first, fall back to GitHub API if clone not available
     efs_dir = get_efs_dir(owner, repo)
     tree_items = get_file_tree(clone_dir=efs_dir, ref=branch)
+
+    if not tree_items:
+        logger.info(
+            "Local clone not available, using GitHub API for %s/%s", owner, repo
+        )
+        installation = get_installation_by_owner(owner_name=owner)
+        if installation:
+            token = get_installation_access_token(
+                installation_id=installation["installation_id"]
+            )
+            tree_items = get_github_file_tree(
+                owner=owner, repo=repo, ref=branch, token=token
+            )
+        else:
+            logger.warning("No installation found for %s, cannot fetch tree", owner)
+
     current_files = {
         item["path"]: item.get("size", 0)
         for item in tree_items
@@ -63,11 +84,21 @@ def sync_files_from_github_to_coverage(
         logger.info("Upserted %d coverage records", len(records))
 
     # Delete stale files (exist in DB but not in GitHub)
-    deleted_count = delete_stale_coverages(
-        owner_id=owner_id,
-        repo_id=repo_id,
-        current_files=set(current_files.keys()),
-    )
+    # Skip if tree_items is empty — means we failed to read the repo, not safe to delete
+    deleted_count = 0
+    if tree_items:
+        logger.info("Deleting stale coverages for %s/%s", owner, repo)
+        deleted_count = delete_stale_coverages(
+            owner_id=owner_id,
+            repo_id=repo_id,
+            current_files=set(current_files.keys()),
+        )
+    else:
+        logger.warning(
+            "Skipping stale deletion for %s/%s — tree fetch may have failed and repo may actually have files, we accidentally deleted coverages before",
+            owner,
+            repo,
+        )
 
     logger.info(
         "Sync completed: %d upserted, %d deleted", len(current_files), deleted_count

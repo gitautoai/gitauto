@@ -8,17 +8,26 @@ import pytest
 from services.github.types.repository import RepositoryAddedOrRemoved
 from services.webhook.process_repositories import process_repositories
 
+SINGLE = "services.webhook.setup_installed_repository"
+
+
+@pytest.fixture
+def mock_get_installation_access_token():
+    with patch(f"{SINGLE}.get_installation_access_token") as mock:
+        mock.return_value = "ghs_test_token"
+        yield mock
+
 
 @pytest.fixture
 def mock_get_efs_dir():
-    with patch("services.webhook.process_repositories.get_efs_dir") as mock:
+    with patch(f"{SINGLE}.get_efs_dir") as mock:
         mock.return_value = "/mnt/efs/test-owner/test-repo"
         yield mock
 
 
 @pytest.fixture
 def mock_get_clone_url():
-    with patch("services.webhook.process_repositories.get_clone_url") as mock:
+    with patch(f"{SINGLE}.get_clone_url") as mock:
         mock.return_value = (
             "https://x-access-token:token@github.com/test-owner/test-repo.git"
         )
@@ -27,149 +36,136 @@ def mock_get_clone_url():
 
 @pytest.fixture
 def mock_git_clone_to_efs():
-    with patch(
-        "services.webhook.process_repositories.git_clone_to_efs",
-    ) as mock:
+    with patch(f"{SINGLE}.git_clone_to_efs") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_git_fetch():
-    with patch(
-        "services.webhook.process_repositories.git_fetch",
-        return_value=True,
-    ) as mock:
+    with patch(f"{SINGLE}.git_fetch", return_value=True) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_git_reset():
-    with patch(
-        "services.webhook.process_repositories.git_reset",
-        return_value=True,
-    ) as mock:
+    with patch(f"{SINGLE}.git_reset", return_value=True) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_os_path_exists():
-    with patch("services.webhook.process_repositories.os.path.exists") as mock:
+    with patch(f"{SINGLE}.os.path.exists") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_is_repo_archived():
-    with patch(
-        "services.webhook.process_repositories.is_repo_archived", return_value=False
-    ) as mock:
+    with patch(f"{SINGLE}.is_repo_archived", return_value=False) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_get_default_branch():
-    with patch("services.webhook.process_repositories.get_default_branch") as mock:
+    with patch(f"{SINGLE}.get_default_branch") as mock:
         mock.return_value = "main"
         yield mock
 
 
 @pytest.fixture
 def mock_get_repository_stats():
-    with patch("services.webhook.process_repositories.get_repository_stats") as mock:
+    with patch(f"{SINGLE}.get_repository_stats") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_upsert_repository():
-    with patch("services.webhook.process_repositories.upsert_repository") as mock:
+    with patch(f"{SINGLE}.upsert_repository") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_run_install_via_codebuild():
-    with patch(
-        "services.webhook.process_repositories.run_install_via_codebuild"
-    ) as mock:
+    with patch(f"{SINGLE}.run_install_via_codebuild") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_detect_package_manager():
-    with patch("services.webhook.process_repositories.detect_package_manager") as mock:
+    with patch(f"{SINGLE}.detect_package_manager") as mock:
         mock.return_value = ("npm", "package-lock.json", "lock content")
         yield mock
 
 
 @pytest.fixture
 def mock_sync_files_from_github_to_coverage():
-    with patch(
-        "services.webhook.process_repositories.sync_files_from_github_to_coverage"
-    ) as mock:
+    with patch(f"{SINGLE}.sync_files_from_github_to_coverage") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_generate_branch_name():
-    with patch("services.webhook.process_repositories.generate_branch_name") as mock:
+    with patch(f"{SINGLE}.generate_branch_name") as mock:
         mock.return_value = "gitauto/setup-20241224-120000-ABCD"
         yield mock
 
 
 @pytest.fixture
 def mock_get_latest_remote_commit_sha():
-    with patch(
-        "services.webhook.process_repositories.get_latest_remote_commit_sha"
-    ) as mock:
+    with patch(f"{SINGLE}.get_latest_remote_commit_sha") as mock:
         mock.return_value = "abc123sha"
         yield mock
 
 
 @pytest.fixture
 def mock_create_remote_branch():
-    with patch("services.webhook.process_repositories.create_remote_branch") as mock:
+    with patch(f"{SINGLE}.create_remote_branch") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_ensure_tsconfig_relaxed_for_tests():
-    with patch(
-        "services.webhook.process_repositories.ensure_tsconfig_relaxed_for_tests"
-    ) as mock:
+    with patch(f"{SINGLE}.ensure_tsconfig_relaxed_for_tests") as mock:
         mock.return_value = (None, None)
         yield mock
 
 
 @pytest.fixture
 def mock_os_listdir():
-    with patch("services.webhook.process_repositories.os.listdir") as mock:
+    with patch(f"{SINGLE}.os.listdir") as mock:
         mock.return_value = []
         yield mock
 
 
 @pytest.fixture
 def mock_os_path_isfile():
-    with patch("services.webhook.process_repositories.os.path.isfile") as mock:
+    with patch(f"{SINGLE}.os.path.isfile") as mock:
         mock.return_value = True
         yield mock
 
 
 @pytest.fixture
 def mock_is_repo_forked():
-    with patch(
-        "services.webhook.process_repositories.is_repo_forked", return_value=False
-    ) as mock:
+    with patch(f"{SINGLE}.is_repo_forked", return_value=False) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_delete_remote_branch():
-    with patch("services.webhook.process_repositories.delete_remote_branch") as mock:
+    with patch(f"{SINGLE}.delete_remote_branch") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_create_pull_request():
-    with patch("services.webhook.process_repositories.create_pull_request") as mock:
+    with patch(f"{SINGLE}.create_pull_request") as mock:
         mock.return_value = ("https://github.com/test/pr/1", 1)
+        yield mock
+
+
+@pytest.fixture
+def mock_has_open_pull_request_by_title():
+    with patch(f"{SINGLE}.has_open_pull_request_by_title") as mock:
+        mock.return_value = False
         yield mock
 
 
@@ -206,6 +202,7 @@ def sample_stats():
 def test_process_repositories_efs_exists_fetches(
     sample_repositories,
     sample_stats,
+    mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_fetch,
@@ -226,6 +223,7 @@ def test_process_repositories_efs_exists_fetches(
     mock_os_listdir,
     mock_os_path_isfile,
     mock_delete_remote_branch,
+    mock_has_open_pull_request_by_title,
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
@@ -236,7 +234,6 @@ def test_process_repositories_efs_exists_fetches(
         owner_name="test-owner",
         owner_type="Organization",
         repositories=sample_repositories,
-        token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
         installation_id=99999,
@@ -248,13 +245,15 @@ def test_process_repositories_efs_exists_fetches(
     assert mock_git_fetch.call_count == 2
     assert mock_git_reset.call_count == 2
     assert mock_get_repository_stats.call_count == 2
-    assert mock_upsert_repository.call_count == 4  # 2 repos x 2 calls (insert + update)
+    # 2 repos x 2 calls each (insert without stats + update with stats)
+    assert mock_upsert_repository.call_count == 4
     assert mock_run_install_via_codebuild.call_count == 2
 
 
 def test_process_repositories_efs_not_exists_clones(
     sample_repositories,
     sample_stats,
+    mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_clone_to_efs,
@@ -274,6 +273,7 @@ def test_process_repositories_efs_not_exists_clones(
     mock_os_listdir,
     mock_os_path_isfile,
     mock_delete_remote_branch,
+    mock_has_open_pull_request_by_title,
 ):
     mock_os_path_exists.return_value = False
     mock_get_repository_stats.return_value = sample_stats
@@ -283,7 +283,6 @@ def test_process_repositories_efs_not_exists_clones(
         owner_name="test-owner",
         owner_type="Organization",
         repositories=sample_repositories,
-        token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
         installation_id=99999,
@@ -292,11 +291,13 @@ def test_process_repositories_efs_not_exists_clones(
     )
 
     assert mock_git_clone_to_efs.call_count == 2
-    assert mock_upsert_repository.call_count == 4  # 2 repos x 2 calls (insert + update)
+    # 2 repos x 2 calls each (insert without stats + update with stats)
+    assert mock_upsert_repository.call_count == 4
     assert mock_run_install_via_codebuild.call_count == 2
 
 
 def test_process_repositories_empty_list(
+    mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_fetch,
@@ -313,7 +314,6 @@ def test_process_repositories_empty_list(
         owner_name="test-owner",
         owner_type="Organization",
         repositories=[],
-        token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
         installation_id=99999,
@@ -331,6 +331,7 @@ def test_process_repositories_empty_list(
 
 def test_process_repositories_stats_saved_correctly(
     sample_stats,
+    mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_fetch,
@@ -351,6 +352,7 @@ def test_process_repositories_stats_saved_correctly(
     mock_os_listdir,
     mock_os_path_isfile,
     mock_delete_remote_branch,
+    mock_has_open_pull_request_by_title,
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
@@ -372,7 +374,6 @@ def test_process_repositories_stats_saved_correctly(
         owner_name="test-owner",
         owner_type="Organization",
         repositories=single_repo,
-        token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
         installation_id=99999,
@@ -398,6 +399,7 @@ def test_process_repositories_stats_saved_correctly(
 
 
 def test_process_repositories_empty_repo_skips_clone(
+    mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_clone_to_efs,
@@ -419,6 +421,7 @@ def test_process_repositories_empty_repo_skips_clone(
     mock_os_listdir,
     mock_os_path_isfile,
     mock_delete_remote_branch,
+    mock_has_open_pull_request_by_title,
 ):
     mock_get_default_branch.return_value = None
     single_repo = cast(
@@ -439,7 +442,6 @@ def test_process_repositories_empty_repo_skips_clone(
         owner_name="test-owner",
         owner_type="Organization",
         repositories=single_repo,
-        token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
         installation_id=99999,
@@ -467,6 +469,7 @@ def test_process_repositories_empty_repo_skips_clone(
 
 def test_process_repositories_non_typescript_deletes_branch_no_pr(
     sample_stats,
+    mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_fetch,
@@ -488,6 +491,7 @@ def test_process_repositories_non_typescript_deletes_branch_no_pr(
     mock_os_path_isfile,
     mock_delete_remote_branch,
     mock_create_pull_request,
+    mock_has_open_pull_request_by_title,
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
@@ -510,7 +514,6 @@ def test_process_repositories_non_typescript_deletes_branch_no_pr(
         owner_name="test-owner",
         owner_type="Organization",
         repositories=single_repo,
-        token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
         installation_id=99999,
@@ -525,6 +528,7 @@ def test_process_repositories_non_typescript_deletes_branch_no_pr(
 
 def test_process_repositories_typescript_creates_pr(
     sample_stats,
+    mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_fetch,
@@ -546,6 +550,7 @@ def test_process_repositories_typescript_creates_pr(
     mock_os_path_isfile,
     mock_delete_remote_branch,
     mock_create_pull_request,
+    mock_has_open_pull_request_by_title,
 ):
     mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
@@ -571,7 +576,6 @@ def test_process_repositories_typescript_creates_pr(
         owner_name="test-owner",
         owner_type="Organization",
         repositories=single_repo,
-        token="ghs_test_token",
         user_id=67890,
         user_name="test-user",
         installation_id=99999,

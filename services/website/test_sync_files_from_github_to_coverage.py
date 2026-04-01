@@ -101,6 +101,32 @@ def test_sync_calls_delete_stale(
         api_key="test-api-key",
     )
 
+    # When tree is empty, delete is skipped (read failure, not safe to delete)
+    mock_delete_stale_coverages.assert_not_called()
+
+
+def test_sync_deletes_stale_when_tree_has_no_source_files(
+    mock_verify_api_key,
+    mock_get_file_tree,
+    mock_upsert_coverages,
+    mock_delete_stale_coverages,
+):
+    # Tree has files but none are source files (e.g., only README)
+    mock_get_file_tree.return_value = [
+        {"path": "README.md", "sha": "abc123", "size": 50, "type": "blob"},
+    ]
+
+    sync_files_from_github_to_coverage(
+        owner="test-owner",
+        repo="test-repo",
+        branch="main",
+        owner_id=123,
+        repo_id=456,
+        user_name="test-user",
+        api_key="test-api-key",
+    )
+
+    # Read succeeded (tree_items non-empty), so stale coverages should be deleted
     mock_delete_stale_coverages.assert_called_once_with(
         owner_id=123,
         repo_id=456,
@@ -172,6 +198,7 @@ def test_sync_skips_verification_without_api_key(
             owner_id=123,
             repo_id=456,
             user_name="test-user",
+            api_key=None,
         )
 
         mock_verify.assert_not_called()
