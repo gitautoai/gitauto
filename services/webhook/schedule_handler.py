@@ -31,7 +31,6 @@ from services.git.get_clone_url import get_clone_url
 from services.git.get_default_branch import get_default_branch
 from services.git.get_latest_remote_commit_sha import get_latest_remote_commit_sha
 from services.git.get_file_tree import get_file_tree
-from services.git.tree import Tree
 from services.github.labels.add_labels import add_labels
 from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.pulls.create_pull_request import create_pull_request
@@ -124,7 +123,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             msg = f"Repository {owner_name}/{repo_name} is empty"
             logger.info(msg)
             return {"status": "skipped", "message": msg}
-    tree_items: list[Tree] = get_file_tree(clone_dir=efs_dir, ref=target_branch)
+    tree_items = get_file_tree(clone_dir=efs_dir, ref=target_branch)
 
     # Copy EFS to /tmp for local file reads (EFS is shared, don't operate on it directly)
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number=None)

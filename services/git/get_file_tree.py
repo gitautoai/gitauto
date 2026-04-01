@@ -13,9 +13,11 @@ def get_file_tree(clone_dir: str, ref: str, root_only: bool = False):
     Returns list[Tree] matching the same structure callers expect.
     Requires a local clone with the ref available.
     """
+    tree_items: list[Tree] = []
+
     if not clone_dir or not os.path.isdir(os.path.join(clone_dir, ".git")):
         logger.warning("No valid git repo at %s", clone_dir)
-        return []
+        return tree_items
 
     # Fetch latest refs to ensure we have the requested ref
     try:
@@ -33,13 +35,12 @@ def get_file_tree(clone_dir: str, ref: str, root_only: bool = False):
         result = run_subprocess(args=args, cwd=clone_dir)
     except ValueError:
         logger.warning("git ls-tree failed for ref %s", ref)
-        return []
+        return tree_items
 
     output = result.stdout.strip() if result and result.stdout else ""
     if not output:
-        return []
+        return tree_items
 
-    tree_items: list[Tree] = []
     for line in output.split("\n"):
         if not line.strip():
             continue

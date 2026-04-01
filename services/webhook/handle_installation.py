@@ -78,7 +78,6 @@ async def handle_installation_created(payload: InstallationPayload):
         owner_name=owner_name,
         owner_type=owner_type,
         repositories=repositories,
-        token=token,
         user_id=user_id,
         user_name=sender_name,
         installation_id=installation_id,

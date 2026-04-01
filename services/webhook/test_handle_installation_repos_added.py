@@ -136,7 +136,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
         )
@@ -190,7 +189,6 @@ class TestHandleInstallationReposAdded:
             repositories=[],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
         )
@@ -293,7 +291,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
         )
@@ -435,7 +432,6 @@ class TestHandleInstallationReposAdded:
             repositories=[{"id": 333, "name": "single-repo"}],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
         )
@@ -475,7 +471,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_different_token",
             user_id=67890,
             user_name="test-sender",
         )
@@ -510,7 +505,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
         )
@@ -549,7 +543,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id="67890",
             user_name="test-sender",
         )
@@ -603,7 +596,6 @@ class TestHandleInstallationReposAdded:
             repositories=complex_repos,
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
         )
@@ -641,7 +633,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="tëst-sëndér",
         )
@@ -826,7 +817,6 @@ class TestHandleInstallationReposAdded:
             repositories=large_repo_list,
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
         )
@@ -881,7 +871,6 @@ class TestHandleInstallationReposAdded:
             repositories=None,
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
         )
@@ -920,7 +909,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name=long_name,
         )
@@ -960,7 +948,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name=special_sender,
         )
@@ -1000,7 +987,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=max_int,
             user_name="test-sender",
         )
@@ -1037,7 +1023,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
         )
@@ -1075,7 +1060,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="\t\n\r",
         )
@@ -1111,7 +1095,6 @@ class TestHandleInstallationReposAdded:
             ],
             sender_display_name="Test Sender",
             sender_email="test@example.com",
-            token="ghs_test_token",
             user_id=67890,
             user_name="test-sender",
         )

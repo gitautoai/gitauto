@@ -14,6 +14,7 @@ from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 from config import ENV, GITHUB_WEBHOOK_SECRET, SENTRY_DSN, UTF8
 from constants.general import PRODUCT_NAME
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
+from payloads.aws.setup_installed_repository_event import SetupInstalledRepositoryEvent
 from services.aws.cleanup_tmp import cleanup_tmp
 from services.efs.cleanup_stale_repos_on_efs import cleanup_stale_repos_on_efs
 from services.efs.clone_and_install import clone_and_install
@@ -23,6 +24,7 @@ from services.slack.slack_notify import slack_notify
 from services.supabase.webhook_deliveries.insert_webhook_delivery import (
     insert_webhook_delivery,
 )
+from services.webhook.setup_installed_repository import setup_installed_repository
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.setup_handler import setup_handler
 from services.webhook.webhook_handler import handle_webhook_event
@@ -58,6 +60,27 @@ def handler(event, context):
     clear_state()  # Prevent metadata from previous invocation bleeding into this one on warm starts
     cleanup_tmp()  # Clean at START (not end) so it runs even if previous invocation crashed/timed out
     set_request_id(getattr(context, "aws_request_id", "local"))
+
+    # For per-repo processing (dispatched by process_repositories)
+    if "triggerType" in event and event["triggerType"] == "setup_installed_repository":
+        event = cast(SetupInstalledRepositoryEvent, event)
+        owner_name = event["owner_name"]
+        repo_name = event["repo_name"]
+        set_owner_repo(owner_name, repo_name)
+        logger.info("Processing single repo %s/%s", owner_name, repo_name)
+        setup_installed_repository(
+            owner_id=event["owner_id"],
+            owner_name=owner_name,
+            owner_type=event["owner_type"],
+            repo_id=event["repo_id"],
+            repo_name=repo_name,
+            installation_id=event["installation_id"],
+            user_id=event["user_id"],
+            user_name=event["user_name"],
+            sender_email=event["sender_email"],
+            sender_display_name=event["sender_display_name"],
+        )
+        return None
 
     # For EFS cleanup scheduled event
     if "triggerType" in event and event["triggerType"] == "cleanup":
