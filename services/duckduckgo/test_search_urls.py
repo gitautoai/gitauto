@@ -3,6 +3,7 @@
 from unittest.mock import Mock, patch
 
 import pytest
+import requests
 from services.duckduckgo.search_urls import (DDG_URL, NUM_RESULTS_DEFAULT,
                                              search_urls)
 
