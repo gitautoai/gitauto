@@ -50,6 +50,11 @@ def sync_files_from_github_to_coverage(
                     "level": "file",
                     "created_by": user_name,
                     "updated_by": user_name,
+                    # SHAs/hash only set when quality is actually evaluated
+                    "impl_blob_sha": None,
+                    "test_blob_sha": None,
+                    "checklist_hash": None,
+                    "quality_checks": None,
                 }
                 for path, size in current_files.items()
             ],

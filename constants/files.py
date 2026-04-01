@@ -1,4 +1,14 @@
 import re
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class TestNamingPattern:
+    name: str
+    detect: re.Pattern[str]  # Matches full file path to identify test files
+    stem_strip: re.Pattern[str]  # Strips test affix from Path.stem to recover impl stem
+    description: str  # Template for detect_test_naming_convention
+
 
 SKIP_DIRS = frozenset(
     {
@@ -16,36 +26,56 @@ SKIP_DIRS = frozenset(
     }
 )
 
-# Test file naming patterns: (convention_name, regex, description_template)
-# Used by is_test_file() for detection and detect_test_naming_convention() for classification.
 # Order matters: more specific first.
-TEST_NAMING_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
-    ("dot_spec", re.compile(r"\.spec\."), "Use .spec. naming (e.g., {example})"),
-    ("dot_test", re.compile(r"\.test\."), "Use .test. naming (e.g., {example})"),
-    (
-        "test_prefix",
-        re.compile(r"(^|/)test_"),
-        "Use test_ prefix naming (e.g., {example})",
+TEST_NAMING_PATTERNS: list[TestNamingPattern] = [
+    # Jest/Vitest: Button.spec.tsx, Quote.spec.ts
+    TestNamingPattern(
+        name="dot_spec",
+        detect=re.compile(r"\.spec\."),
+        stem_strip=re.compile(r"(?i:\.spec$)"),
+        description="Use .spec. naming (e.g., {example})",
     ),
-    (
-        "underscore_test",
-        re.compile(r"_test\."),
-        "Use _test suffix naming (e.g., {example})",
+    # Jest/Vitest: Button.test.tsx, index.test.ts
+    TestNamingPattern(
+        name="dot_test",
+        detect=re.compile(r"\.test\."),
+        stem_strip=re.compile(r"(?i:\.test$)"),
+        description="Use .test. naming (e.g., {example})",
     ),
-    (
-        "underscore_spec",
-        re.compile(r"_spec\."),
-        "Use _spec suffix naming (e.g., {example})",
+    # pytest: test_client.py, test_utils.py
+    TestNamingPattern(
+        name="test_prefix",
+        detect=re.compile(r"(^|/)test_"),
+        stem_strip=re.compile(r"(?i:^test_)"),
+        description="Use test_ prefix naming (e.g., {example})",
     ),
-    (
-        "Test_suffix",
-        re.compile(r"(?<!vi)tests?\."),
-        "Use Test suffix naming (e.g., {example})",
+    # Go: handler_test.go
+    TestNamingPattern(
+        name="underscore_test",
+        detect=re.compile(r"_test\."),
+        stem_strip=re.compile(r"(?i:_test$)"),
+        description="Use _test suffix naming (e.g., {example})",
     ),
-    (
-        "spec_prefix",
-        re.compile(r"(^|/)spec_"),
-        "Use spec_ prefix naming (e.g., {example})",
+    # RSpec: user_spec.rb
+    TestNamingPattern(
+        name="underscore_spec",
+        detect=re.compile(r"_spec\."),
+        stem_strip=re.compile(r"(?i:_spec$)"),
+        description="Use _spec suffix naming (e.g., {example})",
+    ),
+    # PHPUnit/JUnit: SafetypatServiceTest.php, ServiceTest.java
+    TestNamingPattern(
+        name="Test_suffix",
+        detect=re.compile(r"(?<!vi)tests?\."),
+        stem_strip=re.compile(r"(?<=[a-z])Test$"),
+        description="Use Test suffix naming (e.g., {example})",
+    ),
+    # Ruby: spec_helper.rb
+    TestNamingPattern(
+        name="spec_prefix",
+        detect=re.compile(r"(^|/)spec_"),
+        stem_strip=re.compile(r"(?i:^spec_)"),
+        description="Use spec_ prefix naming (e.g., {example})",
     ),
 ]
 
@@ -89,6 +119,9 @@ TEST_DIR_NAMES = {
     "test",  # Java/Maven, Go
     "spec",  # RSpec (Ruby), Jasmine
     "e2e",  # End-to-end tests
+    "unit",  # PHPUnit/Laravel Unit tests
+    "feature",  # PHPUnit/Laravel Feature tests
+    "integration",  # Integration test category
     "cypress",  # Cypress E2E
     "playwright",  # Playwright E2E
     "testing",  # Python, general
@@ -102,6 +135,11 @@ TEST_DIR_NAMES = {
     "test_helper",  # Test helpers (snake_case, Rails)
     "stories",  # Storybook visual tests
 }
+
+# Qualifiers like .integration, .unit, .e2e that appear between impl stem and .test/.spec
+TEST_QUALIFIER_STRIP = re.compile(
+    r"(?i)\.(integration|unit|e2e|functional|acceptance)$"
+)
 
 # Top-level directories that indicate a "separate test directory" convention
 TOP_LEVEL_TEST_DIRS = frozenset({"test", "tests", "spec", "specs", "t"})
@@ -119,6 +157,7 @@ VITEST_CONFIG_FILES = [
     "vitest.config.mts",
     "vitest.config.mjs",
 ]
+
 
 JS_TS_FILE_EXTENSIONS = (".js", ".jsx", ".ts", ".tsx")
 
