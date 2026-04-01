@@ -106,6 +106,11 @@ def check_availability(
             if auto_reload_enabled and credit_balance <= auto_reload_threshold:
                 trigger_auto_reload()
 
+                # Re-read balance after auto-reload since trigger_auto_reload is synchronous
+                owner = get_owner(owner_id=owner_id)
+                credit_balance = owner["credit_balance_usd"] if owner else 0
+                availability_status["credit_balance_usd"] = credit_balance
+
         availability_status["can_proceed"] = credit_balance > 0
 
         if not availability_status["can_proceed"]:

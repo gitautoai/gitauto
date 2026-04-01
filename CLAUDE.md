@@ -212,7 +212,7 @@ When the user explicitly says "LGTM", execute this workflow:
       - Under 280 chars ideal. Write for devs, not marketers.
       - No marketing keywords ("game-changer", "seamless", "doubling down", etc.)
       - No negative framing ("unused", "nobody used", "removing unused")
-      - No internal function/variable names - describe in plain language
+      - No internal names (function names, variable names, component names like "schedule handler", "new_pr_handler", etc.) - describe behavior in plain language
       - When there's a real failure, tell the honest story
       - Sound human. Vary openers every time - check `scripts/git/recent_social_posts.sh wes` first.
 11. If fixing a Sentry issue, resolve related issues:
@@ -224,6 +224,7 @@ When the user explicitly says "LGTM", execute this workflow:
     - **Content**: Must be useful for developers in general, not just GitAuto internals. Extract the universal engineering lesson (e.g., mutation testing, log deduplication, content-based diffs) and make that the focus. Use the GitAuto story as the vehicle, not the destination. Exception: highly technical and advanced internal content is acceptable when it showcases deep engineering capability that developers would find interesting (e.g., novel algorithms, unsolved problems, trade-off analysis across approaches).
     - **Title length**: The blog layout appends `- GitAuto Blog` (16 chars) to the title, and the meta title must be 50-60 chars total. So `metadata.title` must be **34-44 characters**. Always count before committing.
     - **Title MUST vary**: (1) check `ls ../website/app/blog/posts/ | tail -10`, (2) verify no duplicate: `ls ../website/app/blog/posts/ | grep "your-slug-without-date"`
+    - **No customer names**: Customer repo names, org names, and identifiable details are private. Use generic descriptions ("a React app", "~400 files") instead of specific names ("foxcom-forms", "SPIDERPLUS-web"). Approximate numbers instead of exact counts that could identify repos.
     - **Tone**: Honest, transparent, technical. Written for developers.
     - **MDX header format**:
 
