@@ -85,6 +85,10 @@ ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 - Co-located tests alongside source code, pattern: `test_*.py`
 - Git operations (`services/git/`): MUST have both unit tests (mocked `run_subprocess`) AND integration tests against a local bare repo. Use `local_repo` fixture from `services/git/conftest.py`, mark with `@pytest.mark.integration`.
 
+## Platform Agnostic
+
+We aim to be platform-agnostic. Avoid relying on GitHub API as much as possible. Use local git operations (via EFS clones) instead. Only use GitHub API when there's no alternative, e.g. `get_github_file_tree` exists because a user can install GitAuto and immediately visit the file coverage page before the local EFS clone completes.
+
 ## Coding Standards
 
 - **No DOCSTRINGS**: Don't add unless explicitly told to. Don't delete existing unless outdated.

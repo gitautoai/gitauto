@@ -23,6 +23,7 @@ def cleanup_tmp():
     at a time - any previous request has already finished.
     """
     # Only run on Lambda - local /tmp is shared by all processes
+    # AWS_LAMBDA_FUNCTION_NAME is automatically set by AWS Lambda runtime
     if not os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
         return
 
