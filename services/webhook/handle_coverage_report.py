@@ -256,6 +256,11 @@ def handle_coverage_report(
             if not existing_record:
                 item["created_by"] = user_name
                 item["is_excluded_from_testing"] = False
+                # SHAs not available here: CI coverage reports don't include git tree data
+                item["impl_blob_sha"] = None
+                item["test_blob_sha"] = None
+                item["checklist_hash"] = None
+                item["quality_checks"] = None
 
             # Set None for 100% coverage fields
             if item.get("line_coverage") == 100:

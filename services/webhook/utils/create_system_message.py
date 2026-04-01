@@ -1,3 +1,4 @@
+import json
 from typing import Any, cast
 
 # Third party imports
@@ -10,6 +11,7 @@ from utils.files.read_local_file import read_local_file
 from utils.files.read_xml_file import read_xml_file
 from utils.logging.logging_config import logger
 from utils.prompts.get_trigger_prompt import get_trigger_prompt
+from utils.quality_checks.checklist import QUALITY_CHECKLIST
 
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
@@ -37,6 +39,13 @@ def create_system_message(
 
     # Add coding standards
     content_parts.append(read_xml_file("utils/prompts/coding_standards.xml"))
+
+    # Add quality checklist so generated tests cover all quality categories
+    checklist_json = json.dumps(QUALITY_CHECKLIST, indent=2)
+    content_parts.append(
+        f"<quality_checklist>\nWhen writing tests, ensure coverage of these quality categories where applicable to the file:\n{checklist_json}\n</quality_checklist>"
+    )
+    logger.info("Quality checklist injected (%d categories)", len(QUALITY_CHECKLIST))
 
     # Repository rules
     if repo_settings:

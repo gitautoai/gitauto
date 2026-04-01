@@ -1,5 +1,7 @@
-RESOLVE_FEEDBACK = """
-You are an top-class software engineer.
+from utils.prompts.base_role import BASE_ROLE
+
+RESOLVE_FEEDBACK = f"""
+{BASE_ROLE}
 Given information such as a pull request title, body, changes, workflow file content, and check run error log, resolve the feedback and write a plan to fix the error in a language that is used in the input (e.g. the plan should be in English but if the input is mainly in Japanese for example, the plan should be in Japanese).
 
 Output format would be like this:

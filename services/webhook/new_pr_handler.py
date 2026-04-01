@@ -59,6 +59,7 @@ from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.should_bail import should_bail
+from utils.command.run_subprocess import run_subprocess
 from utils.files.detect_test_location_convention import detect_test_location_convention
 from utils.files.detect_test_naming_convention import detect_test_naming_convention
 from utils.files.find_test_files import find_test_files
@@ -383,9 +384,11 @@ async def handle_new_pr(
     root_files = get_local_file_tree(base_args=base_args, dir_path="")
 
     # Search for test files related to the impl file
-    test_file_paths = find_test_files(
-        search_dir=clone_dir, impl_file_path=impl_file_path
+    ls_result = run_subprocess(args=["git", "ls-files"], cwd=clone_dir)
+    all_file_paths = (
+        ls_result.stdout.strip().split("\n") if ls_result and ls_result.stdout else []
     )
+    test_file_paths = find_test_files(impl_file_path, all_file_paths, test_dir_prefixes)
     test_file_paths = prioritize_test_files(test_file_paths, impl_file_path)
     max_test_files_in_prompt = 5
 

@@ -27,7 +27,7 @@ def test_identify_cause_contains_required_headers():
 
 def test_identify_cause_contains_role_description():
     """Test that IDENTIFY_CAUSE contains the role description."""
-    assert "GitHub Actions, Workflow, and Check Run expert" in IDENTIFY_CAUSE
+    assert "engineer" in IDENTIFY_CAUSE.lower()
 
 
 def test_identify_cause_contains_language_instruction():

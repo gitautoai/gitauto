@@ -181,7 +181,7 @@ def handle_exceptions(
     default_return_value: Any = None,
     raise_on_error: bool = False,
     api_type: str = "github",
-) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#checking-the-status-of-your-rate-limit"""
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
