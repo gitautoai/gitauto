@@ -381,6 +381,7 @@ class Owners(TypedDict):
     auto_reload_threshold_usd: int
     auto_reload_target_usd: int
     max_spending_limit_usd: int | None
+    auto_reload_in_progress: datetime.datetime | None
 
 
 class OwnersInsert(TypedDict):
@@ -396,6 +397,7 @@ class OwnersInsert(TypedDict):
     auto_reload_threshold_usd: int
     auto_reload_target_usd: int
     max_spending_limit_usd: NotRequired[int | None]
+    auto_reload_in_progress: NotRequired[datetime.datetime | None]
 
 
 class RepoCoverage(TypedDict):
