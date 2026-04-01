@@ -1,4 +1,4 @@
-# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name, unused-argument
 # pyright: reportUnusedVariable=false
 from unittest.mock import Mock, patch
 
