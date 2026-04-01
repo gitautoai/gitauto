@@ -160,11 +160,15 @@ def test_get_all_coverages_contract():
 @patch("services.webhook.schedule_handler.check_availability")
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_clone_dir")
+@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
-@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_skips_export_only_files(
-    mock_get_raw_content,
+    mock_read_local_file,
     mock_get_all_coverages,
+    _mock_copy_repo,
+    _mock_get_clone_dir,
     mock_get_file_tree,
     mock_get_default_branch,
     mock_check_availability,
@@ -198,8 +202,20 @@ def test_schedule_handler_skips_export_only_files(
     }
     mock_get_default_branch.return_value = "main"
     mock_get_file_tree.return_value = [
-        {"path": "src/components/Button/index.ts", "type": "blob", "size": 100},
-        {"path": "src/utils/helper.ts", "type": "blob", "size": 200},
+        {
+            "path": "src/components/Button/index.ts",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 100,
+        },
+        {
+            "path": "src/utils/helper.ts",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 200,
+        },
     ]
     mock_get_all_coverages.return_value = []
 
@@ -210,7 +226,7 @@ def test_schedule_handler_skips_export_only_files(
         }
         return content_map.get(file_path or "")
 
-    mock_get_raw_content.side_effect = mock_content_side_effect
+    mock_read_local_file.side_effect = mock_content_side_effect
     mock_generate_branch_name.return_value = "gitauto/schedule-20240101-120000-ABCD"
     mock_get_latest_sha.return_value = "abc123"
     mock_create_pr.return_value = ("https://github.com/test/repo/pull/1", 1)
@@ -230,12 +246,9 @@ def test_schedule_handler_skips_export_only_files(
 
     result = schedule_handler(mock_event)
 
-    mock_get_raw_content.assert_any_call(
-        owner="test-org",
-        repo="test-repo",
+    mock_read_local_file.assert_any_call(
         file_path="src/components/Button/index.ts",
-        ref="main",
-        token="test-token",
+        base_dir=_mock_get_clone_dir.return_value,
     )
     mock_create_pr.assert_called_once()
     call_kwargs = mock_create_pr.call_args.kwargs
@@ -258,13 +271,17 @@ def test_schedule_handler_skips_export_only_files(
 @patch("services.webhook.schedule_handler.check_availability")
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_clone_dir")
+@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
-@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.read_local_file")
 @patch("services.webhook.schedule_handler.evaluate_condition")
 def test_schedule_handler_skips_empty_files(
     mock_evaluate_condition,
-    mock_get_raw_content,
+    mock_read_local_file,
     mock_get_all_coverages,
+    _mock_copy_repo,
+    _mock_get_clone_dir,
     mock_get_file_tree,
     mock_get_default_branch,
     mock_check_availability,
@@ -296,8 +313,20 @@ def test_schedule_handler_skips_empty_files(
     }
     mock_get_default_branch.return_value = "main"
     mock_get_file_tree.return_value = [
-        {"path": "src/index.ts", "type": "blob", "size": 0},
-        {"path": "src/app.ts", "type": "blob", "size": 300},
+        {
+            "path": "src/index.ts",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 0,
+        },
+        {
+            "path": "src/app.ts",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 300,
+        },
     ]
     mock_get_all_coverages.return_value = []
 
@@ -308,7 +337,7 @@ def test_schedule_handler_skips_empty_files(
         }
         return content_map.get(file_path or "")
 
-    mock_get_raw_content.side_effect = mock_empty_content_side_effect
+    mock_read_local_file.side_effect = mock_empty_content_side_effect
     mock_evaluate_condition.return_value = EvaluationResult(
         True, "has logic worth testing"
     )
@@ -342,11 +371,15 @@ def test_schedule_handler_skips_empty_files(
 @patch("services.webhook.schedule_handler.check_availability")
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_clone_dir")
+@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
-@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_prioritizes_zero_coverage_files(
-    mock_get_raw_content,
+    mock_read_local_file,
     mock_get_all_coverages,
+    _mock_copy_repo,
+    _mock_get_clone_dir,
     mock_get_file_tree,
     mock_get_default_branch,
     mock_check_availability,
@@ -380,9 +413,27 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
     }
     mock_get_default_branch.return_value = "main"
     mock_get_file_tree.return_value = [
-        {"path": "src/partial.py", "type": "blob", "size": 50},
-        {"path": "src/untouched.py", "type": "blob", "size": 100},
-        {"path": "src/new_file.py", "type": "blob", "size": 75},
+        {
+            "path": "src/partial.py",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 50,
+        },
+        {
+            "path": "src/untouched.py",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 100,
+        },
+        {
+            "path": "src/new_file.py",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 75,
+        },
     ]
     mock_get_all_coverages.return_value = [
         {
@@ -434,7 +485,7 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
             "is_excluded_from_testing": False,
         },
     ]
-    mock_get_raw_content.return_value = "def test(): pass"
+    mock_read_local_file.return_value = "def test(): pass"
     mock_should_skip_test.return_value = False
     mock_evaluate_condition.return_value = EvaluationResult(True, "has testable logic")
     mock_get_open_pull_requests.return_value = []
@@ -496,11 +547,15 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
 @patch("services.webhook.schedule_handler.check_availability")
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_clone_dir")
+@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
-@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_skips_ai_eval_when_tests_exist(
-    mock_get_raw_content,
+    mock_read_local_file,
     mock_get_all_coverages,
+    _mock_copy_repo,
+    _mock_get_clone_dir,
     mock_get_file_tree,
     mock_get_default_branch,
     mock_check_availability,
@@ -537,10 +592,18 @@ def test_schedule_handler_skips_ai_eval_when_tests_exist(
     mock_get_default_branch.return_value = "main"
     # File tree has both a source file and its test file (mirror directory)
     mock_get_file_tree.return_value = [
-        {"path": "src/services/getPolicyInfo.ts", "type": "blob", "size": 500},
+        {
+            "path": "src/services/getPolicyInfo.ts",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 500,
+        },
         {
             "path": "test/spec/services/getPolicyInfo.test.ts",
             "type": "blob",
+            "mode": "100644",
+            "sha": "def456",
             "size": 300,
         },
     ]
@@ -570,7 +633,7 @@ def test_schedule_handler_skips_ai_eval_when_tests_exist(
             "is_excluded_from_testing": False,
         },
     ]
-    mock_get_raw_content.return_value = (
+    mock_read_local_file.return_value = (
         "import { GraphqlContext } from '../context';\n"
         "const getPolicyInfo = async ({ policyId, context }) => {\n"
         "  const result = await context.mongoClient.db().collection('Policy').findOne({});\n"
@@ -603,11 +666,15 @@ def test_schedule_handler_skips_ai_eval_when_tests_exist(
 @patch("services.webhook.schedule_handler.check_availability")
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_clone_dir")
+@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
-@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
-    mock_get_raw_content,
+    mock_read_local_file,
     mock_get_all_coverages,
+    _mock_copy_repo,
+    _mock_get_clone_dir,
     mock_get_file_tree,
     mock_get_default_branch,
     mock_check_availability,
@@ -635,7 +702,13 @@ def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
     }
     mock_get_default_branch.return_value = "master"
     mock_get_file_tree.return_value = [
-        {"path": "src/app.php", "type": "blob", "size": 100},
+        {
+            "path": "src/app.php",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 100,
+        },
     ]
     mock_get_all_coverages.return_value = [
         {
@@ -663,7 +736,7 @@ def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
             "is_excluded_from_testing": False,
         },
     ]
-    mock_get_raw_content.return_value = "<?php function test() { return 1; }"
+    mock_read_local_file.return_value = "<?php function test() { return 1; }"
     mock_should_skip_test.return_value = False
     # Open PR targeting a DIFFERENT branch but for the same file
     mock_get_open_pull_requests.return_value = [
@@ -678,7 +751,7 @@ def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
     result = schedule_handler(mock_event)
 
     assert result["status"] == "skipped"
-    assert "No suitable file found" in result["message"]
+    assert "No suitable file found after checking" in result["message"]
 
 
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
@@ -689,11 +762,15 @@ def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
 @patch("services.webhook.schedule_handler.check_availability")
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_clone_dir")
+@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
-@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_skips_file_with_open_pr_different_title_format(
-    mock_get_raw_content,
+    mock_read_local_file,
     mock_get_all_coverages,
+    _mock_copy_repo,
+    _mock_get_clone_dir,
     mock_get_file_tree,
     mock_get_default_branch,
     mock_check_availability,
@@ -723,7 +800,13 @@ def test_schedule_handler_skips_file_with_open_pr_different_title_format(
     }
     mock_get_default_branch.return_value = "master"
     mock_get_file_tree.return_value = [
-        {"path": "src/app.php", "type": "blob", "size": 100},
+        {
+            "path": "src/app.php",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 100,
+        },
     ]
     mock_get_all_coverages.return_value = [
         {
@@ -751,7 +834,7 @@ def test_schedule_handler_skips_file_with_open_pr_different_title_format(
             "is_excluded_from_testing": False,
         },
     ]
-    mock_get_raw_content.return_value = "<?php function test() { return 1; }"
+    mock_read_local_file.return_value = "<?php function test() { return 1; }"
     mock_should_skip_test.return_value = False
     # Old title format ("for uncovered code in") differs from current ("to"/"Achieve 100%")
     mock_get_open_pull_requests.return_value = [
@@ -766,7 +849,7 @@ def test_schedule_handler_skips_file_with_open_pr_different_title_format(
     result = schedule_handler(mock_event)
 
     assert result["status"] == "skipped"
-    assert "No suitable file found" in result["message"]
+    assert "No suitable file found after checking" in result["message"]
 
 
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
@@ -778,11 +861,17 @@ def test_schedule_handler_skips_file_with_open_pr_different_title_format(
 @patch("services.webhook.schedule_handler.check_availability")
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_clone_dir")
+@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
-@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.read_local_file")
+@patch("services.webhook.schedule_handler.get_checklist_hash")
 def test_schedule_handler_skips_none_coverage_as_fully_covered(
-    mock_get_raw_content,
+    mock_get_checklist_hash,
+    mock_read_local_file,
     mock_get_all_coverages,
+    _mock_copy_repo,
+    _mock_get_clone_dir,
     mock_get_file_tree,
     mock_get_default_branch,
     mock_check_availability,
@@ -813,7 +902,13 @@ def test_schedule_handler_skips_none_coverage_as_fully_covered(
     }
     mock_get_default_branch.return_value = "main"
     mock_get_file_tree.return_value = [
-        {"path": "src/fully_covered_php.php", "type": "blob", "size": 50},
+        {
+            "path": "src/fully_covered_php.php",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 50,
+        },
     ]
     mock_get_all_coverages.return_value = [
         {
@@ -839,16 +934,22 @@ def test_schedule_handler_skips_none_coverage_as_fully_covered(
             "updated_at": "2024-01-01",
             "github_issue_url": None,
             "is_excluded_from_testing": False,
+            "impl_blob_sha": "abc123",
+            "test_blob_sha": None,
+            "checklist_hash": "already_checked",
+            "quality_checks": {"business_logic": {}},
         },
     ]
-    mock_get_raw_content.return_value = "<?php function test() {}"
+    mock_read_local_file.return_value = "<?php function test() {}"
     mock_should_skip_test.return_value = False
     mock_evaluate_condition.return_value = EvaluationResult(True, "has testable logic")
     mock_get_open_pull_requests.return_value = []
+    # Return the same hash as stored in coverage data so needs_quality_reevaluation returns False
+    mock_get_checklist_hash.return_value = "already_checked"
 
     result = schedule_handler(mock_event)
 
-    # All files skipped (100% stmt + 100% func + None branch = fully covered), no PR created
+    # All files skipped (100% coverage + quality already checked), no PR created
     assert result["status"] == "skipped"
 
 
@@ -869,11 +970,15 @@ def test_schedule_handler_skips_none_coverage_as_fully_covered(
 @patch("services.webhook.schedule_handler.check_availability")
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_clone_dir")
+@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
-@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_all_none_coverage_treated_as_candidate(
-    mock_get_raw_content,
+    mock_read_local_file,
     mock_get_all_coverages,
+    _mock_copy_repo,
+    _mock_get_clone_dir,
     mock_get_file_tree,
     mock_get_default_branch,
     mock_check_availability,
@@ -910,7 +1015,13 @@ def test_schedule_handler_all_none_coverage_treated_as_candidate(
     }
     mock_get_default_branch.return_value = "main"
     mock_get_file_tree.return_value = [
-        {"path": "web/pickup/finishp.php", "type": "blob", "size": 500},
+        {
+            "path": "web/pickup/finishp.php",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 500,
+        },
     ]
     mock_get_all_coverages.return_value = [
         {
@@ -938,7 +1049,7 @@ def test_schedule_handler_all_none_coverage_treated_as_candidate(
             "is_excluded_from_testing": False,
         },
     ]
-    mock_get_raw_content.return_value = (
+    mock_read_local_file.return_value = (
         "<?php session_start(); $ctrl = new Controller(); $ret = $ctrl->execute();"
     )
     mock_should_skip_test.return_value = False
@@ -958,8 +1069,8 @@ def test_schedule_handler_all_none_coverage_treated_as_candidate(
     # No existing test file in file tree → "Add unit tests to" (not "Achieve 100%")
     assert "Add unit tests to" in call_kwargs["title"]
     assert "web/pickup/finishp.php" in call_kwargs["title"]
-    # Body should show "No coverage data available" — no metric bullet points
-    assert "No coverage data available." in call_kwargs["body"]
+    # Body should not have metric bullet points for all-None coverage
+    assert "Create tests for happy paths" in call_kwargs["body"]
     assert "Line Coverage:" not in call_kwargs["body"]
     assert "Statement Coverage:" not in call_kwargs["body"]
     assert "Function Coverage:" not in call_kwargs["body"]
@@ -983,11 +1094,15 @@ def test_schedule_handler_all_none_coverage_treated_as_candidate(
 @patch("services.webhook.schedule_handler.check_availability")
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_clone_dir")
+@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
-@patch("services.webhook.schedule_handler.get_raw_content")
+@patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_partial_none_coverage_omits_none_metric(
-    mock_get_raw_content,
+    mock_read_local_file,
     mock_get_all_coverages,
+    _mock_copy_repo,
+    _mock_get_clone_dir,
     mock_get_file_tree,
     mock_get_default_branch,
     mock_check_availability,
@@ -1025,8 +1140,20 @@ def test_schedule_handler_partial_none_coverage_omits_none_metric(
     mock_get_default_branch.return_value = "main"
     # File tree includes both source and test file
     mock_get_file_tree.return_value = [
-        {"path": "src/services/payment.php", "type": "blob", "size": 300},
-        {"path": "tests/services/paymentTest.php", "type": "blob", "size": 200},
+        {
+            "path": "src/services/payment.php",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 300,
+        },
+        {
+            "path": "tests/services/paymentTest.php",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "abc123",
+            "size": 200,
+        },
     ]
     mock_get_all_coverages.return_value = [
         {
@@ -1054,7 +1181,7 @@ def test_schedule_handler_partial_none_coverage_omits_none_metric(
             "is_excluded_from_testing": False,
         },
     ]
-    mock_get_raw_content.return_value = (
+    mock_read_local_file.return_value = (
         "<?php\nclass PaymentService {\n"
         "    public function processPayment() { return true; }\n"
         "    public function processRefund() { return false; }\n"

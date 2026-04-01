@@ -16,10 +16,12 @@ def is_test_file(filename: str) -> bool:
 
     filename_lower = filename.lower()
 
-    for _, pattern, _ in TEST_NAMING_PATTERNS:
-        if pattern.search(filename_lower):
+    for p in TEST_NAMING_PATTERNS:
+        if p.detect.search(filename_lower):  # pylint: disable=no-member
             logger.info(
-                "is_test_file: %s matched naming pattern %s", filename, pattern.pattern
+                "is_test_file: %s matched naming pattern %s",
+                filename,
+                p.detect.pattern,  # pylint: disable=no-member
             )
             return True
 

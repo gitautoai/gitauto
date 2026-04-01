@@ -27,6 +27,18 @@ if [ -n "$STAGED_PY_FILES" ]; then
     git add $STAGED_PY_FILES
 fi
 
+# Markdownlint for staged .md files
+STAGED_MD_FILES=$(git diff --cached --name-only --diff-filter=d -- '*.md')
+if [ -n "$STAGED_MD_FILES" ]; then
+    echo "--- markdownlint ---"
+    # shellcheck disable=SC2086
+    npx --yes markdownlint-cli $STAGED_MD_FILES
+    if [ $? -ne 0 ]; then
+        echo "FAILED: Fix markdownlint violations before committing."
+        exit 1
+    fi
+fi
+
 # Print statement check (whole repo, excluding dirs)
 echo "--- ruff T201 print check ---"
 ruff check --select=T201 . --exclude schemas/,venv/,scripts/

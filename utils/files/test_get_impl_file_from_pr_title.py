@@ -28,3 +28,13 @@ def test_file_at_root():
 def test_no_file_extension():
     title = "Fix the Makefile"
     assert get_impl_file_from_pr_title(title) is None
+
+
+def test_backtick_wrapped_path():
+    title = "Schedule: Add unit tests to `services/github/client.py`"
+    assert get_impl_file_from_pr_title(title) == "services/github/client.py"
+
+
+def test_backtick_with_categories():
+    title = "Schedule: Strengthen tests for `src/utils/foo.ts` (adversarial, security)"
+    assert get_impl_file_from_pr_title(title) == "src/utils/foo.ts"

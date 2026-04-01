@@ -119,6 +119,10 @@ class Coverages(TypedDict):
     file_size: int | None
     is_excluded_from_testing: bool | None
     exclusion_reason: str | None
+    impl_blob_sha: str | None
+    test_blob_sha: str | None
+    checklist_hash: str | None
+    quality_checks: dict[str, Any] | None
 
 
 class CoveragesInsert(TypedDict):
@@ -142,6 +146,10 @@ class CoveragesInsert(TypedDict):
     file_size: NotRequired[int | None]
     is_excluded_from_testing: NotRequired[bool | None]
     exclusion_reason: NotRequired[str | None]
+    impl_blob_sha: NotRequired[str | None]
+    test_blob_sha: NotRequired[str | None]
+    checklist_hash: NotRequired[str | None]
+    quality_checks: NotRequired[dict[str, Any] | None]
 
 
 class Credits(TypedDict):

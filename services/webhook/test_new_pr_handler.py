@@ -4,7 +4,7 @@
 import inspect
 import json
 from typing import cast
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -463,6 +463,9 @@ async def test_image_base64_fetch_failed(
 
 @pytest.mark.asyncio
 @patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
+@patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
 )
@@ -510,6 +513,7 @@ async def test_timeout_approaching_breaks_loop(
     mock_chat_with_agent,
     mock_get_pr_files,
     _mock_read_local_file,
+    _mock_run_subprocess,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -543,6 +547,9 @@ async def test_timeout_approaching_breaks_loop(
 
 
 @pytest.mark.asyncio
+@patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
 @patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
@@ -591,6 +598,7 @@ async def test_branch_deleted_breaks_loop(
     mock_chat_with_agent,
     mock_get_pr_files,
     _mock_read_local_file,
+    _mock_run_subprocess,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -624,6 +632,9 @@ async def test_branch_deleted_breaks_loop(
 
 
 @pytest.mark.asyncio
+@patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
 @patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
@@ -675,6 +686,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_get_pr_files,
     mock_verify_task_is_complete,
     _mock_read_local_file,
+    _mock_run_subprocess,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -805,6 +817,9 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
 
 @pytest.mark.asyncio
 @patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
+@patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
 )
@@ -855,6 +870,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_get_pr_files,
     mock_verify_task_is_complete,
     _mock_read_local_file,
+    _mock_run_subprocess,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -976,6 +992,9 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
 
 @pytest.mark.asyncio
 @patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
+@patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
 )
@@ -1023,6 +1042,7 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_chat_with_agent,
     mock_get_pr_files,
     _mock_read_local_file,
+    _mock_run_subprocess,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -1085,6 +1105,9 @@ async def test_retry_counter_reset_on_successful_loop(
 
 @pytest.mark.asyncio
 @patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
+@patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
 )
@@ -1134,6 +1157,7 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_get_pr_files,
     mock_is_test_file,
     _mock_read_local_file,
+    _mock_run_subprocess,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -1176,6 +1200,9 @@ async def test_non_test_file_skipped_in_header_merge(
 
 
 @pytest.mark.asyncio
+@patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
 @patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
@@ -1232,6 +1259,7 @@ async def test_test_file_header_merge(
     mock_merge_headers,
     mock_replace_remote,
     _mock_read_local_file,
+    _mock_run_subprocess,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -1279,6 +1307,9 @@ async def test_test_file_header_merge(
 
 
 @pytest.mark.asyncio
+@patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
 @patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
@@ -1335,6 +1366,7 @@ async def test_test_file_header_merge_no_content(
     mock_merge_headers,
     mock_replace_remote,
     _mock_read_local_file,
+    _mock_run_subprocess,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -1381,6 +1413,9 @@ async def test_test_file_header_merge_no_content(
 
 
 @pytest.mark.asyncio
+@patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
 @patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
@@ -1437,6 +1472,7 @@ async def test_test_file_header_merge_no_change(
     mock_merge_headers,
     mock_replace_remote,
     _mock_read_local_file,
+    _mock_run_subprocess,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
@@ -1487,6 +1523,9 @@ async def test_test_file_header_merge_no_change(
 @patch("services.webhook.new_pr_handler.insert_email_send", return_value=True)
 @patch("services.webhook.new_pr_handler.send_email")
 @pytest.mark.asyncio
+@patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
 @patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
@@ -1543,6 +1582,7 @@ async def test_credits_depleted_email_sent(
     mock_get_user,
     mock_get_email_text,
     _mock_read_local_file,
+    _mock_run_subprocess,
     mock_send_email,
     _mock_insert_email_send,
     _mock_update_email_send,
@@ -1597,6 +1637,9 @@ async def test_credits_depleted_email_sent(
 
 @pytest.mark.asyncio
 @patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
+@patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
 )
@@ -1640,6 +1683,7 @@ async def test_new_pr_handler_token_accumulation(
     mock_should_bail,
     mock_insert_credit,
     _mock_read_local_file,
+    _mock_run_subprocess,
 ):
     """Test that PR handler accumulates tokens correctly and calls update_usage"""
     mock_get_pull_request_files.return_value = []
@@ -1774,6 +1818,9 @@ async def test_new_pr_handler_token_accumulation(
 
 @pytest.mark.asyncio
 @patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
+@patch(
     "services.webhook.new_pr_handler.read_local_file",
     return_value="def calculate():\n    return 1 + 2\n",
 )
@@ -1819,6 +1866,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_should_bail,
     mock_insert_credit,
     _mock_read_local_file,
+    _mock_run_subprocess,
 ):
     mock_deconstruct_github_payload.return_value = (
         {
@@ -1929,6 +1977,9 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
 
 
 @pytest.mark.asyncio
+@patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
 @patch("services.webhook.new_pr_handler.insert_credit")
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -1974,6 +2025,7 @@ async def test_few_test_files_include_contents_in_prompt(
     mock_create_empty_commit,
     mock_should_bail,
     mock_insert_credit,
+    _mock_run_subprocess,
 ):
     mock_deconstruct_github_payload.return_value = (
         {
@@ -2078,6 +2130,9 @@ async def test_few_test_files_include_contents_in_prompt(
 
 
 @pytest.mark.asyncio
+@patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
 @patch("services.webhook.new_pr_handler.insert_credit")
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -2123,6 +2178,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
     mock_create_empty_commit,
     mock_should_bail,
     mock_insert_credit,
+    _mock_run_subprocess,
 ):
     mock_deconstruct_github_payload.return_value = (
         {

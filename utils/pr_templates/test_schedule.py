@@ -12,21 +12,21 @@ class TestGetPrTitle:
         """Test generating PR title with a basic file path."""
         file_path = "src/main.py"
         result = get_pr_title(file_path)
-        expected = "Schedule: Add unit tests to src/main.py"
+        expected = "Schedule: Add unit tests to `src/main.py`"
         assert result == expected
 
     def test_get_pr_title_nested_file_path(self):
         """Test generating PR title with a nested file path."""
         file_path = "utils/helpers/database.py"
         result = get_pr_title(file_path)
-        expected = "Schedule: Add unit tests to utils/helpers/database.py"
+        expected = "Schedule: Add unit tests to `utils/helpers/database.py`"
         assert result == expected
 
     def test_get_pr_title_empty_string(self):
         """Test generating PR title with an empty string."""
         file_path = ""
         result = get_pr_title(file_path)
-        expected = "Schedule: Add unit tests to "
+        expected = "Schedule: Add unit tests to ``"
         assert result == expected
 
     def test_get_pr_title_special_characters(self):
@@ -40,7 +40,7 @@ class TestGetPrTitle:
 
         for file_path in test_cases:
             result = get_pr_title(file_path)
-            expected = f"Schedule: Add unit tests to {file_path}"
+            expected = f"Schedule: Add unit tests to `{file_path}`"
             assert result == expected
 
 
@@ -58,7 +58,7 @@ class TestGetPrBody:
             yield mock_gh_url, mock_settings
 
     def test_get_pr_body_no_coverage_data(self, mock_constants):
-        """Test early return when all coverage data is None."""
+        """Test that coverage section is skipped when all coverage data is None."""
         result = get_pr_body(
             owner="testowner",
             repo="testrepo",
@@ -71,11 +71,11 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
 
-        expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
-        assert f"## Current Coverage for [src/main.py]({expected_url})" in result
-        assert "No coverage data available." in result
+        # No coverage section when all metrics are None
+        assert "## Current Coverage" not in result
         assert "## Instructions" in result
         assert (
             "Create tests for happy paths, error cases, edge cases, and corner cases."
@@ -97,6 +97,7 @@ class TestGetPrBody:
             uncovered_lines="10,15,20",
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -121,6 +122,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -143,6 +145,7 @@ class TestGetPrBody:
             uncovered_lines="",
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -165,6 +168,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -191,6 +195,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions="func1,func2",
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -217,6 +222,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -241,6 +247,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions="",
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -263,6 +270,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches="branch1,branch2",
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -289,6 +297,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -313,6 +322,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches="",
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -335,6 +345,7 @@ class TestGetPrBody:
             uncovered_lines="10,15,20",
             uncovered_functions="func1,func2",
             uncovered_branches="branch1,branch2",
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -362,6 +373,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/testowner/testrepo/blob/main/src/main.py"
@@ -387,6 +399,7 @@ class TestGetPrBody:
             uncovered_lines="1,2,3,4,5",
             uncovered_functions="helper_func1,helper_func2",
             uncovered_branches="if_branch1,else_branch1",
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/owner/repo/blob/develop/utils/helper.py"
@@ -413,6 +426,7 @@ class TestGetPrBody:
             uncovered_lines="1,2",
             uncovered_functions="test_func",
             uncovered_branches="branch1",
+            quality_checks=None,
         )
 
         assert "- Line Coverage: 70% (Uncovered: 1,2)" in result
@@ -434,6 +448,7 @@ class TestGetPrBody:
             uncovered_lines="1,2",
             uncovered_functions="func1",
             uncovered_branches="branch1",
+            quality_checks=None,
         )
 
         lines = result.split("\n")
@@ -459,6 +474,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         expected_url = "https://github.com/myowner/myrepo/blob/mybranch/myfile.py"
@@ -486,6 +502,7 @@ class TestGetPrBody:
                 uncovered_lines=None,
                 uncovered_functions=None,
                 uncovered_branches=None,
+                quality_checks=None,
             )
             expected_url = (
                 f"https://github.com/test-owner/test_repo/blob/main/{file_path}"
@@ -517,6 +534,7 @@ class TestGetPrBody:
                 uncovered_lines=None,
                 uncovered_functions=None,
                 uncovered_branches=None,
+                quality_checks=None,
             )
             expected_url = f"https://github.com/owner/repo/blob/{branch}/test.py"
             assert expected_url in result
@@ -524,7 +542,7 @@ class TestGetPrBody:
 
     def test_get_pr_body_edge_cases(self, mock_constants):
         """Test edge cases."""
-        # Test with empty strings for owner, repo, branch, file_path
+        # Test with empty strings for owner, repo, branch, file_path and all None coverage
         result = get_pr_body(
             owner="",
             repo="",
@@ -537,9 +555,11 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
-        expected_url = "https://github.com///blob//"
-        assert expected_url in result
+        # No coverage section when all metrics are None
+        assert "## Current Coverage" not in result
+        assert "## Instructions" in result
 
         # Test with very small coverage values
         result = get_pr_body(
@@ -554,6 +574,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
         assert "- Statement Coverage: 0%" in result
 
@@ -571,6 +592,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
         assert isinstance(result, str)
 
@@ -586,6 +608,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
         assert isinstance(result, str)
 
@@ -603,6 +626,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         # Verify the structure without mocking constants
@@ -631,6 +655,7 @@ class TestGetPrBody:
             uncovered_lines="1,2,3",
             uncovered_functions=None,
             uncovered_branches=None,
+            quality_checks=None,
         )
         assert "- Line Coverage: 80% (Uncovered: 1,2,3)" in result
         assert "- Statement Coverage: 75%" in result
@@ -650,6 +675,7 @@ class TestGetPrBody:
             uncovered_lines=None,
             uncovered_functions="func1,func2",
             uncovered_branches="branch1,branch2",
+            quality_checks=None,
         )
         assert "- Function Coverage: 85% (Uncovered: func1,func2)" in result
         assert "- Branch Coverage: 65% (Uncovered: branch1,branch2)" in result
@@ -670,6 +696,7 @@ class TestGetPrBody:
             uncovered_lines="   ",  # Whitespace only
             uncovered_functions="   ",  # Whitespace only
             uncovered_branches=None,
+            quality_checks=None,
         )
 
         # Whitespace-only strings should be treated as truthy, so uncovered text should appear

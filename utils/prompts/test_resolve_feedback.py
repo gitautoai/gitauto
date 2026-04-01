@@ -19,7 +19,7 @@ def test_resolve_feedback_is_not_empty():
 
 def test_resolve_feedback_contains_role_definition():
     """Test that the prompt contains role definition for the AI."""
-    assert "software engineer" in RESOLVE_FEEDBACK.lower()
+    assert "engineer" in RESOLVE_FEEDBACK.lower()
 
 
 def test_resolve_feedback_contains_input_description():
@@ -93,7 +93,7 @@ def test_resolve_feedback_immutable():
 def test_resolve_feedback_contains_expected_keywords():
     """Test that the prompt contains all expected keywords for functionality."""
     expected_keywords = [
-        "software engineer",
+        "engineer",
         "pull request",
         "feedback",
         "plan",

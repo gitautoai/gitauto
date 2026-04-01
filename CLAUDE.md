@@ -118,13 +118,37 @@ Process: Run the real tool, capture stdout/stderr separately, verify which strea
 
 Customer repos are cloned at `../owner/repo` (e.g., `../Foxquilt/foxcom-forms`, `../SPIDERPLUS/SPIDERPLUS-web`). When testing functions that operate on file trees (find_test_files, prioritize_test_files, etc.), run them against real repos to get real data, then use that data in tests. Never make up file paths — verify they exist first.
 
-### No toy tests
+### ZERO toy tests
 
-Toy tests with 2-3 synthetic items are WORTHLESS — they pass even when the logic is fundamentally broken. Think mutation testing: if an "evil coder" could change a key value and your tests still pass, your tests prove nothing. ALWAYS use real-world data: run the function against real cloned repos, capture actual output, use that as test input. Real data (e.g., 31 files instead of 3) exposes real bugs that toy tests never catch.
+**Toy tests are POINTLESS and PROHIBITED.** A test with a curated 4-item list proves nothing — any broken logic still passes because there's no real noise to filter through. Think mutation testing: if an "evil coder" could change a key value and your tests still pass, your tests are worthless.
+
+**ALWAYS use real full-scale data:**
+1. Run `git ls-files` (no filtering, no `head`) on real cloned repos
+2. Save the FULL output as fixture files (e.g., `utils/files/fixtures/foxcom-forms.txt`)
+3. Load fixtures in tests and run the function against the full file list (389, 1659, 13608 files — not 4)
+4. Assert specific real impl→test mappings that you verified manually
+
+**Never curate a minimal `all_files` list.** The whole point is that the function must filter through hundreds/thousands of real files to find the right match. That's what catches real bugs.
 
 ### Write meaningful tests
 
 Tests must verify actual behavior, not just that code compiles. No tests that only check imports, mock everything, or verify string presence in source code.
+
+### Assert what the result IS, never what it ISN'T
+
+**NEVER write `assert X not in result` or `assert result != Y`.** These are lazy assertions that don't verify correct behavior - they only verify one wrong answer is absent while accepting infinite other wrong answers.
+
+**ALWAYS assert the exact expected return value:**
+
+```python
+# WRONG - proves nothing, passes even if function returns garbage
+assert "foo.integration.test.ts" not in result
+
+# RIGHT - verifies the function returns exactly what we expect
+assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
+```
+
+**Before writing an assertion**, look at the real data (repo fixtures, actual files) to determine what the correct answer is. Then assert that exact answer. Never run the function first and use its output as the expected value - that's circular and just tests that the function returns what it returns.
 
 ### NEVER dismiss test failures when fixing PRs
 
@@ -170,10 +194,12 @@ When the user explicitly says "LGTM", execute this workflow:
    - If exists, **STOP and ask user**
 8. Push: `git push`
 9. If PR includes Social Media Posts, check recent posts to avoid repeating patterns:
+
     ```bash
     scripts/git/recent_social_posts.sh gitauto
     scripts/git/recent_social_posts.sh wes
     ```
+
 10. Create PR: `gh pr create --title "PR title" --body "PR description" --assignee @me`
     - PR title: technical and descriptive
     - **No `## Test plan` section**
@@ -195,14 +221,16 @@ When the user explicitly says "LGTM", execute this workflow:
 12. **If this LGTM fixes a real-world repo failure** (e.g., Foxquilt CI failures, customer repo issues), write a blog post in `../website/app/blog/posts/`:
     - **When to trigger**: Only for real customer/production repo failures - not internal refactoring or feature work
     - **Filename**: `YYYY-MM-DD-kebab-case-title.mdx`
-    - **Content**: What failed, root cause, the fix, prevention
+    - **Content**: Must be useful for developers in general, not just GitAuto internals. Extract the universal engineering lesson (e.g., mutation testing, log deduplication, content-based diffs) and make that the focus. Use the GitAuto story as the vehicle, not the destination. Exception: highly technical and advanced internal content is acceptable when it showcases deep engineering capability that developers would find interesting (e.g., novel algorithms, unsolved problems, trade-off analysis across approaches).
+    - **Title length**: The blog layout appends `- GitAuto Blog` (16 chars) to the title, and the meta title must be 50-60 chars total. So `metadata.title` must be **34-44 characters**. Always count before committing.
     - **Title MUST vary**: (1) check `ls ../website/app/blog/posts/ | tail -10`, (2) verify no duplicate: `ls ../website/app/blog/posts/ | grep "your-slug-without-date"`
     - **Tone**: Honest, transparent, technical. Written for developers.
     - **MDX header format**:
+
       ```javascript
       export const metadata = {
-        title: "Your Varied Title Here",
-        description: "1-2 sentence SEO description of the failure and fix.",
+        title: "34-44 chars (layout appends ' - GitAuto Blog' to reach 50-60)",
+        description: "110-160 chars. SEO description of the failure and fix.",
         slug: "kebab-case-matching-filename-without-date",
         alternates: { canonical: "/blog/kebab-case-slug" },
         openGraph: { url: "/blog/kebab-case-slug" },
@@ -213,6 +241,7 @@ When the user explicitly says "LGTM", execute this workflow:
         updatedAt: "YYYY-MM-DD",
       };
       ```
+
     - **Body**: `# Title` heading, then: what happened, root cause, the fix, prevention. 300-600 words, use code blocks and bullet points.
 13. **If this LGTM fixes a real-world repo failure**, also create or update a documentation page in `../website/app/docs/`:
     - **Create NEW page** if the fix introduces a new capability not covered by existing docs

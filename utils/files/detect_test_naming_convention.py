@@ -18,12 +18,12 @@ def detect_test_naming_convention(clone_dir: str):
 
         for filename in filenames:
             filename_lower = filename.lower()
-            for convention, pattern, template in TEST_NAMING_PATTERNS:
-                if pattern.search(filename_lower):
-                    counts[convention] = counts.get(convention, 0) + 1
-                    if convention not in examples:
-                        examples[convention] = filename
-                        templates[convention] = template
+            for p in TEST_NAMING_PATTERNS:
+                if p.detect.search(filename_lower):  # pylint: disable=no-member
+                    counts[p.name] = counts.get(p.name, 0) + 1
+                    if p.name not in examples:
+                        examples[p.name] = filename
+                        templates[p.name] = p.description
                     break  # One file matches at most one pattern
 
     logger.info("Test naming convention detection: counts=%s in %s", counts, clone_dir)
