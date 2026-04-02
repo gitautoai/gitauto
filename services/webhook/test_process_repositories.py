@@ -193,8 +193,6 @@ def sample_repositories():
 def sample_stats():
     return {
         "file_count": 25,
-        "blank_lines": 150,
-        "comment_lines": 75,
         "code_lines": 500,
     }
 
@@ -392,8 +390,6 @@ def test_process_repositories_stats_saved_correctly(
         user_id=67890,
         user_name="test-user",
         file_count=25,
-        blank_lines=150,
-        comment_lines=75,
         code_lines=500,
     )
 

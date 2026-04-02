@@ -13,8 +13,6 @@ def test_insert_repository_success():
             "repo_id": 123456,
             "repo_name": "test-repo",
             "file_count": 100,
-            "blank_lines": 50,
-            "comment_lines": 30,
             "code_lines": 200,
             "created_by": "123:testuser",
             "updated_by": "123:testuser",
@@ -39,8 +37,6 @@ def test_insert_repository_success():
             user_id=123,
             user_name="testuser",
             file_count=100,
-            blank_lines=50,
-            comment_lines=30,
             code_lines=200,
         )
 
@@ -50,8 +46,6 @@ def test_insert_repository_success():
         assert result["repo_name"] == "test-repo"
         assert result["owner_id"] == 789
         assert result["file_count"] == 100
-        assert result["blank_lines"] == 50
-        assert result["comment_lines"] == 30
         assert result["code_lines"] == 200
         assert result["created_by"] == "123:testuser"
         assert result["updated_by"] == "123:testuser"
@@ -142,8 +136,6 @@ def test_insert_repository_with_zero_values():
             "owner_id": 0,
             "repo_id": 0,
             "file_count": 0,
-            "blank_lines": 0,
-            "comment_lines": 0,
             "code_lines": 0,
         }
     ]
@@ -165,8 +157,6 @@ def test_insert_repository_with_zero_values():
             user_id=0,
             user_name="testuser",
             file_count=0,
-            blank_lines=0,
-            comment_lines=0,
             code_lines=0,
         )
 
@@ -174,8 +164,6 @@ def test_insert_repository_with_zero_values():
         assert result["owner_id"] == 0
         assert result["repo_id"] == 0
         assert result["file_count"] == 0
-        assert result["blank_lines"] == 0
-        assert result["comment_lines"] == 0
         assert result["code_lines"] == 0
 
 

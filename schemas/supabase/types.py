@@ -459,8 +459,6 @@ class Repositories(TypedDict):
     file_paths: list[str] | None
     repo_rules: str | None
     file_count: int
-    blank_lines: int
-    comment_lines: int
     code_lines: int
     target_branch: str
     trigger_on_review_comment: bool
@@ -495,8 +493,6 @@ class RepositoriesInsert(TypedDict):
     file_paths: NotRequired[list[str] | None]
     repo_rules: NotRequired[str | None]
     file_count: int
-    blank_lines: int
-    comment_lines: int
     code_lines: int
     target_branch: str
     trigger_on_review_comment: bool
