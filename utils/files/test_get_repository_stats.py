@@ -66,7 +66,7 @@ def test_get_repository_stats_repo_with_known_files(tmp_path):
         f.write("hello\n")
 
     os.system(
-        f"cd {repo_dir} && git add . && git commit -m init --quiet --author='Test <t@t.com>'"
+        f"cd {repo_dir} && git add . && git -c user.name=Test -c user.email=t@t.com commit -m init --quiet"
     )
 
     result = get_repository_stats(local_path=repo_dir)

@@ -51,6 +51,6 @@ def test_count_repo_total_files_exact_count(tmp_path):
             f.write("content\n")
 
     os.system(
-        f"cd {repo_dir} && git add . && git commit -m init --quiet --author='Test <t@t.com>'"
+        f"cd {repo_dir} && git add . && git -c user.name=Test -c user.email=t@t.com commit -m init --quiet"
     )
     assert count_repo_total_files(local_path=repo_dir) == 3
