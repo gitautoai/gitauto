@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name, unused-argument
 # Standard imports
 from unittest.mock import patch
 
