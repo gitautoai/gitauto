@@ -32,8 +32,6 @@ def create_repositories_data(
         "file_paths": None,
         "repo_rules": repo_rules,
         "file_count": 100,
-        "blank_lines": 10,
-        "comment_lines": 20,
         "code_lines": 70,
         "target_branch": "main",
         "trigger_on_review_comment": True,

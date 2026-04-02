@@ -14,8 +14,6 @@ def test_get_repository_success():
         "created_by": "user:test",
         "updated_by": "user:test",
         "file_count": 100,
-        "blank_lines": 50,
-        "comment_lines": 30,
         "code_lines": 200,
         "target_branch": "main",
         "trigger_on_commit": True,

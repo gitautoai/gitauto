@@ -7,6 +7,7 @@ from payloads.aws.setup_installed_repository_event import SetupInstalledReposito
 from schemas.supabase.types import OwnerType
 from services.aws.clients import lambda_client
 from services.github.types.repository import RepositoryAddedOrRemoved
+from services.supabase.repositories.upsert_repository import upsert_repository
 from services.webhook.setup_installed_repository import setup_installed_repository
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -24,6 +25,18 @@ def process_repositories(
     sender_email: str | None,
     sender_display_name: str,
 ):
+    # Insert all repos upfront so website knows total count for progress tracking
+    for repo in repositories:
+        upsert_repository(
+            owner_id=owner_id,
+            owner_name=owner_name,
+            owner_type=owner_type,
+            repo_id=repo["id"],
+            repo_name=repo["name"],
+            user_id=user_id,
+            user_name=user_name,
+        )
+
     # AWS_LAMBDA_FUNCTION_NAME is automatically set by AWS Lambda runtime
     lambda_function_name = os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
 

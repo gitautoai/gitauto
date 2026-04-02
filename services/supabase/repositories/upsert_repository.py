@@ -18,8 +18,6 @@ def upsert_repository(
     user_id: int,
     user_name: str,
     file_count: int = 0,
-    blank_lines: int = 0,
-    comment_lines: int = 0,
     code_lines: int = 0,
 ):
     # First check if owner exists since it's a foreign key
@@ -44,10 +42,6 @@ def upsert_repository(
         kwargs = {}
         if file_count:
             kwargs["file_count"] = file_count
-        if blank_lines:
-            kwargs["blank_lines"] = blank_lines
-        if comment_lines:
-            kwargs["comment_lines"] = comment_lines
         if code_lines:
             kwargs["code_lines"] = code_lines
         return update_repository(
@@ -65,7 +59,5 @@ def upsert_repository(
         user_id=user_id,
         user_name=user_name,
         file_count=file_count,
-        blank_lines=blank_lines,
-        comment_lines=comment_lines,
         code_lines=code_lines,
     )
