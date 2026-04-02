@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name, unused-argument
 from utils.text.reset_command import create_reset_command_message
 
 
