@@ -113,8 +113,6 @@ def setup_installed_repository(
         user_id=user_id,
         user_name=user_name,
         file_count=stats["file_count"],
-        blank_lines=stats["blank_lines"],
-        comment_lines=stats["comment_lines"],
         code_lines=stats["code_lines"],
     )
 

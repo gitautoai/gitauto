@@ -15,8 +15,6 @@ class TestUpdateRepository(unittest.TestCase):
         self.test_user_id = 789
         self.test_user_name = "test-user"
         self.test_file_count = 100
-        self.test_blank_lines = 50
-        self.test_comment_lines = 25
         self.test_code_lines = 500
 
     @patch("services.supabase.repositories.update_repository.supabase")

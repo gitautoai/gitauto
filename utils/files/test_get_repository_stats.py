@@ -1,401 +1,76 @@
-import subprocess
-from unittest.mock import Mock, patch
+import os
+
+import pytest
 
 from utils.files.get_repository_stats import (
     DEFAULT_REPO_STATS,
     get_repository_stats,
 )
 
-
-def test_get_repository_stats_success():
-    mock_result = Mock()
-    mock_result.stdout = """{
-        "header": {
-            "n_files": 10
-        },
-        "SUM": {
-            "blank": 50,
-            "comment": 30,
-            "code": 200
-        }
-    }"""
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == {
-        "file_count": 10,
-        "blank_lines": 50,
-        "comment_lines": 30,
-        "code_lines": 200,
-    }
+# Real git repositories for sociable tests
+GITAUTO_REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+WEBSITE_REPO = os.path.abspath(os.path.join(GITAUTO_REPO, "..", "website"))
 
 
-def test_get_repository_stats_with_extra_text_before_json():
-    mock_result = Mock()
-    mock_result.stdout = """Some extra text before JSON
-{
-    "header": {
-        "n_files": 5
-    },
-    "SUM": {
-        "blank": 25,
-        "comment": 15,
-        "code": 100
-    }
-}"""
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == {
-        "file_count": 5,
-        "blank_lines": 25,
-        "comment_lines": 15,
-        "code_lines": 100,
-    }
+@pytest.mark.integration
+def test_get_repository_stats_on_gitauto_repo():
+    result = get_repository_stats(local_path=GITAUTO_REPO)
+    assert result["file_count"] > 500
+    assert result["code_lines"] > 100000
 
 
-def test_get_repository_stats_with_extra_text_after_json():
-    mock_result = Mock()
-    mock_result.stdout = """{
-    "header": {
-        "n_files": 3
-    },
-    "SUM": {
-        "blank": 10,
-        "comment": 5,
-        "code": 50
-    }
-}
-Some extra text after JSON"""
+@pytest.mark.integration
+@pytest.mark.skipif(
+    not os.path.isdir(os.path.join(WEBSITE_REPO, ".git")),
+    reason="website repo clone not available",
+)
+def test_get_repository_stats_on_website_repo():
+    result = get_repository_stats(local_path=WEBSITE_REPO)
+    assert result["file_count"] > 500
+    assert result["code_lines"] > 10000
 
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
 
+def test_get_repository_stats_nonexistent_path():
+    result = get_repository_stats(local_path="/nonexistent/path")
+    assert result == DEFAULT_REPO_STATS
+
+
+def test_get_repository_stats_not_a_git_repo(tmp_path):
+    result = get_repository_stats(local_path=str(tmp_path))
+    assert result == DEFAULT_REPO_STATS
+
+
+@pytest.mark.integration
+def test_get_repository_stats_empty_repo(tmp_path):
+    """Empty git repo with no commits returns default stats."""
+    repo_dir = str(tmp_path / "empty-repo")
+    os.makedirs(repo_dir)
+    os.system(f"git init {repo_dir} --quiet")
+    result = get_repository_stats(local_path=repo_dir)
+    assert result == DEFAULT_REPO_STATS
+
+
+@pytest.mark.integration
+def test_get_repository_stats_repo_with_known_files(tmp_path):
+    """Create a repo with exactly 3 files, 5 total lines, and verify."""
+    repo_dir = str(tmp_path / "test-repo")
+    os.makedirs(repo_dir)
+    os.system(f"git init {repo_dir} --quiet")
+
+    # a.py: 2 lines, b.js: 2 lines, c.txt: 1 line = 5 total
+    with open(os.path.join(repo_dir, "a.py"), "w", encoding="utf-8") as f:
+        f.write("x = 1\ny = 2\n")
+    with open(os.path.join(repo_dir, "b.js"), "w", encoding="utf-8") as f:
+        f.write("const a = 1;\nconst b = 2;\n")
+    with open(os.path.join(repo_dir, "c.txt"), "w", encoding="utf-8") as f:
+        f.write("hello\n")
+
+    os.system(
+        f"cd {repo_dir} && git add . && git commit -m init --quiet --author='Test <t@t.com>'"
+    )
+
+    result = get_repository_stats(local_path=repo_dir)
     assert result == {
         "file_count": 3,
-        "blank_lines": 10,
-        "comment_lines": 5,
-        "code_lines": 50,
+        "code_lines": 5,
     }
-
-
-def test_get_repository_stats_with_extra_text_before_and_after_json():
-    mock_result = Mock()
-    mock_result.stdout = """Extra text before
-{
-    "header": {
-        "n_files": 7
-    },
-    "SUM": {
-        "blank": 35,
-        "comment": 20,
-        "code": 150
-    }
-}
-Extra text after"""
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == {
-        "file_count": 7,
-        "blank_lines": 35,
-        "comment_lines": 20,
-        "code_lines": 150,
-    }
-
-
-def test_get_repository_stats_invalid_json_format():
-    mock_result = Mock()
-    mock_result.stdout = "No JSON braces here"
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_malformed_json():
-    mock_result = Mock()
-    mock_result.stdout = "{ invalid json }"
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_missing_header():
-    mock_result = Mock()
-    mock_result.stdout = """{
-        "SUM": {
-            "blank": 25,
-            "comment": 15,
-            "code": 100
-        }
-    }"""
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == {
-        "file_count": 0,
-        "blank_lines": 25,
-        "comment_lines": 15,
-        "code_lines": 100,
-    }
-
-
-def test_get_repository_stats_missing_sum():
-    mock_result = Mock()
-    mock_result.stdout = """{
-        "header": {
-            "n_files": 5
-        }
-    }"""
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == {
-        "file_count": 5,
-        "blank_lines": 0,
-        "comment_lines": 0,
-        "code_lines": 0,
-    }
-
-
-def test_get_repository_stats_empty_json():
-    mock_result = Mock()
-    mock_result.stdout = "{}"
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_subprocess_error():
-    with patch("subprocess.run", side_effect=subprocess.CalledProcessError(1, "cloc")):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_only_closing_brace():
-    mock_result = Mock()
-    mock_result.stdout = "}"
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_only_opening_brace():
-    mock_result = Mock()
-    mock_result.stdout = "{"
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_braces_in_wrong_order():
-    mock_result = Mock()
-    mock_result.stdout = "}{"
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_file_not_found_error():
-    with patch(
-        "subprocess.run", side_effect=FileNotFoundError("cloc command not found")
-    ):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_permission_error():
-    with patch("subprocess.run", side_effect=PermissionError("Permission denied")):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_timeout_error():
-    with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cloc", 30)):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_os_error():
-    with patch("subprocess.run", side_effect=OSError("OS error occurred")):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_json_decode_error_with_valid_braces():
-    mock_result = Mock()
-    mock_result.stdout = "{ this is not valid json but has braces }"
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_empty_stdout():
-    mock_result = Mock()
-    mock_result.stdout = ""
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_start_equals_end():
-    mock_result = Mock()
-    mock_result.stdout = "}"
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_start_greater_than_end():
-    mock_result = Mock()
-    mock_result.stdout = "text } more text { end"
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_negative_start():
-    mock_result = Mock()
-    mock_result.stdout = "no braces here"
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_multiple_json_objects():
-    mock_result = Mock()
-    mock_result.stdout = """First object: {
-        "header": {
-            "n_files": 1
-        }
-    } Second object: {
-        "header": {
-            "n_files": 2
-        },
-        "SUM": {
-            "blank": 10,
-            "comment": 5,
-            "code": 25
-        }
-    }"""
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS
-
-
-def test_get_repository_stats_nested_json_with_extra_braces():
-    mock_result = Mock()
-    mock_result.stdout = """Extra { brace before {
-        "header": {
-            "n_files": 8,
-            "nested": {
-                "deep": "value"
-            }
-        },
-        "SUM": {
-            "blank": 40,
-            "comment": 25,
-            "code": 120
-        }
-    } extra } brace after"""
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == {
-        "file_count": 0,
-        "blank_lines": 0,
-        "comment_lines": 0,
-        "code_lines": 0,
-    }
-
-
-def test_get_repository_stats_partial_header_data():
-    mock_result = Mock()
-    mock_result.stdout = """{
-        "header": {
-            "other_field": "value"
-        },
-        "SUM": {
-            "blank": 15,
-            "comment": 8,
-            "code": 75
-        }
-    }"""
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == {
-        "file_count": 0,
-        "blank_lines": 15,
-        "comment_lines": 8,
-        "code_lines": 75,
-    }
-
-
-def test_get_repository_stats_partial_sum_data():
-    mock_result = Mock()
-    mock_result.stdout = """{
-        "header": {
-            "n_files": 6
-        },
-        "SUM": {
-            "blank": 20,
-            "other_field": "value"
-        }
-    }"""
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == {
-        "file_count": 6,
-        "blank_lines": 20,
-        "comment_lines": 0,
-        "code_lines": 0,
-    }
-
-
-def test_get_repository_stats_unicode_error():
-    mock_result = Mock()
-    mock_result.stdout = "{ invalid unicode: \\x80 }"
-
-    with patch("subprocess.run", return_value=mock_result):
-        result = get_repository_stats("/test/path")
-
-    assert result == DEFAULT_REPO_STATS

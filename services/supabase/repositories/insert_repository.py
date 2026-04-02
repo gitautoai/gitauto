@@ -11,8 +11,6 @@ def insert_repository(
     user_id: int,
     user_name: str,
     file_count: int = 0,
-    blank_lines: int = 0,
-    comment_lines: int = 0,
     code_lines: int = 0,
 ):
     structured_rules = get_default_structured_rules()
@@ -25,8 +23,6 @@ def insert_repository(
                 "repo_id": repo_id,
                 "repo_name": repo_name,
                 "file_count": file_count,
-                "blank_lines": blank_lines,
-                "comment_lines": comment_lines,
                 "code_lines": code_lines,
                 "structured_rules": structured_rules,
                 "created_by": str(user_id) + ":" + user_name,

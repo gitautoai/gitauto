@@ -51,8 +51,6 @@ def test_upsert_repository_owner_exists_repo_exists(mocks):
         user_id=789,
         user_name="test_user",
         file_count=10,
-        blank_lines=5,
-        comment_lines=3,
         code_lines=20,
     )
 
@@ -64,8 +62,6 @@ def test_upsert_repository_owner_exists_repo_exists(mocks):
         repo_id=456,
         updated_by="789:test_user",
         file_count=10,
-        blank_lines=5,
-        comment_lines=3,
         code_lines=20,
     )
 
@@ -103,8 +99,6 @@ def test_upsert_repository_owner_not_exists_repo_not_exists(mocks):
         user_id=789,
         user_name="test_user",
         file_count=0,
-        blank_lines=0,
-        comment_lines=0,
         code_lines=0,
     )
 
@@ -124,8 +118,6 @@ def test_upsert_repository_owner_exists_repo_not_exists(mocks):
         user_id=789,
         user_name="test_user",
         file_count=15,
-        blank_lines=8,
-        comment_lines=4,
         code_lines=25,
     )
 
@@ -139,8 +131,6 @@ def test_upsert_repository_owner_exists_repo_not_exists(mocks):
         user_id=789,
         user_name="test_user",
         file_count=15,
-        blank_lines=8,
-        comment_lines=4,
         code_lines=25,
     )
 
@@ -201,8 +191,6 @@ def test_upsert_repository_insert_no_data_returned(mocks):
         user_id=789,
         user_name="test_user",
         file_count=0,
-        blank_lines=0,
-        comment_lines=0,
         code_lines=0,
     )
 
@@ -235,8 +223,6 @@ def test_upsert_repository_with_default_parameters(mocks):
         user_id=789,
         user_name="test_user",
         file_count=0,
-        blank_lines=0,
-        comment_lines=0,
         code_lines=0,
     )
 
@@ -313,7 +299,5 @@ def test_upsert_repository_string_formatting(mocks):
         user_id=789,
         user_name="test_user",
         file_count=0,
-        blank_lines=0,
-        comment_lines=0,
         code_lines=0,
     )
