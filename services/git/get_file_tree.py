@@ -19,17 +19,11 @@ def get_file_tree(clone_dir: str, ref: str, root_only: bool = False):
         logger.warning("No valid git repo at %s", clone_dir)
         return tree_items
 
-    # Fetch latest refs to ensure we have the requested ref
-    try:
-        run_subprocess(args=["git", "fetch", "origin", ref], cwd=clone_dir)
-    except ValueError:
-        logger.warning("Failed to fetch ref %s, using local data", ref)
-
     # -r: recursive, -l: show size, --full-tree: show full paths
     args = ["git", "ls-tree", "--full-tree", "-l"]
     if not root_only:
         args.append("-r")
-    args.append(f"origin/{ref}")
+    args.append(ref)
 
     try:
         result = run_subprocess(args=args, cwd=clone_dir)
