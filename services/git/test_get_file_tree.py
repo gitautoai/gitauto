@@ -37,16 +37,17 @@ class TestGetFileTree:
         assert "size" not in items[2]
 
     @patch("os.path.isdir", return_value=True)
-    def test_fetches_before_ls_tree(self, _mock_isdir, mock_run_subprocess):
+    def test_uses_local_ref_directly(self, _mock_isdir, mock_run_subprocess):
         result = MagicMock()
         result.stdout = ""
         mock_run_subprocess.return_value = result
 
         get_file_tree(clone_dir="/mnt/efs/owner/repo", ref="main")
 
-        # First call should be git fetch
-        fetch_call = mock_run_subprocess.call_args_list[0]
-        assert fetch_call[1]["args"] == ["git", "fetch", "origin", "main"]
+        # Should call git ls-tree with local ref, no fetch, no origin/ prefix
+        call = mock_run_subprocess.call_args_list[0]
+        assert call[1]["args"] == ["git", "ls-tree", "--full-tree", "-l", "-r", "main"]
+        assert mock_run_subprocess.call_count == 1
 
     @patch("os.path.isdir", return_value=False)
     def test_returns_empty_for_invalid_clone_dir(
@@ -76,25 +77,16 @@ class TestGetFileTree:
 
         get_file_tree(clone_dir="/mnt/efs/owner/repo", ref="main", root_only=True)
 
-        # ls-tree call should NOT have -r flag
-        ls_tree_call = mock_run_subprocess.call_args_list[1]
-        assert "-r" not in ls_tree_call[1]["args"]
+        call = mock_run_subprocess.call_args_list[0]
+        assert "-r" not in call[1]["args"]
 
     @patch("os.path.isdir", return_value=True)
-    def test_handles_fetch_failure_gracefully(self, _mock_isdir, mock_run_subprocess):
-        def side_effect(args, cwd):
-            if "fetch" in args:
-                raise ValueError("fetch failed")
-            result = MagicMock()
-            result.stdout = "100644 blob abc123    100\tfile.py"
-            return result
-
-        mock_run_subprocess.side_effect = side_effect
+    def test_returns_empty_when_ls_tree_fails(self, _mock_isdir, mock_run_subprocess):
+        mock_run_subprocess.side_effect = ValueError("ref not found")
 
         items = get_file_tree(clone_dir="/mnt/efs/owner/repo", ref="main")
 
-        assert len(items) == 1
-        assert items[0]["path"] == "file.py"
+        assert not items
 
 
 # --- Integration tests (real git, local bare repo) ---
