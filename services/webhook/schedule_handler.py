@@ -123,13 +123,12 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             msg = f"Repository {owner_name}/{repo_name} is empty"
             logger.info(msg)
             return {"status": "skipped", "message": msg}
-    tree_items = get_file_tree(clone_dir=efs_dir, ref=target_branch)
-
     # Copy EFS to /tmp for local file reads (EFS is shared, don't operate on it directly)
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number=None)
     copy_repo_from_efs_to_tmp(efs_dir, clone_dir)
     git_fetch(clone_dir, clone_url, target_branch)
     git_checkout(clone_dir, target_branch)
+    tree_items = get_file_tree(clone_dir=clone_dir, ref=target_branch)
 
     # Extract necessary data
     all_files_with_sizes = [

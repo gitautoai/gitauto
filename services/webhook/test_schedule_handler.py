@@ -1208,3 +1208,74 @@ def test_schedule_handler_partial_none_coverage_omits_none_metric(
     assert "Statement Coverage: 50%" in call_kwargs["body"]
     assert "Function Coverage: 50%" in call_kwargs["body"]
     assert "Branch Coverage:" not in call_kwargs["body"]
+
+
+@patch("services.webhook.schedule_handler.get_all_coverages")
+@patch("services.webhook.schedule_handler.git_checkout")
+@patch("services.webhook.schedule_handler.git_fetch")
+@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
+@patch("services.webhook.schedule_handler.get_file_tree")
+@patch("services.webhook.schedule_handler.get_clone_dir")
+@patch("services.webhook.schedule_handler.get_efs_dir")
+@patch("services.webhook.schedule_handler.get_default_branch")
+@patch("services.webhook.schedule_handler.check_availability")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+def test_get_file_tree_reads_from_tmp_not_efs(
+    mock_get_token,
+    mock_is_paused,
+    mock_get_repository,
+    mock_check_availability,
+    mock_get_default_branch,
+    mock_get_efs_dir,
+    mock_get_clone_dir,
+    mock_get_file_tree,
+    _mock_copy_repo,
+    _mock_git_fetch,
+    _mock_git_checkout,
+    mock_get_all_coverages,
+    mock_event,
+):
+    """Repo has files but git ls-tree fails on EFS (no local ref before checkout).
+
+    PR #2449 called get_file_tree on efs_dir before fetch/checkout, so git ls-tree
+    returned empty and the handler falsely reported "No files found".
+    The fix: call get_file_tree on clone_dir after checkout where the local ref exists.
+    """
+    mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = None
+    mock_get_repository.return_value = {"trigger_on_schedule": True}
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "exception",
+        "requests_left": None,
+        "credit_balance_usd": 0,
+        "period_end_date": None,
+        "user_message": "",
+        "log_message": "Exception owner - unlimited access.",
+    }
+    mock_get_default_branch.return_value = "master"
+    mock_get_efs_dir.return_value = "/mnt/efs/test-org/test-repo"
+    mock_get_clone_dir.return_value = "/tmp/test-org/test-repo"
+
+    # EFS has no local master ref, /tmp does after checkout
+    def get_file_tree_by_dir(clone_dir, ref):
+        if clone_dir == "/mnt/efs/test-org/test-repo":
+            return []  # git ls-tree master fails on EFS
+        return [
+            {
+                "path": "src/app.ts",
+                "type": "blob",
+                "mode": "100644",
+                "sha": "a1",
+                "size": 50,
+            },
+        ]
+
+    mock_get_file_tree.side_effect = get_file_tree_by_dir
+    mock_get_all_coverages.return_value = []
+
+    result = schedule_handler(mock_event)
+
+    assert result["message"] != "Schedule: No files found"

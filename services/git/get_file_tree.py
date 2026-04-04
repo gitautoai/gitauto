@@ -27,8 +27,8 @@ def get_file_tree(clone_dir: str, ref: str, root_only: bool = False):
 
     try:
         result = run_subprocess(args=args, cwd=clone_dir)
-    except ValueError:
-        logger.warning("git ls-tree failed for ref %s", ref)
+    except ValueError as e:
+        logger.warning("git ls-tree failed for ref %s: %s", ref, e)
         return tree_items
 
     output = result.stdout.strip() if result and result.stdout else ""
