@@ -83,7 +83,8 @@ ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 ### Testing Strategy
 
 - Co-located tests alongside source code, pattern: `test_*.py`
-- Git operations (`services/git/`): MUST have both unit tests (mocked `run_subprocess`) AND integration tests against a local bare repo. Use `local_repo` fixture from `services/git/conftest.py`, mark with `@pytest.mark.integration`.
+- MUST have both solitary tests (mocked dependencies) AND sociable tests (real dependencies). Solitary tests verify individual function logic; sociable tests verify the chain of calls actually works end-to-end. Without sociable tests, we don't know if functions compose correctly in practice. Example: git clone → fetch → checkout must produce a working repo; mocking each individually doesn't prove the chain works.
+- Git sociable tests: Use `local_repo` fixture from `services/git/conftest.py`, mark with `@pytest.mark.integration`.
 
 ## Platform Agnostic
 

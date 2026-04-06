@@ -193,8 +193,7 @@ async def test_stripe_customer_id_update(
 @patch("services.webhook.new_pr_handler.get_base64")
 @patch("services.webhook.new_pr_handler.describe_image")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -220,7 +219,6 @@ async def test_image_urls_processing(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_describe_image,
@@ -290,8 +288,7 @@ async def test_image_urls_processing(
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
 @patch("services.webhook.new_pr_handler.get_base64")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -317,7 +314,6 @@ async def test_image_unsupported_format_skipped(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_base64,
@@ -379,8 +375,7 @@ async def test_image_unsupported_format_skipped(
 @patch("services.webhook.new_pr_handler.get_base64")
 @patch("services.webhook.new_pr_handler.describe_image")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -406,7 +401,6 @@ async def test_image_base64_fetch_failed(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_describe_image,
@@ -475,8 +469,7 @@ async def test_image_base64_fetch_failed(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=True)
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -504,7 +497,6 @@ async def test_timeout_approaching_breaks_loop(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -560,8 +552,7 @@ async def test_timeout_approaching_breaks_loop(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=True)
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -589,7 +580,6 @@ async def test_branch_deleted_breaks_loop(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -647,8 +637,7 @@ async def test_branch_deleted_breaks_loop(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -676,7 +665,6 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -831,8 +819,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -860,7 +847,6 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1004,8 +990,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -1033,7 +1018,6 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1118,8 +1102,7 @@ async def test_retry_counter_reset_on_successful_loop(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -1147,7 +1130,6 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1209,7 +1191,6 @@ async def test_non_test_file_skipped_in_header_merge(
 )
 @patch("services.webhook.new_pr_handler.write_and_commit_file")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
-@patch("services.webhook.new_pr_handler.get_raw_content")
 @patch("services.webhook.new_pr_handler.is_test_file")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
@@ -1217,8 +1198,7 @@ async def test_non_test_file_skipped_in_header_merge(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -1246,7 +1226,6 @@ async def test_test_file_header_merge(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1255,7 +1234,6 @@ async def test_test_file_header_merge(
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_is_test_file,
-    mock_get_raw_content,
     mock_merge_headers,
     mock_replace_remote,
     _mock_read_local_file,
@@ -1295,13 +1273,11 @@ async def test_test_file_header_merge(
     )
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
-    mock_get_raw_content.return_value = "def test_something(): pass"
     mock_merge_headers.return_value = "import pytest\n\ndef test_something(): pass"
 
     await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_is_test_file.assert_called_with("tests/test_example.py")
-    mock_get_raw_content.assert_called()
     mock_merge_headers.assert_called()
     mock_replace_remote.assert_called_once()
 
@@ -1316,7 +1292,6 @@ async def test_test_file_header_merge(
 )
 @patch("services.webhook.new_pr_handler.write_and_commit_file")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
-@patch("services.webhook.new_pr_handler.get_raw_content")
 @patch("services.webhook.new_pr_handler.is_test_file")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
@@ -1324,8 +1299,7 @@ async def test_test_file_header_merge(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -1353,7 +1327,6 @@ async def test_test_file_header_merge_no_content(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1362,10 +1335,9 @@ async def test_test_file_header_merge_no_content(
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_is_test_file,
-    mock_get_raw_content,
     mock_merge_headers,
     mock_replace_remote,
-    _mock_read_local_file,
+    mock_read_local_file,
     _mock_run_subprocess,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
@@ -1402,12 +1374,18 @@ async def test_test_file_header_merge_no_content(
     )
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
-    mock_get_raw_content.return_value = None
+
+    # Return None only for the test file (simulates it not existing locally)
+    def read_side_effect(file_path, base_dir=None):
+        if file_path == "tests/test_example.py":
+            return None
+        return "def calculate():\n    return 1 + 2\n"
+
+    mock_read_local_file.side_effect = read_side_effect
 
     await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_is_test_file.assert_called()
-    mock_get_raw_content.assert_called()
     mock_merge_headers.assert_not_called()
     mock_replace_remote.assert_not_called()
 
@@ -1422,7 +1400,6 @@ async def test_test_file_header_merge_no_content(
 )
 @patch("services.webhook.new_pr_handler.write_and_commit_file")
 @patch("services.webhook.new_pr_handler.merge_test_file_headers")
-@patch("services.webhook.new_pr_handler.get_raw_content")
 @patch("services.webhook.new_pr_handler.is_test_file")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
@@ -1430,8 +1407,7 @@ async def test_test_file_header_merge_no_content(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -1459,7 +1435,6 @@ async def test_test_file_header_merge_no_change(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1468,7 +1443,6 @@ async def test_test_file_header_merge_no_change(
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_is_test_file,
-    mock_get_raw_content,
     mock_merge_headers,
     mock_replace_remote,
     _mock_read_local_file,
@@ -1508,13 +1482,12 @@ async def test_test_file_header_merge_no_change(
     )
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
-    mock_get_raw_content.return_value = "import pytest\n\ndef test_something(): pass"
-    mock_merge_headers.return_value = "import pytest\n\ndef test_something(): pass"
+    # merge_test_file_headers returns same content as read_local_file → no change → no write
+    mock_merge_headers.return_value = "def calculate():\n    return 1 + 2\n"
 
     await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_is_test_file.assert_called()
-    mock_get_raw_content.assert_called()
     mock_merge_headers.assert_called()
     mock_replace_remote.assert_not_called()
 
@@ -1540,8 +1513,7 @@ async def test_test_file_header_merge_no_change(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
 @patch("services.webhook.new_pr_handler.extract_image_urls")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
@@ -1569,7 +1541,6 @@ async def test_credits_depleted_email_sent(
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_extract_image_urls,
     mock_get_remote_file,
@@ -1653,8 +1624,7 @@ async def test_credits_depleted_email_sent(
 @patch("services.webhook.new_pr_handler.update_usage")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
 @patch("services.webhook.new_pr_handler.create_user_request")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.get_owner")
 @patch("services.webhook.new_pr_handler.create_comment")
@@ -1670,7 +1640,6 @@ async def test_new_pr_handler_token_accumulation(
     mock_create_comment,
     mock_get_owner,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_create_user_request,
     mock_chat_with_agent,
@@ -1836,8 +1805,7 @@ async def test_new_pr_handler_token_accumulation(
 @patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
 @patch("services.webhook.new_pr_handler.create_user_request")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.get_owner")
 @patch("services.webhook.new_pr_handler.create_comment")
@@ -1851,7 +1819,6 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_create_comment,
     mock_get_owner,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_create_user_request,
     mock_chat_with_agent,
@@ -1994,8 +1961,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.read_local_file")
 @patch("services.webhook.new_pr_handler.find_test_files")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.get_owner")
 @patch("services.webhook.new_pr_handler.create_comment")
@@ -2009,7 +1975,6 @@ async def test_few_test_files_include_contents_in_prompt(
     mock_create_comment,
     mock_get_owner,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_find_test_files,
     mock_read_local_file,
@@ -2147,8 +2112,7 @@ async def test_few_test_files_include_contents_in_prompt(
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.read_local_file")
 @patch("services.webhook.new_pr_handler.find_test_files")
-@patch("services.webhook.new_pr_handler.prepare_repo_for_work")
-@patch("services.webhook.new_pr_handler.git_clone_to_efs")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.get_owner")
 @patch("services.webhook.new_pr_handler.create_comment")
@@ -2162,7 +2126,6 @@ async def test_many_test_files_include_paths_only_in_prompt(
     mock_create_comment,
     mock_get_owner,
     mock_ensure_node_packages,
-    mock_git_clone_to_efs,
     mock_prepare_repo,
     mock_find_test_files,
     mock_read_local_file,

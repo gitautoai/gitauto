@@ -24,8 +24,9 @@ from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
-from services.git.git_clone_to_efs import git_clone_to_efs
-from services.git.prepare_repo_for_work import prepare_repo_for_work
+from services.git.clone_repo_and_install_dependencies import (
+    clone_repo_and_install_dependencies,
+)
 from services.github.check_suites.get_failed_check_runs import (
     get_failed_check_runs_from_check_suite,
 )
@@ -197,13 +198,13 @@ async def handle_check_suite(
 
     pull_request = pull_requests[0]
     pr_number = pull_request["number"]
+    base_branch = pull_request["base"]["ref"]
     set_pr_number(pr_number)
 
     full_pr = get_pull_request(
         owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
     pr_title = full_pr["title"]
-    target_branch = full_pr["base"]["ref"]
 
     # Get repository settings - check if trigger_on_test_failure is enabled
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
@@ -230,8 +231,8 @@ async def handle_check_suite(
         "pr_comments": [],  # Not needed - check_suite agent uses CI error logs, not PR discussion
         "latest_commit_sha": check_run["head_sha"],
         "pr_creator": sender_name,
-        "base_branch": head_branch,
-        "new_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_file_tree requires the base branch
+        "base_branch": base_branch,
+        "new_branch": head_branch,
         "installation_id": installation_id,
         "token": token,
         "sender_id": sender_id,
@@ -248,22 +249,25 @@ async def handle_check_suite(
     }
 
     # Clone repo to tmp
-    prepare_repo_for_work(
+    clone_repo_and_install_dependencies(
         owner=owner_name,
         repo=repo_name,
+        base_branch=base_branch,
         pr_branch=head_branch,
         token=token,
         clone_dir=clone_dir,
     )
 
-    # Clone and install
+    # Install dependencies (read repo files from clone_dir, cache on EFS)
     efs_dir = get_efs_dir(owner_name, repo_name)
-    clone_url = get_clone_url(owner_name, repo_name, token)
-    git_clone_to_efs(efs_dir, clone_url, target_branch)
-    node_ready = ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
+    node_ready = ensure_node_packages(
+        owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir
+    )
     logger.info("node: ready=%s", node_ready)
 
-    php_ready = ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
+    php_ready = ensure_php_packages(
+        owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir
+    )
     logger.info("php: ready=%s", php_ready)
 
     # Check if CI-failed comment already exists (skip if GA is already handling this PR).

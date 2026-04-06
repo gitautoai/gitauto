@@ -8,45 +8,54 @@ from services.website.sync_files_from_github_to_coverage import (
     sync_files_from_github_to_coverage,
 )
 
+MODULE = "services.website.sync_files_from_github_to_coverage"
+
 
 @pytest.fixture
 def mock_verify_api_key():
-    with patch(
-        "services.website.sync_files_from_github_to_coverage.verify_api_key"
-    ) as mock:
+    with patch(f"{MODULE}.verify_api_key") as mock:
         yield mock
 
 
 @pytest.fixture
-def mock_get_efs_dir():
-    with patch(
-        "services.website.sync_files_from_github_to_coverage.get_efs_dir",
-        return_value="/mnt/efs/test-owner/test-repo",
-    ) as mock:
+def mock_get_installation_by_owner():
+    with patch(f"{MODULE}.get_installation_by_owner") as mock:
+        mock.return_value = {"installation_id": 12345}
         yield mock
 
 
 @pytest.fixture
-def mock_get_file_tree(mock_get_efs_dir):
-    with patch(
-        "services.website.sync_files_from_github_to_coverage.get_file_tree"
-    ) as mock:
+def mock_get_installation_access_token():
+    with patch(f"{MODULE}.get_installation_access_token") as mock:
+        mock.return_value = "fake-token"
+        yield mock
+
+
+@pytest.fixture
+def mock_git_clone_to_tmp():
+    with patch(f"{MODULE}.git_clone_to_tmp") as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_get_file_tree(
+    mock_get_installation_by_owner,
+    mock_get_installation_access_token,
+    mock_git_clone_to_tmp,
+):
+    with patch(f"{MODULE}.get_file_tree") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_upsert_coverages():
-    with patch(
-        "services.website.sync_files_from_github_to_coverage.upsert_coverages"
-    ) as mock:
+    with patch(f"{MODULE}.upsert_coverages") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_delete_stale_coverages():
-    with patch(
-        "services.website.sync_files_from_github_to_coverage.delete_stale_coverages"
-    ) as mock:
+    with patch(f"{MODULE}.delete_stale_coverages") as mock:
         mock.return_value = 0
         yield mock
 
@@ -162,7 +171,7 @@ def test_sync_filters_directories(
 
 def test_sync_invalid_api_key(mock_get_file_tree):
     with patch(
-        "services.website.sync_files_from_github_to_coverage.verify_api_key",
+        f"{MODULE}.verify_api_key",
         side_effect=HTTPException(status_code=401, detail="Invalid API key"),
     ):
         with pytest.raises(HTTPException) as exc_info:
@@ -183,14 +192,11 @@ def test_sync_skips_verification_without_api_key(
     mock_upsert_coverages,
     mock_delete_stale_coverages,
 ):
-    """When api_key is None (internal Lambda calls), verification is skipped."""
     mock_get_file_tree.return_value = [
         {"path": "src/main.py", "sha": "abc123", "size": 100, "type": "blob"},
     ]
 
-    with patch(
-        "services.website.sync_files_from_github_to_coverage.verify_api_key"
-    ) as mock_verify:
+    with patch(f"{MODULE}.verify_api_key") as mock_verify:
         sync_files_from_github_to_coverage(
             owner="test-owner",
             repo="test-repo",

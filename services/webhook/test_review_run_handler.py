@@ -78,13 +78,11 @@ def mock_review_comment_payload():
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
-@patch("services.webhook.review_run_handler.git_clone_to_efs")
-@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
 @pytest.mark.asyncio
 async def test_review_run_handler_accumulates_tokens_correctly(
     _mock_prepare_repo,
-    _mock_git_clone_to_efs,
     _mock_ensure_node_packages,
     mock_update_usage,
     _mock_get_reference,
@@ -192,14 +190,12 @@ async def test_review_run_handler_accumulates_tokens_correctly(
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
-@patch("services.webhook.review_run_handler.git_clone_to_efs")
-@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
 @patch("services.webhook.review_run_handler.MAX_ITERATIONS", 2)
 @pytest.mark.asyncio
 async def test_review_run_handler_max_iterations_forces_verification(
     _mock_prepare_repo,
-    _mock_git_clone_to_efs,
     _mock_ensure_node_packages,
     _mock_update_usage,
     _mock_get_reference,
@@ -337,8 +333,7 @@ def mock_bot_review_comment_payload():
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
-@patch("services.webhook.review_run_handler.git_clone_to_efs")
-@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -349,7 +344,6 @@ async def test_thread_resolved_during_loop_stops_agent(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
     _mock_prepare_repo,
-    _mock_git_clone_to_efs,
     _mock_ensure_node,
     _mock_update_usage,
     _mock_get_reference,
@@ -421,8 +415,7 @@ async def test_thread_resolved_during_loop_stops_agent(
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
-@patch("services.webhook.review_run_handler.git_clone_to_efs")
-@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -433,7 +426,6 @@ async def test_bot_first_review_comment_is_processed(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
     _mock_prepare_repo,
-    _mock_git_clone_to_efs,
     _mock_ensure_node,
     _mock_update_usage,
     _mock_get_reference,
@@ -598,8 +590,7 @@ async def test_bot_reply_after_gitauto_replied_is_skipped(
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
-@patch("services.webhook.review_run_handler.git_clone_to_efs")
-@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -610,7 +601,6 @@ async def test_human_review_comment_always_processed(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
     _mock_prepare_repo,
-    _mock_git_clone_to_efs,
     _mock_ensure_node,
     _mock_update_usage,
     _mock_get_reference,
@@ -749,8 +739,7 @@ def mock_pr_comment_payload():
 @patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
-@patch("services.webhook.review_run_handler.git_clone_to_efs")
-@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -761,7 +750,6 @@ async def test_pr_comment_uses_create_comment_not_reply(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
     _mock_prepare_repo,
-    _mock_git_clone_to_efs,
     _mock_ensure_node,
     _mock_update_usage,
     _mock_get_reference,
@@ -846,8 +834,7 @@ async def test_pr_comment_uses_create_comment_not_reply(
 @patch("services.webhook.review_run_handler.get_reference")
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
-@patch("services.webhook.review_run_handler.git_clone_to_efs")
-@patch("services.webhook.review_run_handler.prepare_repo_for_work")
+@patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -860,7 +847,6 @@ async def test_question_comment_agent_replies_without_code_changes(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
     _mock_prepare_repo,
-    _mock_git_clone_to_efs,
     _mock_ensure_node,
     _mock_update_usage,
     mock_get_reference,

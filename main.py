@@ -17,7 +17,6 @@ from payloads.aws.event_bridge_scheduler.event_types import EventBridgeScheduler
 from payloads.aws.setup_installed_repository_event import SetupInstalledRepositoryEvent
 from services.aws.cleanup_tmp import cleanup_tmp
 from services.efs.cleanup_stale_repos_on_efs import cleanup_stale_repos_on_efs
-from services.efs.clone_and_install import clone_and_install
 from services.github.utils.verify_webhook_signature import verify_webhook_signature
 from services.sentry.before_send import before_send
 from services.slack.slack_notify import slack_notify
@@ -211,16 +210,6 @@ async def api_sync_files_from_github_to_coverage(
         api_key=api_key,
     )
     return {"status": "syncing"}
-
-
-@app.post(path="/api/{owner}/{repo}/clone_and_install")
-async def api_clone_and_install(
-    owner: str,
-    repo: str,
-    api_key: str = Header(..., alias="X-API-Key"),
-):
-    verify_api_key(api_key)
-    return clone_and_install(owner, repo)
 
 
 @app.post(path="/api/{owner}/{repo}/setup_coverage_workflow")
