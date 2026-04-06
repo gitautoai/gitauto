@@ -17,9 +17,6 @@ def _build_mock_supabase(owners_data, repos_data):
     repos_result = Mock()
     repos_result.data = repos_data
 
-    call_count = {"n": 0}
-    original_table = mock_supabase.table
-
     def table_side_effect(table_name):
         mock_table = Mock()
         if table_name == "owners":
