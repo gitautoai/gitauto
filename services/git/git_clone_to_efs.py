@@ -12,10 +12,6 @@ def git_clone_to_efs(efs_dir: str, clone_url: str, branch: str):
     logger.info("Cloning base to EFS: branch=%s dir=%s", branch, efs_dir)
     os.makedirs(efs_dir, exist_ok=True)
 
-    # Lambda /var/task is read-only; redirect git config to /tmp
-    # GIT_CONFIG_GLOBAL only affects git, unlike HOME which affects all tools
-    os.environ["GIT_CONFIG_GLOBAL"] = "/tmp/.gitconfig"
-
     # EFS directories may be owned by different Lambda instances; mark as safe
     run_subprocess(
         ["git", "config", "--global", "--add", "safe.directory", efs_dir], efs_dir
