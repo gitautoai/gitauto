@@ -108,7 +108,7 @@ async def handle_new_pr(
     sender_name = base_args["sender_name"]
 
     # Start notification
-    start_msg = f"PR handler started: `{trigger}` by `{sender_name}` for `{pr_number}:{pr_title}` in `{owner_name}/{repo_name}`"
+    start_msg = f"PR handler started: `{trigger}` by `{sender_name}` for {pr_number}:{pr_title} in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
 
     # Create a comment to track progress
