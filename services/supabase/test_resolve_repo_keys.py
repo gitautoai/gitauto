@@ -225,9 +225,9 @@ def test_large_input_set():
 
     assert len(result) == 50
     # Spot-check a few entries
-    assert (f"owner-1", "repo-10") in result
-    assert (f"owner-25", "repo-250") in result
-    assert (f"owner-50", "repo-500") in result
+    assert ("owner-1", "repo-10") in result
+    assert ("owner-25", "repo-250") in result
+    assert ("owner-50", "repo-500") in result
 
 
 def test_partial_owner_coverage():
