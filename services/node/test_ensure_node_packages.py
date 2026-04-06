@@ -10,7 +10,12 @@ from services.node.ensure_node_packages import ensure_node_packages
 
 @pytest.fixture
 def efs_dir(tmp_path):
-    return str(tmp_path)
+    return str(tmp_path / "efs")
+
+
+@pytest.fixture
+def clone_dir(tmp_path):
+    return str(tmp_path / "clone")
 
 
 def _setup_node_modules(
@@ -36,13 +41,15 @@ def test_returns_false_when_no_package_json():
 
         result = ensure_node_packages(
             owner_id=123,
+            clone_dir="/tmp/owner/repo",
             efs_dir="/mnt/efs/owner/repo",
         )
 
         assert result is False
 
 
-def test_reuses_when_content_matches(efs_dir):
+def test_reuses_when_content_matches(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
     _setup_node_modules(efs_dir)
 
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
@@ -54,13 +61,16 @@ def test_reuses_when_content_matches(efs_dir):
             with patch("services.node.ensure_node_packages.fcntl.flock"):
                 result = ensure_node_packages(
                     owner_id=123,
+                    clone_dir=clone_dir,
                     efs_dir=efs_dir,
                 )
 
                 assert result is True
 
 
-def test_triggers_codebuild_when_no_node_modules(efs_dir):
+def test_triggers_codebuild_when_no_node_modules(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
+
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
@@ -73,6 +83,7 @@ def test_triggers_codebuild_when_no_node_modules(efs_dir):
                 ) as mock_codebuild:
                     result = ensure_node_packages(
                         owner_id=123,
+                        clone_dir=clone_dir,
                         efs_dir=efs_dir,
                     )
 
@@ -80,7 +91,8 @@ def test_triggers_codebuild_when_no_node_modules(efs_dir):
                     assert result is False
 
 
-def test_triggers_codebuild_when_content_differs(efs_dir):
+def test_triggers_codebuild_when_content_differs(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
     _setup_node_modules(efs_dir, package_json='{"name": "old"}')
 
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
@@ -95,6 +107,7 @@ def test_triggers_codebuild_when_content_differs(efs_dir):
                 ) as mock_codebuild:
                     result = ensure_node_packages(
                         owner_id=123,
+                        clone_dir=clone_dir,
                         efs_dir=efs_dir,
                     )
 
@@ -102,8 +115,9 @@ def test_triggers_codebuild_when_content_differs(efs_dir):
                     assert result is False
 
 
-def test_triggers_codebuild_when_bin_missing(efs_dir):
+def test_triggers_codebuild_when_bin_missing(efs_dir, clone_dir):
     # node_modules exists but no .bin
+    os.makedirs(efs_dir, exist_ok=True)
     os.makedirs(os.path.join(efs_dir, "node_modules"))
     with open(os.path.join(efs_dir, "package.json"), "w", encoding=UTF8) as f:
         f.write('{"name": "test"}')
@@ -120,6 +134,7 @@ def test_triggers_codebuild_when_bin_missing(efs_dir):
                 ) as mock_codebuild:
                     result = ensure_node_packages(
                         owner_id=123,
+                        clone_dir=clone_dir,
                         efs_dir=efs_dir,
                     )
 
@@ -127,7 +142,8 @@ def test_triggers_codebuild_when_bin_missing(efs_dir):
                     assert result is False
 
 
-def test_triggers_codebuild_when_bin_empty(efs_dir):
+def test_triggers_codebuild_when_bin_empty(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
     os.makedirs(os.path.join(efs_dir, "node_modules", ".bin"))
     with open(os.path.join(efs_dir, "package.json"), "w", encoding=UTF8) as f:
         f.write('{"name": "test"}')
@@ -144,6 +160,7 @@ def test_triggers_codebuild_when_bin_empty(efs_dir):
                 ) as mock_codebuild:
                     result = ensure_node_packages(
                         owner_id=123,
+                        clone_dir=clone_dir,
                         efs_dir=efs_dir,
                     )
 
@@ -151,7 +168,8 @@ def test_triggers_codebuild_when_bin_empty(efs_dir):
                     assert result is False
 
 
-def test_reuses_when_npmrc_matches(efs_dir):
+def test_reuses_when_npmrc_matches(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
     _setup_node_modules(efs_dir, npmrc="//registry.npmjs.org/:_authToken=${NPM_TOKEN}")
 
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
@@ -166,13 +184,15 @@ def test_reuses_when_npmrc_matches(efs_dir):
             with patch("services.node.ensure_node_packages.fcntl.flock"):
                 result = ensure_node_packages(
                     owner_id=123,
+                    clone_dir=clone_dir,
                     efs_dir=efs_dir,
                 )
 
                 assert result is True
 
 
-def test_triggers_codebuild_when_npmrc_differs(efs_dir):
+def test_triggers_codebuild_when_npmrc_differs(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
     _setup_node_modules(efs_dir, npmrc="//registry.npmjs.org/:_authToken=${NPM_TOKEN}")
 
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
@@ -190,6 +210,7 @@ def test_triggers_codebuild_when_npmrc_differs(efs_dir):
                 ) as mock_codebuild:
                     result = ensure_node_packages(
                         owner_id=123,
+                        clone_dir=clone_dir,
                         efs_dir=efs_dir,
                     )
 
@@ -197,7 +218,9 @@ def test_triggers_codebuild_when_npmrc_differs(efs_dir):
                     assert result is False
 
 
-def test_sanitizes_http_to_https_in_npmrc(efs_dir):
+def test_sanitizes_http_to_https_in_npmrc(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
+
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
@@ -213,6 +236,7 @@ def test_sanitizes_http_to_https_in_npmrc(efs_dir):
                 ):
                     ensure_node_packages(
                         owner_id=123,
+                        clone_dir=clone_dir,
                         efs_dir=efs_dir,
                     )
 
@@ -222,7 +246,9 @@ def test_sanitizes_http_to_https_in_npmrc(efs_dir):
                         assert f.read() == "registry=https://registry.npmjs.org/"
 
 
-def test_preserves_https_in_npmrc(efs_dir):
+def test_preserves_https_in_npmrc(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
+
     with patch("services.node.ensure_node_packages.read_local_file") as mock_get:
         with patch(
             "services.node.ensure_node_packages.detect_package_manager",
@@ -238,6 +264,7 @@ def test_preserves_https_in_npmrc(efs_dir):
                 ):
                     ensure_node_packages(
                         owner_id=123,
+                        clone_dir=clone_dir,
                         efs_dir=efs_dir,
                     )
 

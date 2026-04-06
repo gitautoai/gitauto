@@ -8,11 +8,14 @@ Fixture files saved from CPython 3.13 (PSF license) in services/git/fixtures/:
 - typing.py.txt     (~3800 lines, 133K chars) - 7 identical __reduce__ methods across alias classes
 """
 import os
+import subprocess
+import tempfile
 from typing import cast
 
 import pytest
 
 from services.claude.tools.file_modify_result import FileWriteResult
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.search_and_replace import search_and_replace
 from services.types.base_args import BaseArgs
 
@@ -799,3 +802,41 @@ def test_final_newline_ensured(sample_base_args, tmp_path):
     assert result.success is True
     content = (tmp_path / "test.py").read_text()
     assert content.endswith("\n")
+
+
+@pytest.mark.integration
+def test_search_and_replace_end_to_end(local_repo, create_test_base_args):
+    """Sociable: replace text in README, verify pushed to bare repo."""
+    bare_url, _work_dir = local_repo
+
+    with tempfile.TemporaryDirectory() as clone_dir:
+        git_clone_to_tmp(clone_dir, bare_url, "main")
+
+        base_args = create_test_base_args(
+            clone_dir=clone_dir,
+            clone_url=bare_url,
+            new_branch="feature/replace-test",
+        )
+
+        result = search_and_replace(
+            old_string="# Test",
+            new_string="# Modified Test",
+            file_path="README.md",
+            base_args=base_args,
+        )
+
+        assert isinstance(result, FileWriteResult)
+        assert result.success is True
+
+        with open(os.path.join(clone_dir, "README.md"), encoding="utf-8") as f:
+            assert "# Modified Test" in f.read()
+
+        bare_dir = bare_url.replace("file://", "")
+        log = subprocess.run(
+            ["git", "log", "--oneline", "feature/replace-test", "-1"],
+            cwd=bare_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert "Update README.md" in log.stdout

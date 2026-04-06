@@ -10,7 +10,12 @@ from services.php.ensure_php_packages import ensure_php_packages
 
 @pytest.fixture
 def efs_dir(tmp_path):
-    return str(tmp_path)
+    return str(tmp_path / "efs")
+
+
+@pytest.fixture
+def clone_dir(tmp_path):
+    return str(tmp_path / "clone")
 
 
 def test_returns_false_when_no_composer_json():
@@ -19,16 +24,18 @@ def test_returns_false_when_no_composer_json():
 
         result = ensure_php_packages(
             owner_id=123,
+            clone_dir="/tmp/owner/repo",
             efs_dir="/mnt/efs/owner/repo",
         )
 
         assert result is False
 
 
-def test_reuses_when_vendor_and_content_match(efs_dir):
+def test_reuses_when_vendor_and_content_match(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
     # Set up EFS with matching vendor, autoload, composer.json
     vendor_path = os.path.join(efs_dir, "vendor")
-    os.makedirs(os.path.join(vendor_path, "autoload.php").rsplit("/", 1)[0])
+    os.makedirs(vendor_path)
     with open(os.path.join(vendor_path, "autoload.php"), "w", encoding=UTF8) as f:
         f.write("<?php // autoload")
     with open(os.path.join(efs_dir, "composer.json"), "w", encoding=UTF8) as f:
@@ -46,13 +53,16 @@ def test_reuses_when_vendor_and_content_match(efs_dir):
         with patch("services.php.ensure_php_packages.fcntl.flock"):
             result = ensure_php_packages(
                 owner_id=123,
+                clone_dir=clone_dir,
                 efs_dir=efs_dir,
             )
 
             assert result is True
 
 
-def test_triggers_codebuild_when_no_vendor(efs_dir):
+def test_triggers_codebuild_when_no_vendor(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
+
     with patch("services.php.ensure_php_packages.read_local_file") as mock_get:
         mock_get.return_value = '{"require": {}}'
         with patch("services.php.ensure_php_packages.fcntl.flock"):
@@ -61,6 +71,7 @@ def test_triggers_codebuild_when_no_vendor(efs_dir):
             ) as mock_codebuild:
                 result = ensure_php_packages(
                     owner_id=123,
+                    clone_dir=clone_dir,
                     efs_dir=efs_dir,
                 )
 
@@ -68,7 +79,8 @@ def test_triggers_codebuild_when_no_vendor(efs_dir):
                 assert result is False
 
 
-def test_triggers_codebuild_when_content_differs(efs_dir):
+def test_triggers_codebuild_when_content_differs(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
     # Set up EFS with old composer.json
     vendor_path = os.path.join(efs_dir, "vendor")
     os.makedirs(vendor_path)
@@ -85,6 +97,7 @@ def test_triggers_codebuild_when_content_differs(efs_dir):
             ) as mock_codebuild:
                 result = ensure_php_packages(
                     owner_id=123,
+                    clone_dir=clone_dir,
                     efs_dir=efs_dir,
                 )
 
@@ -92,7 +105,8 @@ def test_triggers_codebuild_when_content_differs(efs_dir):
                 assert result is False
 
 
-def test_triggers_codebuild_when_autoload_missing(efs_dir):
+def test_triggers_codebuild_when_autoload_missing(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
     # vendor exists but autoload.php missing
     os.makedirs(os.path.join(efs_dir, "vendor"))
 
@@ -104,6 +118,7 @@ def test_triggers_codebuild_when_autoload_missing(efs_dir):
             ) as mock_codebuild:
                 result = ensure_php_packages(
                     owner_id=123,
+                    clone_dir=clone_dir,
                     efs_dir=efs_dir,
                 )
 
@@ -111,7 +126,8 @@ def test_triggers_codebuild_when_autoload_missing(efs_dir):
                 assert result is False
 
 
-def test_triggers_codebuild_when_lock_differs(efs_dir):
+def test_triggers_codebuild_when_lock_differs(efs_dir, clone_dir):
+    os.makedirs(efs_dir, exist_ok=True)
     # Set up EFS with matching composer.json but different lock
     vendor_path = os.path.join(efs_dir, "vendor")
     os.makedirs(vendor_path)
@@ -139,6 +155,7 @@ def test_triggers_codebuild_when_lock_differs(efs_dir):
             ) as mock_codebuild:
                 result = ensure_php_packages(
                     owner_id=123,
+                    clone_dir=clone_dir,
                     efs_dir=efs_dir,
                 )
 

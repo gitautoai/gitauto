@@ -6,7 +6,8 @@ import json
 from schemas.supabase.types import RepoCoverageInsert
 from services.coverages.parse_lcov_coverage import parse_lcov_coverage
 from services.coverages.coverage_types import CoverageReport
-from services.efs.get_efs_dir import get_efs_dir
+from services.git.get_clone_dir import get_clone_dir
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.get_file_tree import get_file_tree
 from services.github.artifacts.download_artifact import download_artifact
 from services.github.artifacts.get_workflow_artifacts import get_workflow_artifacts
@@ -147,9 +148,10 @@ def handle_coverage_report(
     else:
         return None
 
-    # Fetch file tree early to normalize absolute paths in lcov files
-    efs_dir = get_efs_dir(owner_name, repo_name)
-    tree_items = get_file_tree(clone_dir=efs_dir, ref=head_branch)
+    # Clone to /tmp and fetch file tree to normalize absolute paths in lcov files
+    clone_dir = get_clone_dir(owner_name, repo_name, pr_number=None)
+    git_clone_to_tmp(clone_dir, clone_url, head_branch)
+    tree_items = get_file_tree(clone_dir=clone_dir, ref=head_branch)
     repo_files = {item["path"] for item in tree_items if item["type"] == "blob"}
 
     coverage_data: list[CoverageReport] = []

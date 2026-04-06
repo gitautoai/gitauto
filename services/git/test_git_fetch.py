@@ -1,5 +1,11 @@
+import os
+import tempfile
 from unittest.mock import patch
 
+import pytest
+
+from services.git.conftest import SAMPLE_REPO_URL
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.git_fetch import git_fetch
 
 
@@ -34,3 +40,16 @@ def test_git_fetch_resolves_locks_before_fetch():
 
         assert result is True
         mock_resolve.assert_called_once_with("/mnt/efs/repo/.git")
+
+
+@pytest.mark.integration
+def test_git_fetch_from_real_repo():
+    """Sociable: clone main, fetch a different branch, verify FETCH_HEAD updated."""
+    with tempfile.TemporaryDirectory() as clone_dir:
+        git_clone_to_tmp(clone_dir, SAMPLE_REPO_URL, "main")
+
+        result = git_fetch(clone_dir, SAMPLE_REPO_URL, "test/git-fetch")
+
+        assert result is True
+        fetch_head = os.path.join(clone_dir, ".git", "FETCH_HEAD")
+        assert os.path.isfile(fetch_head)

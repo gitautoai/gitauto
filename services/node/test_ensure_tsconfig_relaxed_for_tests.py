@@ -24,10 +24,7 @@ def _make_base_args():
     return cast(
         BaseArgs,
         {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "token": "test-token",
-            "new_branch": "test-branch",
+            "clone_dir": "/tmp/clone",
         },
     )
 
@@ -64,7 +61,7 @@ def test_jsonc_handles_complex_tsconfig():
 
 
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.read_local_file")
 def test_creates_file_when_no_variants_exist(
     mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
@@ -80,7 +77,7 @@ def test_creates_file_when_no_variants_exist(
 
 
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.read_local_file")
 def test_skips_when_variant_has_correct_settings(
     mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
@@ -97,18 +94,18 @@ def test_skips_when_variant_has_correct_settings(
 
 
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.read_local_file")
 def test_updates_variant_when_missing_settings(
     mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
     root_files = ["tsconfig.json", "tsconfig.build.json"]
 
-    def get_raw_side_effect(owner, repo, file_path, ref, token):
+    def read_side_effect(file_path, base_dir):
         if file_path == "tsconfig.build.json":
             return '{"compilerOptions": {"noUnusedLocals": true}}'
         return None
 
-    mock_get_raw.side_effect = get_raw_side_effect
+    mock_get_raw.side_effect = read_side_effect
     mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_tsconfig_relaxed_for_tests(root_files, _make_base_args())
@@ -122,7 +119,7 @@ def test_updates_variant_when_missing_settings(
 
 
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.read_local_file")
 def test_updates_existing_tsconfig_test(
     mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
@@ -136,12 +133,12 @@ def test_updates_existing_tsconfig_test(
   }
 }"""
 
-    def get_raw_side_effect(owner, repo, file_path, ref, token):
+    def read_side_effect(file_path, base_dir):
         if file_path == "tsconfig.test.json":
             return existing_config
         return None
 
-    mock_get_raw.side_effect = get_raw_side_effect
+    mock_get_raw.side_effect = read_side_effect
     mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_tsconfig_relaxed_for_tests(root_files, _make_base_args())
@@ -156,7 +153,7 @@ def test_updates_existing_tsconfig_test(
 
 
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.read_local_file")
 def test_ignores_nested_tsconfig_files(
     mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
@@ -171,7 +168,7 @@ def test_ignores_nested_tsconfig_files(
 
 
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.read_local_file")
 def test_creates_when_only_main_tsconfig_exists(
     mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
@@ -186,7 +183,7 @@ def test_creates_when_only_main_tsconfig_exists(
 
 
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.read_local_file")
 def test_skips_non_typescript_repo(mock_get_raw: MagicMock, mock_replace: MagicMock):
     root_files = ["package.json", "index.js"]
     mock_get_raw.return_value = None
@@ -200,18 +197,18 @@ def test_skips_non_typescript_repo(mock_get_raw: MagicMock, mock_replace: MagicM
 
 
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.read_local_file")
 def test_skips_when_variant_has_invalid_json(
     mock_get_raw: MagicMock, mock_replace: MagicMock
 ):
     root_files = ["tsconfig.json", "tsconfig.spec.json"]
 
-    def get_raw_side_effect(owner, repo, file_path, ref, token):
+    def read_side_effect(file_path, base_dir):
         if file_path == "tsconfig.spec.json":
             return "invalid json {"
         return None
 
-    mock_get_raw.side_effect = get_raw_side_effect
+    mock_get_raw.side_effect = read_side_effect
     mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_tsconfig_relaxed_for_tests(root_files, _make_base_args())
@@ -222,7 +219,7 @@ def test_skips_when_variant_has_invalid_json(
 
 
 @patch("services.node.ensure_tsconfig_relaxed_for_tests.write_and_commit_file")
-@patch("services.node.ensure_tsconfig_relaxed_for_tests.get_raw_content")
+@patch("services.node.ensure_tsconfig_relaxed_for_tests.read_local_file")
 def test_handles_tsconfig_with_comments(
     mock_get_raw: MagicMock, mock_replace: MagicMock
 ):

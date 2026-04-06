@@ -1,8 +1,10 @@
 from typing import cast
 
 from schemas.supabase.types import CoveragesInsert
-from services.efs.get_efs_dir import get_efs_dir
+from services.git.get_clone_dir import get_clone_dir
+from services.git.get_clone_url import get_clone_url
 from services.git.get_file_tree import get_file_tree
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.github.repositories.get_github_file_tree import get_github_file_tree
 from services.github.token.get_installation_token import get_installation_access_token
 from services.supabase.coverages.delete_stale_coverages import delete_stale_coverages
@@ -30,24 +32,28 @@ def sync_files_from_github_to_coverage(
 
     logger.info("Starting sync for %s/%s branch=%s", owner, repo, branch)
 
-    # Try local clone first, fall back to GitHub API if clone not available
-    efs_dir = get_efs_dir(owner, repo)
-    tree_items = get_file_tree(clone_dir=efs_dir, ref=branch)
+    # Try local clone to /tmp first, fall back to GitHub API if clone not available
+    installation = get_installation_by_owner(owner_name=owner)
+    if not installation:
+        logger.warning("No installation found for %s, cannot fetch tree", owner)
+        return
 
+    token = get_installation_access_token(
+        installation_id=installation["installation_id"]
+    )
+    clone_url = get_clone_url(owner, repo, token)
+    clone_dir = get_clone_dir(owner, repo, pr_number=None)
+    git_clone_to_tmp(clone_dir, clone_url, branch)
+    tree_items = get_file_tree(clone_dir=clone_dir, ref=branch)
+
+    # Fall back to GitHub API if clone to /tmp failed (e.g. user installed GitAuto and is redirected to the website file coverage page before the initial clone completes)
     if not tree_items:
         logger.info(
             "Local clone not available, using GitHub API for %s/%s", owner, repo
         )
-        installation = get_installation_by_owner(owner_name=owner)
-        if installation:
-            token = get_installation_access_token(
-                installation_id=installation["installation_id"]
-            )
-            tree_items = get_github_file_tree(
-                owner=owner, repo=repo, ref=branch, token=token
-            )
-        else:
-            logger.warning("No installation found for %s, cannot fetch tree", owner)
+        tree_items = get_github_file_tree(
+            owner=owner, repo=repo, ref=branch, token=token
+        )
 
     current_files = {
         item["path"]: item.get("size", 0)

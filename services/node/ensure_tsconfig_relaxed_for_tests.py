@@ -4,9 +4,9 @@ import re
 import jsonc
 
 from services.git.write_and_commit_file import write_and_commit_file
-from services.github.files.get_raw_content import get_raw_content
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
 
 TSCONFIG_TEST_PATH = "tsconfig.test.json"
@@ -22,10 +22,7 @@ def ensure_tsconfig_relaxed_for_tests(root_files: list[str], base_args: BaseArgs
     Checks all tsconfig.*.json files first. Only creates tsconfig.test.json if none have correct settings.
     Returns (path, status) where status is 'added', 'modified', or None if no changes were made.
     """
-    owner = base_args["owner"]
-    repo = base_args["repo"]
-    token = base_args["token"]
-    new_branch = base_args["new_branch"]
+    clone_dir = base_args["clone_dir"]
 
     if "tsconfig.json" not in root_files:
         logger.debug("Not a TypeScript repo, skipping")
@@ -58,9 +55,7 @@ def ensure_tsconfig_relaxed_for_tests(root_files: list[str], base_args: BaseArgs
 
     for variant_path in variant_files:
         logger.info("Checking %s for relaxed settings", variant_path)
-        content = get_raw_content(
-            owner=owner, repo=repo, file_path=variant_path, ref=new_branch, token=token
-        )
+        content = read_local_file(file_path=variant_path, base_dir=clone_dir)
         if not content:
             logger.warning("Could not fetch content for %s", variant_path)
             continue

@@ -5,6 +5,8 @@ import tempfile
 
 import pytest
 
+SAMPLE_REPO_URL = "https://github.com/gitautoai/sample-calculator.git"
+
 
 @pytest.fixture
 def local_repo():

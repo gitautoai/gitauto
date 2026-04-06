@@ -17,11 +17,11 @@ from services.tsc.run_tsc_check import TscResult
 @patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
-@patch("services.agents.verify_task_is_ready.get_raw_content")
+@patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_valid_file_returns_success(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
 ):
-    mock_get_raw_content.return_value = "function foo() { return 1; }"
+    mock_read_local_file.return_value = "function foo() { return 1; }"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
     mock_eslint.return_value = ESLintResult(
         success=True, content=None, lint_errors=None, coverage_errors=None
@@ -33,6 +33,7 @@ async def test_valid_file_returns_success(
             "repo": "test",
             "token": "test",
             "base_branch": "main",
+            "clone_dir": "/tmp/clone",
         },
     )
     result = await verify_task_is_ready(
@@ -53,11 +54,11 @@ async def test_valid_file_returns_success(
 @patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
-@patch("services.agents.verify_task_is_ready.get_raw_content")
+@patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_prettier_fails_returns_errors(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
 ):
-    mock_get_raw_content.return_value = "function foo() { return 1;"
+    mock_read_local_file.return_value = "function foo() { return 1;"
     mock_prettier.return_value = PrettierResult(
         success=False, content=None, error="SyntaxError: Unexpected token"
     )
@@ -71,6 +72,7 @@ async def test_prettier_fails_returns_errors(
             "repo": "test",
             "token": "test",
             "base_branch": "main",
+            "clone_dir": "/tmp/clone",
         },
     )
     result = await verify_task_is_ready(
@@ -91,11 +93,11 @@ async def test_prettier_fails_returns_errors(
 @patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
-@patch("services.agents.verify_task_is_ready.get_raw_content")
+@patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_eslint_fails_returns_errors(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
 ):
-    mock_get_raw_content.return_value = "function foo() { return 1; }"
+    mock_read_local_file.return_value = "function foo() { return 1; }"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
     mock_eslint.return_value = ESLintResult(
         success=False,
@@ -110,6 +112,7 @@ async def test_eslint_fails_returns_errors(
             "repo": "test",
             "token": "test",
             "base_branch": "main",
+            "clone_dir": "/tmp/clone",
         },
     )
     result = await verify_task_is_ready(
@@ -127,8 +130,8 @@ async def test_eslint_fails_returns_errors(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.get_raw_content")
-async def test_non_js_files_skipped(mock_get_raw_content):
+@patch("services.agents.verify_task_is_ready.read_local_file")
+async def test_non_js_files_skipped(mock_read_local_file):
     base_args = cast(
         BaseArgs,
         {
@@ -136,6 +139,7 @@ async def test_non_js_files_skipped(mock_get_raw_content):
             "repo": "test",
             "token": "test",
             "base_branch": "main",
+            "clone_dir": "/tmp/clone",
         },
     )
     result = await verify_task_is_ready(
@@ -149,7 +153,7 @@ async def test_non_js_files_skipped(mock_get_raw_content):
     assert result.errors == []
     assert result.fixes_applied == []
     assert result.files_with_errors == set()
-    mock_get_raw_content.assert_not_called()
+    mock_read_local_file.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -161,6 +165,7 @@ async def test_empty_file_list():
             "repo": "test",
             "token": "test",
             "base_branch": "main",
+            "clone_dir": "/tmp/clone",
         },
     )
     result = await verify_task_is_ready(
@@ -180,11 +185,11 @@ async def test_empty_file_list():
 @patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
-@patch("services.agents.verify_task_is_ready.get_raw_content")
+@patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_file_not_found_skipped(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
 ):
-    mock_get_raw_content.return_value = None
+    mock_read_local_file.return_value = None
     base_args = cast(
         BaseArgs,
         {
@@ -192,6 +197,7 @@ async def test_file_not_found_skipped(
             "repo": "test",
             "token": "test",
             "base_branch": "main",
+            "clone_dir": "/tmp/clone",
         },
     )
     result = await verify_task_is_ready(
@@ -211,13 +217,13 @@ async def test_file_not_found_skipped(
 @patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
-@patch("services.agents.verify_task_is_ready.get_raw_content")
+@patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_fixes_applied_and_pushed(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
 ):
     original = "function foo() { return 1; }"
     formatted = "function foo() {\n  return 1;\n}"
-    mock_get_raw_content.return_value = original
+    mock_read_local_file.return_value = original
     mock_prettier.return_value = PrettierResult(
         success=True, content=formatted, error=None
     )
@@ -231,6 +237,7 @@ async def test_fixes_applied_and_pushed(
             "repo": "test",
             "token": "test",
             "base_branch": "main",
+            "clone_dir": "/tmp/clone",
         },
     )
     result = await verify_task_is_ready(
@@ -251,13 +258,13 @@ async def test_fixes_applied_and_pushed(
 @patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
-@patch("services.agents.verify_task_is_ready.get_raw_content")
+@patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_eslint_partial_fix_pushes_and_reports_errors(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
 ):
     original = "const x = 1\nconst unused = 2;"
     fixed = "const x = 1;\nconst unused = 2;"
-    mock_get_raw_content.return_value = original
+    mock_read_local_file.return_value = original
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
     mock_eslint.return_value = ESLintResult(
         success=False,
@@ -272,6 +279,7 @@ async def test_eslint_partial_fix_pushes_and_reports_errors(
             "repo": "test",
             "token": "test",
             "base_branch": "main",
+            "clone_dir": "/tmp/clone",
         },
     )
     result = await verify_task_is_ready(
@@ -294,11 +302,11 @@ async def test_eslint_partial_fix_pushes_and_reports_errors(
 @patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
-@patch("services.agents.verify_task_is_ready.get_raw_content")
+@patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_no_explicit_any_ignored(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
 ):
-    mock_get_raw_content.return_value = (
+    mock_read_local_file.return_value = (
         "export async function getUsers(): Promise<any[]> { return []; }"
     )
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
@@ -315,6 +323,7 @@ async def test_no_explicit_any_ignored(
             "repo": "foxden-auth-service",
             "token": "test",
             "base_branch": "main",
+            "clone_dir": "/tmp/clone",
         },
     )
     result = await verify_task_is_ready(
@@ -337,11 +346,11 @@ async def test_no_explicit_any_ignored(
 @patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
-@patch("services.agents.verify_task_is_ready.get_raw_content")
+@patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_run_tsc_reports_type_errors(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit, mock_tsc
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, mock_tsc
 ):
-    mock_get_raw_content.return_value = "const x: number = 'hello';"
+    mock_read_local_file.return_value = "const x: number = 'hello';"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
     mock_eslint.return_value = ESLintResult(
         success=True, content=None, lint_errors=None, coverage_errors=None
@@ -385,11 +394,11 @@ async def test_run_tsc_reports_type_errors(
 @patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
-@patch("services.agents.verify_task_is_ready.get_raw_content")
+@patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_run_jest_reports_test_failures(
-    mock_get_raw_content, mock_prettier, mock_eslint, mock_commit, mock_jest
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, mock_jest
 ):
-    mock_get_raw_content.return_value = (
+    mock_read_local_file.return_value = (
         "describe('test', () => { it('fails', () => { expect(true).toBe(false); }); });"
     )
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)

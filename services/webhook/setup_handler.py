@@ -8,14 +8,14 @@ from constants.system_messages.setup_handler import (
     SETUP_PR_BODY,
 )
 from services.chat_with_agent import chat_with_agent
-from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_empty_commit import create_empty_commit
 from services.git.create_remote_branch import create_remote_branch
 from services.git.delete_remote_branch import delete_remote_branch
+from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.get_default_branch import get_default_branch
 from services.git.get_latest_remote_commit_sha import get_latest_remote_commit_sha
-from services.git.git_clone_to_efs import git_clone_to_efs
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.claude.tools.tools import TOOLS_FOR_SETUP
 from services.github.pulls.close_pull_request import close_pull_request
 from services.github.pulls.create_pull_request import create_pull_request
@@ -89,11 +89,13 @@ async def setup_handler(
             return
         logger.info("Using default branch as target: %s", target_branch)
 
-    efs_dir = get_efs_dir(owner_name, repo_name)
     clone_url = get_clone_url(owner_name, repo_name, token)
-    git_clone_to_efs(efs_dir=efs_dir, clone_url=clone_url, branch=target_branch)
+
+    # Clone to /tmp for reading files (fast, no EFS throughput cost)
+    clone_dir = get_clone_dir(owner_name, repo_name, pr_number=None)
+    git_clone_to_tmp(clone_dir, clone_url, target_branch)
     root_files = [
-        f for f in os.listdir(efs_dir) if os.path.isfile(os.path.join(efs_dir, f))
+        f for f in os.listdir(clone_dir) if os.path.isfile(os.path.join(clone_dir, f))
     ]
 
     # Look up sender info from GitHub
@@ -119,7 +121,7 @@ async def setup_handler(
         "installation_id": installation_id,
         "base_branch": target_branch,
         "new_branch": new_branch,
-        "clone_dir": efs_dir,
+        "clone_dir": clone_dir,
         "is_fork": is_repo_forked(owner=owner_name, repo=repo_name, token=token),
         "sender_id": sender_id,
         "sender_name": sender_name,
@@ -163,9 +165,9 @@ async def setup_handler(
         trigger="setup",
     )
 
-    # Read existing workflow files from local clone at EFS
+    # Read existing workflow files from local clone
     workflow_files: dict[str, str] = {}
-    local_workflow_dir = os.path.join(efs_dir, WORKFLOW_DIR)
+    local_workflow_dir = os.path.join(clone_dir, WORKFLOW_DIR)
     if os.path.isdir(local_workflow_dir):
         for filename in os.listdir(local_workflow_dir):
             if not filename.endswith(".yml"):
