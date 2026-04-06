@@ -155,7 +155,7 @@ Resources:
           GH_PRIVATE_KEY: '{{resolve:ssm:/gitauto/GH_PRIVATE_KEY}}'
           GH_WEBHOOK_SECRET: '{{resolve:ssm:/gitauto/GH_WEBHOOK_SECRET}}'
           GITAUTO_API_KEY: '{{resolve:ssm:/gitauto/GITAUTO_API_KEY}}'
-          GIT_CONFIG_GLOBAL: '{{resolve:ssm:/gitauto/GIT_CONFIG_GLOBAL}}'
+          GIT_CONFIG_GLOBAL: '/tmp/.gitconfig'
           GIT_PYTHON_REFRESH: '{{resolve:ssm:/gitauto/GIT_PYTHON_REFRESH}}'
           OPENAI_API_KEY: '{{resolve:ssm:/gitauto/OPENAI_API_KEY}}'
           OPENAI_ORG_ID: '{{resolve:ssm:/gitauto/OPENAI_ORG_ID}}'
