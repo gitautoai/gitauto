@@ -35,26 +35,27 @@ def mock_get_clone_url():
 
 
 @pytest.fixture
-def mock_git_clone_to_efs():
-    with patch(f"{SINGLE}.git_clone_to_efs") as mock:
+def mock_get_clone_dir():
+    with patch(f"{SINGLE}.get_clone_dir") as mock:
+        mock.return_value = "/tmp/test-owner/test-repo"
         yield mock
 
 
 @pytest.fixture
-def mock_git_fetch():
-    with patch(f"{SINGLE}.git_fetch", return_value=True) as mock:
+def mock_git_clone_to_tmp():
+    with patch(f"{SINGLE}.git_clone_to_tmp") as mock:
         yield mock
 
 
 @pytest.fixture
-def mock_git_reset():
-    with patch(f"{SINGLE}.git_reset", return_value=True) as mock:
+def mock_ensure_node_packages():
+    with patch(f"{SINGLE}.ensure_node_packages") as mock:
         yield mock
 
 
 @pytest.fixture
-def mock_os_path_exists():
-    with patch(f"{SINGLE}.os.path.exists") as mock:
+def mock_ensure_php_packages():
+    with patch(f"{SINGLE}.ensure_php_packages") as mock:
         yield mock
 
 
@@ -80,19 +81,6 @@ def mock_get_repository_stats():
 @pytest.fixture
 def mock_upsert_repository():
     with patch(f"{SINGLE}.upsert_repository") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_run_install_via_codebuild():
-    with patch(f"{SINGLE}.run_install_via_codebuild") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_detect_package_manager():
-    with patch(f"{SINGLE}.detect_package_manager") as mock:
-        mock.return_value = ("npm", "package-lock.json", "lock content")
         yield mock
 
 
@@ -197,21 +185,20 @@ def sample_stats():
     }
 
 
-def test_process_repositories_efs_exists_fetches(
+def test_process_repositories_clones_and_installs(
     sample_repositories,
     sample_stats,
     mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
-    mock_git_fetch,
-    mock_git_reset,
-    mock_os_path_exists,
+    mock_get_clone_dir,
+    mock_git_clone_to_tmp,
+    mock_ensure_node_packages,
+    mock_ensure_php_packages,
     mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
-    mock_run_install_via_codebuild,
-    mock_detect_package_manager,
     mock_sync_files_from_github_to_coverage,
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
@@ -223,7 +210,6 @@ def test_process_repositories_efs_exists_fetches(
     mock_delete_remote_branch,
     mock_has_open_pull_request_by_title,
 ):
-    mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
     mock_get_default_branch.side_effect = ["main", "master"]
 
@@ -240,72 +226,25 @@ def test_process_repositories_efs_exists_fetches(
     )
 
     assert mock_get_default_branch.call_count == 2
-    assert mock_git_fetch.call_count == 2
-    assert mock_git_reset.call_count == 2
+    assert mock_git_clone_to_tmp.call_count == 2
+    assert mock_ensure_node_packages.call_count == 2
     assert mock_get_repository_stats.call_count == 2
     # 2 repos x 2 calls each (insert without stats + update with stats)
     assert mock_upsert_repository.call_count == 4
-    assert mock_run_install_via_codebuild.call_count == 2
-
-
-def test_process_repositories_efs_not_exists_clones(
-    sample_repositories,
-    sample_stats,
-    mock_get_installation_access_token,
-    mock_get_efs_dir,
-    mock_get_clone_url,
-    mock_git_clone_to_efs,
-    mock_os_path_exists,
-    mock_is_repo_archived,
-    mock_get_default_branch,
-    mock_get_repository_stats,
-    mock_upsert_repository,
-    mock_run_install_via_codebuild,
-    mock_detect_package_manager,
-    mock_sync_files_from_github_to_coverage,
-    mock_generate_branch_name,
-    mock_get_latest_remote_commit_sha,
-    mock_create_remote_branch,
-    mock_is_repo_forked,
-    mock_ensure_tsconfig_relaxed_for_tests,
-    mock_os_listdir,
-    mock_os_path_isfile,
-    mock_delete_remote_branch,
-    mock_has_open_pull_request_by_title,
-):
-    mock_os_path_exists.return_value = False
-    mock_get_repository_stats.return_value = sample_stats
-
-    process_repositories(
-        owner_id=12345,
-        owner_name="test-owner",
-        owner_type="Organization",
-        repositories=sample_repositories,
-        user_id=67890,
-        user_name="test-user",
-        installation_id=99999,
-        sender_email="test@example.com",
-        sender_display_name="Test User",
-    )
-
-    assert mock_git_clone_to_efs.call_count == 2
-    # 2 repos x 2 calls each (insert without stats + update with stats)
-    assert mock_upsert_repository.call_count == 4
-    assert mock_run_install_via_codebuild.call_count == 2
 
 
 def test_process_repositories_empty_list(
     mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
-    mock_git_fetch,
-    mock_git_reset,
-    mock_os_path_exists,
+    mock_get_clone_dir,
+    mock_git_clone_to_tmp,
+    mock_ensure_node_packages,
+    mock_ensure_php_packages,
     mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
-    mock_run_install_via_codebuild,
 ):
     process_repositories(
         owner_id=12345,
@@ -320,11 +259,10 @@ def test_process_repositories_empty_list(
     )
 
     mock_get_default_branch.assert_not_called()
-    mock_git_fetch.assert_not_called()
-    mock_git_reset.assert_not_called()
+    mock_git_clone_to_tmp.assert_not_called()
+    mock_ensure_node_packages.assert_not_called()
     mock_get_repository_stats.assert_not_called()
     mock_upsert_repository.assert_not_called()
-    mock_run_install_via_codebuild.assert_not_called()
 
 
 def test_process_repositories_stats_saved_correctly(
@@ -332,15 +270,14 @@ def test_process_repositories_stats_saved_correctly(
     mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
-    mock_git_fetch,
-    mock_git_reset,
-    mock_os_path_exists,
+    mock_get_clone_dir,
+    mock_git_clone_to_tmp,
+    mock_ensure_node_packages,
+    mock_ensure_php_packages,
     mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
-    mock_run_install_via_codebuild,
-    mock_detect_package_manager,
     mock_sync_files_from_github_to_coverage,
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
@@ -352,7 +289,6 @@ def test_process_repositories_stats_saved_correctly(
     mock_delete_remote_branch,
     mock_has_open_pull_request_by_title,
 ):
-    mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
     single_repo = cast(
         list[RepositoryAddedOrRemoved],
@@ -398,16 +334,14 @@ def test_process_repositories_empty_repo_skips_clone(
     mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
-    mock_git_clone_to_efs,
-    mock_git_fetch,
-    mock_git_reset,
-    mock_os_path_exists,
+    mock_get_clone_dir,
+    mock_git_clone_to_tmp,
+    mock_ensure_node_packages,
+    mock_ensure_php_packages,
     mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
-    mock_run_install_via_codebuild,
-    mock_detect_package_manager,
     mock_sync_files_from_github_to_coverage,
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
@@ -446,11 +380,9 @@ def test_process_repositories_empty_repo_skips_clone(
     )
 
     mock_get_default_branch.assert_called_once()
-    mock_git_clone_to_efs.assert_not_called()
-    mock_git_fetch.assert_not_called()
-    mock_git_reset.assert_not_called()
+    mock_git_clone_to_tmp.assert_not_called()
+    mock_ensure_node_packages.assert_not_called()
     mock_get_repository_stats.assert_not_called()
-    mock_run_install_via_codebuild.assert_not_called()
     # Only called once without stats (empty repo skips clone)
     mock_upsert_repository.assert_called_once_with(
         owner_id=12345,
@@ -468,15 +400,14 @@ def test_process_repositories_non_typescript_deletes_branch_no_pr(
     mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
-    mock_git_fetch,
-    mock_git_reset,
-    mock_os_path_exists,
+    mock_get_clone_dir,
+    mock_git_clone_to_tmp,
+    mock_ensure_node_packages,
+    mock_ensure_php_packages,
     mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
-    mock_run_install_via_codebuild,
-    mock_detect_package_manager,
     mock_sync_files_from_github_to_coverage,
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
@@ -489,7 +420,6 @@ def test_process_repositories_non_typescript_deletes_branch_no_pr(
     mock_create_pull_request,
     mock_has_open_pull_request_by_title,
 ):
-    mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
     mock_ensure_tsconfig_relaxed_for_tests.return_value = (None, None)
     single_repo = cast(
@@ -527,15 +457,14 @@ def test_process_repositories_typescript_creates_pr(
     mock_get_installation_access_token,
     mock_get_efs_dir,
     mock_get_clone_url,
-    mock_git_fetch,
-    mock_git_reset,
-    mock_os_path_exists,
+    mock_get_clone_dir,
+    mock_git_clone_to_tmp,
+    mock_ensure_node_packages,
+    mock_ensure_php_packages,
     mock_is_repo_archived,
     mock_get_default_branch,
     mock_get_repository_stats,
     mock_upsert_repository,
-    mock_run_install_via_codebuild,
-    mock_detect_package_manager,
     mock_sync_files_from_github_to_coverage,
     mock_generate_branch_name,
     mock_get_latest_remote_commit_sha,
@@ -548,7 +477,6 @@ def test_process_repositories_typescript_creates_pr(
     mock_create_pull_request,
     mock_has_open_pull_request_by_title,
 ):
-    mock_os_path_exists.return_value = True
     mock_get_repository_stats.return_value = sample_stats
     mock_ensure_tsconfig_relaxed_for_tests.return_value = (
         "tsconfig.test.json",

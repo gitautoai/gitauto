@@ -46,8 +46,8 @@ INSTALLATION = {"owner_id": 1, "installation_id": 123, "owner_type": "Organizati
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs")
-@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.git_clone_to_tmp")
+@patch(f"{MODULE}.get_clone_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
@@ -61,8 +61,8 @@ async def test_not_completed_closes_pr_and_deletes_branch(
     mock_installation,
     mock_repo,
     mock_default_branch,
-    mock_efs_dir,
-    mock_clone_to_efs,
+    mock_clone_dir,
+    mock_clone_to_tmp,
     mock_clone_url,
     mock_is_fork,
     mock_sha,
@@ -77,7 +77,7 @@ async def test_not_completed_closes_pr_and_deletes_branch(
     mock_slack,
     tmp_path,
 ):
-    mock_efs_dir.return_value = str(tmp_path)
+    mock_clone_dir.return_value = str(tmp_path)
     mock_agent.return_value = _make_agent_result(is_completed=False)
 
     await setup_handler(
@@ -88,7 +88,7 @@ async def test_not_completed_closes_pr_and_deletes_branch(
         sender_name="test-user",
     )
 
-    mock_clone_to_efs.assert_called_once()
+    mock_clone_to_tmp.assert_called_once()
     mock_create_pr.assert_called_once()
     mock_close_pr.assert_called_once()
     mock_delete_branch.assert_called_once()
@@ -107,8 +107,8 @@ async def test_not_completed_closes_pr_and_deletes_branch(
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs")
-@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.git_clone_to_tmp")
+@patch(f"{MODULE}.get_clone_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
@@ -122,8 +122,8 @@ async def test_completed_keeps_pr(
     mock_installation,
     mock_repo,
     mock_default_branch,
-    mock_efs_dir,
-    mock_clone_to_efs,
+    mock_clone_dir,
+    mock_clone_to_tmp,
     mock_clone_url,
     mock_is_fork,
     mock_sha,
@@ -138,7 +138,7 @@ async def test_completed_keeps_pr(
     mock_slack,
     tmp_path,
 ):
-    mock_efs_dir.return_value = str(tmp_path)
+    mock_clone_dir.return_value = str(tmp_path)
     mock_agent.return_value = _make_agent_result(is_completed=True)
 
     await setup_handler(
@@ -167,8 +167,8 @@ async def test_completed_keeps_pr(
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs")
-@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.git_clone_to_tmp")
+@patch(f"{MODULE}.get_clone_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(
     f"{MODULE}.get_repository_by_name",
@@ -185,8 +185,8 @@ async def test_uses_target_branch_when_set(
     mock_installation,
     mock_repo,
     mock_default_branch,
-    mock_efs_dir,
-    mock_clone_to_efs,
+    mock_clone_dir,
+    mock_clone_to_tmp,
     mock_clone_url,
     mock_is_fork,
     mock_sha,
@@ -201,7 +201,7 @@ async def test_uses_target_branch_when_set(
     mock_slack,
     tmp_path,
 ):
-    mock_efs_dir.return_value = str(tmp_path)
+    mock_clone_dir.return_value = str(tmp_path)
     mock_agent.return_value = _make_agent_result(is_completed=True)
 
     await setup_handler(
@@ -234,8 +234,8 @@ async def test_uses_target_branch_when_set(
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs")
-@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.git_clone_to_tmp")
+@patch(f"{MODULE}.get_clone_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
@@ -249,8 +249,8 @@ async def test_passes_existing_workflows_to_claude(
     mock_installation,
     mock_repo,
     mock_default_branch,
-    mock_efs_dir,
-    mock_clone_to_efs,
+    mock_clone_dir,
+    mock_clone_to_tmp,
     mock_clone_url,
     mock_is_fork,
     mock_sha,
@@ -265,7 +265,7 @@ async def test_passes_existing_workflows_to_claude(
     mock_slack,
     tmp_path,
 ):
-    mock_efs_dir.return_value = str(tmp_path)
+    mock_clone_dir.return_value = str(tmp_path)
 
     # Create local workflow files
     workflow_dir = tmp_path / ".github" / "workflows"
@@ -303,23 +303,23 @@ async def test_passes_existing_workflows_to_claude(
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs")
-@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.git_clone_to_tmp")
+@patch(f"{MODULE}.get_clone_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
 @patch(f"{MODULE}.get_email_from_commits", return_value=None)
 @patch(f"{MODULE}.get_user_public_info", return_value=SENDER_INFO)
 @patch(f"{MODULE}.chat_with_agent")
-async def test_clones_repo_when_efs_dir_missing(
+async def test_clones_repo_to_tmp(
     mock_agent: MagicMock,
     mock_user_info,
     mock_email_from_commits,
     mock_installation,
     mock_repo,
     mock_default_branch,
-    mock_efs_dir,
-    mock_clone_to_efs,
+    mock_clone_dir,
+    mock_clone_to_tmp,
     mock_clone_url,
     mock_is_fork,
     mock_sha,
@@ -334,13 +334,9 @@ async def test_clones_repo_when_efs_dir_missing(
     mock_slack,
     tmp_path,
 ):
-    # Point to a non-existent directory to simulate missing EFS clone
-    missing_dir = str(tmp_path / "nonexistent")
-    mock_efs_dir.return_value = missing_dir
-    # Real git_clone_to_efs creates the directory; simulate that
-    mock_clone_to_efs.side_effect = lambda **kwargs: os.makedirs(
-        kwargs["efs_dir"], exist_ok=True
-    )
+    clone_path = str(tmp_path / "clone")
+    os.makedirs(clone_path, exist_ok=True)
+    mock_clone_dir.return_value = clone_path
     mock_agent.return_value = _make_agent_result(is_completed=True)
 
     await setup_handler(
@@ -351,11 +347,10 @@ async def test_clones_repo_when_efs_dir_missing(
         sender_name="test-user",
     )
 
-    # git_clone_to_efs should be called to clone the repo
-    mock_clone_to_efs.assert_called_once_with(
-        efs_dir=missing_dir,
-        clone_url="https://github.com/o/r.git",
-        branch="main",
+    mock_clone_to_tmp.assert_called_once_with(
+        clone_path,
+        "https://github.com/o/r.git",
+        "main",
     )
     mock_create_pr.assert_called_once()
 
@@ -403,8 +398,8 @@ async def test_empty_repo_skips(mock_installation, mock_repo, mock_default_branc
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs")
-@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.git_clone_to_tmp")
+@patch(f"{MODULE}.get_clone_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
@@ -418,8 +413,8 @@ async def test_system_message_mentions_coverage(
     mock_installation,
     mock_repo,
     mock_default_branch,
-    mock_efs_dir,
-    mock_clone_to_efs,
+    mock_clone_dir,
+    mock_clone_to_tmp,
     mock_clone_url,
     mock_is_fork,
     mock_sha,
@@ -434,7 +429,7 @@ async def test_system_message_mentions_coverage(
     mock_slack,
     tmp_path,
 ):
-    mock_efs_dir.return_value = str(tmp_path)
+    mock_clone_dir.return_value = str(tmp_path)
     mock_agent.return_value = _make_agent_result(is_completed=True)
 
     await setup_handler(
@@ -463,8 +458,8 @@ async def test_system_message_mentions_coverage(
 @patch(f"{MODULE}.get_latest_remote_commit_sha", return_value="abc123")
 @patch(f"{MODULE}.is_repo_forked", return_value=False)
 @patch(f"{MODULE}.get_clone_url", return_value="https://github.com/o/r.git")
-@patch(f"{MODULE}.git_clone_to_efs")
-@patch(f"{MODULE}.get_efs_dir")
+@patch(f"{MODULE}.git_clone_to_tmp")
+@patch(f"{MODULE}.get_clone_dir")
 @patch(f"{MODULE}.get_default_branch", return_value="main")
 @patch(f"{MODULE}.get_repository_by_name", return_value=None)
 @patch(f"{MODULE}.get_installation_by_owner", return_value=INSTALLATION)
@@ -478,8 +473,8 @@ async def test_sets_pr_number_in_base_args(
     mock_installation,
     mock_repo,
     mock_default_branch,
-    mock_efs_dir,
-    mock_clone_to_efs,
+    mock_clone_dir,
+    mock_clone_to_tmp,
     mock_clone_url,
     mock_is_fork,
     mock_sha,
@@ -494,7 +489,7 @@ async def test_sets_pr_number_in_base_args(
     mock_slack,
     tmp_path,
 ):
-    mock_efs_dir.return_value = str(tmp_path)
+    mock_clone_dir.return_value = str(tmp_path)
     mock_agent.return_value = _make_agent_result(is_completed=True)
 
     await setup_handler(

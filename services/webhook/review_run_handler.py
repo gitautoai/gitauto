@@ -21,8 +21,9 @@ from services.node.set_npm_token_env import set_npm_token_env
 from services.php.ensure_php_packages import ensure_php_packages
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
-from services.git.git_clone_to_efs import git_clone_to_efs
-from services.git.prepare_repo_for_work import prepare_repo_for_work
+from services.git.clone_repo_and_install_dependencies import (
+    clone_repo_and_install_dependencies,
+)
 from services.github.comments.create_comment import create_comment
 from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
@@ -90,8 +91,8 @@ async def handle_review_run(
     pr_body = pull_request["body"]
     pr_url = pull_request["url"]
     pr_file_url = f"{pr_url}/files"
-    head_branch = pull_request["head"]["ref"]  # gitauto/dashboard-20250101-155924-Ab1C
     base_branch = pull_request["base"]["ref"]  # main, master, etc.
+    head_branch = pull_request["head"]["ref"]  # gitauto/dashboard-20250101-155924-Ab1C
     pr_creator = pull_request["user"]["login"]
     if not head_branch.startswith(PRODUCT_ID + "/"):
         logger.info(
@@ -194,7 +195,7 @@ async def handle_review_run(
         "pr_number": pr_number,
         "pr_comments": [],
         "latest_commit_sha": pull_request["head"]["sha"],
-        "base_branch": head_branch,  # Yes, intentionally set head_branch to base_branch because get_file_tree requires the base branch
+        "base_branch": base_branch,
         "new_branch": head_branch,
         "installation_id": installation_id,
         "token": token,
@@ -223,22 +224,25 @@ async def handle_review_run(
     }
 
     # Clone repo to tmp
-    prepare_repo_for_work(
+    clone_repo_and_install_dependencies(
         owner=owner_name,
         repo=repo_name,
+        base_branch=base_branch,
         pr_branch=head_branch,
         token=token,
         clone_dir=clone_dir,
     )
 
-    # Clone and install
+    # Install dependencies (read repo files from clone_dir, cache on EFS)
     efs_dir = get_efs_dir(owner_name, repo_name)
-    clone_url = get_clone_url(owner_name, repo_name, token)
-    git_clone_to_efs(efs_dir, clone_url, base_branch)
-    node_ready = ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
+    node_ready = ensure_node_packages(
+        owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir
+    )
     logger.info("node: ready=%s", node_ready)
 
-    php_ready = ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
+    php_ready = ensure_php_packages(
+        owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir
+    )
     logger.info("php: ready=%s", php_ready)
 
     # Create a usage record

@@ -1,7 +1,13 @@
 # pylint: disable=unused-argument
+import os
+import subprocess
+import tempfile
 from typing import cast
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.git_commit_and_push import git_commit_and_push
 from services.types.base_args import BaseArgs
 
@@ -139,3 +145,39 @@ def test_git_commit_and_push_stages_specific_files():
         assert result is True
         assert "old.py" in add_args_captured
         assert "new.py" in add_args_captured
+
+
+@pytest.mark.integration
+def test_git_commit_and_push_to_local_bare(local_repo, create_test_base_args):
+    """Sociable: clone local repo, create file, commit+push, verify in bare repo."""
+    bare_url, _work_dir = local_repo
+
+    with tempfile.TemporaryDirectory() as clone_dir:
+        git_clone_to_tmp(clone_dir, bare_url, "main")
+
+        base_args = create_test_base_args(
+            clone_dir=clone_dir,
+            clone_url=bare_url,
+            new_branch="feature/sociable-push",
+        )
+
+        with open(os.path.join(clone_dir, "new_file.py"), "w", encoding="utf-8") as f:
+            f.write("print('hello')\n")
+
+        result = git_commit_and_push(
+            base_args=base_args,
+            message="Add new file",
+            files=["new_file.py"],
+        )
+
+        assert result is True
+
+        bare_dir = bare_url.replace("file://", "")
+        log = subprocess.run(
+            ["git", "log", "--oneline", "feature/sociable-push", "-1"],
+            cwd=bare_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert "Add new file" in log.stdout

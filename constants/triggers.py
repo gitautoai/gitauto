@@ -6,7 +6,6 @@ Trigger = Union[
     Literal[
         "check_suite_completed",
         "cleanup_stale_repos",
-        "clone_and_install",
         "dashboard",
         "installation",
         "installation_repositories",

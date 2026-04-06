@@ -1,10 +1,13 @@
 import subprocess
 
+from utils.logging.logging_config import logger
+
 
 def run_subprocess(args: list[str], cwd: str):
     if not args:
         raise ValueError("Command cannot be empty")
 
+    logger.info("Running: %s in %s", " ".join(args), cwd)
     try:
         result = subprocess.run(
             args=args,

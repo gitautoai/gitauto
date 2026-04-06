@@ -1,5 +1,8 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
+import os
+import subprocess
+import tempfile
 from typing import cast
 from unittest.mock import patch
 
@@ -7,6 +10,7 @@ import pytest
 
 from services.claude.tools.file_modify_result import FileWriteResult
 from services.git.apply_diff_to_file import apply_diff_to_file
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.types.base_args import BaseArgs
 from utils.files.apply_patch import PatchResult
 
@@ -187,3 +191,42 @@ def test_nested_file_path(sample_base_args, tmp_path):
         assert isinstance(result, FileWriteResult)
         assert result.success is True
         assert (nested_dir / "helper.py").read_text() == "new\n"
+
+
+@pytest.mark.integration
+def test_apply_diff_end_to_end(local_repo, create_test_base_args):
+    """Sociable: apply diff to README, verify pushed to bare repo."""
+    bare_url, _work_dir = local_repo
+
+    with tempfile.TemporaryDirectory() as clone_dir:
+        git_clone_to_tmp(clone_dir, bare_url, "main")
+
+        base_args = create_test_base_args(
+            clone_dir=clone_dir,
+            clone_url=bare_url,
+            new_branch="feature/diff-test",
+        )
+
+        diff = "--- a/README.md\n+++ b/README.md\n@@ -1 +1 @@\n-# Test\n+# Diff Applied"
+
+        result = apply_diff_to_file(
+            diff=diff,
+            file_path="README.md",
+            base_args=base_args,
+        )
+
+        assert isinstance(result, FileWriteResult)
+        assert result.success is True
+
+        with open(os.path.join(clone_dir, "README.md"), encoding="utf-8") as f:
+            assert "# Diff Applied" in f.read()
+
+        bare_dir = bare_url.replace("file://", "")
+        log = subprocess.run(
+            ["git", "log", "--oneline", "feature/diff-test", "-1"],
+            cwd=bare_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert "Update README.md" in log.stdout

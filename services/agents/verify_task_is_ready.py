@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from constants.files import PHP_TEST_FILE_EXTENSIONS
 from services.eslint.run_eslint_fix import run_eslint_fix
 from services.git.git_commit_and_push import git_commit_and_push
-from services.github.files.get_raw_content import get_raw_content
 from services.types.base_args import BaseArgs
 from services.jest.run_jest_test import run_jest_test
 from services.phpunit.run_phpunit_test import run_phpunit_test
@@ -11,6 +10,7 @@ from services.prettier.run_prettier_fix import run_prettier_fix
 from services.tsc.run_tsc_check import run_tsc_check
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.filter_js_ts_files import filter_js_ts_files
+from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
 
 
@@ -35,10 +35,7 @@ async def verify_task_is_ready(
     run_jest: bool,
     run_phpunit: bool,
 ):
-    owner = base_args.get("owner", "")
-    repo = base_args.get("repo", "")
-    token = base_args.get("token", "")
-    base_branch = base_args.get("base_branch", "")
+    clone_dir = base_args.get("clone_dir", "")
 
     js_ts_files = filter_js_ts_files(file_paths)
     if not js_ts_files:
@@ -48,9 +45,7 @@ async def verify_task_is_ready(
     formatting_applied: list[str] = []
     files_with_errors: set[str] = set()
     for file_path in js_ts_files:
-        content = get_raw_content(
-            owner=owner, repo=repo, file_path=file_path, ref=base_branch, token=token
-        )
+        content = read_local_file(file_path=file_path, base_dir=clone_dir)
         if not content:
             continue
 

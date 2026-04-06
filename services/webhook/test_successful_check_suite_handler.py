@@ -20,18 +20,9 @@ def load_payload(filename: str):
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
 @patch("services.webhook.successful_check_suite_handler.get_repository_features")
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
 def test_handle_successful_check_suite_with_pr(
     mock_get_token,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
     mock_get_repo_features,
     mock_get_check_suites,
     mock_get_required_checks,
@@ -44,7 +35,6 @@ def test_handle_successful_check_suite_with_pr(
     payload["check_suite"]["head_branch"] = f"{PRODUCT_ID}/issue-2-test"
 
     mock_get_token.return_value = "test-token"
-    mock_check_skip_ci.return_value = False
     mock_get_repo_features.return_value = {"auto_merge": False}
     mock_get_check_suites.return_value = [
         {"app": {"name": "CircleCI Checks"}, "status": "completed"}
@@ -127,12 +117,6 @@ def test_handle_successful_check_suite_without_pr():
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request_files")
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
 @patch("services.webhook.successful_check_suite_handler.get_repository_features")
@@ -140,9 +124,6 @@ def test_handle_successful_check_suite_no_usage_record_found(
     mock_get_repo_features,
     mock_get_token,
     mock_get_pr,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
     mock_get_files,
     mock_merge_pr,
     mock_get_check_suites,
@@ -163,7 +144,6 @@ def test_handle_successful_check_suite_no_usage_record_found(
         status_code=200, checks=["GitHub Actions"], strict=True
     )
     mock_get_pr.return_value = {"mergeable_state": "clean"}
-    mock_check_skip_ci.return_value = False
     mock_get_files.return_value = []
 
     with patch(
@@ -195,16 +175,8 @@ def test_handle_successful_check_suite_no_usage_record_found(
         mock_table.update.assert_not_called()
 
 
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
-def test_handle_successful_check_suite_with_exception(
-    mock_get_token, mock_check_skip_ci, _mock_copy_efs, _mock_get_clone_dir
-):
+def test_handle_successful_check_suite_with_exception(mock_get_token):
     payload = load_payload("completed_failed_github_actions.json")
     payload["check_suite"]["pull_requests"][0]["head"][
         "ref"
@@ -212,7 +184,6 @@ def test_handle_successful_check_suite_with_exception(
     payload["check_suite"]["head_branch"] = f"{PRODUCT_ID}/issue-2004-test"
 
     mock_get_token.return_value = "test-token"
-    mock_check_skip_ci.return_value = False
 
     with patch(
         "services.webhook.successful_check_suite_handler.supabase"
@@ -231,12 +202,6 @@ def test_handle_successful_check_suite_with_exception(
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request_files")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
@@ -250,9 +215,6 @@ def test_auto_merge_success(
     mock_get_pr,
     mock_get_files,
     mock_merge_pr,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
     mock_get_check_suites,
     mock_get_required_checks,
 ):
@@ -275,7 +237,6 @@ def test_auto_merge_success(
         status_code=200, checks=["CircleCI Checks"], strict=True
     )
     mock_get_pr.return_value = {"mergeable_state": "clean"}
-    mock_check_skip_ci.return_value = False
     mock_get_files.return_value = [
         {"filename": "test_something.py", "status": "modified"}
     ]
@@ -322,20 +283,11 @@ def test_auto_merge_success(
         )
 
 
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_repository_features")
 def test_auto_merge_disabled(
     mock_get_repo_features,
     mock_get_pr,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
 ):
     payload = load_payload("completed_failed_github_actions.json")
     payload["check_suite"]["pull_requests"][0]["head"][
@@ -344,7 +296,6 @@ def test_auto_merge_disabled(
     payload["check_suite"]["head_branch"] = f"{PRODUCT_ID}/issue-2004-test"
 
     mock_get_repo_features.return_value = {"auto_merge": False}
-    mock_check_skip_ci.return_value = False
 
     with patch(
         "services.webhook.successful_check_suite_handler.supabase"
@@ -376,12 +327,6 @@ def test_auto_merge_disabled(
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request_files")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
@@ -395,9 +340,6 @@ def test_auto_merge_multiple_test_files_changed(
     mock_get_pr,
     mock_get_files,
     mock_merge_pr,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
     mock_get_check_suites,
     mock_get_required_checks,
 ):
@@ -420,7 +362,6 @@ def test_auto_merge_multiple_test_files_changed(
         status_code=200, checks=["CircleCI Checks"], strict=True
     )
     mock_get_pr.return_value = {"mergeable_state": "clean"}
-    mock_check_skip_ci.return_value = False
     mock_get_files.return_value = [
         {"filename": "test_something.py", "status": "modified"},
         {"filename": "test_another.py", "status": "modified"},
@@ -464,12 +405,6 @@ def test_auto_merge_multiple_test_files_changed(
 
 
 @patch("services.webhook.successful_check_suite_handler.create_comment")
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request_files")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
@@ -483,9 +418,6 @@ def test_auto_merge_mixed_test_and_non_test_files(
     mock_get_pr,
     mock_get_files,
     mock_merge_pr,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
     mock_create_comment,
 ):
     payload = load_payload("completed_failed_github_actions.json")
@@ -501,7 +433,6 @@ def test_auto_merge_mixed_test_and_non_test_files(
     }
     mock_get_token.return_value = "test-token"
     mock_get_pr.return_value = {"mergeable_state": "clean"}
-    mock_check_skip_ci.return_value = False
     mock_get_files.return_value = [
         {"filename": "test_something.py", "status": "modified"},
         {"filename": "src/main.py", "status": "modified"},
@@ -544,12 +475,6 @@ def test_auto_merge_mixed_test_and_non_test_files(
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request_files")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
@@ -563,9 +488,6 @@ def test_auto_merge_with_non_test_files_allowed(
     mock_get_pr,
     mock_get_files,
     mock_merge_pr,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
     mock_get_check_suites,
     mock_get_required_checks,
 ):
@@ -588,7 +510,6 @@ def test_auto_merge_with_non_test_files_allowed(
         status_code=200, checks=["CircleCI Checks"], strict=True
     )
     mock_get_pr.return_value = {"mergeable_state": "clean"}
-    mock_check_skip_ci.return_value = False
     mock_get_files.return_value = [
         {"filename": "src/main.py", "status": "modified"},
         {"filename": "src/utils.py", "status": "modified"},
@@ -688,20 +609,11 @@ def test_auto_merge_skipped_for_human_pr(
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
 @patch("services.webhook.successful_check_suite_handler.get_repository_features")
 def test_auto_merge_blocked_skips_notification_when_checks_in_progress(
     mock_get_repo_features,
     mock_get_token,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
     mock_get_pr,
     mock_merge_pr,
     mock_get_check_suites,
@@ -721,7 +633,6 @@ def test_auto_merge_blocked_skips_notification_when_checks_in_progress(
         "auto_merge_only_test_files": False,
     }
     mock_get_token.return_value = "test-token"
-    mock_check_skip_ci.return_value = False
     mock_get_check_suites.return_value = [
         {
             "app": {"name": "CircleCI Checks"},
@@ -772,20 +683,11 @@ def test_auto_merge_blocked_skips_notification_when_checks_in_progress(
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
 @patch("services.webhook.successful_check_suite_handler.get_repository_features")
 def test_auto_merge_with_blocked_state(
     mock_get_repo_features,
     mock_get_token,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
     mock_get_pr,
     mock_merge_pr,
     mock_get_check_suites,
@@ -804,7 +706,6 @@ def test_auto_merge_with_blocked_state(
         "auto_merge_only_test_files": False,
     }
     mock_get_token.return_value = "test-token"
-    mock_check_skip_ci.return_value = False
     mock_get_check_suites.return_value = [
         {"app": {"name": "CircleCI Checks"}, "status": "completed"}
     ]
@@ -847,12 +748,6 @@ def test_auto_merge_with_blocked_state(
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request_files")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
@@ -866,9 +761,6 @@ def test_auto_merge_with_unstable_state(
     mock_get_pr,
     mock_get_files,
     mock_merge_pr,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
     mock_get_check_suites,
     mock_get_required_checks,
 ):
@@ -891,7 +783,6 @@ def test_auto_merge_with_unstable_state(
         status_code=200, checks=["CircleCI Checks"], strict=True
     )
     mock_get_pr.return_value = {"mergeable_state": "unstable"}
-    mock_check_skip_ci.return_value = False
     mock_get_files.return_value = [
         {"filename": "test_something.py", "status": "modified"}
     ]
@@ -939,20 +830,11 @@ def test_auto_merge_with_unstable_state(
 @patch("services.webhook.successful_check_suite_handler.get_check_suites")
 @patch("services.webhook.successful_check_suite_handler.merge_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
 @patch("services.webhook.successful_check_suite_handler.get_repository_features")
 def test_auto_merge_with_unknown_state_no_comment(
     mock_get_repo_features,
     mock_get_token,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
     mock_get_pr,
     mock_merge_pr,
     mock_get_check_suites,
@@ -971,7 +853,6 @@ def test_auto_merge_with_unknown_state_no_comment(
         "auto_merge_only_test_files": False,
     }
     mock_get_token.return_value = "test-token"
-    mock_check_skip_ci.return_value = False
     mock_get_check_suites.return_value = [
         {"app": {"name": "CircleCI Checks"}, "status": "completed"}
     ]
@@ -1012,72 +893,27 @@ def test_auto_merge_with_unknown_state_no_comment(
         mock_create_comment.assert_called_once()
 
 
-@patch("services.webhook.successful_check_suite_handler.get_required_status_checks")
-@patch("services.webhook.successful_check_suite_handler.get_check_suites")
-@patch(
-    "services.webhook.successful_check_suite_handler.get_clone_dir",
-    return_value="/tmp/test-owner/test-repo/pr-1",
-)
-@patch("services.webhook.successful_check_suite_handler.copy_repo_from_efs_to_tmp")
-@patch("services.webhook.successful_check_suite_handler.check_commit_has_skip_ci")
 @patch("services.webhook.successful_check_suite_handler.get_pull_request")
 @patch("services.webhook.successful_check_suite_handler.get_installation_access_token")
-@patch("services.webhook.successful_check_suite_handler.get_repository_features")
 def test_skip_ci_returns_early(
-    mock_get_repo_features,
     mock_get_token,
     mock_get_pr,
-    mock_check_skip_ci,
-    _mock_copy_efs,
-    _mock_get_clone_dir,
-    mock_get_check_suites,
-    mock_get_required_checks,
 ):
     payload = load_payload("completed_failed_github_actions.json")
     payload["check_suite"]["pull_requests"][0]["head"][
         "ref"
     ] = f"{PRODUCT_ID}/issue-2004-test"
     payload["check_suite"]["head_branch"] = f"{PRODUCT_ID}/issue-2004-test"
+    payload["check_suite"]["head_commit"]["message"] = "Initial commit [skip ci]"
 
-    mock_get_repo_features.return_value = {"auto_merge": True}
     mock_get_token.return_value = "test-token"
-    mock_get_check_suites.return_value = [
-        {"app": {"name": "GitHub Actions"}, "status": "completed"}
-    ]
-    mock_get_required_checks.return_value = StatusChecksResult(
-        status_code=200, checks=["GitHub Actions"], strict=True
-    )
-    mock_check_skip_ci.return_value = True
 
     with patch(
         "services.webhook.successful_check_suite_handler.supabase"
     ) as mock_supabase:
         mock_table = MagicMock()
-        mock_select = MagicMock()
-        mock_eq1 = MagicMock()
-        mock_eq2 = MagicMock()
-        mock_eq3 = MagicMock()
-        mock_order = MagicMock()
-        mock_limit = MagicMock()
-
         mock_supabase.table.return_value = mock_table
-        mock_table.select.return_value = mock_select
-        mock_select.eq.return_value = mock_eq1
-        mock_eq1.eq.return_value = mock_eq2
-        mock_eq2.eq.return_value = mock_eq3
-        mock_eq3.order.return_value = mock_order
-        mock_order.limit.return_value = mock_limit
-        mock_limit.execute.return_value = MagicMock(data=[{"id": 100}])
-
-        mock_update = MagicMock()
-        mock_update_eq = MagicMock()
-        mock_table.update.return_value = mock_update
-        mock_update.eq.return_value = mock_update_eq
 
         handle_successful_check_suite(cast(CheckSuiteCompletedPayload, payload))
 
-        mock_check_skip_ci.assert_called_once_with(
-            commit_sha="f8a15e5cc8987ef16de232e6a7d6d27c62ace05b",
-            clone_dir="/tmp/test-owner/test-repo/pr-1",
-        )
         mock_get_pr.assert_not_called()

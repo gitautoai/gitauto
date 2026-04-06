@@ -1,10 +1,14 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
+import os
+import subprocess
+import tempfile
 from typing import cast
 
 import pytest
 
 from services.claude.tools.file_modify_result import FileWriteResult
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.write_and_commit_file import (
     WRITE_AND_COMMIT_FILE,
     write_and_commit_file,
@@ -245,3 +249,38 @@ def test_tool_definition_structure():
             assert "file_content" in properties
         assert params.get("required") == ["file_path", "file_content"]
         assert params.get("additionalProperties") is False
+
+
+@pytest.mark.integration
+def test_write_and_commit_file_end_to_end(local_repo, create_test_base_args):
+    """Sociable: write new file, verify pushed to bare repo."""
+    bare_url, _work_dir = local_repo
+
+    with tempfile.TemporaryDirectory() as clone_dir:
+        git_clone_to_tmp(clone_dir, bare_url, "main")
+
+        base_args = create_test_base_args(
+            clone_dir=clone_dir,
+            clone_url=bare_url,
+            new_branch="feature/write-test",
+        )
+
+        result = write_and_commit_file(
+            file_content="print('new content')",
+            file_path="new_file.py",
+            base_args=base_args,
+        )
+
+        assert isinstance(result, FileWriteResult)
+        assert result.success is True
+        assert os.path.isfile(os.path.join(clone_dir, "new_file.py"))
+
+        bare_dir = bare_url.replace("file://", "")
+        log = subprocess.run(
+            ["git", "log", "--oneline", "feature/write-test", "-1"],
+            cwd=bare_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert "Create new_file.py" in log.stdout

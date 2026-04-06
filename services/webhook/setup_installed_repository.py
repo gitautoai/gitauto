@@ -3,16 +3,14 @@ import os
 
 # Local imports
 from schemas.supabase.types import OwnerType
-from services.aws.run_install_via_codebuild import run_install_via_codebuild
 from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_remote_branch import create_remote_branch
 from services.git.delete_remote_branch import delete_remote_branch
+from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.get_default_branch import get_default_branch
 from services.git.get_latest_remote_commit_sha import get_latest_remote_commit_sha
-from services.git.git_clone_to_efs import git_clone_to_efs
-from services.git.git_fetch import git_fetch
-from services.git.git_reset import git_reset
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.github.branches.is_repo_archived import is_repo_archived
 from services.github.pulls.create_pull_request import create_pull_request
 from services.github.pulls.has_open_pull_request_by_title import (
@@ -20,7 +18,8 @@ from services.github.pulls.has_open_pull_request_by_title import (
 )
 from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.token.get_installation_token import get_installation_access_token
-from services.node.detect_package_manager import detect_package_manager
+from services.node.ensure_node_packages import ensure_node_packages
+from services.php.ensure_php_packages import ensure_php_packages
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
     ensure_jest_uses_tsconfig_for_tests,
 )
@@ -83,26 +82,17 @@ def setup_installed_repository(
         logger.info("Repository %s/%s is empty, skipping clone", owner_name, repo_name)
         return
 
-    # Clone or update EFS (reusable for future PR work)
+    # Clone to /tmp for reading files and stats (fast, no EFS throughput cost)
+    clone_dir = get_clone_dir(owner_name, repo_name, pr_number=None)
+    git_clone_to_tmp(clone_dir, clone_url, default_branch)
+
+    # Install dependencies: read repo files from clone_dir, write manifests to EFS, trigger CodeBuild
     efs_dir = get_efs_dir(owner_name, repo_name)
-    efs_git_dir = os.path.join(efs_dir, ".git")
-
-    if os.path.exists(efs_git_dir):
-        logger.info("EFS clone exists, updating: %s", efs_dir)
-        fetch_ok = git_fetch(efs_dir, clone_url, default_branch)
-        if fetch_ok:
-            git_reset(efs_dir)
-    else:
-        logger.info("No EFS clone, creating: %s", efs_dir)
-        git_clone_to_efs(efs_dir, clone_url, default_branch)
-
-    # Start package install via CodeBuild (fire-and-forget) for Node projects
-    pkg_manager, lock_file, _ = detect_package_manager(efs_dir)
-    if lock_file:
-        run_install_via_codebuild(efs_dir, owner_id, pkg_manager)
+    ensure_node_packages(owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir)
+    ensure_php_packages(owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir)
 
     # Get stats and update repository
-    stats = get_repository_stats(local_path=efs_dir)
+    stats = get_repository_stats(local_path=clone_dir)
     logger.info("Repository %s stats: %s", repo_name, stats)
     upsert_repository(
         owner_id=owner_id,
@@ -158,7 +148,7 @@ def setup_installed_repository(
         "reviewers": [user_name] if user_name and "[bot]" not in user_name else [],
         "github_urls": [],
         "other_urls": [],
-        "clone_dir": efs_dir,
+        "clone_dir": clone_dir,
         "pr_number": 0,
         "pr_title": SETUP_PR_TITLE,
         "pr_body": "",
@@ -173,7 +163,7 @@ def setup_installed_repository(
     changes: list[str] = []
 
     root_files = [
-        f for f in os.listdir(efs_dir) if os.path.isfile(os.path.join(efs_dir, f))
+        f for f in os.listdir(clone_dir) if os.path.isfile(os.path.join(clone_dir, f))
     ]
 
     tsconfig_path, tsconfig_status = ensure_tsconfig_relaxed_for_tests(

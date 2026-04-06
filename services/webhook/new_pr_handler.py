@@ -19,14 +19,13 @@ from services.claude.tools.tools import TOOLS_FOR_ISSUES
 from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_clone_dir import get_clone_dir
-from services.git.get_clone_url import get_clone_url
-from services.git.git_clone_to_efs import git_clone_to_efs
-from services.git.prepare_repo_for_work import prepare_repo_for_work
+from services.git.clone_repo_and_install_dependencies import (
+    clone_repo_and_install_dependencies,
+)
 from services.git.write_and_commit_file import write_and_commit_file
 from services.github.comments.create_comment import create_comment
 from services.github.comments.get_comments import get_comments
 from services.github.comments.update_comment import update_comment
-from services.github.files.get_raw_content import get_raw_content
 from services.github.files.get_remote_file_content_by_url import (
     get_remote_file_content_by_url,
 )
@@ -209,17 +208,6 @@ async def handle_new_pr(
         slack_notify(availability_status["log_message"], thread_ts)
         return
 
-    # Start clone and install tasks early to run in parallel with LLM processing
-    base_branch = base_args["base_branch"]
-    efs_dir = get_efs_dir(owner_name, repo_name)
-    clone_url = get_clone_url(owner_name, repo_name, token)
-    git_clone_to_efs(efs_dir, clone_url, base_branch)
-    node_ready = ensure_node_packages(owner_id=owner_id, efs_dir=efs_dir)
-    logger.info("node: ready=%s", node_ready)
-
-    php_ready = ensure_php_packages(owner_id=owner_id, efs_dir=efs_dir)
-    logger.info("php: ready=%s", php_ready)
-
     # Create a usage record
     usage_id = create_user_request(
         user_id=sender_id,
@@ -320,13 +308,26 @@ async def handle_new_pr(
     # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args["clone_dir"] = clone_dir
-    prepare_repo_for_work(
+    clone_repo_and_install_dependencies(
         owner=owner_name,
         repo=repo_name,
+        base_branch=base_args["base_branch"],
         pr_branch=new_branch_name,
         token=token,
         clone_dir=clone_dir,
     )
+
+    # Install dependencies (read repo files from clone_dir, cache on EFS)
+    efs_dir = get_efs_dir(owner_name, repo_name)
+    node_ready = ensure_node_packages(
+        owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir
+    )
+    logger.info("node: ready=%s", node_ready)
+
+    php_ready = ensure_php_packages(
+        owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir
+    )
+    logger.info("php: ready=%s", php_ready)
 
     # Read impl file from local clone and skip if no testable code
     impl_file_content = (
@@ -611,13 +612,7 @@ async def handle_new_pr(
         if not is_test_file(file_path) or is_config_file(file_path):
             continue
 
-        file_content = get_raw_content(
-            owner=owner_name,
-            repo=repo_name,
-            file_path=file_path,
-            ref=new_branch_name,
-            token=token,
-        )
+        file_content = read_local_file(file_path=file_path, base_dir=clone_dir)
         if not file_content:
             continue
 

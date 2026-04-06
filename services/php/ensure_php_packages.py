@@ -11,14 +11,16 @@ from utils.logging.logging_config import logger
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def ensure_php_packages(
     owner_id: int,
+    clone_dir: str,
     efs_dir: str,
 ):
-    composer_json_content = read_local_file("composer.json", base_dir=efs_dir)
+    # Read repo files from clone_dir (the PR branch cloned to /tmp)
+    composer_json_content = read_local_file("composer.json", base_dir=clone_dir)
     if not composer_json_content:
         logger.info("php: No composer.json found, skipping installation")
         return False
 
-    composer_lock_content = read_local_file("composer.lock", base_dir=efs_dir)
+    composer_lock_content = read_local_file("composer.lock", base_dir=clone_dir)
 
     os.makedirs(efs_dir, exist_ok=True)
 

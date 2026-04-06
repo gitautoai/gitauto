@@ -20,8 +20,7 @@ from schemas.supabase.types import Coverages, CoveragesInsert
 from services.claude.evaluate_condition import evaluate_condition
 from services.claude.evaluate_quality_checks import evaluate_quality_checks
 from services.aws.delete_scheduler import delete_scheduler
-from services.efs.copy_repo_from_efs_to_tmp import copy_repo_from_efs_to_tmp
-from services.efs.get_efs_dir import get_efs_dir
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.create_empty_commit import create_empty_commit
 from services.git.create_remote_branch import create_remote_branch
 from services.git.git_checkout import git_checkout
@@ -115,7 +114,6 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     # Get repository files and coverage data
     clone_url = get_clone_url(owner_name, repo_name, token)
-    efs_dir = get_efs_dir(owner_name, repo_name)
     target_branch = repo_settings.get("target_branch")
     if not target_branch:
         target_branch = get_default_branch(clone_url=clone_url)
@@ -123,11 +121,10 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             msg = f"Repository {owner_name}/{repo_name} is empty"
             logger.info(msg)
             return {"status": "skipped", "message": msg}
-    # Copy EFS to /tmp for local file reads (EFS is shared, don't operate on it directly)
+
+    # Clone directly to /tmp
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number=None)
-    copy_repo_from_efs_to_tmp(efs_dir, clone_dir)
-    git_fetch(clone_dir, clone_url, target_branch)
-    git_checkout(clone_dir, target_branch)
+    git_clone_to_tmp(clone_dir, clone_url, target_branch)
     tree_items = get_file_tree(clone_dir=clone_dir, ref=target_branch)
 
     # Extract necessary data

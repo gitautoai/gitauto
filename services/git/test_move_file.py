@@ -1,8 +1,13 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
+import os
+import subprocess
+import tempfile
+
 import pytest
 
 from services.claude.tools.file_modify_result import FileMoveResult
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.move_file import move_file
 
 
@@ -77,3 +82,37 @@ def test_exception_handling_returns_result(base_args, tmp_path):
 
     result = move_file("my_dir", "new_dir", base_args)
     assert isinstance(result, FileMoveResult)
+
+
+@pytest.mark.integration
+def test_move_file_end_to_end(local_repo, create_test_base_args):
+    """Sociable: move file in repo, verify pushed to bare repo."""
+    bare_url, _work_dir = local_repo
+    bare_dir = bare_url.replace("file://", "")
+
+    with tempfile.TemporaryDirectory() as clone_dir:
+        git_clone_to_tmp(clone_dir, bare_url, "main")
+
+        base_args = create_test_base_args(
+            clone_dir=clone_dir,
+            clone_url=bare_url,
+            new_branch="feature/move-test",
+        )
+
+        assert os.path.isfile(os.path.join(clone_dir, "src", "main.py"))
+
+        result = move_file("src/main.py", "src/renamed_main.py", base_args)
+
+        assert isinstance(result, FileMoveResult)
+        assert result.success is True
+        assert not os.path.exists(os.path.join(clone_dir, "src", "main.py"))
+        assert os.path.isfile(os.path.join(clone_dir, "src", "renamed_main.py"))
+
+        log = subprocess.run(
+            ["git", "log", "--oneline", "feature/move-test", "-1"],
+            cwd=bare_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert "Move src/main.py" in log.stdout

@@ -161,7 +161,7 @@ def test_get_all_coverages_contract():
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_clone_dir")
-@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
+@patch("services.webhook.schedule_handler.git_clone_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_skips_export_only_files(
@@ -272,7 +272,7 @@ def test_schedule_handler_skips_export_only_files(
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_clone_dir")
-@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
+@patch("services.webhook.schedule_handler.git_clone_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.read_local_file")
 @patch("services.webhook.schedule_handler.evaluate_condition")
@@ -372,7 +372,7 @@ def test_schedule_handler_skips_empty_files(
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_clone_dir")
-@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
+@patch("services.webhook.schedule_handler.git_clone_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_prioritizes_zero_coverage_files(
@@ -548,7 +548,7 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_clone_dir")
-@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
+@patch("services.webhook.schedule_handler.git_clone_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_skips_ai_eval_when_tests_exist(
@@ -667,7 +667,7 @@ def test_schedule_handler_skips_ai_eval_when_tests_exist(
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_clone_dir")
-@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
+@patch("services.webhook.schedule_handler.git_clone_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
@@ -763,7 +763,7 @@ def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_clone_dir")
-@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
+@patch("services.webhook.schedule_handler.git_clone_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_skips_file_with_open_pr_different_title_format(
@@ -862,7 +862,7 @@ def test_schedule_handler_skips_file_with_open_pr_different_title_format(
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_clone_dir")
-@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
+@patch("services.webhook.schedule_handler.git_clone_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.read_local_file")
 @patch("services.webhook.schedule_handler.get_checklist_hash")
@@ -971,7 +971,7 @@ def test_schedule_handler_skips_none_coverage_as_fully_covered(
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_clone_dir")
-@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
+@patch("services.webhook.schedule_handler.git_clone_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_all_none_coverage_treated_as_candidate(
@@ -1095,7 +1095,7 @@ def test_schedule_handler_all_none_coverage_treated_as_candidate(
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_clone_dir")
-@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
+@patch("services.webhook.schedule_handler.git_clone_to_tmp")
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.read_local_file")
 def test_schedule_handler_partial_none_coverage_omits_none_metric(
@@ -1213,10 +1213,10 @@ def test_schedule_handler_partial_none_coverage_omits_none_metric(
 @patch("services.webhook.schedule_handler.get_all_coverages")
 @patch("services.webhook.schedule_handler.git_checkout")
 @patch("services.webhook.schedule_handler.git_fetch")
-@patch("services.webhook.schedule_handler.copy_repo_from_efs_to_tmp")
+@patch("services.webhook.schedule_handler.git_clone_to_tmp")
 @patch("services.webhook.schedule_handler.get_file_tree")
 @patch("services.webhook.schedule_handler.get_clone_dir")
-@patch("services.webhook.schedule_handler.get_efs_dir")
+@patch("services.webhook.schedule_handler.get_clone_url")
 @patch("services.webhook.schedule_handler.get_default_branch")
 @patch("services.webhook.schedule_handler.check_availability")
 @patch("services.webhook.schedule_handler.get_repository")
@@ -1228,20 +1228,19 @@ def test_get_file_tree_reads_from_tmp_not_efs(
     mock_get_repository,
     mock_check_availability,
     mock_get_default_branch,
-    mock_get_efs_dir,
+    mock_get_clone_url,
     mock_get_clone_dir,
     mock_get_file_tree,
-    _mock_copy_repo,
+    _mock_clone_to_tmp,
     _mock_git_fetch,
     _mock_git_checkout,
     mock_get_all_coverages,
     mock_event,
 ):
-    """Repo has files but git ls-tree fails on EFS (no local ref before checkout).
+    """Verify get_file_tree reads from /tmp clone_dir, not EFS.
 
-    PR #2449 called get_file_tree on efs_dir before fetch/checkout, so git ls-tree
-    returned empty and the handler falsely reported "No files found".
-    The fix: call get_file_tree on clone_dir after checkout where the local ref exists.
+    After the EFS migration, schedule_handler clones to /tmp via git_clone_to_tmp
+    and calls get_file_tree on clone_dir where the local ref exists.
     """
     mock_get_token.return_value = "test-token"
     mock_is_paused.return_value = None
@@ -1256,26 +1255,26 @@ def test_get_file_tree_reads_from_tmp_not_efs(
         "log_message": "Exception owner - unlimited access.",
     }
     mock_get_default_branch.return_value = "master"
-    mock_get_efs_dir.return_value = "/mnt/efs/test-org/test-repo"
+    mock_get_clone_url.return_value = (
+        "https://x-access-token:test-token@github.com/test-org/test-repo.git"
+    )
     mock_get_clone_dir.return_value = "/tmp/test-org/test-repo"
 
-    # EFS has no local master ref, /tmp does after checkout
-    def get_file_tree_by_dir(clone_dir, ref):
-        if clone_dir == "/mnt/efs/test-org/test-repo":
-            return []  # git ls-tree master fails on EFS
-        return [
-            {
-                "path": "src/app.ts",
-                "type": "blob",
-                "mode": "100644",
-                "sha": "a1",
-                "size": 50,
-            },
-        ]
-
-    mock_get_file_tree.side_effect = get_file_tree_by_dir
+    mock_get_file_tree.return_value = [
+        {
+            "path": "src/app.ts",
+            "type": "blob",
+            "mode": "100644",
+            "sha": "a1",
+            "size": 50,
+        },
+    ]
     mock_get_all_coverages.return_value = []
 
     result = schedule_handler(mock_event)
 
+    # get_file_tree should be called with clone_dir (/tmp), not efs_dir
+    mock_get_file_tree.assert_called_once_with(
+        clone_dir="/tmp/test-org/test-repo", ref="master"
+    )
     assert result["message"] != "Schedule: No files found"

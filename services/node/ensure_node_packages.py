@@ -12,16 +12,18 @@ from utils.logging.logging_config import logger
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def ensure_node_packages(
     owner_id: int,
+    clone_dir: str,
     efs_dir: str,
 ):
-    package_json_content = read_local_file("package.json", base_dir=efs_dir)
+    # Read repo files from clone_dir (the PR branch cloned to /tmp)
+    package_json_content = read_local_file("package.json", base_dir=clone_dir)
     if not package_json_content:
         logger.info("node: No package.json found, skipping installation")
         return False
 
-    npmrc_content = read_local_file(".npmrc", base_dir=efs_dir)
+    npmrc_content = read_local_file(".npmrc", base_dir=clone_dir)
 
-    pkg_manager, lock_file_name, lock_file_content = detect_package_manager(efs_dir)
+    pkg_manager, lock_file_name, lock_file_content = detect_package_manager(clone_dir)
 
     # Ensure EFS directory exists
     os.makedirs(efs_dir, exist_ok=True)
