@@ -220,6 +220,7 @@ When the user explicitly says "LGTM", execute this workflow:
       - No internal names (function names, variable names, component names like "schedule handler", "new_pr_handler", etc.) - describe behavior in plain language
       - When there's a real failure, tell the honest story
       - Sound human. Vary openers every time - check `scripts/git/recent_social_posts.sh wes` first.
+      - **No small numbers** - Don't expose specific dollar amounts or metrics that look trivial to readers (e.g. "$76/mo savings"). Use relative language instead ("biggest line item", "most of our costs"). Only include numbers that would impress the audience.
 11. If fixing a Sentry issue, resolve related issues:
     - `python3 scripts/sentry/get_issue.py AGENT-XXX` to check related
     - `python3 scripts/sentry/resolve_issue.py AGENT-XXX AGENT-YYY ...` to resolve

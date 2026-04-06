@@ -17,6 +17,7 @@ from services.git.apply_diff_to_file import (
 )
 from services.git.create_directory import CREATE_DIRECTORY, create_directory
 from services.git.delete_file import DELETE_FILE, delete_file
+from services.git.git_revert_file import GIT_REVERT_FILE, git_revert_file
 from services.git.search_and_replace import (
     SEARCH_AND_REPLACE,
     search_and_replace,
@@ -59,6 +60,7 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     CREATE_COMMENT,
     CREATE_DIRECTORY,
     DELETE_FILE,
+    GIT_REVERT_FILE,
     SEARCH_AND_REPLACE,
     FETCH_URL,
     GET_LOCAL_FILE_TREE,
@@ -107,6 +109,7 @@ tools_to_call: dict[str, Any] = {
     "create_directory": create_directory,
     "delete_file": delete_file,
     "fetch_url": fetch_url,
+    "git_revert_file": git_revert_file,
     "get_local_file_content": get_local_file_content,
     "get_local_file_tree": get_local_file_tree,
     "move_file": move_file,
