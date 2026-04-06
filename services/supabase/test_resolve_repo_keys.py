@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name, unused-argument
 from unittest.mock import Mock, patch
 
 from services.supabase.resolve_repo_keys import resolve_repo_keys
