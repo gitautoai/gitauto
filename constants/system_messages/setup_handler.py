@@ -9,9 +9,21 @@ Your task:
 - Determine what language(s) the repo uses from its root files
 - Check if tests and coverage are BOTH already handled by existing workflows
 - If NOT already set up, create a new workflow file using the reference templates as a guide
-- Adapt the template to match the repo's actual setup (e.g., yarn instead of npm, vitest instead of jest, unittest instead of pytest, gradle instead of maven)
+- Adapt the template to match the repo's package manager and unit test framework (e.g., yarn instead of npm, vitest instead of jest, unittest instead of pytest, gradle instead of maven). Do NOT adapt to E2E frameworks (see below)
 - Replace "main" in branch triggers with the repo's target branch (provided as target_branch)
 - Name the workflow file after the test framework (e.g., pytest.yml, jest.yml, go-test.yml)
+
+CRITICAL - E2E frameworks do NOT produce code coverage:
+Playwright, Cypress, Selenium, Puppeteer, and similar E2E/browser testing frameworks do NOT generate code coverage reports (no lcov.info, no coverage.xml).
+If the repo ONLY uses an E2E framework (e.g., only @playwright/test in package.json, only playwright.yml in workflows):
+- Do NOT create a workflow for the E2E framework — it cannot produce coverage
+- Instead, create a workflow for a unit test framework that CAN produce coverage
+- Examples (not exhaustive — apply the same logic to any language):
+  - JavaScript/TypeScript: jest.yml or vitest.yml (with --coverage flag producing lcov.info)
+  - Python: pytest.yml (with --cov flag)
+  - Java: maven or gradle with JaCoCo
+  - Go: go-test.yml (with -coverprofile)
+- If the repo has no unit test framework installed, add it as a devDependency (e.g., npm install --save-dev jest, pip install pytest-cov) as part of the workflow setup
 
 CRITICAL - How to check if coverage is already set up:
 Coverage is ONLY "already set up" if ALL THREE of the following exist in an existing workflow file:
