@@ -30,6 +30,8 @@ def git_clone_to_tmp(clone_dir: str, clone_url: str, branch: str):
         return clone_dir
 
     # Fresh clone — single git command, no intermediate steps
+    # Benchmark on Lambda (3072MB, us-west-1): SPIDERPLUS-web (13,618 files, 1.1GB) cloned in 17s
+    # GitHub tarball API was 2x slower (37s) — git pack protocol is more efficient
     logger.info("Shallow cloning: branch=%s dir=%s", branch, clone_dir)
     os.makedirs(clone_dir, exist_ok=True)
     # --depth 1: shallow clone (latest commit only), -b: checkout this branch
