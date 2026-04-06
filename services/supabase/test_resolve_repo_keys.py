@@ -1,5 +1,3 @@
-# pylint: disable=unused-argument
-# pyright: reportUnusedVariable=false
 from unittest.mock import Mock, patch
 
 from services.supabase.resolve_repo_keys import resolve_repo_keys
