@@ -332,6 +332,8 @@ Resources:
           - Id: ExpireOldTarballs
             Status: Enabled
             ExpirationInDays: 30
+            Filter:
+              Prefix: "" # Apply to all objects
 
   # =============================================================================
   # CodeBuild - AWS managed build service (serverless containers, not EC2)
