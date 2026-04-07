@@ -308,6 +308,10 @@ Resources:
                 Resource: '*'
               - Effect: Allow
                 Action:
+                  - s3:ListBucket
+                Resource: !GetAtt DependencyCacheBucket.Arn
+              - Effect: Allow
+                Action:
                   - s3:GetObject
                   - s3:PutObject
                 Resource: !Sub '${DependencyCacheBucket.Arn}/*'
@@ -341,8 +345,9 @@ Resources:
           version: 0.2
           phases:
             install:
-              runtime-versions:
-                nodejs: 24
+              commands:
+                - n "$NODE_VERSION"
+                - echo "Using Node.js $(node --version)"
             build:
               commands:
                 - echo "Installing packages for $S3_KEY_PREFIX using $PKG_MANAGER"

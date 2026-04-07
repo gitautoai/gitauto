@@ -2,6 +2,7 @@ from services.aws.s3.check_s3_dep_freshness_and_trigger_install import (
     check_s3_dep_freshness_and_trigger_install,
 )
 from services.aws.s3.get_dep_manifest_hash import get_dep_manifest_hash
+from services.node.detect_node_version import detect_node_version
 from services.node.detect_package_manager import detect_package_manager
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.read_local_file import read_local_file
@@ -23,10 +24,13 @@ def ensure_node_packages(
 
     npmrc_content = read_local_file(".npmrc", base_dir=clone_dir)
 
+    node_version = detect_node_version(clone_dir)
+
     pkg_manager, lock_file_name, lock_file_content = detect_package_manager(clone_dir)
 
+    # Include node_version in hash so version changes invalidate the cache
     manifest_hash = get_dep_manifest_hash(
-        [package_json_content, lock_file_content, npmrc_content]
+        [package_json_content, lock_file_content, npmrc_content, node_version]
     )
 
     # Build manifest files to upload to S3 for CodeBuild
@@ -41,6 +45,15 @@ def ensure_node_packages(
     if lock_file_name and lock_file_content:
         manifest_files[lock_file_name] = lock_file_content
 
+    # Upload version files so CodeBuild can see them
+    nvmrc_content = read_local_file(".nvmrc", base_dir=clone_dir)
+    if nvmrc_content:
+        manifest_files[".nvmrc"] = nvmrc_content
+
+    node_version_content = read_local_file(".node-version", base_dir=clone_dir)
+    if node_version_content:
+        manifest_files[".node-version"] = node_version_content
+
     return check_s3_dep_freshness_and_trigger_install(
         owner_name=owner_name,
         repo_name=repo_name,
@@ -50,4 +63,5 @@ def ensure_node_packages(
         manifest_hash=manifest_hash,
         manifest_files=manifest_files,
         log_prefix="node",
+        node_version=node_version,
     )

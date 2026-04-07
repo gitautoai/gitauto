@@ -3,6 +3,7 @@ from mypy_boto3_codebuild.type_defs import EnvironmentVariableTypeDef
 from constants.aws import S3_DEPENDENCY_BUCKET
 from constants.general import IS_PRD
 from services.aws.clients import codebuild_client
+from services.node.detect_node_version import DEFAULT_NODE_VERSION
 from services.supabase.npm_tokens.get_npm_token import get_npm_token
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -13,6 +14,7 @@ def run_install_via_codebuild(
     s3_key_prefix: str,  # e.g. "Foxquilt/foxcom-forms" — S3 path for manifests and tarballs
     owner_id: int,
     pkg_manager: str,
+    node_version: str = DEFAULT_NODE_VERSION,
 ):
     if not IS_PRD:
         logger.info("codebuild: Skipping in non-prod environment")
@@ -22,6 +24,7 @@ def run_install_via_codebuild(
         {"name": "S3_BUCKET", "value": S3_DEPENDENCY_BUCKET, "type": "PLAINTEXT"},
         {"name": "S3_KEY_PREFIX", "value": s3_key_prefix, "type": "PLAINTEXT"},
         {"name": "PKG_MANAGER", "value": pkg_manager, "type": "PLAINTEXT"},
+        {"name": "NODE_VERSION", "value": node_version, "type": "PLAINTEXT"},
     ]
 
     npm_token = get_npm_token(owner_id)
