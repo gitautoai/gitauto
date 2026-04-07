@@ -147,10 +147,10 @@ def search_and_replace(
         base_args=base_args, message=f"Update {file_path}", files=[file_path]
     )
 
-    diff_section = f"\n\nDiff:\n```\n{diff_text}```" if diff_text else ""
     return FileWriteResult(
         success=True,
-        message=f"Updated {file_path}.{diff_section}",
+        message=f"Updated {file_path}.",
         file_path=file_path,
         content=new_content,
+        diff=diff_text,
     )

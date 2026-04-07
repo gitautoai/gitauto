@@ -109,10 +109,10 @@ def write_and_commit_file(
     message = commit_message if commit_message else default_message
     git_commit_and_push(base_args=base_args, message=message, files=[file_path])
 
-    diff_section = f"\n\nDiff:\n```\n{diff_text}```" if diff_text else ""
     return FileWriteResult(
         success=True,
-        message=f"{'Updated' if file_exists else 'Created'} {file_path}.{diff_section}",
+        message=f"{'Updated' if file_exists else 'Created'} {file_path}.",
         file_path=file_path,
         content=file_content,
+        diff=diff_text,
     )

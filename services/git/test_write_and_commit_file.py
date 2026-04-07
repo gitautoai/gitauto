@@ -193,9 +193,9 @@ def test_diff_included_for_existing_file(sample_base_args, tmp_path):
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
-    assert "Diff:" in result.message
-    assert "-line " in result.message
-    assert "+replaced " in result.message
+    assert "Diff:" not in result.message
+    assert "-line " in result.diff
+    assert "+replaced " in result.diff
 
 
 def test_diff_included_for_small_change(sample_base_args, tmp_path):
@@ -216,9 +216,9 @@ def test_diff_included_for_small_change(sample_base_args, tmp_path):
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
-    assert "Diff:" in result.message
-    assert "-line 5" in result.message
-    assert "+modified line 5" in result.message
+    assert "Diff:" not in result.message
+    assert "-line 5" in result.diff
+    assert "+modified line 5" in result.diff
 
 
 def test_no_diff_for_new_files(sample_base_args, tmp_path):
@@ -231,7 +231,7 @@ def test_no_diff_for_new_files(sample_base_args, tmp_path):
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
-    assert "Diff:" not in result.message
+    assert result.diff == ""
 
 
 def test_tool_definition_structure():
