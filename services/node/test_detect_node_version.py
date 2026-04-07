@@ -12,51 +12,40 @@ def repo_dir(tmp_path):
     return str(tmp_path)
 
 
+def real_repo(path: str):
+    """Skip if the repo directory doesn't exist (CI doesn't have local clones)."""
+    if not os.path.isdir(path):
+        pytest.skip(f"{os.path.basename(path)} repo not cloned")
+    return path
+
+
 # Real repos at ../website, ../Foxquilt/*, ../posthog, etc.
-# Skipped in CI where these repos don't exist
 @pytest.mark.integration
 class TestRealRepos:
     def test_website_engines_22x(self):
-        # ../website/package.json has engines.node = "22.x"
-        repo = os.path.join(REPOS_ROOT, "website")
-        if not os.path.isdir(repo):
-            pytest.skip("website repo not cloned")
+        repo = real_repo(os.path.join(REPOS_ROOT, "website"))
         assert detect_node_version(repo) == "22"
 
     def test_posthog_nvmrc_18(self):
-        # ../posthog/.nvmrc = "18", engines.node = ">=18 <19"
-        # .nvmrc takes precedence
-        repo = os.path.join(REPOS_ROOT, "posthog")
-        if not os.path.isdir(repo):
-            pytest.skip("posthog repo not cloned")
+        repo = real_repo(os.path.join(REPOS_ROOT, "posthog"))
         assert detect_node_version(repo) == "18"
 
     def test_ghostwriter_engines_gte_22(self):
-        # ../ghostwriter/package.json has engines.node = ">=22.0.0"
-        repo = os.path.join(REPOS_ROOT, "ghostwriter")
-        if not os.path.isdir(repo):
-            pytest.skip("ghostwriter repo not cloned")
+        repo = real_repo(os.path.join(REPOS_ROOT, "ghostwriter"))
         assert detect_node_version(repo) == "22"
 
     def test_slackgpt3_engines_22(self):
-        # ../slackgpt3/package.json has engines.node = "22"
-        repo = os.path.join(REPOS_ROOT, "slackgpt3")
-        if not os.path.isdir(repo):
-            pytest.skip("slackgpt3 repo not cloned")
+        repo = real_repo(os.path.join(REPOS_ROOT, "slackgpt3"))
         assert detect_node_version(repo) == "22"
 
     def test_foxcom_forms_no_version_defaults_to_22(self):
-        # Fox repos have no .nvmrc, no .node-version, no engines.node
-        repo = os.path.join(REPOS_ROOT, "Foxquilt", "foxcom-forms")
-        if not os.path.isdir(repo):
-            pytest.skip("foxcom-forms repo not cloned")
+        repo = real_repo(os.path.join(REPOS_ROOT, "Foxquilt", "foxcom-forms"))
         assert detect_node_version(repo) == DEFAULT_NODE_VERSION
 
     def test_foxden_admin_portal_backend_no_version_defaults_to_22(self):
-        # This is the repo that failed with Node 24 - should default to 22
-        repo = os.path.join(REPOS_ROOT, "Foxquilt", "foxden-admin-portal-backend")
-        if not os.path.isdir(repo):
-            pytest.skip("foxden-admin-portal-backend repo not cloned")
+        repo = real_repo(
+            os.path.join(REPOS_ROOT, "Foxquilt", "foxden-admin-portal-backend")
+        )
         assert detect_node_version(repo) == DEFAULT_NODE_VERSION
 
 
