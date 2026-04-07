@@ -347,7 +347,7 @@ Resources:
   CodeBuildSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for CodeBuild (VPC access for private npm registries)
+      GroupDescription: Security group for CodeBuild to access EFS
       VpcId: !Ref VPC
       SecurityGroupEgress:
         - IpProtocol: -1
