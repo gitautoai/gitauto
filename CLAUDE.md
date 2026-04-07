@@ -259,7 +259,7 @@ When the user explicitly says "LGTM", execute this workflow:
 **CRITICAL GIT RULES:**
 
 - **NEVER use `git add .`** - always specify exact files
-- **IMMEDIATELY act on "Create a pull request" in git push output** - When `git push` prints `remote: Create a pull request for 'branch' on GitHub by visiting:`, it means NO PR exists for this branch. You MUST run `gh pr create` RIGHT AWAY before doing anything else. Do NOT ignore this message. Do NOT continue to other tasks. Create the PR immediately.
+- **After every `git push`, check if a PR exists**: Run `gh pr list --head $(git branch --show-current) --state open` after every push. If no PR exists, run `gh pr create` immediately. Do NOT skip this step. Do NOT assume a PR exists.
 
 **CRITICAL VERIFICATION REQUIREMENT:**
 
