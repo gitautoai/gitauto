@@ -3,11 +3,9 @@ Description: 'Lambda function with IAM role for GitAuto'
 
 # =============================================================================
 # Deployed via: .github/workflows/deployment.yml
-# Stack name: gitauto-lambda-with-vpc-efs
+# Stack name: gitauto-lambda-with-vpc-efs (can't rename without changing Function URL)
 # Depends on: gitauto-vpc-nat-efs (exports VPC, subnets, security groups, S3 bucket)
-#
-# NOTE: Can't rename stack. Would need to rename Lambda too, but that breaks
-# Function URL (used by GitHub App webhook, website, 88+ EventBridge schedules).
+# File renamed from deploy-lambda-with-vpc-efs.yml after EFS removal
 # =============================================================================
 
 Parameters:

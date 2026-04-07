@@ -3,10 +3,8 @@ Description: 'VPC + NAT Instance (~$4/mo) + S3 + CodeBuild for GitAuto'
 
 # =============================================================================
 # Deployed via: .github/workflows/deployment.yml
-# Stack name: gitauto-vpc-nat-efs
-#
-# NOTE: Can't rename stack. Would need to rename all resources too, but that
-# breaks references from Lambda stack (VPC, subnets, security groups).
+# Stack name: gitauto-vpc-nat-efs (can't rename without recreating all resources)
+# File renamed from setup-vpc-nat-efs.yml after EFS removal
 # =============================================================================
 Resources:
 

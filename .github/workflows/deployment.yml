@@ -58,7 +58,7 @@ jobs:
         run: |
           aws cloudformation deploy \
             --stack-name gitauto-vpc-nat-efs \
-            --template-file infrastructure/setup-vpc-nat-efs.yml \
+            --template-file infrastructure/setup-vpc-nat-s3.yml \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
@@ -66,7 +66,7 @@ jobs:
         run: |
           aws cloudformation deploy \
             --stack-name gitauto-lambda-with-vpc-efs \
-            --template-file infrastructure/deploy-lambda-with-vpc-efs.yml \
+            --template-file infrastructure/deploy-lambda.yml \
             --parameter-overrides ECRImageUri=$ECR_REGISTRY/pr-agent-prod:$IMAGE_TAG \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset

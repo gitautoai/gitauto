@@ -77,8 +77,8 @@ ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 **CRITICAL**: GitAuto runs on AWS Lambda, not in client environments. Infrastructure is managed via CloudFormation:
 
 - `Dockerfile` - Lambda container image
-- `infrastructure/setup-vpc-nat-efs.yml` - VPC, NAT, S3, CodeBuild project and IAM role
-- `infrastructure/deploy-lambda-with-vpc-efs.yml` - Lambda function and IAM role
+- `infrastructure/setup-vpc-nat-s3.yml` - VPC, NAT, S3, CodeBuild project and IAM role
+- `infrastructure/deploy-lambda.yml` - Lambda function and IAM role
 
 ### Testing Strategy
 

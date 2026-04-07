@@ -2,7 +2,7 @@
 from utils.error.handle_exceptions import handle_exceptions
 from utils.memory.get_rss_mb import get_rss_mb
 
-# Must match MemorySize in infrastructure/deploy-lambda-with-vpc-efs.yml
+# Must match MemorySize in infrastructure/deploy-lambda.yml
 LAMBDA_MEMORY_MB = 2048
 
 
