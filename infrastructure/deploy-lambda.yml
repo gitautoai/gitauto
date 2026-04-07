@@ -67,6 +67,8 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         # CodeBuild - trigger package installations (npm install, pip install, etc.)
         - PolicyName: CodeBuildAccess
