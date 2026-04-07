@@ -15,7 +15,6 @@ from services.github.types.webhook.review_run_payload import ReviewRunPayload
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.chat_with_agent import chat_with_agent
-from services.efs.get_efs_dir import get_efs_dir
 from services.node.ensure_node_packages import ensure_node_packages
 from services.node.set_npm_token_env import set_npm_token_env
 from services.php.ensure_php_packages import ensure_php_packages
@@ -233,15 +232,20 @@ async def handle_review_run(
         clone_dir=clone_dir,
     )
 
-    # Install dependencies (read repo files from clone_dir, cache on EFS)
-    efs_dir = get_efs_dir(owner_name, repo_name)
+    # Install dependencies (read repo files from clone_dir, cache on S3)
     node_ready = ensure_node_packages(
-        owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir
+        owner_id=owner_id,
+        clone_dir=clone_dir,
+        owner_name=owner_name,
+        repo_name=repo_name,
     )
     logger.info("node: ready=%s", node_ready)
 
     php_ready = ensure_php_packages(
-        owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir
+        owner_id=owner_id,
+        clone_dir=clone_dir,
+        owner_name=owner_name,
+        repo_name=repo_name,
     )
     logger.info("php: ready=%s", php_ready)
 

@@ -402,7 +402,7 @@ async def test_run_jest_test_type_error_in_output(
 async def test_run_jest_test_sets_mongoms_download_dir(
     mock_exists, mock_subprocess, _mock_distro
 ):
-    """Verify MONGOMS_DOWNLOAD_DIR is set so MongoMemoryServer can cache mongod on EFS."""
+    """Verify MONGOMS_DOWNLOAD_DIR is set to /tmp for MongoMemoryServer binary caching."""
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
@@ -424,10 +424,7 @@ async def test_run_jest_test_sets_mongoms_download_dir(
     # Verify jest was called with MONGOMS_DOWNLOAD_DIR in env (first call is jest)
     call_kwargs = mock_subprocess.call_args_list[0].kwargs
     env = call_kwargs["env"]
-    assert "MONGOMS_DOWNLOAD_DIR" in env
-    assert "test-owner" in env["MONGOMS_DOWNLOAD_DIR"]
-    assert "test-repo" in env["MONGOMS_DOWNLOAD_DIR"]
-    assert env["MONGOMS_DOWNLOAD_DIR"].endswith(".cache/mongodb-binaries")
+    assert env["MONGOMS_DOWNLOAD_DIR"] == "/tmp/mongodb-binaries"
 
 
 # Real Jest output captured from foxden-rating-quoting-backend on 2026-03-23.

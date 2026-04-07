@@ -1,11 +1,10 @@
-import fcntl
-import os
-
-from config import UTF8
-from services.aws.run_install_via_codebuild import run_install_via_codebuild
+from services.aws.s3.check_s3_dep_freshness_and_trigger_install import (
+    check_s3_dep_freshness_and_trigger_install,
+)
+from services.aws.s3.get_dep_manifest_hash import get_dep_manifest_hash
 from services.node.detect_package_manager import detect_package_manager
-from utils.files.read_local_file import read_local_file
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
 
 
@@ -13,7 +12,8 @@ from utils.logging.logging_config import logger
 def ensure_node_packages(
     owner_id: int,
     clone_dir: str,
-    efs_dir: str,
+    owner_name: str,
+    repo_name: str,
 ):
     # Read repo files from clone_dir (the PR branch cloned to /tmp)
     package_json_content = read_local_file("package.json", base_dir=clone_dir)
@@ -25,102 +25,29 @@ def ensure_node_packages(
 
     pkg_manager, lock_file_name, lock_file_content = detect_package_manager(clone_dir)
 
-    # Ensure EFS directory exists
-    os.makedirs(efs_dir, exist_ok=True)
+    manifest_hash = get_dep_manifest_hash(
+        [package_json_content, lock_file_content, npmrc_content]
+    )
 
-    install_lock_path = os.path.join(efs_dir, ".install.lock")
+    # Build manifest files to upload to S3 for CodeBuild
+    manifest_files = {"package.json": package_json_content}
 
-    with open(install_lock_path, "w", encoding=UTF8) as lock_file:
-        try:
-            logger.info("node: Acquiring lock for %s", efs_dir)
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-            logger.info("node: Lock acquired for %s", efs_dir)
+    if npmrc_content:
+        sanitized_npmrc = npmrc_content.replace(
+            "http://registry.npmjs.org", "https://registry.npmjs.org"
+        )
+        manifest_files[".npmrc"] = sanitized_npmrc
 
-            # Check if existing packages can be reused
-            node_modules_path = os.path.join(efs_dir, "node_modules")
-            bin_path = os.path.join(node_modules_path, ".bin")
-            package_json_path = os.path.join(efs_dir, "package.json")
-            can_reuse = os.path.exists(node_modules_path)
+    if lock_file_name and lock_file_content:
+        manifest_files[lock_file_name] = lock_file_content
 
-            if can_reuse:
-                if not os.path.exists(bin_path):
-                    logger.info(
-                        "node: Incomplete install - .bin directory missing at %s",
-                        bin_path,
-                    )
-                    can_reuse = False
-                else:
-                    bin_contents = os.listdir(bin_path)
-                    if not bin_contents:
-                        logger.info(
-                            "node: Incomplete install - .bin directory empty at %s",
-                            bin_path,
-                        )
-                        can_reuse = False
-
-            if can_reuse:
-                # Verify package.json matches
-                if os.path.exists(package_json_path):
-                    with open(package_json_path, "r", encoding=UTF8) as f:
-                        can_reuse = f.read() == package_json_content
-                else:
-                    can_reuse = False
-
-            if can_reuse and npmrc_content:
-                npmrc_path = os.path.join(efs_dir, ".npmrc")
-                if os.path.exists(npmrc_path):
-                    with open(npmrc_path, "r", encoding=UTF8) as f:
-                        can_reuse = f.read() == npmrc_content
-                else:
-                    can_reuse = False
-
-            if can_reuse and npmrc_content is None:
-                # No .npmrc in repo, but if one exists on EFS, it's stale
-                npmrc_path = os.path.join(efs_dir, ".npmrc")
-                if os.path.exists(npmrc_path):
-                    can_reuse = False
-
-            if can_reuse and lock_file_name:
-                lock_path = os.path.join(efs_dir, lock_file_name)
-                if lock_file_content:
-                    if os.path.exists(lock_path):
-                        with open(lock_path, "r", encoding=UTF8) as f:
-                            can_reuse = f.read() == lock_file_content
-                    else:
-                        can_reuse = False
-
-            if can_reuse:
-                logger.info(
-                    "node: Reusing existing packages on EFS at %s (%d binaries in .bin)",
-                    efs_dir,
-                    len(os.listdir(bin_path)),
-                )
-                return True
-
-            # Copy to EFS because install runs in EFS to cache node_modules across Lambda invocations
-            with open(package_json_path, "w", encoding=UTF8) as f:
-                f.write(package_json_content)
-
-            if npmrc_content:
-                npmrc_path = os.path.join(efs_dir, ".npmrc")
-                sanitized_npmrc = npmrc_content.replace(
-                    "http://registry.npmjs.org", "https://registry.npmjs.org"
-                )
-                with open(npmrc_path, "w", encoding=UTF8) as f:
-                    f.write(sanitized_npmrc)
-                logger.info("node: Wrote .npmrc to %s", npmrc_path)
-
-            if lock_file_name and lock_file_content:
-                lock_path = os.path.join(efs_dir, lock_file_name)
-                with open(lock_path, "w", encoding=UTF8) as f:
-                    f.write(lock_file_content)
-                logger.info("node: Wrote %s to %s", lock_file_name, lock_path)
-
-            # Trigger CodeBuild install (fire and forget, bypasses Lambda 15-min timeout)
-            run_install_via_codebuild(efs_dir, owner_id, pkg_manager)
-            logger.info("node: Triggered CodeBuild install for %s", efs_dir)
-            return False  # Packages not ready yet, installing in background
-
-        finally:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
-            logger.info("node: Lock released for %s", efs_dir)
+    return check_s3_dep_freshness_and_trigger_install(
+        owner_name=owner_name,
+        repo_name=repo_name,
+        owner_id=owner_id,
+        pkg_manager=pkg_manager,
+        tarball_name="node_modules.tar.gz",
+        manifest_hash=manifest_hash,
+        manifest_files=manifest_files,
+        log_prefix="node",
+    )

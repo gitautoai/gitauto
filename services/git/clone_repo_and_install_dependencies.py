@@ -1,5 +1,4 @@
-from services.efs.extract_dependencies import extract_dependencies
-from services.efs.get_efs_dir import get_efs_dir
+from services.aws.s3.download_and_extract_dependency import download_and_extract_s3_deps
 from services.git.copy_config_templates import copy_config_templates
 from services.git.get_clone_url import get_clone_url
 from services.git.git_checkout import git_checkout
@@ -27,9 +26,8 @@ def clone_repo_and_install_dependencies(
     git_fetch(clone_dir, clone_url, pr_branch)
     git_checkout(clone_dir, pr_branch)
 
-    # Step 3: Extract dependencies from EFS tarball to clone_dir
-    efs_dir = get_efs_dir(owner, repo)
-    extract_dependencies(efs_dir, clone_dir)
+    # Step 3: Extract dependencies from S3 tarball to clone_dir
+    download_and_extract_s3_deps(owner, repo, clone_dir)
 
     # Step 4: Copy config templates (e.g., .env.example → .env)
     copy_config_templates(clone_dir)

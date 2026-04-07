@@ -4,7 +4,6 @@ import subprocess
 from dataclasses import dataclass, field
 
 from constants.aws import EFS_TIMEOUT_SECONDS
-from services.efs.get_efs_dir import get_efs_dir
 from services.jest.get_mongoms_distro import get_mongoms_distro
 from services.jest.parse_coverage_json import Coverage, parse_coverage_json
 from services.node.detect_package_manager import detect_package_manager
@@ -57,8 +56,6 @@ async def run_jest_test(
         return JestResult()
 
     # Build base command
-    owner = base_args["owner"]
-    repo = base_args["repo"]
     test_script_name = get_test_script_name(clone_dir)
     if test_script_name:
         pkg_manager, _, _ = detect_package_manager(clone_dir)
@@ -70,11 +67,9 @@ async def run_jest_test(
     env = os.environ.copy()
     env["CI"] = "true"
 
-    # MongoMemoryServer needs a writable cache dir for the mongod binary.
-    # Lambda's home dir (/home/sbx_user1051) doesn't exist, so point it to the EFS repo dir.
-    # We don't copy this to /tmp unlike node_modules because it's a single ~100MB file (fine to read over NFS), not 150k+ small files.
-    efs_dir = get_efs_dir(owner, repo)
-    env["MONGOMS_DOWNLOAD_DIR"] = os.path.join(efs_dir, ".cache", "mongodb-binaries")
+    # MongoMemoryServer downloads mongod binary on first use (~3s on Lambda).
+    # Not shared across instances (unlike EFS), but 3s per cold start is acceptable.
+    env["MONGOMS_DOWNLOAD_DIR"] = "/tmp/mongodb-binaries"
     mongoms_distro = get_mongoms_distro(clone_dir)
     if mongoms_distro:
         env["MONGOMS_DISTRO"] = mongoms_distro

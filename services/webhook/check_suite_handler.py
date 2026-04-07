@@ -20,7 +20,6 @@ from services.circleci.get_build_logs import get_circleci_build_logs
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
 from services.claude.tools.tools import TOOLS_FOR_PRS
 from services.codecov.get_commit_coverage import get_codecov_commit_coverage
-from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
@@ -258,15 +257,20 @@ async def handle_check_suite(
         clone_dir=clone_dir,
     )
 
-    # Install dependencies (read repo files from clone_dir, cache on EFS)
-    efs_dir = get_efs_dir(owner_name, repo_name)
+    # Install dependencies (read repo files from clone_dir, cache on S3)
     node_ready = ensure_node_packages(
-        owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir
+        owner_id=owner_id,
+        clone_dir=clone_dir,
+        owner_name=owner_name,
+        repo_name=repo_name,
     )
     logger.info("node: ready=%s", node_ready)
 
     php_ready = ensure_php_packages(
-        owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir
+        owner_id=owner_id,
+        clone_dir=clone_dir,
+        owner_name=owner_name,
+        repo_name=repo_name,
     )
     logger.info("php: ready=%s", php_ready)
 
