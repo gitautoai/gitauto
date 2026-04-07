@@ -6,6 +6,7 @@ import requests
 
 # Local imports
 from config import TIMEOUT
+from constants.slack import SLACK_CHANNEL_ID
 from constants.general import IS_PRD
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -25,7 +26,7 @@ def slack_notify(text: str, thread_ts: str | None = None):
         "Content-Type": "application/json",
     }
 
-    payload = {"channel": "C08PHH352S3", "text": text}
+    payload = {"channel": SLACK_CHANNEL_ID, "text": text}
 
     if thread_ts:
         payload["thread_ts"] = thread_ts

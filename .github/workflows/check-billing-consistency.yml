@@ -1,0 +1,63 @@
+name: Check Billing Consistency
+
+on:
+  schedule:
+    # Run daily at 10 AM PT (5 PM UTC)
+    - cron: "0 17 * * *"
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Start date (YYYY-MM-DD), default: 30 days ago"
+        required: false
+      end_date:
+        description: "End date (YYYY-MM-DD), default: tomorrow"
+        required: false
+      owner:
+        description: "Check specific owner only (default: all credit owners)"
+        required: false
+
+env:
+  ENV: github-actions
+  GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+  SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+  SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
+
+jobs:
+  check-consistency:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install requests supabase python-dotenv
+
+      - name: Run billing consistency check
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.start_date }}" ]; then
+            ARGS="$ARGS --start ${{ github.event.inputs.start_date }}"
+          fi
+          if [ -n "${{ github.event.inputs.end_date }}" ]; then
+            ARGS="$ARGS --end ${{ github.event.inputs.end_date }}"
+          fi
+          if [ -n "${{ github.event.inputs.owner }}" ]; then
+            ARGS="$ARGS --owner ${{ github.event.inputs.owner }}"
+          fi
+          python3 scripts/supabase/check_billing_consistency.py $ARGS
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -s -X POST \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"channel\":\"C08PHH352S3\",\"text\":\"<!channel> Billing consistency check failed! Check workflow logs.\"}" \
+            https://slack.com/api/chat.postMessage
