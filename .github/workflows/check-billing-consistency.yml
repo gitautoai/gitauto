@@ -17,7 +17,7 @@ on:
         required: false
 
 env:
-  ENV: github-actions
+  ENV: prod
   GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
   SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
   SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
@@ -37,7 +37,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install dependencies
-        run: pip install requests supabase python-dotenv
+        run: pip install -r requirements.txt
 
       - name: Run billing consistency check
         run: |
