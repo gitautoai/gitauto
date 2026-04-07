@@ -47,7 +47,7 @@ def chat_with_claude(
     buffer = 4096
     context_window = CONTEXT_WINDOW.get(model_id, 200_000)
     max_output = MAX_OUTPUT_TOKENS.get(model_id, 64_000)
-    max_input = context_window - max_output - buffer
+    max_input = min(context_window - max_output - buffer, 200_000)
     messages, token_input = trim_messages_to_token_limit(
         messages=messages, client=claude, model=model_id, max_input=max_input
     )
