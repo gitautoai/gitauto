@@ -40,7 +40,7 @@ def test_run_install_via_codebuild_starts_build():
                 env_vars = call_args.kwargs["environmentVariablesOverride"]
                 assert {
                     "name": "S3_BUCKET",
-                    "value": "dependency-cache",
+                    "value": "gitauto-dependency-cache",
                     "type": "PLAINTEXT",
                 } in env_vars
                 assert {
