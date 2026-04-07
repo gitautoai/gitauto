@@ -558,7 +558,7 @@ async def test_run_jest_test_captures_full_esm_error(
     errors_joined = "\n".join(result.errors)
     assert "_globalSetup.mjs:2" in errors_joined
     assert "SyntaxError: Cannot use import statement outside a module" in errors_joined
-    assert "Runtime.createScriptFromCode" in errors_joined
+    # Runtime.createScriptFromCode is a node_modules stack frame, correctly stripped by minimize_jest_test_logs
 
 
 @pytest.mark.asyncio

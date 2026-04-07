@@ -1,4 +1,8 @@
+import os
+
 from utils.logs.minimize_jest_test_logs import minimize_jest_test_logs
+
+FIXTURES_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 
 
 def test_minimize_jest_test_logs_with_summary():
@@ -44,31 +48,54 @@ Tests:       1 failed, 2 passed, 3 total"""
     assert "PASS test/utils/timeout" not in result
 
 
-def test_minimize_jest_test_logs_no_summary():
-    """Test that logs without summary section are returned unchanged."""
-    input_log = """```CircleCI Build Log: yarn test
-yarn run v1.22.22
-$ craco test --watchAll=false
-
-PASS test/utils/timeout.test.ts (10.698 s)
-  ✓ all tests passed
-
-Test Suites: 1 passed, 1 total"""
-
+def test_minimize_jest_test_logs_no_summary_still_minimizes():
+    """Test that logs without summary section still get minimized via strip_jest_noise."""
+    input_log = (
+        "yarn run v1.22.22\n"
+        '{"level":"debug","msg":"connecting"}\n'
+        '{"level":"debug","msg":"query"}\n'
+        "FAIL src/a.test.ts\n"
+        "  ✕ should work\n"
+        "\n"
+        "  ● should work\n"
+        "\n"
+        "    expect(true).toBe(false)\n"
+        "\n"
+        "      at Object.<anonymous> (node_modules/jest/build/index.js:100:10)\n"
+        "      at Object.<anonymous> (src/a.test.ts:5:3)\n"
+        "\n"
+        "PASS src/b.test.ts\n"
+        "  ✓ should pass (1 ms)\n"
+        "Test Suites: 1 failed, 1 passed, 2 total\n"
+        "Tests: 1 failed, 1 passed, 2 total"
+    )
     result = minimize_jest_test_logs(input_log)
-    assert result == input_log
+    # strip_jest_noise removes JSON lines, ✓, PASS section
+    # strip_node_modules removes node_modules/jest stack frame
+    # dedup_jest_errors drops ✕ line (between FAIL and ●), keeps ● block
+    expected = (
+        "yarn run v1.22.22\n"
+        "FAIL src/a.test.ts\n"
+        "  ● should work\n"
+        "\n"
+        "    expect(true).toBe(false)\n"
+        "\n"
+        "      at Object.<anonymous> (src/a.test.ts:5:3)\n"
+        "\n"
+        "\n"
+        "Test Suites: 1 failed, 1 passed, 2 total\n"
+        "Tests: 1 failed, 1 passed, 2 total"
+    )
+    assert result == expected
 
 
 def test_minimize_jest_test_logs_empty():
     assert minimize_jest_test_logs("") == ""
 
 
-def test_minimize_jest_test_logs_not_jest():
-    """Test that non-Jest logs are returned unchanged."""
-    input_log = """Some other build output
-with no Jest markers
-or test results"""
-
+def test_minimize_jest_test_logs_plain_text_preserved():
+    """Test that plain text without noise is preserved."""
+    input_log = "Some other build output\nwith no Jest markers\nor test results"
     result = minimize_jest_test_logs(input_log)
     assert result == input_log
 
@@ -96,3 +123,19 @@ Test Suites: 1 failed, 2 passed, 3 total"""
     assert "Test Suites: 1 failed, 2 passed, 3 total" in result
     # PASS sections should be removed
     assert "PASS test/file1" not in result
+
+
+def test_minimize_real_subprocess_fixture():
+    """Test full pipeline on real 776K jest subprocess output from production."""
+    fixture_path = os.path.join(FIXTURES_DIR, "raw_jest_subprocess_output.txt")
+    expected_path = os.path.join(
+        FIXTURES_DIR, "raw_jest_subprocess_output_minimized.txt"
+    )
+
+    with open(fixture_path, encoding="utf-8") as f:
+        raw = f.read()
+    with open(expected_path, encoding="utf-8") as f:
+        expected = f.read()
+
+    result = minimize_jest_test_logs(raw)
+    assert result == expected.strip()

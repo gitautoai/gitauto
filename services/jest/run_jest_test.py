@@ -11,6 +11,7 @@ from services.node.get_test_script_name import get_test_script_name
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
+from utils.logs.minimize_jest_test_logs import minimize_jest_test_logs
 from utils.process.kill_processes_by_name import kill_processes_by_name
 
 
@@ -139,7 +140,7 @@ async def run_jest_test(
             # If no specific files detected, mark all as failed
             if not error_files:
                 error_files.update(test_file_paths)
-            all_errors.append(output.strip())
+            all_errors.append(minimize_jest_test_logs(output.strip()))
             logger.warning("%s: tests failed:\n%s", runner_name, output.strip())
 
     # Parse coverage data if coverage was enabled and tests passed
