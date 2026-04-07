@@ -13,7 +13,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-lambda
+  # Closed-without-merge PRs get a unique group so they can't cancel real deployments
+  group: ${{ github.event.pull_request.merged == true && 'deploy-lambda' || format('deploy-skip-{0}', github.run_id) }}
   cancel-in-progress: true # Cancel older deployments, run only the latest
 
 env:
