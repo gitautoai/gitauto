@@ -68,7 +68,7 @@ AWS CLI is configured for us-west-1. **Always use `--start-from-head`** with `ge
 python3 scripts/aws/filter_log_events_across_streams.py --owner Foxquilt --repo foxcom-forms --pr 1089
 python3 scripts/aws/filter_log_events_across_streams.py --hours 24 --owner Foxquilt --repo foxcom-forms
 
-# SSH to NAT Instance (EFS at /mnt/efs)
+# SSH to NAT Instance
 ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 ```
 
@@ -77,7 +77,7 @@ ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 **CRITICAL**: GitAuto runs on AWS Lambda, not in client environments. Infrastructure is managed via CloudFormation:
 
 - `Dockerfile` - Lambda container image
-- `infrastructure/setup-vpc-nat-efs.yml` - VPC, NAT, EFS, CodeBuild project and IAM role
+- `infrastructure/setup-vpc-nat-efs.yml` - VPC, NAT, S3, CodeBuild project and IAM role
 - `infrastructure/deploy-lambda-with-vpc-efs.yml` - Lambda function and IAM role
 
 ### Testing Strategy
@@ -88,7 +88,7 @@ ssh -i infrastructure/nat-instance-ssh-private-key.pem ec2-user@54.176.165.89
 
 ## Platform Agnostic
 
-We aim to be platform-agnostic. Avoid relying on GitHub API as much as possible. Use local git operations (via EFS clones) instead. Only use GitHub API when there's no alternative, e.g. `get_github_file_tree` exists because a user can install GitAuto and immediately visit the file coverage page before the local EFS clone completes.
+We aim to be platform-agnostic. Avoid relying on GitHub API as much as possible. Use local git operations (via /tmp clones) instead. Only use GitHub API when there's no alternative, e.g. `get_github_file_tree` exists because a user can install GitAuto and immediately visit the file coverage page before the local clone completes.
 
 ## Coding Standards
 

@@ -7,14 +7,14 @@ from utils.error.handle_exceptions import handle_exceptions
 def create_remote_branch(sha: str, base_args: BaseArgs) -> None:
     """Creates a remote branch pointing to the given SHA using git push.
 
-    Requires clone_dir to be a valid git repo (EFS clone or local clone).
+    Requires clone_dir to be a valid git repo.
     """
     clone_url = base_args["clone_url"]
     base_branch = base_args["base_branch"]
     branch_name = base_args["new_branch"]
     clone_dir = base_args["clone_dir"]
 
-    # EFS repos are shallow (--depth 1) so the SHA from ls-remote may not exist locally.
+    # Repos are shallow (--depth 1) so the SHA from ls-remote may not exist locally.
     # Fetch the base branch first to ensure the latest commit object is available.
     run_subprocess(
         args=["git", "fetch", clone_url, base_branch],

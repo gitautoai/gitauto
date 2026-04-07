@@ -91,7 +91,7 @@ async def setup_handler(
 
     clone_url = get_clone_url(owner_name, repo_name, token)
 
-    # Clone to /tmp for reading files (fast, no EFS throughput cost)
+    # Clone to /tmp for reading files
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number=None)
     git_clone_to_tmp(clone_dir, clone_url, target_branch)
     root_files = [

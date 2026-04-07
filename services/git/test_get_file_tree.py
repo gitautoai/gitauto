@@ -25,7 +25,7 @@ class TestGetFileTree:
         result.stdout = GIT_LS_TREE_OUTPUT
         mock_run_subprocess.return_value = result
 
-        items = get_file_tree(clone_dir="/mnt/efs/owner/repo", ref="main")
+        items = get_file_tree(clone_dir="/tmp/owner/repo", ref="main")
 
         assert len(items) == 3
         assert items[0]["path"] == "src/main.py"
@@ -42,7 +42,7 @@ class TestGetFileTree:
         result.stdout = ""
         mock_run_subprocess.return_value = result
 
-        get_file_tree(clone_dir="/mnt/efs/owner/repo", ref="main")
+        get_file_tree(clone_dir="/tmp/owner/repo", ref="main")
 
         # Should call git ls-tree with local ref, no fetch, no origin/ prefix
         call = mock_run_subprocess.call_args_list[0]
@@ -65,7 +65,7 @@ class TestGetFileTree:
         result.stdout = ""
         mock_run_subprocess.return_value = result
 
-        items = get_file_tree(clone_dir="/mnt/efs/owner/repo", ref="main")
+        items = get_file_tree(clone_dir="/tmp/owner/repo", ref="main")
 
         assert not items
 
@@ -75,7 +75,7 @@ class TestGetFileTree:
         result.stdout = ""
         mock_run_subprocess.return_value = result
 
-        get_file_tree(clone_dir="/mnt/efs/owner/repo", ref="main", root_only=True)
+        get_file_tree(clone_dir="/tmp/owner/repo", ref="main", root_only=True)
 
         call = mock_run_subprocess.call_args_list[0]
         assert "-r" not in call[1]["args"]
@@ -84,7 +84,7 @@ class TestGetFileTree:
     def test_returns_empty_when_ls_tree_fails(self, _mock_isdir, mock_run_subprocess):
         mock_run_subprocess.side_effect = ValueError("ref not found")
 
-        items = get_file_tree(clone_dir="/mnt/efs/owner/repo", ref="main")
+        items = get_file_tree(clone_dir="/tmp/owner/repo", ref="main")
 
         assert not items
 

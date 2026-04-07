@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass, field
 
-from constants.aws import EFS_TIMEOUT_SECONDS
+from constants.aws import SUBPROCESS_TIMEOUT_SECONDS
 from services.jest.get_mongoms_distro import get_mongoms_distro
 from services.jest.parse_coverage_json import Coverage, parse_coverage_json
 from services.node.detect_package_manager import detect_package_manager
@@ -68,7 +68,7 @@ async def run_jest_test(
     env["CI"] = "true"
 
     # MongoMemoryServer downloads mongod binary on first use (~3s on Lambda).
-    # Not shared across instances (unlike EFS), but 3s per cold start is acceptable.
+    # Downloaded from S3 cache on first use (~3s on Lambda cold start).
     env["MONGOMS_DOWNLOAD_DIR"] = "/tmp/mongodb-binaries"
     mongoms_distro = get_mongoms_distro(clone_dir)
     if mongoms_distro:
@@ -116,7 +116,7 @@ async def run_jest_test(
         cmd,
         capture_output=True,
         text=True,
-        timeout=EFS_TIMEOUT_SECONDS,
+        timeout=SUBPROCESS_TIMEOUT_SECONDS,
         check=False,
         cwd=clone_dir,
         env=env,

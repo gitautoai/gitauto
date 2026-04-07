@@ -3,7 +3,7 @@ import subprocess
 from dataclasses import dataclass
 
 from config import UTF8
-from constants.aws import EFS_TIMEOUT_SECONDS
+from constants.aws import SUBPROCESS_TIMEOUT_SECONDS
 from services.node.get_npm_cache_dir import set_npm_cache_env
 from services.prettier.get_prettier_config import get_prettier_config
 from services.types.base_args import BaseArgs
@@ -58,7 +58,7 @@ async def run_prettier_fix(*, base_args: BaseArgs, file_path: str, file_content:
         ["npx", "--yes", "prettier", "--write", full_path],
         capture_output=True,
         text=True,
-        timeout=EFS_TIMEOUT_SECONDS,
+        timeout=SUBPROCESS_TIMEOUT_SECONDS,
         check=False,
         cwd=clone_dir,
         env=env,

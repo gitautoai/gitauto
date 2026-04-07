@@ -16,7 +16,6 @@ from constants.general import PRODUCT_NAME
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 from payloads.aws.setup_installed_repository_event import SetupInstalledRepositoryEvent
 from services.aws.cleanup_tmp import cleanup_tmp
-from services.efs.cleanup_stale_repos_on_efs import cleanup_stale_repos_on_efs
 from services.github.utils.verify_webhook_signature import verify_webhook_signature
 from services.sentry.before_send import before_send
 from services.slack.slack_notify import slack_notify
@@ -80,13 +79,6 @@ def handler(event, context):
             sender_display_name=event["sender_display_name"],
         )
         return None
-
-    # For EFS cleanup scheduled event
-    if "triggerType" in event and event["triggerType"] == "cleanup":
-        logger.info("EFS cleanup triggered")
-        result = cleanup_stale_repos_on_efs()
-        logger.info("EFS cleanup result: %s", result)
-        return result
 
     # For scheduled event from EventBridge Scheduler
     if "triggerType" in event and event["triggerType"] == "schedule":

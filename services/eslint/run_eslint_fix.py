@@ -7,7 +7,7 @@ from typing import TypedDict
 import sentry_sdk
 
 from config import UTF8
-from constants.aws import EFS_TIMEOUT_SECONDS
+from constants.aws import SUBPROCESS_TIMEOUT_SECONDS
 from services.eslint.eslint_config_has_parser_project import (
     eslint_config_has_parser_project,
 )
@@ -156,7 +156,7 @@ async def run_eslint_fix(*, base_args: BaseArgs, file_path: str, file_content: s
         cmd,
         capture_output=True,
         text=True,
-        timeout=EFS_TIMEOUT_SECONDS,
+        timeout=SUBPROCESS_TIMEOUT_SECONDS,
         check=False,
         cwd=clone_dir,
         env=env,

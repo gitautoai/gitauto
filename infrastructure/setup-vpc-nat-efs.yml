@@ -1,12 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'VPC + NAT Instance (~$4/mo) + EFS + CodeBuild for GitAuto'
+Description: 'VPC + NAT Instance (~$4/mo) + S3 + CodeBuild for GitAuto'
 
 # =============================================================================
 # Deployed via: .github/workflows/deployment.yml
 # Stack name: gitauto-vpc-nat-efs
 #
 # NOTE: Can't rename stack. Would need to rename all resources too, but that
-# breaks references from Lambda stack (VPC, subnets, EFS, security groups).
+# breaks references from Lambda stack (VPC, subnets, security groups).
 # =============================================================================
 Resources:
 
@@ -42,7 +42,7 @@ Resources:
   # =============================================================================
   # Subnets - isolated network segments within VPC, each in one AZ (Availability Zone)
   # - 1 public subnet: NAT Instance in AZ-a only (single point of failure, but ~$4/mo vs ~$8/mo for 2)
-  # - 2 private subnets: Lambda + EFS in both AZs (EFS HA works, but internet depends on NAT in AZ-a)
+  # - 2 private subnets: Lambda + CodeBuild in both AZs (internet depends on NAT in AZ-a)
   # us-west-1 AZs verified: aws ec2 describe-availability-zones --region us-west-1 --query 'AvailabilityZones[*].ZoneName'
   # =============================================================================
 
@@ -61,7 +61,7 @@ Resources:
         - Key: Name
           Value: gitauto-public-1a
 
-  # Private subnets (for Lambda + EFS)
+  # Private subnets (for Lambda + CodeBuild)
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Metadata:
@@ -173,7 +173,6 @@ Resources:
   # Using Amazon Linux 2023 AMI with NAT configuration
   # https://docs.aws.amazon.com/vpc/latest/userguide/VPC_NAT_Instance.html
   # NAT instance routes traffic - package installs run on CodeBuild
-  # EFS mounted for debugging access via SSH
   NATInstance:
     Type: AWS::EC2::Instance
     Properties:
@@ -185,7 +184,7 @@ Resources:
         - !Ref NATSecurityGroup
       SourceDestCheck: false # Required for NAT
       UserData:
-        Fn::Base64: !Sub |
+        Fn::Base64: |
           #!/bin/bash
           set -e
 
@@ -210,13 +209,6 @@ Resources:
           iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
           service iptables save
           echo "NAT setup complete" >> /var/log/nat-setup.log
-
-          # Mount EFS for debugging access via SSH
-          yum install -y amazon-efs-utils
-          mkdir -p /mnt/efs
-          echo "${GitAutoEFS}:/ /mnt/efs efs defaults,_netdev 0 0" >> /etc/fstab
-          mount -a
-          echo "EFS mounted at /mnt/efs" >> /var/log/nat-setup.log
       Tags:
         - Key: Name
           Value: gitauto-nat-instance
@@ -350,32 +342,14 @@ Resources:
   # - Lambda: 15 min timeout, 10GB storage, ~$0.0005/min (at 512MB) - 10x cheaper
   # - CodeBuild: 8 hour timeout, 70GB local SSD, ~$0.005/min - 10x more expensive
   # - Lambda is cheaper but times out on large yarn installs (can take 1+ hour)
-  # - Container spins up, runs install, creates tarball on EFS, terminates
+  # - Container spins up, runs install, uploads tarball to S3, terminates
   #
-  # Strategy: Store node_modules as tarball on EFS, Lambda extracts to /tmp
-  # - Writing 150k files to EFS is slow (NFS metadata latency, ~1ms per file)
-  # - Writing 1 tarball to EFS is fast (sequential write, throughput-limited)
-  # - Lambda extracts tarball to local /tmp (fast, ~15-30s)
-  #
-  # Timing breakdown (Foxquilt/foxcom-forms with yarn, 2026-01-31, tarball approach):
-  #   QUEUED: 1s
-  #   PROVISIONING: 30s (spin up container)
-  #   DOWNLOAD_SOURCE: 36s (mount EFS, install Node.js 24)
-  #   BUILD: 175s
-  #     - tar EFS to local SSD: 1s
-  #     - yarn install: 103s
-  #       - Resolving packages: ~2s
-  #       - Fetching packages: ~35s
-  #       - Linking dependencies: ~46s
-  #       - Building fresh packages: ~20s
-  #     - tar -czf node_modules.tar.gz to EFS: 67s
-  #     - cleanup: 3s
-  #   Total: ~4 min
+  # Strategy: Store node_modules as tarball on S3, Lambda downloads + extracts to /tmp
   # =============================================================================
   CodeBuildSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for CodeBuild to access EFS
+      GroupDescription: Security group for CodeBuild (VPC access for private npm registries)
       VpcId: !Ref VPC
       SecurityGroupEgress:
         - IpProtocol: -1
@@ -419,12 +393,6 @@ Resources:
                 Resource: '*'
               - Effect: Allow
                 Action:
-                  - elasticfilesystem:ClientMount
-                  - elasticfilesystem:ClientWrite
-                  - elasticfilesystem:DescribeMountTargets
-                Resource: !GetAtt GitAutoEFS.Arn
-              - Effect: Allow
-                Action:
                   - s3:GetObject
                   - s3:PutObject
                 Resource: !Sub '${DependencyCacheBucket.Arn}/*'
@@ -444,7 +412,7 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL # 3GB RAM, 2 vCPU, ~$0.005/min
         Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0 # Has Node.js 24
-        PrivilegedMode: true # Required while FileSystemLocations exists on deployed project
+        PrivilegedMode: true # TODO: Set to false after deployed project's FileSystemLocations is removed
         EnvironmentVariables:
           - Name: S3_BUCKET
             Value: !Ref DependencyCacheBucket

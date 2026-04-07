@@ -81,7 +81,7 @@ def setup_installed_repository(
         logger.info("Repository %s/%s is empty, skipping clone", owner_name, repo_name)
         return
 
-    # Clone to /tmp for reading files and stats (fast, no EFS throughput cost)
+    # Clone to /tmp for reading files and stats
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number=None)
     git_clone_to_tmp(clone_dir, clone_url, default_branch)
 
