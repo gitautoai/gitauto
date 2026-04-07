@@ -14,13 +14,6 @@ from services.git.conftest import SAMPLE_REPO_URL
 
 
 @pytest.fixture
-def mock_get_efs_dir():
-    with patch("services.git.clone_repo_and_install_dependencies.get_efs_dir") as mock:
-        mock.return_value = "/mnt/efs/owner/repo"
-        yield mock
-
-
-@pytest.fixture
 def mock_get_clone_url():
     with patch(
         "services.git.clone_repo_and_install_dependencies.get_clone_url"
@@ -51,9 +44,9 @@ def mock_git_checkout():
 
 
 @pytest.fixture
-def mock_extract():
+def mock_s3_extract():
     with patch(
-        "services.git.clone_repo_and_install_dependencies.extract_dependencies"
+        "services.git.clone_repo_and_install_dependencies.download_and_extract_s3_deps"
     ) as mock:
         yield mock
 
@@ -67,12 +60,11 @@ def mock_copy_config():
 
 
 def test_prepare_repo_clones_base_then_checks_out_pr(
-    mock_get_efs_dir,
     mock_get_clone_url,
     mock_git_clone_to_tmp,
     mock_git_fetch,
     mock_git_checkout,
-    mock_extract,
+    mock_s3_extract,
     mock_copy_config,
 ):
     clone_url = "https://x-access-token:token@github.com/owner/repo.git"
@@ -89,7 +81,7 @@ def test_prepare_repo_clones_base_then_checks_out_pr(
     mock_git_clone_to_tmp.assert_called_once_with("/tmp/repo", clone_url, "main")
     mock_git_fetch.assert_called_once_with("/tmp/repo", clone_url, "feature")
     mock_git_checkout.assert_called_once_with("/tmp/repo", "feature")
-    mock_extract.assert_called_once_with("/mnt/efs/owner/repo", "/tmp/repo")
+    mock_s3_extract.assert_called_once_with("owner", "repo", "/tmp/repo")
     mock_copy_config.assert_called_once_with("/tmp/repo")
 
 
@@ -103,12 +95,9 @@ def test_clone_repo_checks_out_pr_branch():
         with patch(
             "services.git.clone_repo_and_install_dependencies.get_clone_url"
         ) as mock_url, patch(
-            "services.git.clone_repo_and_install_dependencies.get_efs_dir"
-        ) as mock_efs, patch(
-            "services.git.clone_repo_and_install_dependencies.extract_dependencies"
+            "services.git.clone_repo_and_install_dependencies.download_and_extract_s3_deps"
         ):
             mock_url.return_value = SAMPLE_REPO_URL
-            mock_efs.return_value = "/mnt/efs/fake"
 
             clone_repo_and_install_dependencies(
                 owner="gitautoai",

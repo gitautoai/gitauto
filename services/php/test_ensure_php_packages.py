@@ -1,163 +1,77 @@
-# pylint: disable=redefined-outer-name
-import os
+# pyright: reportUnusedVariable=false
 from unittest.mock import patch
 
-import pytest
-
-from config import UTF8
 from services.php.ensure_php_packages import ensure_php_packages
 
-
-@pytest.fixture
-def efs_dir(tmp_path):
-    return str(tmp_path / "efs")
-
-
-@pytest.fixture
-def clone_dir(tmp_path):
-    return str(tmp_path / "clone")
+MODULE = "services.php.ensure_php_packages"
 
 
 def test_returns_false_when_no_composer_json():
-    with patch("services.php.ensure_php_packages.read_local_file") as mock_get:
+    with patch(f"{MODULE}.read_local_file") as mock_get:
         mock_get.return_value = None
 
         result = ensure_php_packages(
             owner_id=123,
             clone_dir="/tmp/owner/repo",
-            efs_dir="/mnt/efs/owner/repo",
+            owner_name="owner",
+            repo_name="repo",
         )
 
         assert result is False
 
 
-def test_reuses_when_vendor_and_content_match(efs_dir, clone_dir):
-    os.makedirs(efs_dir, exist_ok=True)
-    # Set up EFS with matching vendor, autoload, composer.json
-    vendor_path = os.path.join(efs_dir, "vendor")
-    os.makedirs(vendor_path)
-    with open(os.path.join(vendor_path, "autoload.php"), "w", encoding=UTF8) as f:
-        f.write("<?php // autoload")
-    with open(os.path.join(efs_dir, "composer.json"), "w", encoding=UTF8) as f:
-        f.write('{"require": {}}')
-
-    def read_side_effect(filename, **_kwargs):
-        if filename == "composer.json":
-            return '{"require": {}}'
-        return None
-
-    with patch(
-        "services.php.ensure_php_packages.read_local_file",
-        side_effect=read_side_effect,
-    ):
-        with patch("services.php.ensure_php_packages.fcntl.flock"):
-            result = ensure_php_packages(
-                owner_id=123,
-                clone_dir=clone_dir,
-                efs_dir=efs_dir,
-            )
-
-            assert result is True
-
-
-def test_triggers_codebuild_when_no_vendor(efs_dir, clone_dir):
-    os.makedirs(efs_dir, exist_ok=True)
-
-    with patch("services.php.ensure_php_packages.read_local_file") as mock_get:
-        mock_get.return_value = '{"require": {}}'
-        with patch("services.php.ensure_php_packages.fcntl.flock"):
-            with patch(
-                "services.php.ensure_php_packages.run_install_via_codebuild"
-            ) as mock_codebuild:
-                result = ensure_php_packages(
-                    owner_id=123,
-                    clone_dir=clone_dir,
-                    efs_dir=efs_dir,
-                )
-
-                mock_codebuild.assert_called_once_with(efs_dir, 123, "composer")
-                assert result is False
-
-
-def test_triggers_codebuild_when_content_differs(efs_dir, clone_dir):
-    os.makedirs(efs_dir, exist_ok=True)
-    # Set up EFS with old composer.json
-    vendor_path = os.path.join(efs_dir, "vendor")
-    os.makedirs(vendor_path)
-    with open(os.path.join(vendor_path, "autoload.php"), "w", encoding=UTF8) as f:
-        f.write("<?php // autoload")
-    with open(os.path.join(efs_dir, "composer.json"), "w", encoding=UTF8) as f:
-        f.write('{"require": {"old": "1.0"}}')
-
-    with patch("services.php.ensure_php_packages.read_local_file") as mock_get:
-        mock_get.return_value = '{"require": {"new": "2.0"}}'
-        with patch("services.php.ensure_php_packages.fcntl.flock"):
-            with patch(
-                "services.php.ensure_php_packages.run_install_via_codebuild"
-            ) as mock_codebuild:
-                result = ensure_php_packages(
-                    owner_id=123,
-                    clone_dir=clone_dir,
-                    efs_dir=efs_dir,
-                )
-
-                mock_codebuild.assert_called_once()
-                assert result is False
-
-
-def test_triggers_codebuild_when_autoload_missing(efs_dir, clone_dir):
-    os.makedirs(efs_dir, exist_ok=True)
-    # vendor exists but autoload.php missing
-    os.makedirs(os.path.join(efs_dir, "vendor"))
-
-    with patch("services.php.ensure_php_packages.read_local_file") as mock_get:
-        mock_get.return_value = '{"require": {}}'
-        with patch("services.php.ensure_php_packages.fcntl.flock"):
-            with patch(
-                "services.php.ensure_php_packages.run_install_via_codebuild"
-            ) as mock_codebuild:
-                result = ensure_php_packages(
-                    owner_id=123,
-                    clone_dir=clone_dir,
-                    efs_dir=efs_dir,
-                )
-
-                mock_codebuild.assert_called_once()
-                assert result is False
-
-
-def test_triggers_codebuild_when_lock_differs(efs_dir, clone_dir):
-    os.makedirs(efs_dir, exist_ok=True)
-    # Set up EFS with matching composer.json but different lock
-    vendor_path = os.path.join(efs_dir, "vendor")
-    os.makedirs(vendor_path)
-    with open(os.path.join(vendor_path, "autoload.php"), "w", encoding=UTF8) as f:
-        f.write("<?php // autoload")
-    with open(os.path.join(efs_dir, "composer.json"), "w", encoding=UTF8) as f:
-        f.write('{"require": {}}')
-    with open(os.path.join(efs_dir, "composer.lock"), "w", encoding=UTF8) as f:
-        f.write('{"_readme": "old"}')
-
+def test_calls_shared_function_with_correct_args():
     def read_side_effect(filename, **_kwargs):
         if filename == "composer.json":
             return '{"require": {}}'
         if filename == "composer.lock":
-            return '{"_readme": "new"}'
+            return '{"_readme": "lock"}'
         return None
 
-    with patch(
-        "services.php.ensure_php_packages.read_local_file",
-        side_effect=read_side_effect,
-    ):
-        with patch("services.php.ensure_php_packages.fcntl.flock"):
+    with patch(f"{MODULE}.read_local_file", side_effect=read_side_effect):
+        with patch(f"{MODULE}.get_dep_manifest_hash", return_value="abc123"):
             with patch(
-                "services.php.ensure_php_packages.run_install_via_codebuild"
-            ) as mock_codebuild:
+                f"{MODULE}.check_s3_dep_freshness_and_trigger_install",
+                return_value=True,
+            ) as mock_check:
                 result = ensure_php_packages(
                     owner_id=123,
-                    clone_dir=clone_dir,
-                    efs_dir=efs_dir,
+                    clone_dir="/tmp/clone",
+                    owner_name="owner",
+                    repo_name="repo",
                 )
 
-                mock_codebuild.assert_called_once()
-                assert result is False
+                assert result is True
+                mock_check.assert_called_once_with(
+                    owner_name="owner",
+                    repo_name="repo",
+                    owner_id=123,
+                    pkg_manager="composer",
+                    tarball_name="vendor.tar.gz",
+                    manifest_hash="abc123",
+                    manifest_files={
+                        "composer.json": '{"require": {}}',
+                        "composer.lock": '{"_readme": "lock"}',
+                    },
+                    log_prefix="php",
+                )
+
+
+def test_excludes_lock_file_when_not_present():
+    with patch(f"{MODULE}.read_local_file") as mock_get:
+        mock_get.side_effect = ['{"require": {}}', None]
+        with patch(f"{MODULE}.get_dep_manifest_hash", return_value="abc123"):
+            with patch(
+                f"{MODULE}.check_s3_dep_freshness_and_trigger_install",
+                return_value=False,
+            ) as mock_check:
+                ensure_php_packages(
+                    owner_id=123,
+                    clone_dir="/tmp/clone",
+                    owner_name="owner",
+                    repo_name="repo",
+                )
+
+                manifest_files = mock_check.call_args.kwargs["manifest_files"]
+                assert "composer.json" in manifest_files
+                assert "composer.lock" not in manifest_files

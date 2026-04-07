@@ -19,13 +19,6 @@ def mock_get_installation_access_token():
 
 
 @pytest.fixture
-def mock_get_efs_dir():
-    with patch(f"{SINGLE}.get_efs_dir") as mock:
-        mock.return_value = "/mnt/efs/test-owner/test-repo"
-        yield mock
-
-
-@pytest.fixture
 def mock_get_clone_url():
     with patch(f"{SINGLE}.get_clone_url") as mock:
         mock.return_value = (
@@ -189,7 +182,6 @@ def test_process_repositories_clones_and_installs(
     sample_repositories,
     sample_stats,
     mock_get_installation_access_token,
-    mock_get_efs_dir,
     mock_get_clone_url,
     mock_get_clone_dir,
     mock_git_clone_to_tmp,
@@ -235,7 +227,6 @@ def test_process_repositories_clones_and_installs(
 
 def test_process_repositories_empty_list(
     mock_get_installation_access_token,
-    mock_get_efs_dir,
     mock_get_clone_url,
     mock_get_clone_dir,
     mock_git_clone_to_tmp,
@@ -268,7 +259,6 @@ def test_process_repositories_empty_list(
 def test_process_repositories_stats_saved_correctly(
     sample_stats,
     mock_get_installation_access_token,
-    mock_get_efs_dir,
     mock_get_clone_url,
     mock_get_clone_dir,
     mock_git_clone_to_tmp,
@@ -332,7 +322,6 @@ def test_process_repositories_stats_saved_correctly(
 
 def test_process_repositories_empty_repo_skips_clone(
     mock_get_installation_access_token,
-    mock_get_efs_dir,
     mock_get_clone_url,
     mock_get_clone_dir,
     mock_git_clone_to_tmp,
@@ -398,7 +387,6 @@ def test_process_repositories_empty_repo_skips_clone(
 def test_process_repositories_non_typescript_deletes_branch_no_pr(
     sample_stats,
     mock_get_installation_access_token,
-    mock_get_efs_dir,
     mock_get_clone_url,
     mock_get_clone_dir,
     mock_git_clone_to_tmp,
@@ -455,7 +443,6 @@ def test_process_repositories_non_typescript_deletes_branch_no_pr(
 def test_process_repositories_typescript_creates_pr(
     sample_stats,
     mock_get_installation_access_token,
-    mock_get_efs_dir,
     mock_get_clone_url,
     mock_get_clone_dir,
     mock_git_clone_to_tmp,
