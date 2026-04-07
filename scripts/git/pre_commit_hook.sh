@@ -39,6 +39,21 @@ if [ -n "$STAGED_MD_FILES" ]; then
     fi
 fi
 
+# CloudFormation template validation for staged infrastructure files
+STAGED_CFN_FILES=$(git diff --cached --name-only --diff-filter=d -- 'infrastructure/*.yml')
+if [ -n "$STAGED_CFN_FILES" ]; then
+    echo "--- CloudFormation validation ---"
+    for cfn_file in $STAGED_CFN_FILES; do
+        if aws cloudformation validate-template --template-body "file://$cfn_file" --region us-west-1 > /dev/null 2>&1; then
+            echo "  $cfn_file: OK"
+        else
+            echo "FAILED: $cfn_file failed CloudFormation validation."
+            aws cloudformation validate-template --template-body "file://$cfn_file" --region us-west-1
+            exit 1
+        fi
+    done
+fi
+
 # Print statement check (whole repo, excluding dirs)
 echo "--- ruff T201 print check ---"
 ruff check --select=T201 . --exclude schemas/,venv/,scripts/
