@@ -16,7 +16,7 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_24.x | bash - && \
     npm install -g yarn
 
 # Install PHP CLI and Composer for PHPUnit test execution
-# Same packages are also installed in CodeBuild (infrastructure/setup-vpc-nat-s3.yml)
+# Same packages are also installed in CodeBuild (infrastructure/setup-infra.yml)
 # php-cli: PHP command-line interpreter to run PHPUnit
 # php-json: JSON encoding/decoding used by PHPUnit for config and result output
 # php-mbstring: Multibyte string functions required by PHPUnit for string diffing

@@ -44,7 +44,7 @@ constants/website.py
 infrastructure/cloudwatch-alarms-sns.yml
 infrastructure/deploy-lambda.yml
 infrastructure/eventbridge-scheduler.yml
-infrastructure/setup-vpc-nat-s3.yml
+infrastructure/setup-infra.yml
 main.py
 payloads/aws/event_bridge_scheduler/context.json
 payloads/aws/event_bridge_scheduler/event.json

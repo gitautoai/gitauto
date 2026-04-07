@@ -4,7 +4,6 @@ Description: 'VPC + NAT Instance (~$4/mo) + S3 + CodeBuild for GitAuto'
 # =============================================================================
 # Deployed via: .github/workflows/deployment.yml
 # Stack name: gitauto-vpc-nat-efs (can't rename without recreating all resources)
-# File renamed from setup-vpc-nat-efs.yml after EFS removal
 # =============================================================================
 Resources:
 
@@ -227,21 +226,6 @@ Resources:
       AllocationId: !GetAtt NATEIP.AllocationId
 
   # =============================================================================
-  # Lambda Security Group - only egress needed (Lambda initiates connections, doesn't receive)
-  # =============================================================================
-  LambdaSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for GitAuto Lambda
-      VpcId: !Ref VPC
-      SecurityGroupEgress:
-        - IpProtocol: -1 # All outbound traffic
-          CidrIp: 0.0.0.0/0
-      Tags:
-        - Key: Name
-          Value: gitauto-lambda-sg
-
-  # =============================================================================
   # S3 Bucket - dependency cache
   # Stores node_modules.tar.gz, vendor.tar.gz per repo, and etc.
   # Key structure: {owner}/{repo}/node_modules.tar.gz
@@ -343,7 +327,7 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL # 3GB RAM, 2 vCPU, ~$0.005/min
         Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0 # Has Node.js 24
-        PrivilegedMode: true # TODO: Set to false after FileSystemLocations is removed from live state
+        PrivilegedMode: false
         EnvironmentVariables:
           - Name: S3_BUCKET
             Value: !Ref DependencyCacheBucket
@@ -422,33 +406,9 @@ Resources:
           Value: gitauto-package-install
 
 # =============================================================================
-# Outputs - values needed to configure Lambda
+# Outputs
 # =============================================================================
 Outputs:
-  VPCId:
-    Description: VPC ID
-    Value: !Ref VPC
-    Export:
-      Name: GitAutoVPCId
-
-  PrivateSubnet1Id:
-    Description: Private Subnet 1 ID (us-west-1a)
-    Value: !Ref PrivateSubnet1
-    Export:
-      Name: GitAutoPrivateSubnet1Id
-
-  PrivateSubnet2Id:
-    Description: Private Subnet 2 ID (us-west-1c)
-    Value: !Ref PrivateSubnet2
-    Export:
-      Name: GitAutoPrivateSubnet2Id
-
-  LambdaSecurityGroupId:
-    Description: Security Group ID for Lambda
-    Value: !Ref LambdaSecurityGroup
-    Export:
-      Name: GitAutoLambdaSecurityGroupId
-
   NATInstanceId:
     Description: NAT Instance ID
     Value: !Ref NATInstance
