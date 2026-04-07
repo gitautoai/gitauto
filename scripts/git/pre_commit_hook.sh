@@ -39,19 +39,15 @@ if [ -n "$STAGED_MD_FILES" ]; then
     fi
 fi
 
-# CloudFormation template validation for staged infrastructure files
+# CloudFormation (CFN) template validation for staged infrastructure files (errors only, ignore warnings)
 STAGED_CFN_FILES=$(git diff --cached --name-only --diff-filter=d -- 'infrastructure/*.yml')
 if [ -n "$STAGED_CFN_FILES" ]; then
-    echo "--- CloudFormation validation ---"
-    for cfn_file in $STAGED_CFN_FILES; do
-        if aws cloudformation validate-template --template-body "file://$cfn_file" --region us-west-1 > /dev/null 2>&1; then
-            echo "  $cfn_file: OK"
-        else
-            echo "FAILED: $cfn_file failed CloudFormation validation."
-            aws cloudformation validate-template --template-body "file://$cfn_file" --region us-west-1
-            exit 1
-        fi
-    done
+    echo "--- cfn-lint (CloudFormation) ---"
+    # shellcheck disable=SC2086
+    if ! cfn-lint -- $STAGED_CFN_FILES; then
+        echo "FAILED: Fix cfn-lint errors before committing."
+        exit 1
+    fi
 fi
 
 # Print statement check (whole repo, excluding dirs)

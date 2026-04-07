@@ -48,6 +48,10 @@ Resources:
 
   PublicSubnet:
     Type: AWS::EC2::Subnet
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks: [W3010] # Intentional: us-west-1 only has 2 AZs (a, c)
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.1.0/24
@@ -60,6 +64,10 @@ Resources:
   # Private subnets (for Lambda + EFS)
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks: [W3010] # Intentional: us-west-1 only has 2 AZs (a, c)
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.11.0/24
@@ -70,6 +78,10 @@ Resources:
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks: [W3010] # Intentional: us-west-1 only has 2 AZs (a, c)
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.12.0/24
@@ -315,13 +327,13 @@ Resources:
   DependencyCacheBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain # Keep bucket if stack is deleted
+    UpdateReplacePolicy: Retain
     Properties:
       BucketName: gitauto-dependency-cache
       BucketEncryption: # Encrypt at rest (free)
         ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionRule:
-              ServerSideEncryptionByDefault:
-                SSEAlgorithm: AES256
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
       PublicAccessBlockConfiguration: # No public access
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -332,8 +344,6 @@ Resources:
           - Id: ExpireOldTarballs
             Status: Enabled
             ExpirationInDays: 30
-            Filter:
-              Prefix: "" # Apply to all objects
 
   # =============================================================================
   # CodeBuild - AWS managed build service (serverless containers, not EC2)
@@ -417,7 +427,6 @@ Resources:
                 Action:
                   - s3:GetObject
                   - s3:PutObject
-                  - s3:HeadObject
                 Resource: !Sub '${DependencyCacheBucket.Arn}/*'
       Tags:
         - Key: Name
