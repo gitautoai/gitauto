@@ -3,11 +3,9 @@ Description: 'Lambda function with IAM role for GitAuto'
 
 # =============================================================================
 # Deployed via: .github/workflows/deployment.yml
-# Stack name: gitauto-lambda-with-vpc-efs
-# Depends on: gitauto-vpc-nat-efs (exports VPC, EFS, etc.)
-#
-# NOTE: Can't rename stack. Would need to rename Lambda too, but that breaks
-# Function URL (used by GitHub App webhook, website, 88+ EventBridge schedules).
+# Stack name: gitauto-lambda-with-vpc-efs (can't rename without changing Function URL)
+# Depends on: gitauto-vpc-nat-efs (exports VPC, subnets, security groups, S3 bucket)
+# File renamed from deploy-lambda-with-vpc-efs.yml after EFS removal
 # =============================================================================
 
 Parameters:
@@ -56,7 +54,7 @@ Resources:
 
   # =============================================================================
   # Lambda IAM Role
-  # - Includes all permissions: CloudWatch, VPC, EFS, CodeBuild
+  # - Includes all permissions: CloudWatch, VPC, S3, CodeBuild
   # =============================================================================
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -82,16 +80,6 @@ Resources:
               - Effect: Allow
                 Action: codebuild:StartBuild
                 Resource: !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/gitauto-package-install'
-        # EFS - mount and write to shared filesystem
-        - PolicyName: EFSAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - elasticfilesystem:ClientMount
-                  - elasticfilesystem:ClientWrite
-                Resource: !ImportValue GitAutoEFSFileSystemArn
         # S3 - read/write dependency tarballs and manifests
         - PolicyName: S3DependencyCacheAccess
           PolicyDocument:
@@ -129,7 +117,7 @@ Resources:
   # =============================================================================
   # Lambda Function
   # - Container image from ECR
-  # - VPC-connected for EFS access
+  # - VPC-connected for CodeBuild (private npm registries)
   # - 15 min timeout (max for Lambda)
   # - Environment variables from AWS Parameter Store (/gitauto/*)
   # =============================================================================
@@ -155,9 +143,6 @@ Resources:
         SubnetIds:
           - !ImportValue GitAutoPrivateSubnet1Id
           - !ImportValue GitAutoPrivateSubnet2Id
-      FileSystemConfigs:
-        - Arn: !ImportValue GitAutoEFSAccessPointArn
-          LocalMountPath: /mnt/efs
       Environment:
         Variables:
           # Lambda's default HOME (/home/sbx_user1051) doesn't exist, causing npm/git/etc to fail when they try to write to HOME

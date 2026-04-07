@@ -3,7 +3,7 @@ import os
 import subprocess
 from dataclasses import dataclass, field
 
-from constants.aws import EFS_TIMEOUT_SECONDS
+from constants.aws import SUBPROCESS_TIMEOUT_SECONDS
 from constants.files import PHP_TEST_FILE_EXTENSIONS
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
@@ -68,7 +68,7 @@ async def run_phpunit_test(
         cmd,
         capture_output=True,
         text=True,
-        timeout=EFS_TIMEOUT_SECONDS,
+        timeout=SUBPROCESS_TIMEOUT_SECONDS,
         check=False,
         cwd=clone_dir,
     )

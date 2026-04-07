@@ -6,7 +6,7 @@ from utils.logging.logging_config import logger
 
 
 def get_github_file_tree(owner: str, repo: str, ref: str, token: str):
-    """Fallback for get_file_tree via GitHub Trees API. When a user installs GitAuto and immediately visits the file coverage page, the local EFS clone hasn't completed yet, so we fetch the tree from GitHub API instead. We want to be platform-agnostic and remove GitHub API calls as much as possible, but can't remove this one."""
+    """Fallback for get_file_tree via GitHub Trees API. When a user installs GitAuto and immediately visits the file coverage page, the local clone hasn't completed yet, so we fetch the tree from GitHub API instead. We want to be platform-agnostic and remove GitHub API calls as much as possible, but can't remove this one."""
     tree_items: list[Tree] = []
 
     headers = {

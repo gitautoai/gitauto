@@ -100,11 +100,11 @@ def test_integration_create_remote_branch(local_repo):
 
 @pytest.mark.integration
 def test_integration_shallow_clone_missing_sha(local_repo, tmp_path):
-    """Reproduces production failure: EFS repo is shallow (--depth 1) and doesn't
+    """Reproduces production failure: shallow repo (--depth 1) doesn't
     have the latest SHA that was pushed to the remote after the shallow clone."""
     bare_url, work_dir = local_repo
 
-    # 1. Create a shallow clone (simulates EFS --depth 1 clone)
+    # 1. Create a shallow clone (--depth 1)
     shallow_dir = str(tmp_path / "shallow")
     subprocess.run(
         ["git", "clone", "--depth", "1", bare_url, shallow_dir],

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from constants.aws import EFS_TIMEOUT_SECONDS
+from constants.aws import SUBPROCESS_TIMEOUT_SECONDS
 from services.prettier.run_prettier_fix import run_prettier_fix
 from services.types.base_args import BaseArgs
 
@@ -179,7 +179,7 @@ async def test_run_prettier_fix_timeout(base_args):
                     "services.prettier.run_prettier_fix.subprocess.run"
                 ) as mock_run:
                     mock_run.side_effect = subprocess.TimeoutExpired(
-                        cmd="npx prettier", timeout=EFS_TIMEOUT_SECONDS
+                        cmd="npx prettier", timeout=SUBPROCESS_TIMEOUT_SECONDS
                     )
 
                     coro = run_prettier_fix(

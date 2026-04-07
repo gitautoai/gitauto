@@ -2,7 +2,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 
-from constants.aws import EFS_TIMEOUT_SECONDS
+from constants.aws import SUBPROCESS_TIMEOUT_SECONDS
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -64,7 +64,7 @@ async def run_tsc_check(*, base_args: BaseArgs, file_paths: list[str]):
         cmd,
         capture_output=True,
         text=True,
-        timeout=EFS_TIMEOUT_SECONDS,
+        timeout=SUBPROCESS_TIMEOUT_SECONDS,
         check=False,
         cwd=clone_dir,
     )

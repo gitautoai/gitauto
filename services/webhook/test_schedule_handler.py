@@ -1222,7 +1222,7 @@ def test_schedule_handler_partial_none_coverage_omits_none_metric(
 @patch("services.webhook.schedule_handler.get_repository")
 @patch("services.webhook.schedule_handler.get_schedule_pause")
 @patch("services.webhook.schedule_handler.get_installation_access_token")
-def test_get_file_tree_reads_from_tmp_not_efs(
+def test_get_file_tree_reads_from_clone_dir(
     mock_get_token,
     mock_is_paused,
     mock_get_repository,
@@ -1237,11 +1237,7 @@ def test_get_file_tree_reads_from_tmp_not_efs(
     mock_get_all_coverages,
     mock_event,
 ):
-    """Verify get_file_tree reads from /tmp clone_dir, not EFS.
-
-    After the EFS migration, schedule_handler clones to /tmp via git_clone_to_tmp
-    and calls get_file_tree on clone_dir where the local ref exists.
-    """
+    """Verify get_file_tree reads from /tmp clone_dir."""
     mock_get_token.return_value = "test-token"
     mock_is_paused.return_value = None
     mock_get_repository.return_value = {"trigger_on_schedule": True}
@@ -1273,7 +1269,7 @@ def test_get_file_tree_reads_from_tmp_not_efs(
 
     result = schedule_handler(mock_event)
 
-    # get_file_tree should be called with clone_dir (/tmp), not efs_dir
+    # get_file_tree should be called with clone_dir (/tmp)
     mock_get_file_tree.assert_called_once_with(
         clone_dir="/tmp/test-org/test-repo", ref="master"
     )

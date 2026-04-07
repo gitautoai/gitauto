@@ -237,7 +237,7 @@ def test_integration_empty_commit_on_shallow_clone_with_new_branch(
     HEAD is on an old commit - causing non-fast-forward rejection."""
     bare_url, work_dir = local_repo
 
-    # 1. Create a shallow clone (simulates EFS --depth 1 copied to /tmp)
+    # 1. Create a shallow clone (--depth 1)
     shallow_dir = str(tmp_path / "shallow")
     subprocess.run(
         ["git", "clone", "--depth", "1", bare_url, shallow_dir],

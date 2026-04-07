@@ -7,5 +7,5 @@ S3_DEPENDENCY_BUCKET = os.environ.get(
     "S3_DEPENDENCY_BUCKET", "gitauto-dependency-cache"
 )
 
-# 10 minutes - max time to wait for EFS install and run linters
-EFS_TIMEOUT_SECONDS = 600
+# 10 minutes - max time to wait for subprocess commands (linters, test runners, etc.)
+SUBPROCESS_TIMEOUT_SECONDS = 600
