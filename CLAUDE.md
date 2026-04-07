@@ -119,6 +119,10 @@ When testing code that parses external tool output (Jest, ESLint, git, CI logs, 
 
 Process: Run the real tool, capture stdout/stderr separately, verify which stream has what, use as fixture constants with documentation of source.
 
+### Never generate expected output from the function under test
+
+Using the function to generate its own expected output is circular and proves nothing. If the function has a bug, the expected output will have the same bug, and the test will pass. Expected fixtures must be created independently — by manual editing, external tools, or verified hand calculations.
+
 ### Use real cloned repos for integration-style tests
 
 Customer repos are cloned at `../owner/repo` (e.g., `../Foxquilt/foxcom-forms`, `../SPIDERPLUS/SPIDERPLUS-web`). When testing functions that operate on file trees (find_test_files, prioritize_test_files, etc.), run them against real repos to get real data, then use that data in tests. Never make up file paths — verify they exist first.
@@ -143,14 +147,22 @@ Tests must verify actual behavior, not just that code compiles. No tests that on
 
 **NEVER write `assert X not in result` or `assert result != Y`.** These are lazy assertions that don't verify correct behavior - they only verify one wrong answer is absent while accepting infinite other wrong answers.
 
-**ALWAYS assert the exact expected return value:**
+**ALWAYS assert the exact expected return value with `==`**, regardless of data size. If the input fixture is 600K, save the expected output as a 600K fixture file and assert `result == expected`. Never skip exact matching because the data is "too big" — that's exactly when partial assertions miss bugs.
 
 ```python
 # WRONG - proves nothing, passes even if function returns garbage
 assert "foo.integration.test.ts" not in result
 
+# WRONG - checks individual fields but misses unexpected mutations elsewhere
+assert result[0]["content"][0]["input"]["old_string"] == "[Outdated search text removed]"
+
 # RIGHT - verifies the function returns exactly what we expect
 assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
+
+# RIGHT - exact match against full expected fixture, catches any unintended change
+with open("fixtures/expected_output.json") as f:
+    expected = json.loads(f.read())
+assert result == expected
 ```
 
 **Before writing an assertion**, look at the real data (repo fixtures, actual files) to determine what the correct answer is. Then assert that exact answer. Never run the function first and use its output as the expected value - that's circular and just tests that the function returns what it returns.

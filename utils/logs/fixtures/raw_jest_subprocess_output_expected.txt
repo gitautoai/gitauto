@@ -1,0 +1,39 @@
+yarn run v1.22.22
+$ cross-env TZ=UTC MONGOMS_VERSION=v7.0-latest NODE_OPTIONS='--max-old-space-size=6144' jest --findRelatedTests src/models/graphql/scalars/PolicyDescriptionResolver.test.ts src/models/graphql/scalars/PolicyDescriptionResolver.ts -u --forceExit
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+warning From Yarn 1.0 onwards, scripts don't require "--" for options to be forwarded. In a future version, any explicit "--" will be forwarded as-is to the scripts.
+FAIL unit src/context/index.test.ts
+  context/index
+    createContext
+      ✕ should create SecretsManagerClient with correct region (4 ms)
+      startAmtrustSession
+      close function
+      error handling
+      edge cases
+    createGraphqlContext
+
+  ● context/index › createContext › should create SecretsManagerClient with correct region
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+      Object {
+    -   "region": "ca-central-1",
+    +   "region": "us-west-1",
+      },
+
+    Number of calls: 1
+
+      214 |       await createContext();
+      215 |
+    > 216 |       expect(SecretsManagerClient).toHaveBeenCalledWith({ region: 'ca-central-1' });
+          |                                    ^
+      217 |     });
+      218 |
+      219 |     it('should create DB operations with mongo client', async () => {
+
+      at Object.<anonymous> (src/context/index.test.ts:216:36)
+
+error Command failed with exit code 1.

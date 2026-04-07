@@ -1,5 +1,8 @@
 # pylint: disable=too-many-lines
+# pyright: reportIndexIssue=false, reportArgumentType=false
 
+import json
+from pathlib import Path
 from typing import cast
 from unittest.mock import patch
 
@@ -8,6 +11,8 @@ from anthropic.types import MessageParam
 from services.claude.remove_outdated_file_edit_attempts import (
     remove_outdated_file_edit_attempts,
 )
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 def test_remove_outdated_file_edit_attempts_empty_list():
@@ -1379,4 +1384,330 @@ def test_search_and_replace_mixed_with_apply_diff():
             ],
         },
     ]
+    assert result == expected
+
+
+def test_tool_result_stripped_for_outdated_search_and_replace():
+    """Test that tool_results for search_and_replace are stripped when outdated via tool_use_id."""
+    big_result = (
+        "Successfully replaced in test.py\n\nDiff:\n```\n- old\n+ new```\n\n"
+        + "x" * 10000
+    )
+
+    messages: list[MessageParam] = cast(
+        list[MessageParam],
+        [
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_1",
+                        "name": "search_and_replace",
+                        "input": {
+                            "file_path": "test.py",
+                            "old_string": "old",
+                            "new_string": "new",
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "toolu_1",
+                        "content": big_result,
+                    }
+                ],
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_2",
+                        "name": "search_and_replace",
+                        "input": {
+                            "file_path": "test.py",
+                            "old_string": "new",
+                            "new_string": "newer",
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "toolu_2",
+                        "content": big_result,
+                    }
+                ],
+            },
+        ],
+    )
+    result = remove_outdated_file_edit_attempts(messages)
+
+    # First tool_use input: stripped (outdated)
+    assert (
+        result[0]["content"][0]["input"]["old_string"]
+        == "[Outdated search text removed]"
+    )
+    # First tool_result: stripped (outdated)
+    assert (
+        result[1]["content"][0]["content"]
+        == "[Outdated edit result for 'test.py' removed]"
+    )
+    # Second tool_use input: kept (latest)
+    assert result[2]["content"][0]["input"]["old_string"] == "new"
+    # Second tool_result: kept (latest)
+    assert result[3]["content"][0]["content"] == big_result
+
+
+def test_tool_result_kept_when_latest():
+    """Test that the latest tool_result is kept even when earlier ones are stripped."""
+    messages: list[MessageParam] = cast(
+        list[MessageParam],
+        [
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_1",
+                        "name": "search_and_replace",
+                        "input": {
+                            "file_path": "test.py",
+                            "old_string": "a",
+                            "new_string": "b",
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "toolu_1",
+                        "content": "Result with full file content here",
+                    }
+                ],
+            },
+        ],
+    )
+    result = remove_outdated_file_edit_attempts(messages)
+
+    # Single edit — both tool_use and tool_result should be kept as-is
+    assert result == messages
+
+
+def test_write_and_commit_file_input_stripped_when_outdated():
+    """Test that write_and_commit_file file_content is stripped when outdated."""
+    big_content = "def main():\n    pass\n" * 500
+
+    messages: list[MessageParam] = cast(
+        list[MessageParam],
+        [
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_1",
+                        "name": "write_and_commit_file",
+                        "input": {
+                            "file_path": "test.py",
+                            "file_content": big_content,
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "toolu_1",
+                        "content": "Written successfully",
+                    }
+                ],
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_2",
+                        "name": "write_and_commit_file",
+                        "input": {
+                            "file_path": "test.py",
+                            "file_content": big_content + "\n# updated",
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "toolu_2",
+                        "content": "Written successfully",
+                    }
+                ],
+            },
+        ],
+    )
+    result = remove_outdated_file_edit_attempts(messages)
+
+    # First write_and_commit input: stripped
+    assert (
+        result[0]["content"][0]["input"]["file_content"]
+        == "[Outdated file content removed]"
+    )
+    # First tool_result: stripped
+    assert (
+        result[1]["content"][0]["content"]
+        == "[Outdated edit result for 'test.py' removed]"
+    )
+    # Second write_and_commit input: kept (latest)
+    assert (
+        result[2]["content"][0]["input"]["file_content"] == big_content + "\n# updated"
+    )
+    # Second tool_result: kept (latest)
+    assert result[3]["content"][0]["content"] == "Written successfully"
+
+
+def test_tool_result_without_tool_use_id_falls_through():
+    """Test that tool_results without tool_use_id use the text-based fallback."""
+    failed_diff = 'diff partially applied to the file: test.py. But, some changes were rejected. Review rejected changes, modify the diff, and try again.\n\ndiff="--- a/test.py"\n\nrej_text="Failed"'
+
+    messages: list[MessageParam] = cast(
+        list[MessageParam],
+        [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "content": failed_diff,
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "content": failed_diff,
+                    }
+                ],
+            },
+        ],
+    )
+    result = remove_outdated_file_edit_attempts(messages)
+
+    # First: stripped via text-based fallback
+    assert (
+        result[0]["content"][0]["content"]
+        == "[Outdated failed diff for 'test.py' removed]"
+    )
+    # Second: kept (latest)
+    assert result[1]["content"][0]["content"] == failed_diff
+
+
+def test_mixed_edit_tools_tool_results_stripped():
+    """Test search_and_replace then write_and_commit for same file strips outdated results."""
+    messages: list[MessageParam] = cast(
+        list[MessageParam],
+        [
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_1",
+                        "name": "search_and_replace",
+                        "input": {
+                            "file_path": "test.py",
+                            "old_string": "a",
+                            "new_string": "b",
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "toolu_1",
+                        "content": "Result 1 with full file " + "x" * 5000,
+                    }
+                ],
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_2",
+                        "name": "write_and_commit_file",
+                        "input": {
+                            "file_path": "test.py",
+                            "file_content": "full new content",
+                        },
+                    }
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "toolu_2",
+                        "content": "Final result",
+                    }
+                ],
+            },
+        ],
+    )
+    result = remove_outdated_file_edit_attempts(messages)
+
+    # search_and_replace input: stripped (outdated)
+    assert (
+        result[0]["content"][0]["input"]["old_string"]
+        == "[Outdated search text removed]"
+    )
+    # First tool_result: stripped (outdated)
+    assert (
+        result[1]["content"][0]["content"]
+        == "[Outdated edit result for 'test.py' removed]"
+    )
+    # write_and_commit input: kept (latest)
+    assert result[2]["content"][0]["input"]["file_content"] == "full new content"
+    # Final tool_result: kept (latest)
+    assert result[3]["content"][0]["content"] == "Final result"
+
+
+def test_real_conversation_llm_97545():
+    """Real production conversation (llm_requests id=97545) with 13 search_and_replace edits.
+
+    60 messages, foxden-account.ts edited 6 times, foxden-account.spec.ts edited 7 times.
+    Tool_use inputs were already stripped by old code. New code strips 11 outdated tool_results.
+    Expected output built by manual analysis — not generated by the function under test.
+    """
+    input_path = FIXTURES_DIR / "llm_97545_input_content.json"
+    expected_path = FIXTURES_DIR / "llm_97545_expected_output.json"
+    with open(input_path, encoding="utf-8") as f:
+        messages = json.loads(f.read())
+    with open(expected_path, encoding="utf-8") as f:
+        expected = json.loads(f.read())
+
+    result = remove_outdated_file_edit_attempts(messages)
+
     assert result == expected
