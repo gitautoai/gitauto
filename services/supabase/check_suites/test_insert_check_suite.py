@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from postgrest.exceptions import APIError
-
-from services.supabase.check_suites.insert_check_suite import insert_check_suite
+from services.supabase.check_suites.insert_check_suite import \
+    insert_check_suite
 
 
 @pytest.fixture
@@ -60,5 +60,19 @@ def test_insert_check_suite_exception_returns_false(mock_supabase_client):
     )
 
     result = insert_check_suite(check_suite_id=12345)
+
+    assert result is False
+
+
+def test_insert_check_suite_non_duplicate_api_error_reraises(mock_supabase_client):
+    # APIError with a non-23505 code should re-raise (line 23), which the
+    # handle_exceptions decorator catches and returns False.
+    mock, _ = mock_supabase_client
+    api_error = APIError(
+        {"code": "42501", "message": "permission denied for table check_suites"}
+    )
+    mock.table.return_value.insert.return_value.execute.side_effect = api_error
+
+    result = insert_check_suite(check_suite_id=99999)
 
     assert result is False
