@@ -316,7 +316,7 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain # Keep bucket if stack is deleted
     Properties:
-      BucketName: dependency-cache
+      BucketName: gitauto-dependency-cache
       BucketEncryption: # Encrypt at rest (free)
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionRule:
