@@ -317,9 +317,12 @@ async def chat_with_agent(
                             file_path=tool_result.file_path,
                             content=tool_result.content,
                         )
-                        tool_result_content = (
-                            f"{tool_result.message}\n\n{formatted_content}"
+                        diff_section = (
+                            f"\n\nDiff:\n```\n{tool_result.diff}```"
+                            if tool_result.diff
+                            else ""
                         )
+                        tool_result_content = f"{tool_result.message}{diff_section}\n\n{formatted_content}"
                     else:
                         tool_result_content = tool_result.message
                 elif isinstance(tool_result, FileMoveResult):

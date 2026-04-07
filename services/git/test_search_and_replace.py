@@ -238,9 +238,9 @@ def test_diff_included_in_message(sample_base_args, tmp_path):
 
     assert isinstance(result, FileWriteResult)
     assert result.success is True
-    assert "Diff:" in result.message
-    assert "-beta" in result.message
-    assert "+delta" in result.message
+    assert "Diff:" not in result.message
+    assert "-beta" in result.diff
+    assert "+delta" in result.diff
 
 
 # ---------------------------------------------------------------------------
@@ -318,9 +318,9 @@ def test_pydecimal_add_method_unique_with_docstring(
     assert len(content.split("\n")) > 6000
     # result.content must match what was written to disk
     assert result.content == content
-    # Diff must be in the message
-    assert "Diff:" in result.message
-    assert "+        NOTE: patched by search_and_replace test." in result.message
+    # Diff must be in the diff field, not in message
+    assert "Diff:" not in result.message
+    assert "+        NOTE: patched by search_and_replace test." in result.diff
 
 
 def test_pydecimal_disambiguate_convert_other_via_method_signature(
@@ -351,8 +351,8 @@ def test_pydecimal_disambiguate_convert_other_via_method_signature(
     assert "raiseit=False" not in sub_block
     # result.content matches disk and diff is present
     assert result.content == content
-    assert "Diff:" in result.message
-    assert "+        other = _convert_other(other, raiseit=False)" in result.message
+    assert "Diff:" not in result.message
+    assert "+        other = _convert_other(other, raiseit=False)" in result.diff
 
 
 # ---------------------------------------------------------------------------
@@ -430,9 +430,9 @@ def test_argparse_help_action_call_unique_with_body(
     assert len(content.split("\n")) > 2500
     # result.content matches disk and diff is present
     assert result.content == content
-    assert "Diff:" in result.message
-    assert "+        parser.print_help(file=None)" in result.message
-    assert "+        parser.exit(status=0)" in result.message
+    assert "Diff:" not in result.message
+    assert "+        parser.print_help(file=None)" in result.diff
+    assert "+        parser.exit(status=0)" in result.diff
 
 
 def test_argparse_disambiguate_call_via_class_context(
@@ -460,8 +460,8 @@ def test_argparse_disambiguate_call_via_class_context(
     assert "class _StoreAction(Action):" in content
     # result.content matches disk and diff is present
     assert result.content == content
-    assert "Diff:" in result.message
-    assert '+    """Display help and exit."""' in result.message
+    assert "Diff:" not in result.message
+    assert '+    """Display help and exit."""' in result.diff
 
 
 # ---------------------------------------------------------------------------
@@ -538,7 +538,8 @@ def test_typing_special_form_class_unique(sample_base_args, tmp_path, typing_sou
     assert len(content.split("\n")) > 3500
     # result.content matches disk and diff is present
     assert result.content == content
-    assert "Diff:" in result.message
+    assert "Diff:" not in result.message
+    assert result.diff
 
 
 # ---------------------------------------------------------------------------

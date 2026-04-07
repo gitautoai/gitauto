@@ -9,6 +9,7 @@ class FileWriteResult:
     message: str
     file_path: str
     content: str
+    diff: str = ""
     commit_sha: str = ""
 
 
