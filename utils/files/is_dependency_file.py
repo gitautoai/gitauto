@@ -1,7 +1,13 @@
 from utils.error.handle_exceptions import handle_exceptions
 
-# Third-party dependency directories by language/ecosystem
-DEPENDENCY_DIRS = [
+# Dependency dirs we support caching as tarballs for faster installs
+SUPPORTED_DEPENDENCY_DIRS = [
+    "node_modules",  # npm/yarn/pnpm (JS/TS)
+    "vendor",  # Composer (PHP), Go modules
+]
+
+# All third-party dependency directories by language/ecosystem (for file filtering)
+DEPENDENCY_DIRS = SUPPORTED_DEPENDENCY_DIRS + [
     ".bundle",  # Bundler (Ruby)
     ".dart_tool",  # Dart/Flutter
     ".venv",  # virtualenv (Python, alternative)
@@ -11,10 +17,8 @@ DEPENDENCY_DIRS = [
     "elm-stuff",  # Elm
     "Godeps",  # godep (Go, legacy)
     "jspm_packages",  # jspm (JS)
-    "node_modules",  # npm/yarn/pnpm (JS/TS)
     "Packages",  # NuGet (C#), Swift Package Manager
     "Pods",  # CocoaPods (iOS)
-    "vendor",  # Composer (PHP), Go modules
     "venv",  # virtualenv (Python)
 ]
 

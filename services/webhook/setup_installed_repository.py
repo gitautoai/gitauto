@@ -3,7 +3,6 @@ import os
 
 # Local imports
 from schemas.supabase.types import OwnerType
-from services.efs.get_efs_dir import get_efs_dir
 from services.git.create_remote_branch import create_remote_branch
 from services.git.delete_remote_branch import delete_remote_branch
 from services.git.get_clone_dir import get_clone_dir
@@ -86,10 +85,19 @@ def setup_installed_repository(
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number=None)
     git_clone_to_tmp(clone_dir, clone_url, default_branch)
 
-    # Install dependencies: read repo files from clone_dir, write manifests to EFS, trigger CodeBuild
-    efs_dir = get_efs_dir(owner_name, repo_name)
-    ensure_node_packages(owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir)
-    ensure_php_packages(owner_id=owner_id, clone_dir=clone_dir, efs_dir=efs_dir)
+    # Install dependencies: read repo files from clone_dir, upload manifests to S3, trigger CodeBuild
+    ensure_node_packages(
+        owner_id=owner_id,
+        clone_dir=clone_dir,
+        owner_name=owner_name,
+        repo_name=repo_name,
+    )
+    ensure_php_packages(
+        owner_id=owner_id,
+        clone_dir=clone_dir,
+        owner_name=owner_name,
+        repo_name=repo_name,
+    )
 
     # Get stats and update repository
     stats = get_repository_stats(local_path=clone_dir)

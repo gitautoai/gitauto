@@ -307,6 +307,33 @@ Resources:
         - !Ref EFSSecurityGroup
 
   # =============================================================================
+  # S3 Bucket - dependency cache
+  # Stores node_modules.tar.gz, vendor.tar.gz per repo, and etc.
+  # Key structure: {owner}/{repo}/node_modules.tar.gz
+  # Object metadata: x-amz-meta-manifest-hash (SHA256 of manifests)
+  # =============================================================================
+  DependencyCacheBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain # Keep bucket if stack is deleted
+    Properties:
+      BucketName: dependency-cache
+      BucketEncryption: # Encrypt at rest (free)
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionRule:
+              ServerSideEncryptionByDefault:
+                SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration: # No public access
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration: # Auto-delete after 30 days
+        Rules:
+          - Id: ExpireOldTarballs
+            Status: Enabled
+            ExpirationInDays: 30
+
+  # =============================================================================
   # CodeBuild - AWS managed build service (serverless containers, not EC2)
   # - Lambda: 15 min timeout, 10GB storage, ~$0.0005/min (at 512MB) - 10x cheaper
   # - CodeBuild: 8 hour timeout, 70GB local SSD, ~$0.005/min - 10x more expensive
@@ -384,6 +411,12 @@ Resources:
                   - elasticfilesystem:ClientWrite
                   - elasticfilesystem:DescribeMountTargets
                 Resource: !GetAtt GitAutoEFS.Arn
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:HeadObject
+                Resource: !Sub '${DependencyCacheBucket.Arn}/*'
       Tags:
         - Key: Name
           Value: gitauto-codebuild-role
@@ -392,7 +425,7 @@ Resources:
     Type: AWS::CodeBuild::Project
     Properties:
       Name: gitauto-package-install
-      Description: Install npm/yarn packages on EFS
+      Description: Install npm/yarn/composer packages, upload tarball to S3
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Artifacts:
         Type: NO_ARTIFACTS
@@ -400,10 +433,12 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL # 3GB RAM, 2 vCPU, ~$0.005/min
         Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0 # Has Node.js 24
-        PrivilegedMode: true # Required for EFS mount
+        PrivilegedMode: false
         EnvironmentVariables:
-          - Name: EFS_DIR
-            Value: /mnt/efs
+          - Name: S3_BUCKET
+            Value: !Ref DependencyCacheBucket
+          - Name: S3_KEY_PREFIX
+            Value: placeholder
           - Name: PKG_MANAGER
             Value: yarn
       Source:
@@ -416,43 +451,51 @@ Resources:
                 nodejs: 24
             build:
               commands:
-                - echo "Installing packages in $EFS_DIR using $PKG_MANAGER"
-                - LOCAL_DIR="/tmp$EFS_DIR"
+                - echo "Installing packages for $S3_KEY_PREFIX using $PKG_MANAGER"
+                - LOCAL_DIR="/tmp/build"
                 - mkdir -p "$LOCAL_DIR"
+                - aws s3 cp "s3://$S3_BUCKET/$S3_KEY_PREFIX/manifests/" "$LOCAL_DIR/" --recursive
+                - MANIFEST_HASH=$(cat "$LOCAL_DIR/.manifest-hash" 2>/dev/null || echo "unknown")
+                - rm -f "$LOCAL_DIR/.manifest-hash"
                 - |
                   if [ "$PKG_MANAGER" = "composer" ]; then
-                    tar -cf - -C "$EFS_DIR" --exclude vendor --exclude 'vendor-bin/*/vendor' . | tar -xf - -C "$LOCAL_DIR"
                     cd "$LOCAL_DIR"
-                    # Same PHP packages as Dockerfile - see comments there for details
                     yum install -y php-cli php-json php-mbstring php-xml php-pdo
                     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
                     composer install --no-interaction
-                    # Install bamarni/composer-bin-plugin namespaces (e.g. vendor-bin/dev74) if present
                     for vb_dir in vendor-bin/*/; do
                       if [ -f "${vb_dir}composer.json" ]; then
                         composer install --no-interaction --working-dir="$vb_dir"
                       fi
                     done
-                    rm -f "$EFS_DIR/vendor.tar.gz"
-                    tar -czf "$EFS_DIR/vendor.tar.gz" -C "$LOCAL_DIR" vendor vendor-bin
+                    tar -czf /tmp/vendor.tar.gz -C "$LOCAL_DIR" vendor vendor-bin
+                    aws s3 cp /tmp/vendor.tar.gz "s3://$S3_BUCKET/$S3_KEY_PREFIX/vendor.tar.gz" \
+                      --metadata "manifest-hash=$MANIFEST_HASH"
                   else
-                    tar -cf - -C "$EFS_DIR" --exclude node_modules . | tar -xf - -C "$LOCAL_DIR"
                     cd "$LOCAL_DIR"
                     if [ -n "$NPM_TOKEN" ]; then
                       export NPM_TOKEN="$NPM_TOKEN"
                     fi
                     $PKG_MANAGER install
-                    # Pre-download MongoDB binary to EFS cache if repo uses MongoMemoryServer.
-                    # Script is copied to EFS by Lambda before starting CodeBuild.
-                    MONGOD_SCRIPT="/mnt/efs/.scripts/download_mongod_binary.mjs"
-                    if [ -f "$MONGOD_SCRIPT" ] && node -e "require.resolve('mongodb-memory-server-core')" 2>/dev/null; then
-                      MONGOMS_DOWNLOAD_DIR="$EFS_DIR/.cache/mongodb-binaries" node "$MONGOD_SCRIPT" || true
+                    # Pre-download MongoDB binary to S3 cache if repo uses MongoMemoryServer
+                    MONGOD_SCRIPT="$CODEBUILD_SRC_DIR/download_mongod_binary.mjs"
+                    if [ -f "$LOCAL_DIR/node_modules/mongodb-memory-server-core/package.json" ]; then
+                      # Download mongod binary, upload to S3
+                      MONGOMS_DOWNLOAD_DIR="/tmp/mongodb-binaries" node -e "
+                        const { MongoBinaryDownload } = require('$LOCAL_DIR/node_modules/mongodb-memory-server-core/lib/util/MongoBinaryDownload');
+                        new MongoBinaryDownload({}).download().catch(e => console.error(e));
+                      " || true
+                      if [ -d /tmp/mongodb-binaries ]; then
+                        tar -czf /tmp/mongodb-binaries.tar.gz -C /tmp mongodb-binaries
+                        aws s3 cp /tmp/mongodb-binaries.tar.gz "s3://$S3_BUCKET/$S3_KEY_PREFIX/mongodb-binaries.tar.gz"
+                      fi
                     fi
-                    rm -f "$EFS_DIR/node_modules.tar.gz"
-                    tar -czf "$EFS_DIR/node_modules.tar.gz" -C "$LOCAL_DIR" node_modules
+                    tar -czf /tmp/node_modules.tar.gz -C "$LOCAL_DIR" node_modules
+                    aws s3 cp /tmp/node_modules.tar.gz "s3://$S3_BUCKET/$S3_KEY_PREFIX/node_modules.tar.gz" \
+                      --metadata "manifest-hash=$MANIFEST_HASH"
                   fi
                 - rm -rf "$LOCAL_DIR"
-                - echo "Package install complete for $PKG_MANAGER in $EFS_DIR"
+                - echo "Package install complete for $PKG_MANAGER, uploaded to s3://$S3_BUCKET/$S3_KEY_PREFIX/"
       TimeoutInMinutes: 60
       VpcConfig:
         VpcId: !Ref VPC
@@ -460,12 +503,6 @@ Resources:
           - !Ref PrivateSubnet1
         SecurityGroupIds:
           - !Ref CodeBuildSecurityGroup
-      FileSystemLocations:
-        - Type: EFS
-          Location: !Sub '${GitAutoEFS}.efs.${AWS::Region}.amazonaws.com:/'
-          MountPoint: /mnt/efs
-          Identifier: efs_mount
-          MountOptions: 'nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2'
       LogsConfig:
         CloudWatchLogs:
           Status: ENABLED
@@ -555,3 +592,9 @@ Outputs:
     Value: !Ref CodeBuildProject
     Export:
       Name: GitAutoCodeBuildProjectName
+
+  DependencyCacheBucketName:
+    Description: S3 bucket for dependency tarballs
+    Value: !Ref DependencyCacheBucket
+    Export:
+      Name: GitAutoDependencyCacheBucket
