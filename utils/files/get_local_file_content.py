@@ -20,7 +20,7 @@ from utils.new_lines.detect_new_line import detect_line_break
 # NOTE: No strict=True here because line_number, keyword, start_line, end_line are optional
 GET_LOCAL_FILE_CONTENT: ToolUnionParam = {
     "name": "get_local_file_content",
-    "description": "Reads the content of a file from the local clone. Can read any file on disk including those not tracked by git (e.g., node_modules). IMPORTANT: Always read the FULL file by default - do NOT use start_line/end_line/line_number/keyword to truncate the read. Only use start_line/end_line for files over 2000 lines. Truncating reads causes you to miss critical context like required fields, data structures, and execution order.",
+    "description": "Reads the content of a file from the local clone. Can read any file on disk including those not tracked by git (e.g., node_modules). IMPORTANT: Always read the FULL file by default - do NOT use start_line/end_line/line_number/keyword to truncate the read. Only use start_line/end_line for files over 2000 lines. Truncating reads causes you to miss critical context like required fields, data structures, and execution order. NOTE: For large generated files (lockfiles, bundled output, etc.) over 2000 lines, you MUST use keyword or start_line/end_line to read specific sections. Full reads of such files will be rejected.",
     "input_schema": {
         "type": "object",
         "properties": {
@@ -122,6 +122,15 @@ def get_local_file_content(
         keyword = None
         start_line = None
         end_line = None
+
+    # Reject full reads of huge files — require a filter (keyword or line range)
+    if len(lines) >= 2000 and not has_line_number and not has_keyword and not has_range:
+        logger.info(
+            "Rejected full read of '%s' (%d lines). Requires filter.",
+            file_path,
+            len(lines),
+        )
+        return f"Error: '{file_path}' is {len(lines)} lines — too large to read in full. Use keyword, line_number, or start_line/end_line to read specific sections."
 
     width = len(str(len(lines)))
     numbered_lines = [f"{i + 1:>{width}}:{line}" for i, line in enumerate(lines)]

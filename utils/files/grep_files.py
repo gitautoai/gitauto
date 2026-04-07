@@ -6,18 +6,18 @@ from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
 
-@handle_exceptions(default_return_value=[], raise_on_error=False)
+@handle_exceptions(default_return_value={}, raise_on_error=False)
 def grep_files(query: str, search_dir: str):
-    """Run grep -r -l on search_dir and return matching file paths."""
+    """Run grep -r -n on search_dir and return matching file paths with lines."""
     if not os.path.isdir(search_dir):
         logger.warning("Directory not found: %s", search_dir)
-        return list[str]()
+        return dict[str, list[str]]()
 
     result = subprocess.run(
         [
             "grep",
             "-r",  # Recursive search
-            "-l",  # Filenames only, not matching lines
+            "-n",  # Show line numbers with matching lines
             # Skip binary files (images, compiled files, etc.)
             "--binary-files=without-match",
             *GREP_EXCLUDE_DIRS,
@@ -37,12 +37,23 @@ def grep_files(query: str, search_dir: str):
         logger.warning(
             "grep failed with return code %d: %s", result.returncode, result.stderr
         )
-        return list[str]()
+        return dict[str, list[str]]()
 
     if not result.stdout.strip():
-        return list[str]()
+        return dict[str, list[str]]()
 
-    # grep outputs relative paths (e.g. ./src/main.py) since we use cwd=search_dir
-    return [
-        line.strip().removeprefix("./") for line in result.stdout.strip().split("\n")
-    ]
+    # Parse grep -n output: ./path/to/file:123:matching line content
+    matches: dict[str, list[str]] = {}
+    for line in result.stdout.strip().split("\n"):
+        # Split on first two colons: file_path:line_number:content
+        parts = line.split(":", 2)
+        if len(parts) < 3:
+            continue
+        file_path = parts[0].strip().removeprefix("./")
+        line_num = parts[1]
+        content = parts[2]
+        if file_path not in matches:
+            matches[file_path] = []
+        matches[file_path].append(f"{line_num}:{content}")
+
+    return matches

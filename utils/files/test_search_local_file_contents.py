@@ -35,6 +35,7 @@ def test_search_finds_matching_files():
         )
         assert "1 files found" in result
         assert "src/main.py" in result
+        assert "src/main.py:1:def hello_world():" in result
 
 
 def test_search_no_matches():
@@ -122,5 +123,11 @@ def test_search_real_repo():
     )
     assert "files found" in result
     assert "search_local_file_contents.py" in result
-    assert "node_modules" not in result
-    assert "venv" not in result
+    # Verify excluded dirs don't appear as file paths (they may appear in line content)
+    for line in result.split("\n"):
+        if line.startswith("- "):
+            file_path = line[2:].strip()
+            assert not file_path.startswith(
+                "node_modules/"
+            ), f"Should exclude: {file_path}"
+            assert not file_path.startswith("venv/"), f"Should exclude: {file_path}"
