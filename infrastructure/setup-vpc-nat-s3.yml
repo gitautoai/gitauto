@@ -40,7 +40,7 @@ Resources:
   # =============================================================================
   # Subnets - isolated network segments within VPC, each in one AZ (Availability Zone)
   # - 1 public subnet: NAT Instance in AZ-a only (single point of failure, but ~$4/mo vs ~$8/mo for 2)
-  # - 2 private subnets: Lambda + CodeBuild in both AZs (internet depends on NAT in AZ-a)
+  # - 2 private subnets: CodeBuild in both AZs (internet depends on NAT in AZ-a)
   # us-west-1 AZs verified: aws ec2 describe-availability-zones --region us-west-1 --query 'AvailabilityZones[*].ZoneName'
   # =============================================================================
 
@@ -59,7 +59,7 @@ Resources:
         - Key: Name
           Value: gitauto-public-1a
 
-  # Private subnets (for Lambda + CodeBuild)
+  # Private subnets (for CodeBuild — Lambda no longer needs VPC)
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Metadata:
@@ -242,73 +242,6 @@ Resources:
           Value: gitauto-lambda-sg
 
   # =============================================================================
-  # EFS (Elastic File System) - persistent storage shared across Lambda invocations
-  # Throughput modes:
-  #   - bursting: Free but slow (~2.4 MB/s baseline for 49GB), rm/rsync takes 10+ min
-  #   - elastic: ~$0.04/GB read, ~$0.06/GB write, scales automatically
-  #   - provisioned: ~$6/MB/s/mo fixed cost
-  # Jan 2026 usage: 6.9GB read + 14.1GB write = ~$1.13/mo with elastic
-  # To check usage: aws cloudwatch get-metric-statistics --namespace AWS/EFS \
-  #   --metric-name DataReadIOBytes --dimensions Name=FileSystemId,Value=fs-xxx \
-  #   --start-time 2026-01-01T00:00:00Z --end-time 2026-02-01T00:00:00Z \
-  #   --period 2678400 --statistics Sum --region us-west-1
-  # =============================================================================
-  GitAutoEFS:
-    Type: AWS::EFS::FileSystem
-    Properties:
-      PerformanceMode: generalPurpose
-      ThroughputMode: elastic # ~$0.04/GB read, ~$0.06/GB write (~$1/mo based on Jan usage)
-      Encrypted: true
-      BackupPolicy: # Disabled - data is regenerable (re-clone, re-install)
-        Status: DISABLED
-      # Move unused files from Standard ($0.30/GB/mo) to IA ($0.016/GB/mo)
-      # https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-efs-filesystem-lifecyclepolicy.html
-      LifecyclePolicies:
-        - TransitionToIA: AFTER_7_DAYS
-      FileSystemTags:
-        - Key: Name
-          Value: gitauto-efs
-
-  EFSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for GitAuto EFS
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 2049
-          ToPort: 2049
-          SourceSecurityGroupId: !Ref LambdaSecurityGroup
-        - IpProtocol: tcp
-          FromPort: 2049
-          ToPort: 2049
-          SourceSecurityGroupId: !Ref CodeBuildSecurityGroup
-        - IpProtocol: tcp
-          FromPort: 2049
-          ToPort: 2049
-          SourceSecurityGroupId: !Ref NATSecurityGroup
-      Tags:
-        - Key: Name
-          Value: gitauto-efs-sg
-
-  # Mount Targets (one per private subnet)
-  MountTarget1:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref GitAutoEFS
-      SubnetId: !Ref PrivateSubnet1
-      SecurityGroups:
-        - !Ref EFSSecurityGroup
-
-  MountTarget2:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref GitAutoEFS
-      SubnetId: !Ref PrivateSubnet2
-      SecurityGroups:
-        - !Ref EFSSecurityGroup
-
-  # =============================================================================
   # S3 Bucket - dependency cache
   # Stores node_modules.tar.gz, vendor.tar.gz per repo, and etc.
   # Key structure: {owner}/{repo}/node_modules.tar.gz
@@ -410,7 +343,7 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL # 3GB RAM, 2 vCPU, ~$0.005/min
         Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0 # Has Node.js 24
-        PrivilegedMode: true # TODO: Set to false after deployed project's FileSystemLocations is removed
+        PrivilegedMode: false
         EnvironmentVariables:
           - Name: S3_BUCKET
             Value: !Ref DependencyCacheBucket
@@ -488,24 +421,6 @@ Resources:
         - Key: Name
           Value: gitauto-package-install
 
-  # EFS Access Point for Lambda
-  LambdaAccessPoint:
-    Type: AWS::EFS::AccessPoint
-    Properties:
-      FileSystemId: !Ref GitAutoEFS
-      PosixUser: # Lambda runs as UID 0 (root)
-        Uid: '0'
-        Gid: '0'
-      RootDirectory:
-        Path: /
-        CreationInfo: # Must match PosixUser for write access
-          OwnerUid: '0'
-          OwnerGid: '0'
-          Permissions: '755'
-      AccessPointTags:
-        - Key: Name
-          Value: gitauto-lambda-access-point
-
 # =============================================================================
 # Outputs - values needed to configure Lambda
 # =============================================================================
@@ -533,24 +448,6 @@ Outputs:
     Value: !Ref LambdaSecurityGroup
     Export:
       Name: GitAutoLambdaSecurityGroupId
-
-  EFSFileSystemId:
-    Description: EFS File System ID
-    Value: !Ref GitAutoEFS
-    Export:
-      Name: GitAutoEFSId
-
-  EFSFileSystemArn:
-    Description: EFS File System ARN for IAM policies
-    Value: !GetAtt GitAutoEFS.Arn
-    Export:
-      Name: GitAutoEFSFileSystemArn
-
-  EFSAccessPointArn:
-    Description: EFS Access Point ARN (Amazon Resource Name) for Lambda
-    Value: !GetAtt LambdaAccessPoint.Arn
-    Export:
-      Name: GitAutoEFSAccessPointArn
 
   NATInstanceId:
     Description: NAT Instance ID

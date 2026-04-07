@@ -54,7 +54,7 @@ Resources:
 
   # =============================================================================
   # Lambda IAM Role
-  # - Includes all permissions: CloudWatch, VPC, S3, CodeBuild
+  # - Includes all permissions: CloudWatch, S3, CodeBuild
   # =============================================================================
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -68,9 +68,6 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
-      # AWS managed policy for VPC access (ENI management)
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
       Policies:
         # CodeBuild - trigger package installations (npm install, pip install, etc.)
         - PolicyName: CodeBuildAccess
@@ -117,7 +114,7 @@ Resources:
   # =============================================================================
   # Lambda Function
   # - Container image from ECR
-  # - VPC-connected for CodeBuild (private npm registries)
+  # - No VPC (calls AWS APIs directly, improves cold start by 1-3s)
   # - 15 min timeout (max for Lambda)
   # - Environment variables from AWS Parameter Store (/gitauto/*)
   # =============================================================================
@@ -137,12 +134,6 @@ Resources:
         Size: 2048
       Timeout: 900
       Role: !GetAtt LambdaExecutionRole.Arn
-      VpcConfig:
-        SecurityGroupIds:
-          - !ImportValue GitAutoLambdaSecurityGroupId
-        SubnetIds:
-          - !ImportValue GitAutoPrivateSubnet1Id
-          - !ImportValue GitAutoPrivateSubnet2Id
       Environment:
         Variables:
           # Lambda's default HOME (/home/sbx_user1051) doesn't exist, causing npm/git/etc to fail when they try to write to HOME
