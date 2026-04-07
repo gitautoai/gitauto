@@ -3,6 +3,7 @@ from botocore.exceptions import ClientError
 from config import UTF8
 from constants.aws import S3_DEPENDENCY_BUCKET
 from services.aws.clients import s3_client
+from services.node.detect_node_version import DEFAULT_NODE_VERSION
 from services.aws.run_install_via_codebuild import run_install_via_codebuild
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -18,6 +19,7 @@ def check_s3_dep_freshness_and_trigger_install(
     manifest_hash: str,
     manifest_files: dict[str, str],  # filename -> content, uploaded to S3 for CodeBuild
     log_prefix: str,  # e.g. "node" or "php"
+    node_version: str = DEFAULT_NODE_VERSION,
 ):
     """Check S3 tarball freshness and trigger CodeBuild if stale. Returns True if fresh."""
     # Check S3 tarball freshness via HeadObject metadata
@@ -67,7 +69,10 @@ def check_s3_dep_freshness_and_trigger_install(
     # Trigger CodeBuild install (fire and forget, bypasses Lambda 15-min timeout)
     s3_key_prefix = f"{owner_name}/{repo_name}"
     run_install_via_codebuild(
-        s3_key_prefix=s3_key_prefix, owner_id=owner_id, pkg_manager=pkg_manager
+        s3_key_prefix=s3_key_prefix,
+        owner_id=owner_id,
+        pkg_manager=pkg_manager,
+        node_version=node_version,
     )
     logger.info(
         "%s: Triggered CodeBuild install for %s/%s", log_prefix, owner_name, repo_name
