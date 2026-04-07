@@ -11,8 +11,12 @@ __pycache__
 !/scripts/git/list_changed_files.sh
 !/scripts/git/pre_commit_hook.sh
 !/scripts/git/recent_social_posts.sh
+!/scripts/aws/
+/scripts/aws/*
+!/scripts/aws/trigger_schedule.py
 !/scripts/lint/
 !/scripts/sentry/
+!/scripts/supabase/
 coverage.*
 coverage/
 infrastructure/lambda-env-backup.json
