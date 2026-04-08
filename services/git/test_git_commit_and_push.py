@@ -147,6 +147,45 @@ def test_git_commit_and_push_stages_specific_files():
         assert "new.py" in add_args_captured
 
 
+def test_git_commit_and_push_force_push():
+    push_args_captured = []
+
+    def mock_run(args, cwd):
+        nonlocal push_args_captured
+        if args[:2] == ["git", "push"]:
+            push_args_captured = args
+        return MagicMock(returncode=0, stdout="")
+
+    with patch("services.git.git_commit_and_push.run_subprocess", side_effect=mock_run):
+        result = git_commit_and_push(
+            base_args=_make_base_args(),
+            message="Rebase onto release/20260422",
+            files=["app.py"],
+            force=True,
+        )
+        assert result is True
+        assert "--force-with-lease" in push_args_captured
+
+
+def test_git_commit_and_push_no_force_by_default():
+    push_args_captured = []
+
+    def mock_run(args, cwd):
+        nonlocal push_args_captured
+        if args[:2] == ["git", "push"]:
+            push_args_captured = args
+        return MagicMock(returncode=0, stdout="")
+
+    with patch("services.git.git_commit_and_push.run_subprocess", side_effect=mock_run):
+        result = git_commit_and_push(
+            base_args=_make_base_args(),
+            message="Normal push",
+            files=["app.py"],
+        )
+        assert result is True
+        assert "--force-with-lease" not in push_args_captured
+
+
 @pytest.mark.integration
 def test_git_commit_and_push_to_local_bare(local_repo, create_test_base_args):
     """Sociable: clone local repo, create file, commit+push, verify in bare repo."""

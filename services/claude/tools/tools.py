@@ -32,9 +32,9 @@ from services.github.comments.reply_to_comment import (
     REPLY_TO_REVIEW_COMMENT,
     reply_to_comment,
 )
-from services.github.pulls.change_pr_base_branch import (
-    CHANGE_PR_BASE_BRANCH,
-    change_pr_base_branch,
+from services.git.reset_pr_branch_to_new_base import (
+    RESET_PR_BRANCH_TO_NEW_BASE,
+    reset_pr_branch_to_new_base,
 )
 from utils.files.get_local_file_content import (
     GET_LOCAL_FILE_CONTENT,
@@ -84,7 +84,7 @@ TOOLS_FOR_PRS: list[ToolUnionParam] = _TOOLS_BASE + [
 
 # Review comment handler adds reply capability
 TOOLS_FOR_REVIEW_COMMENTS: list[ToolUnionParam] = TOOLS_FOR_PRS + [
-    CHANGE_PR_BASE_BRANCH,
+    RESET_PR_BRANCH_TO_NEW_BASE,
     REPLY_TO_REVIEW_COMMENT,
 ]
 
@@ -104,7 +104,7 @@ FILE_EDIT_TOOLS = [
 # Define tools to call
 tools_to_call: dict[str, Any] = {
     "apply_diff_to_file": apply_diff_to_file,
-    "change_pr_base_branch": change_pr_base_branch,
+    "reset_pr_branch_to_new_base": reset_pr_branch_to_new_base,
     "create_comment": create_comment,
     "create_directory": create_directory,
     "delete_file": delete_file,
