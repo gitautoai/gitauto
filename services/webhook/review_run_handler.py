@@ -395,6 +395,16 @@ async def handle_review_run(
         ):
             break
 
+        # Re-check trigger_on_review_comment in case it was disabled during execution
+        refreshed_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+        if not refreshed_settings or not refreshed_settings.get(
+            "trigger_on_review_comment"
+        ):
+            is_completed = True
+            completion_reason = "Stopped because the review comment trigger was disabled during execution."
+            logger.info(completion_reason)
+            break
+
         # Check if the review thread was resolved while we were working (no thread for PR comments)
         if review_path:
             thread_check = get_review_thread_comments(

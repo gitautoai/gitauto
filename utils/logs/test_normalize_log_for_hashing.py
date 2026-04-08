@@ -1,6 +1,6 @@
 from utils.logs.normalize_log_for_hashing import normalize_log_for_hashing
 
-# Two real raw error logs from nebula-crm PR #1 (usage IDs 14971 and 14972). Same underlying error (missing UX evidence file) but different commit SHAs because GA created empty commits between runs.
+# Two real raw error logs from nebula-crm PR #1 (usage IDs 14971 and 14972). Same underlying error (missing UX evidence file) but different commit SHAs because GitAuto created empty commits between runs.
 RAW_LOG_RUN_A = """```GitHub Check Run Log: frontend-ui/3_Validate frontend UX evidence.txt
  ##[group]Run set -euo pipefail
 set -euo pipefail
