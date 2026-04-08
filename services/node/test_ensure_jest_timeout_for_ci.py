@@ -44,7 +44,20 @@ def test_no_jest_config_file(mock_read_local_file: MagicMock):
     mock_read_local_file.assert_not_called()
 
 
-def test_already_has_test_timeout(
+def test_already_has_correct_timeout(
+    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+):
+    mock_read_local_file.return_value = (
+        "module.exports = {\n  testTimeout: process.env.CI ? 180000 : 5000,\n};\n"
+    )
+    result = ensure_jest_timeout_for_ci(
+        root_files=["jest.config.js"], base_args=BASE_ARGS
+    )
+    assert result is None
+    mock_write_and_commit.assert_not_called()
+
+
+def test_updates_wrong_timeout_value(
     mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
 ):
     mock_read_local_file.return_value = (
@@ -53,8 +66,10 @@ def test_already_has_test_timeout(
     result = ensure_jest_timeout_for_ci(
         root_files=["jest.config.js"], base_args=BASE_ARGS
     )
-    assert result is None
-    mock_write_and_commit.assert_not_called()
+    assert result == "jest.config.js"
+    written = mock_write_and_commit.call_args.kwargs["file_content"]
+    assert "180000" in written
+    assert "10000" not in written
 
 
 def test_empty_content(
@@ -280,15 +295,17 @@ def test_foxden_version_controller_merge_recursive(
     assert written.index("testTimeout") < written.index("clearMocks")
 
 
-def test_foxden_rating_quoting_already_has_timeout(
+def test_foxden_rating_quoting_updates_wrong_timeout(
     mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
 ):
     mock_read_local_file.return_value = FOXDEN_RATING_QUOTING_CONFIG
     result = ensure_jest_timeout_for_ci(
         root_files=["jest.config.js"], base_args=BASE_ARGS
     )
-    assert result is None
-    mock_write_and_commit.assert_not_called()
+    assert result == "jest.config.js"
+    written = mock_write_and_commit.call_args.kwargs["file_content"]
+    assert "testTimeout: process.env.CI ? 180000 : 5000," in written
+    assert "60000" not in written
 
 
 def test_foxcom_forms_backend(
@@ -315,6 +332,38 @@ def test_foxden_auth_service(
     written = mock_write_and_commit.call_args.kwargs["file_content"]
     assert "testTimeout: process.env.CI ? 180000 : 5000," in written
     assert written.index("testTimeout") < written.index("clearMocks")
+
+
+# Config with duplicate testTimeout (last-key-wins bug from parallel PR merges)
+FOXDEN_ADMIN_PORTAL_DUPLICATE_TIMEOUT = """export default {
+  testTimeout: process.env.CI ? 180000 : 5000,
+  clearMocks: true,
+  coverageDirectory: 'coverage',
+  collectCoverageFrom: ['<rootDir>/src/**/*.ts'],
+  coverageProvider: 'v8',
+  setupFilesAfterEnv: ['<rootDir>/test/setupTests.ts'],
+  testEnvironment: 'jsdom',
+  testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[tj]s?(x)'],
+
+  testTimeout: process.env.CI ? 30000 : 5000
+};
+"""
+
+
+def test_removes_duplicate_test_timeout_keeps_first(
+    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+):
+    mock_read_local_file.return_value = FOXDEN_ADMIN_PORTAL_DUPLICATE_TIMEOUT
+    result = ensure_jest_timeout_for_ci(
+        root_files=["jest.config.ts"], base_args=BASE_ARGS
+    )
+    assert result == "jest.config.ts"
+    written = mock_write_and_commit.call_args.kwargs["file_content"]
+    # Should keep first (180000) and remove second (30000)
+    assert "testTimeout: process.env.CI ? 180000 : 5000," in written
+    assert "testTimeout: process.env.CI ? 30000 : 5000" not in written
+    # Should only have one testTimeout
+    assert written.count("testTimeout") == 1
 
 
 WEBSITE_JEST_CONFIG = """import type { Config } from "jest";
