@@ -1,8 +1,7 @@
+import os
 from enum import StrEnum
 
-from utils.env import get_env_var
-
-CLAUDE_API_KEY = get_env_var(name="ANTHROPIC_API_KEY")
+CLAUDE_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
 
 # https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases
