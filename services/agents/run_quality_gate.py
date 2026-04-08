@@ -39,6 +39,7 @@ def run_quality_gate(clone_dir: str, impl_file: str, base_args: BaseArgs):
 
     # Check for any failing checks
     failed_categories: list[str] = []
+    failure_details: list[str] = []
     for category, checks in quality_results.items():
         for check_name, check_data in checks.items():
             if check_data.get("status") == "fail":
@@ -51,6 +52,7 @@ def run_quality_gate(clone_dir: str, impl_file: str, base_args: BaseArgs):
                     reason,
                 )
                 failed_categories.append(category)
+                failure_details.append(f"{category}.{check_name}: {reason}")
                 break
 
     if failed_categories:
@@ -60,7 +62,8 @@ def run_quality_gate(clone_dir: str, impl_file: str, base_args: BaseArgs):
             len(failed_categories),
             ", ".join(failed_categories),
         )
-        return f"Quality gate failed for {impl_file}. {QUALITY_GATE_MESSAGE}"
+        details = "\n".join(failure_details)
+        return f"Quality gate failed for {impl_file}:\n{details}"
 
     logger.info("Quality gate passed for %s: all checks pass or N/A", impl_file)
     return ""

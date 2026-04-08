@@ -30,6 +30,7 @@ from services.node.ensure_tsconfig_relaxed_for_tests import (
 from services.node.ensure_vitest_timeout_for_ci import ensure_vitest_timeout_for_ci
 from services.phpunit.run_phpunit_test import run_phpunit_test
 from services.prettier.run_prettier_fix import run_prettier_fix
+from services.slack.slack_notify import slack_notify
 from services.tsc.create_tsc_issue import create_tsc_issue
 from services.tsc.run_tsc_check import run_tsc_check
 from utils.error.handle_exceptions import handle_exceptions
@@ -92,14 +93,16 @@ async def verify_task_is_complete(
     trigger = base_args.get("trigger", "")
     impl_file = base_args.get("impl_file_to_collect_coverage_from", "")
 
+    quality_gate_fail_count = base_args.get("quality_gate_fail_count", 0) or 0
+
     if not pr_files:
         # 0 changes on a schedule/dashboard PR: fail immediately without LLM call.
         # The schedule_handler already evaluated quality and found issues (that's why it created the PR). The LLM quality gate only runs after the agent makes changes (bottom of this function) to avoid paying for the same evaluation twice.
         if trigger in ("schedule", "dashboard") and impl_file:
             # First 0-change attempt: reject to nudge agent to try.
             # Second 0-change attempt: agent genuinely can't improve, let it pass.
-            if not base_args.get("quality_gate_retried"):
-                base_args["quality_gate_retried"] = True
+            if quality_gate_fail_count < 1:
+                base_args["quality_gate_fail_count"] = quality_gate_fail_count + 1
                 return VerifyTaskIsCompleteResult(
                     success=False,
                     message=f"Task NOT complete. You made 0 changes to the test file for {impl_file}. {QUALITY_GATE_MESSAGE}",
@@ -309,12 +312,28 @@ async def verify_task_is_complete(
 
     # Quality gate for schedule/dashboard PRs: evaluate test quality via Claude.
     # Runs last to avoid paying for LLM call when lint/test errors will force a retry anyway.
+    # Escape hatch: skip after 3 consecutive failures to prevent infinite loops.
     if trigger in ("schedule", "dashboard") and impl_file and not remaining_errors:
-        quality_error = run_quality_gate(
-            clone_dir=clone_dir, impl_file=impl_file, base_args=base_args
-        )
-        if quality_error:
-            remaining_errors.append(f"- {quality_error}")
+        if quality_gate_fail_count >= 3:
+            logger.info(
+                "Quality gate skipped for %s: failed %d times, accepting current quality",
+                impl_file,
+                quality_gate_fail_count,
+            )
+            pr_number = base_args.get("pr_number", 0)
+            thread_ts = base_args.get("slack_thread_ts")
+            slack_notify(
+                f"Quality gate skipped for {owner}/{repo}#{pr_number} ({impl_file}): "
+                f"failed {quality_gate_fail_count} times, accepting current quality",
+                thread_ts,
+            )
+        else:
+            quality_error = run_quality_gate(
+                clone_dir=clone_dir, impl_file=impl_file, base_args=base_args
+            )
+            if quality_error:
+                base_args["quality_gate_fail_count"] = quality_gate_fail_count + 1
+                remaining_errors.append(f"- {quality_error}")
 
     if remaining_errors:
         error_msg = "\n".join(remaining_errors)

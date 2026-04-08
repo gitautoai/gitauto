@@ -1367,3 +1367,94 @@ async def test_lint_only_errors_still_block_completion(
     assert result.success is False
     assert "no-explicit-any" in result.message
     assert "src/utils.ts" in result.error_files
+
+
+# --- Quality gate escape hatch tests ---
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_quality_gate_0_changes_first_attempt_rejects(mock_get_files, base_args):
+    """First 0-change attempt on schedule PR rejects and increments counter."""
+    mock_get_files.return_value = []
+    base_args["trigger"] = "schedule"
+    base_args["impl_file_to_collect_coverage_from"] = "src/foo.ts"
+
+    result = await verify_task_is_complete(base_args)
+
+    assert result.success is False
+    assert "0 changes" in result.message
+    assert base_args["quality_gate_fail_count"] == 1
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_quality_gate_0_changes_second_attempt_accepts(mock_get_files, base_args):
+    """Second 0-change attempt accepts (escape hatch)."""
+    mock_get_files.return_value = []
+    base_args["trigger"] = "schedule"
+    base_args["impl_file_to_collect_coverage_from"] = "src/foo.ts"
+    base_args["quality_gate_fail_count"] = 1
+
+    result = await verify_task_is_complete(base_args)
+
+    assert result.success is True
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.slack_notify")
+@patch("services.agents.verify_task_is_complete.run_quality_gate")
+@patch("services.agents.verify_task_is_complete.read_local_file")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_quality_gate_skipped_after_3_failures(
+    mock_get_files, mock_read, mock_quality_gate, mock_slack, base_args, tmp_path
+):
+    """Quality gate is skipped after 3 consecutive failures and notifies Slack."""
+    mock_get_files.return_value = [
+        {"filename": "test/foo.spec.ts", "status": "added"},
+    ]
+    mock_read.return_value = "test content"
+    base_args["trigger"] = "schedule"
+    base_args["impl_file_to_collect_coverage_from"] = "src/foo.ts"
+    base_args["quality_gate_fail_count"] = 3
+    base_args["slack_thread_ts"] = "ts_abc123"
+    (tmp_path / "test/foo.spec.ts").parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "test/foo.spec.ts").touch()
+
+    result = await verify_task_is_complete(base_args)
+
+    mock_quality_gate.assert_not_called()
+    mock_slack.assert_called_once()
+    assert "test-owner/test-repo#123" in mock_slack.call_args[0][0]
+    assert "src/foo.ts" in mock_slack.call_args[0][0]
+    assert mock_slack.call_args[0][1] == "ts_abc123"
+    assert result.success is True
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.run_quality_gate")
+@patch("services.agents.verify_task_is_complete.read_local_file")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_quality_gate_runs_when_fail_count_below_3(
+    mock_get_files, mock_read, mock_quality_gate, base_args, tmp_path
+):
+    """Quality gate runs and increments counter on failure when count < 3."""
+    mock_get_files.return_value = [
+        {"filename": "test/foo.spec.ts", "status": "added"},
+    ]
+    mock_read.return_value = "test content"
+    mock_quality_gate.return_value = (
+        "Quality gate failed for src/foo.ts:\nadversarial.null_inputs: No null tests"
+    )
+    base_args["trigger"] = "schedule"
+    base_args["impl_file_to_collect_coverage_from"] = "src/foo.ts"
+    base_args["quality_gate_fail_count"] = 1
+    (tmp_path / "test/foo.spec.ts").parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "test/foo.spec.ts").touch()
+
+    result = await verify_task_is_complete(base_args)
+
+    mock_quality_gate.assert_called_once()
+    assert result.success is False
+    assert "adversarial.null_inputs" in result.message
+    assert base_args["quality_gate_fail_count"] == 2
