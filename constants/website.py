@@ -1,3 +1,3 @@
-from utils.env import get_env_var
+import os
 
-GITAUTO_API_KEY = get_env_var(name="GITAUTO_API_KEY")
+GITAUTO_API_KEY = os.getenv("GITAUTO_API_KEY", "")

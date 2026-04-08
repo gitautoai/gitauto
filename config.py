@@ -1,15 +1,18 @@
 # Standard imports
 import base64
 from datetime import datetime, timezone
+import os
 
-# Project imports
-from utils.env import get_env_var
+# Third-party imports
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # GitHub Credentials from environment variables
 GITHUB_API_URL = "https://api.github.com"
 GITHUB_API_VERSION = "2022-11-28"
-GITHUB_APP_ID = int(get_env_var(name="GH_APP_ID"))
+GITHUB_APP_ID = int(os.getenv("GH_APP_ID", "0"))
 GITHUB_APP_IDS = list(
     set(
         [
@@ -19,9 +22,9 @@ GITHUB_APP_IDS = list(
         ]
     )
 )
-GITHUB_APP_NAME = get_env_var(name="GH_APP_NAME")
-GITHUB_APP_USER_ID = int(get_env_var(name="GH_APP_USER_ID"))
-GITHUB_APP_USER_NAME = get_env_var(name="GH_APP_USER_NAME")
+GITHUB_APP_NAME = os.getenv("GH_APP_NAME", "")
+GITHUB_APP_USER_ID = int(os.getenv("GH_APP_USER_ID", "0"))
+GITHUB_APP_USER_NAME = os.getenv("GH_APP_USER_NAME", "")
 GITHUB_CHECK_RUN_FAILURES = [
     "startup_failure",
     "failure",
@@ -32,12 +35,16 @@ GITHUB_NOREPLY_EMAIL_DOMAIN = "users.noreply.github.com"  # https://docs.github.
 GITHUB_APP_GIT_EMAIL = (
     f"{GITHUB_APP_USER_ID}+{GITHUB_APP_USER_NAME}@{GITHUB_NOREPLY_EMAIL_DOMAIN}"
 )
-GITHUB_PRIVATE_KEY_ENCODED = get_env_var(name="GH_PRIVATE_KEY")
-GITHUB_PRIVATE_KEY = base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED)
-GITHUB_WEBHOOK_SECRET = get_env_var(name="GH_WEBHOOK_SECRET")
+GITHUB_PRIVATE_KEY_ENCODED = os.getenv("GH_PRIVATE_KEY", "")
+GITHUB_PRIVATE_KEY = (
+    base64.b64decode(s=GITHUB_PRIVATE_KEY_ENCODED)
+    if GITHUB_PRIVATE_KEY_ENCODED
+    else b""
+)
+GITHUB_WEBHOOK_SECRET = os.getenv("GH_WEBHOOK_SECRET", "")
 
 # OpenAI Credentials from environment variables
-OPENAI_API_KEY = get_env_var(name="OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_ASSISTANT_NAME = (
     "GitAuto: AI Coding Agent that generates GitHub pull requests from issues"
 )
@@ -52,28 +59,28 @@ OPENAI_MODEL_ID = "gpt-5.2"  # https://platform.openai.com/docs/models/gpt-5.2
 OPENAI_MODEL_ID_FOR_TIKTOKEN = (
     "gpt-4.1"  # https://github.com/openai/tiktoken/blob/main/tiktoken/model.py
 )
-OPENAI_ORG_ID = get_env_var(name="OPENAI_ORG_ID")
+OPENAI_ORG_ID = os.getenv("OPENAI_ORG_ID", "")
 OPENAI_TEMPERATURE = 0.0
 
 # Resend Credentials
-RESEND_API_KEY = get_env_var(name="RESEND_API_KEY")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 EMAIL_FROM = "Wes from GitAuto <wes@gitauto.ai>"
 
 # Sentry Credentials from environment variables
-SENTRY_DSN = get_env_var(name="SENTRY_DSN")
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
 
 # Stripe
-STRIPE_API_KEY = get_env_var(name="STRIPE_API_KEY")
-STRIPE_FREE_TIER_PRICE_ID = get_env_var(name="STRIPE_FREE_TIER_PRICE_ID")
-STRIPE_PRODUCT_ID_FREE = get_env_var(name="STRIPE_PRODUCT_ID_FREE")
-STRIPE_PRODUCT_ID_STANDARD = get_env_var(name="STRIPE_PRODUCT_ID_STANDARD")
+STRIPE_API_KEY = os.getenv("STRIPE_API_KEY", "")
+STRIPE_FREE_TIER_PRICE_ID = os.getenv("STRIPE_FREE_TIER_PRICE_ID", "")
+STRIPE_PRODUCT_ID_FREE = os.getenv("STRIPE_PRODUCT_ID_FREE", "")
+STRIPE_PRODUCT_ID_STANDARD = os.getenv("STRIPE_PRODUCT_ID_STANDARD", "")
 
 # General
 ONE_YEAR_FROM_NOW = datetime.now(timezone.utc).replace(
     year=datetime.now().year + 1, microsecond=0
 )
 EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
-ENV = get_env_var(name="ENV")
+ENV = os.getenv("ENV", "")
 EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
 # Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
 CREDIT_USAGE_USD = 8
@@ -83,7 +90,7 @@ CREDIT_AMOUNTS_USD = {
 }
 MAX_RETRIES = 3
 PER_PAGE = 100
-PRODUCT_ID = get_env_var(name="PRODUCT_ID")
+PRODUCT_ID = os.getenv("PRODUCT_ID", "")
 TIMEOUT = 120  # seconds
 TZ = timezone.utc
 UTF8 = "utf-8"
