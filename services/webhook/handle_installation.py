@@ -93,4 +93,5 @@ async def handle_installation_created(payload: InstallationPayload):
             token=token,
             sender_id=user_id,
             sender_name=sender_name,
+            source="installation",
         )

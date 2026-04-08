@@ -86,6 +86,7 @@ async def test_not_completed_closes_pr_and_deletes_branch(
         token="test-token",
         sender_id=123,
         sender_name="test-user",
+        source="test",
     )
 
     mock_clone_to_tmp.assert_called_once()
@@ -147,6 +148,7 @@ async def test_completed_keeps_pr(
         token="test-token",
         sender_id=123,
         sender_name="test-user",
+        source="test",
     )
 
     mock_create_pr.assert_called_once()
@@ -210,6 +212,7 @@ async def test_uses_target_branch_when_set(
         token="test-token",
         sender_id=123,
         sender_name="test-user",
+        source="test",
     )
 
     # Should use target_branch, not call get_default_branch
@@ -281,6 +284,7 @@ async def test_passes_existing_workflows_to_claude(
         token="test-token",
         sender_id=123,
         sender_name="test-user",
+        source="test",
     )
 
     call_kwargs = mock_agent.call_args.kwargs
@@ -345,6 +349,7 @@ async def test_clones_repo_to_tmp(
         token="test-token",
         sender_id=123,
         sender_name="test-user",
+        source="test",
     )
 
     mock_clone_to_tmp.assert_called_once_with(
@@ -364,6 +369,7 @@ async def test_no_installation_skips(mock_installation):
         token="test-token",
         sender_id=123,
         sender_name="test-user",
+        source="test",
     )
 
     mock_installation.assert_called_once()
@@ -380,6 +386,7 @@ async def test_empty_repo_skips(mock_installation, mock_repo, mock_default_branc
         token="test-token",
         sender_id=123,
         sender_name="test-user",
+        source="test",
     )
 
     mock_default_branch.assert_called_once()
@@ -438,6 +445,7 @@ async def test_system_message_mentions_coverage(
         token="test-token",
         sender_id=123,
         sender_name="test-user",
+        source="test",
     )
 
     call_kwargs = mock_agent.call_args.kwargs
@@ -498,6 +506,7 @@ async def test_sets_pr_number_in_base_args(
         token="test-token",
         sender_id=123,
         sender_name="test-user",
+        source="test",
     )
 
     call_kwargs = mock_agent.call_args.kwargs

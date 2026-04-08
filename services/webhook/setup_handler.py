@@ -1,7 +1,12 @@
 import os
-from anthropic.types import MessageParam
+from anthropic.types import MessageParam, TextBlockParam
 
 from constants.agent import MAX_ITERATIONS
+from constants.ci import (
+    CI_CONFIG_FILES,
+    GHA_WORKFLOW_DIR,
+    GITAUTO_COVERAGE_WORKFLOW_TEMPLATES_DIR,
+)
 from constants.claude import ClaudeModelId
 from constants.system_messages.setup_handler import (
     SETUP_HANDLER_SYSTEM_MESSAGE,
@@ -42,11 +47,6 @@ from utils.logging.logging_config import (
     set_trigger,
 )
 
-WORKFLOW_DIR = ".github/workflows"
-TEMPLATES_DIR = os.path.join(
-    os.path.dirname(__file__), os.pardir, "github", "workflows", "templates"
-)
-
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 async def setup_handler(
@@ -55,18 +55,20 @@ async def setup_handler(
     token: str,
     sender_id: int,
     sender_name: str,
+    source: str,
 ):
     set_owner_repo(owner_name, repo_name)
     set_trigger("setup")
     logger.info(
-        "Setup triggered by sender_name=%s sender_id=%d for %s/%s",
+        "Setup triggered by sender_name=%s sender_id=%d source=%s for %s/%s",
         sender_name,
         sender_id,
+        source,
         owner_name,
         repo_name,
     )
     thread_ts = slack_notify(
-        f"Setup started for {owner_name}/{repo_name} by {sender_name} (id={sender_id})"
+        f"Setup started for {owner_name}/{repo_name} by {sender_name} from {source}"
     )
 
     installation = get_installation_by_owner(owner_name)
@@ -174,48 +176,64 @@ async def setup_handler(
         trigger="setup",
     )
 
-    # Read existing workflow files from local clone
-    workflow_files: dict[str, str] = {}
-    local_workflow_dir = os.path.join(clone_dir, WORKFLOW_DIR)
+    # Read all existing CI configs from local clone
+    ci_configs: dict[str, str] = {}
+
+    # GitHub Actions workflows (multiple .yml files in a directory)
+    local_workflow_dir = os.path.join(clone_dir, GHA_WORKFLOW_DIR)
     if os.path.isdir(local_workflow_dir):
         for filename in os.listdir(local_workflow_dir):
             if not filename.endswith(".yml"):
+                logger.info("Skipping non-YAML file: %s", filename)
                 continue
             content = read_local_file(file_path=filename, base_dir=local_workflow_dir)
             if content:
-                workflow_files[f"{WORKFLOW_DIR}/{filename}"] = (
+                ci_configs[f"{GHA_WORKFLOW_DIR}/{filename} (GitHub Actions)"] = (
                     format_content_with_line_numbers(
-                        file_path=f"{WORKFLOW_DIR}/{filename}", content=content
+                        file_path=f"{GHA_WORKFLOW_DIR}/{filename}", content=content
                     )
                 )
 
+    # Other CI systems (single config files each)
+    for config_path, ci_name in CI_CONFIG_FILES:
+        full_path = os.path.join(clone_dir, config_path)
+        if os.path.isfile(full_path):
+            content = read_local_file(file_path=config_path, base_dir=clone_dir)
+            if content:
+                ci_configs[f"{config_path} ({ci_name})"] = (
+                    format_content_with_line_numbers(
+                        file_path=config_path, content=content
+                    )
+                )
+
+    logger.info("Detected CI configs: %s", list(ci_configs.keys()))
+
     # One example template is enough - Claude knows how to write workflows for any language
-    raw_template = read_local_file(file_path="pytest.yml", base_dir=TEMPLATES_DIR) or ""
+    raw_template = (
+        read_local_file(
+            file_path="pytest.yml", base_dir=GITAUTO_COVERAGE_WORKFLOW_TEMPLATES_DIR
+        )
+        or ""
+    )
     example_template = (
         format_content_with_line_numbers(file_path="pytest.yml", content=raw_template)
         if raw_template
         else ""
     )
 
-    messages: list[MessageParam] = [
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": f"Root files: {root_files}"},
-                {"type": "text", "text": f"Target branch: {target_branch}"},
-                {"type": "text", "text": f"Existing workflows:\n{workflow_files}"},
-                {
-                    "type": "text",
-                    "text": f"Example template (pytest.yml):\n{example_template}",
-                },
-            ],
-        }
+    user_content: list[TextBlockParam] = [
+        {"type": "text", "text": f"Root files: {root_files}"},
+        {"type": "text", "text": f"Target branch: {target_branch}"},
+        {"type": "text", "text": f"Existing CI configs:\n{ci_configs}"},
+        {"type": "text", "text": f"Example template (pytest.yml):\n{example_template}"},
     ]
 
+    messages: list[MessageParam] = [{"role": "user", "content": user_content}]
+
     logger.info(
-        "Calling Claude for setup (root files: %d, existing workflows: %d)",
+        "Calling Claude for setup (root files: %d, CI configs: %d)",
         len(root_files),
-        len(workflow_files),
+        len(ci_configs),
     )
 
     total_token_input = 0
@@ -241,6 +259,7 @@ async def setup_handler(
         completion_reason = result.completion_reason
 
         if result.is_completed:
+            logger.info("Setup agent completed successfully")
             is_completed = True
             break
 
@@ -265,6 +284,7 @@ async def setup_handler(
     )
 
     if is_completed and pr_files:
+        logger.info("Setup PR has %d file changes", len(pr_files))
         slack_notify(
             f"Setup completed for {owner_name}/{repo_name}#{pr_number}\n{pr_url}",
             thread_ts=thread_ts,

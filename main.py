@@ -212,6 +212,7 @@ async def setup_coverage_workflow(
     api_key: str = Header(..., alias="X-API-Key"),
     sender_id: int = Header(0, alias="X-Sender-Id"),
     sender_name: str = Header("", alias="X-Sender-Name"),
+    source: str = Header("", alias="X-Source"),
 ):
     verify_api_key(api_key)
     return await setup_handler(
@@ -220,4 +221,5 @@ async def setup_coverage_workflow(
         token=token,
         sender_id=sender_id,
         sender_name=sender_name,
+        source=source,
     )
