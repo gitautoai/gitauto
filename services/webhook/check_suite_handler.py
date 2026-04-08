@@ -683,6 +683,7 @@ async def handle_check_suite(
     total_token_input = 0
     total_token_output = 0
     is_completed = False
+    completion_reason = ""
 
     system_message = create_system_message(
         trigger=trigger, repo_settings=repo_settings, clone_dir=clone_dir
@@ -702,7 +703,9 @@ async def handle_check_suite(
         if not refreshed_settings or not refreshed_settings.get(
             "trigger_on_test_failure"
         ):
-            logger.info("trigger_on_test_failure disabled during execution, stopping")
+            is_completed = True
+            completion_reason = "Stopped because the test failure trigger was disabled during execution."
+            logger.info(completion_reason)
             break
 
         # Safety check: Stop if older active request exists (race condition prevention)
@@ -760,20 +763,24 @@ async def handle_check_suite(
         final_result = await verify_task_is_complete(base_args=base_args)
         is_completed = final_result.success
 
-    # Trigger final test workflows with an empty commit
-    comment_body = "Creating final empty commit to trigger workflows..."
-    update_comment(body=comment_body, base_args=base_args)
-    create_empty_commit(base_args=base_args)
-
-    # Update final comment. Do NOT include CHECK_RUN_FAILED_MESSAGE here — that marker
-    # is a concurrency lock set at line 317 when processing starts. Clearing it here
-    # releases the lock so the next check_suite webhook can proceed. The error hash
-    # dedup at line 557 prevents re-attempting the same error.
-    if is_completed:
-        final_msg = f"Created an empty commit to re-trigger the `{check_run_name}` CI. Waiting for results."
+    # If stopped due to trigger being disabled, post reason and skip empty commit
+    if completion_reason:
+        update_comment(body=completion_reason, base_args=base_args)
     else:
-        final_msg = f"I tried to fix `{check_run_name}` but verification still shows errors. Please review the changes."
-    update_comment(body=final_msg, base_args=base_args)
+        # Trigger final test workflows with an empty commit
+        comment_body = "Creating final empty commit to trigger workflows..."
+        update_comment(body=comment_body, base_args=base_args)
+        create_empty_commit(base_args=base_args)
+
+        # Update final comment. Do NOT include CHECK_RUN_FAILED_MESSAGE here — that marker
+        # is a concurrency lock set at line 317 when processing starts. Clearing it here
+        # releases the lock so the next check_suite webhook can proceed. The error hash
+        # dedup at line 557 prevents re-attempting the same error.
+        if is_completed:
+            final_msg = f"Created an empty commit to re-trigger the `{check_run_name}` CI. Waiting for results."
+        else:
+            final_msg = f"I tried to fix `{check_run_name}` but verification still shows errors. Please review the changes."
+        update_comment(body=final_msg, base_args=base_args)
 
     # Update usage record
     end_time = time.time()

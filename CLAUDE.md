@@ -243,6 +243,7 @@ When the user explicitly says "LGTM", execute this workflow:
     - **Title MUST vary**: (1) check `ls ../website/app/blog/posts/ | tail -10`, (2) verify no duplicate: `ls ../website/app/blog/posts/ | grep "your-slug-without-date"`
     - **No customer names**: Customer repo names, org names, and identifiable details are private. Use generic descriptions ("a React app", "~400 files") instead of specific names ("foxcom-forms", "SPIDERPLUS-web"). Approximate numbers instead of exact counts that could identify repos.
     - **Tone**: Honest, transparent, technical. Written for developers.
+    - **Be specific about model names**: When referring to "the agent" or "the model", always specify the exact model (e.g., "Claude Opus 4.6") at least on first mention. Don't just say "an LLM" or "the agent" - readers want to know which model exhibited the behavior.
     - **MDX header format**:
 
       ```javascript
