@@ -463,8 +463,6 @@ class Repositories(TypedDict):
     target_branch: str
     trigger_on_review_comment: bool
     trigger_on_test_failure: bool
-    trigger_on_commit: bool
-    trigger_on_merged: bool
     trigger_on_schedule: bool
     schedule_frequency: str | None
     schedule_minute: int | None
@@ -472,7 +470,6 @@ class Repositories(TypedDict):
     schedule_day_of_week: str | None
     schedule_include_weekends: bool
     structured_rules: dict[str, Any] | None
-    trigger_on_pr_change: bool
     schedule_execution_count: int
     schedule_interval_minutes: int
     test_dir_prefixes: list[str]
@@ -497,8 +494,6 @@ class RepositoriesInsert(TypedDict):
     target_branch: str
     trigger_on_review_comment: bool
     trigger_on_test_failure: bool
-    trigger_on_commit: bool
-    trigger_on_merged: bool
     trigger_on_schedule: bool
     schedule_frequency: NotRequired[str | None]
     schedule_minute: NotRequired[int | None]
@@ -506,7 +501,6 @@ class RepositoriesInsert(TypedDict):
     schedule_day_of_week: NotRequired[str | None]
     schedule_include_weekends: bool
     structured_rules: NotRequired[dict[str, Any] | None]
-    trigger_on_pr_change: bool
     schedule_execution_count: int
     schedule_interval_minutes: int
     test_dir_prefixes: list[str]

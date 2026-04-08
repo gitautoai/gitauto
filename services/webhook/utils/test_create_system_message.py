@@ -36,8 +36,6 @@ def create_repositories_data(
         "target_branch": "main",
         "trigger_on_review_comment": True,
         "trigger_on_test_failure": True,
-        "trigger_on_commit": False,
-        "trigger_on_merged": False,
         "trigger_on_schedule": False,
         "schedule_frequency": None,
         "schedule_minute": None,
@@ -46,7 +44,6 @@ def create_repositories_data(
         "schedule_include_weekends": False,
         "structured_rules": structured_rules,
         "preferred_language": preferred_language,
-        "trigger_on_pr_change": True,
         "schedule_execution_count": 0,
         "schedule_interval_minutes": 60,
     }
