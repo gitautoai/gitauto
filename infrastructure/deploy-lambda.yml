@@ -158,9 +158,6 @@ Resources:
           SLACK_BOT_TOKEN: '{{resolve:ssm:/gitauto/SLACK_BOT_TOKEN}}'
           SLACK_WEBHOOK_URL_NOTIFICATIONS: '{{resolve:ssm:/gitauto/SLACK_WEBHOOK_URL_NOTIFICATIONS}}'
           STRIPE_API_KEY: '{{resolve:ssm:/gitauto/STRIPE_API_KEY}}'
-          STRIPE_FREE_TIER_PRICE_ID: '{{resolve:ssm:/gitauto/STRIPE_FREE_TIER_PRICE_ID}}'
-          STRIPE_PRODUCT_ID_FREE: '{{resolve:ssm:/gitauto/STRIPE_PRODUCT_ID_FREE}}'
-          STRIPE_PRODUCT_ID_STANDARD: '{{resolve:ssm:/gitauto/STRIPE_PRODUCT_ID_STANDARD}}'
           SUPABASE_SERVICE_ROLE_KEY: '{{resolve:ssm:/gitauto/SUPABASE_SERVICE_ROLE_KEY}}'
           S3_DEPENDENCY_BUCKET: !ImportValue GitAutoDependencyCacheBucket
           SUPABASE_URL: '{{resolve:ssm:/gitauto/SUPABASE_URL}}'

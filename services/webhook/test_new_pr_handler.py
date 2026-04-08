@@ -110,9 +110,7 @@ async def test_can_proceed_false_early_return(
     mock_check_availability.return_value = {
         "can_proceed": False,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "No credits available",
         "log_message": "User has no credits",
     }
@@ -168,9 +166,7 @@ async def test_stripe_customer_id_update(
     mock_check_availability.return_value = {
         "can_proceed": False,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "No credits",
         "log_message": "No credits",
     }
@@ -244,9 +240,7 @@ async def test_image_urls_processing(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -338,9 +332,7 @@ async def test_image_unsupported_format_skipped(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -426,9 +418,7 @@ async def test_image_base64_fetch_failed(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -521,9 +511,7 @@ async def test_timeout_approaching_breaks_loop(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -604,9 +592,7 @@ async def test_branch_deleted_breaks_loop(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -690,9 +676,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -872,9 +856,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -1042,9 +1024,7 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -1155,9 +1135,7 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -1253,9 +1231,7 @@ async def test_test_file_header_merge(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -1354,9 +1330,7 @@ async def test_test_file_header_merge_no_content(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -1462,9 +1436,7 @@ async def test_test_file_header_merge_no_change(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -1572,9 +1544,7 @@ async def test_credits_depleted_email_sent(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -1698,9 +1668,7 @@ async def test_new_pr_handler_token_accumulation(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding with credit billing",
     }
@@ -1864,9 +1832,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -1875,9 +1841,7 @@ async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -2021,9 +1985,7 @@ async def test_few_test_files_include_contents_in_prompt(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
@@ -2172,9 +2134,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 50,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Proceeding",
     }
