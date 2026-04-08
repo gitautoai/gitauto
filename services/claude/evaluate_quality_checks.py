@@ -2,8 +2,9 @@
 import json
 
 # Local imports
-from constants.claude import MAX_OUTPUT_TOKENS, ClaudeModelId
+from constants.claude import MAX_OUTPUT_TOKENS
 from services.claude.client import claude
+from services.model_selection import get_model
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 from utils.prompts.quality_check import QUALITY_CHECK_SYSTEM_PROMPT
@@ -30,9 +31,10 @@ def evaluate_quality_checks(
     # Attempted structured output (output_format JSON schema) but got 400:
     # "The compiled grammar is too large" (8 categories x 41 checks x {status, reason}).
     # Fallback: prompt-guided JSON with regular messages.create.
+    model = get_model()
     response = claude.messages.create(
-        model=ClaudeModelId.SONNET_4_6,
-        max_tokens=MAX_OUTPUT_TOKENS[ClaudeModelId.SONNET_4_6],
+        model=model,
+        max_tokens=MAX_OUTPUT_TOKENS[model],
         temperature=0,
         system=QUALITY_CHECK_SYSTEM_PROMPT
         + "\n\nRespond with ONLY the JSON object, no other text.",

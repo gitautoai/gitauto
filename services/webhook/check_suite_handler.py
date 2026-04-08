@@ -246,6 +246,7 @@ async def handle_check_suite(
         "check_run_name": check_run_name,
         "trigger": trigger,
         "skip_ci": True,
+        "slack_thread_ts": thread_ts,
     }
 
     # Clone repo to tmp
@@ -275,7 +276,7 @@ async def handle_check_suite(
     )
     logger.info("php: ready=%s", php_ready)
 
-    # Check if CI-failed comment already exists (skip if GA is already handling this PR).
+    # Check if CI-failed comment already exists (skip if GitAuto is already handling this PR).
     # Exception: if the LATEST CI-failed comment is from an infra retry (contains "Re-triggering CI"), proceed because CI was re-triggered and failed with real errors.
     comments = get_all_comments(
         owner=owner_name, repo=repo_name, pr_number=pr_number, token=token

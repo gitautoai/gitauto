@@ -64,7 +64,10 @@ def mock_review_comment_payload():
 
 
 @patch("services.webhook.review_run_handler.slack_notify")
+@patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
+@patch("services.webhook.review_run_handler.set_npm_token_env")
 @patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
 @patch("services.webhook.review_run_handler.get_repository")
 @patch("services.webhook.review_run_handler.create_user_request")
 @patch("services.webhook.review_run_handler.get_review_thread_comments")
@@ -79,9 +82,15 @@ def mock_review_comment_payload():
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
 @patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch("services.webhook.review_run_handler.ensure_php_packages")
+@patch(
+    "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
+)
 @patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
 @pytest.mark.asyncio
 async def test_review_run_handler_accumulates_tokens_correctly(
+    _mock_verify_task_is_ready,
+    _mock_ensure_php,
     _mock_prepare_repo,
     _mock_ensure_node_packages,
     mock_update_usage,
@@ -96,7 +105,10 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     mock_get_thread_comments,
     mock_create_user_request,
     mock_get_repo,
+    mock_get_user_public_info,
     mock_get_token,
+    _mock_set_npm_token_env,
+    _mock_get_local_file_tree,
     _mock_slack_notify,
     mock_review_comment_payload,
 ):
@@ -104,8 +116,12 @@ async def test_review_run_handler_accumulates_tokens_correctly(
 
     # Setup realistic mocks
     mock_get_token.return_value = "ghs_test_token"
-    mock_get_repo.return_value = {"id": 98765}
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
+    )()
+    mock_get_repo.return_value = {"id": 98765, "trigger_on_review_comment": True}
     mock_create_user_request.return_value = 777  # This is the usage_id
+    _mock_verify_task_is_ready.return_value = VerifyTaskIsReadyResult()
     mock_get_thread_comments.return_value = ReviewThreadResult(
         comments=[
             {
@@ -171,12 +187,15 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     assert usage_call_kwargs["pr_number"] == 123
 
     # Verify get_repository was called with owner_id and repo_id
-    mock_get_repo.assert_called_once_with(owner_id=11111, repo_id=98765)
+    mock_get_repo.assert_called_with(owner_id=11111, repo_id=98765)
 
 
 @patch("services.webhook.review_run_handler.slack_notify")
+@patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
+@patch("services.webhook.review_run_handler.set_npm_token_env")
 @patch("services.webhook.review_run_handler.verify_task_is_complete")
 @patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
 @patch("services.webhook.review_run_handler.get_repository")
 @patch("services.webhook.review_run_handler.create_user_request")
 @patch("services.webhook.review_run_handler.get_review_thread_comments")
@@ -191,10 +210,16 @@ async def test_review_run_handler_accumulates_tokens_correctly(
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
 @patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch("services.webhook.review_run_handler.ensure_php_packages")
+@patch(
+    "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
+)
 @patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
 @patch("services.webhook.review_run_handler.MAX_ITERATIONS", 2)
 @pytest.mark.asyncio
 async def test_review_run_handler_max_iterations_forces_verification(
+    _mock_verify_task_is_ready,
+    _mock_ensure_php,
     _mock_prepare_repo,
     _mock_ensure_node_packages,
     _mock_update_usage,
@@ -209,16 +234,23 @@ async def test_review_run_handler_max_iterations_forces_verification(
     mock_get_thread_comments,
     mock_create_user_request,
     mock_get_repo,
+    mock_get_user_public_info,
     mock_get_token,
     mock_verify_task_is_complete,
+    _mock_set_npm_token_env,
+    _mock_get_local_file_tree,
     _mock_slack_notify,
     mock_review_comment_payload,
 ):
     """Test that review run handler forces verify_task_is_complete when MAX_ITERATIONS is reached."""
 
     mock_get_token.return_value = "ghs_test_token"
-    mock_get_repo.return_value = {"id": 98765}
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
+    )()
+    mock_get_repo.return_value = {"id": 98765, "trigger_on_review_comment": True}
     mock_create_user_request.return_value = 777
+    _mock_verify_task_is_ready.return_value = VerifyTaskIsReadyResult()
     mock_get_thread_comments.return_value = ReviewThreadResult(
         comments=[
             {
@@ -369,7 +401,7 @@ async def test_thread_resolved_during_loop_stops_agent(
     mock_get_user_public_info.return_value = type(
         "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
     )()
-    mock_get_repo.return_value = {"id": 98765}
+    mock_get_repo.return_value = {"id": 98765, "trigger_on_review_comment": True}
     mock_create_user_request.return_value = 777
     mock_reply_to_comment.return_value = "http://comment-url"
     mock_get_file_content.return_value = "def main():\n    pass"
@@ -451,7 +483,7 @@ async def test_bot_first_review_comment_is_processed(
     mock_get_user_public_info.return_value = type(
         "UserPublicInfo", (), {"email": "bot@test.com", "display_name": "Devin"}
     )()
-    mock_get_repo.return_value = {"id": 98765}
+    mock_get_repo.return_value = {"id": 98765, "trigger_on_review_comment": True}
     mock_create_user_request.return_value = 777
     mock_reply_to_comment.return_value = "http://comment-url"
     mock_get_file_content.return_value = "def main():\n    pass"
@@ -626,7 +658,7 @@ async def test_human_review_comment_always_processed(
     mock_get_user_public_info.return_value = type(
         "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
     )()
-    mock_get_repo.return_value = {"id": 98765}
+    mock_get_repo.return_value = {"id": 98765, "trigger_on_review_comment": True}
     mock_create_user_request.return_value = 777
     mock_reply_to_comment.return_value = "http://comment-url"
     mock_get_file_content.return_value = "def main():\n    pass"
@@ -776,7 +808,7 @@ async def test_pr_comment_uses_create_comment_not_reply(
     mock_get_user_public_info.return_value = type(
         "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
     )()
-    mock_get_repo.return_value = {"id": 98765}
+    mock_get_repo.return_value = {"id": 98765, "trigger_on_review_comment": True}
     mock_create_user_request.return_value = 777
     mock_create_comment.return_value = "http://new-comment-url"
     mock_get_pr_files.return_value = [{"filename": "src/main.py", "status": "modified"}]
@@ -875,7 +907,7 @@ async def test_question_comment_agent_replies_without_code_changes(
     mock_get_user_public_info.return_value = type(
         "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
     )()
-    mock_get_repo.return_value = {"id": 98765}
+    mock_get_repo.return_value = {"id": 98765, "trigger_on_review_comment": True}
     mock_create_user_request.return_value = 777
     mock_create_comment.return_value = "http://new-comment-url"
     mock_get_pr_files.return_value = [{"filename": "src/main.py", "status": "modified"}]

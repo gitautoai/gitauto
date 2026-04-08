@@ -106,6 +106,12 @@ async def handle_review_run(
         logger.info("Ignoring review comment from GitAuto itself")
         return
 
+    # Check if review comment trigger is enabled for this repo
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+    if not repo_settings or not repo_settings.get("trigger_on_review_comment"):
+        logger.info("trigger_on_review_comment is disabled, skipping")
+        return
+
     # Extract other information
     installation_id: int = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
@@ -221,6 +227,7 @@ async def handle_review_run(
         "review_comment": review_comment,
         "trigger": trigger,
         "skip_ci": True,
+        "slack_thread_ts": thread_ts,
     }
 
     # Clone repo to tmp
@@ -450,14 +457,20 @@ async def handle_review_run(
             )
         create_empty_commit(base_args=base_args)
 
-    # Use the agent's own explanation as the final reply
-    if completion_reason:
-        if not review_path:
-            create_comment(base_args=base_args, body=completion_reason)
-        elif review_author_is_bot:
-            reply_to_comment(base_args=base_args, body=completion_reason)
-        else:
-            update_comment(body=completion_reason, base_args=base_args)
+    # Use the agent's own explanation as the final reply, or a fallback if empty
+    if not completion_reason:
+        completion_reason = (
+            "Done." if is_completed else "I was unable to complete this task."
+        )
+        logger.warning(
+            "completion_reason was empty, using fallback: %s", completion_reason
+        )
+    if not review_path:
+        create_comment(base_args=base_args, body=completion_reason)
+    elif review_author_is_bot:
+        reply_to_comment(base_args=base_args, body=completion_reason)
+    else:
+        update_comment(body=completion_reason, base_args=base_args)
 
     # Update usage record
     end_time = time.time()
