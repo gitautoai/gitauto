@@ -10,7 +10,7 @@ from anthropic.types import MessageParam
 # Local imports
 from constants.agent import MAX_ITERATIONS
 from constants.messages import SETTINGS_LINKS
-from constants.triggers import Trigger
+from constants.triggers import NewPrTrigger
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.chat_with_agent import chat_with_agent
@@ -82,7 +82,7 @@ from utils.urls.extract_urls import extract_image_urls
 
 async def handle_new_pr(
     payload: PrLabeledPayload,
-    trigger: Trigger,
+    trigger: NewPrTrigger,
     lambda_info: dict[str, str | None] | None = None,
 ) -> None:
     set_trigger(trigger)
@@ -95,6 +95,7 @@ async def handle_new_pr(
     base_args["pr_number"] = pr_number
     pr_url = payload["pull_request"]["html_url"]
 
+    base_args["trigger"] = trigger
     # Ensure skip_ci is set to True for development commits
     base_args["skip_ci"] = True
 
@@ -394,6 +395,7 @@ async def handle_new_pr(
     )
     test_file_paths = find_test_files(impl_file_path, all_file_paths, test_dir_prefixes)
     test_file_paths = prioritize_test_files(test_file_paths, impl_file_path)
+    base_args["test_file_paths"] = test_file_paths
     max_test_files_in_prompt = 5
 
     # Include most relevant test files with contents, rest as paths-only

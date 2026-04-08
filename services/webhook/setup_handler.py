@@ -58,7 +58,16 @@ async def setup_handler(
 ):
     set_owner_repo(owner_name, repo_name)
     set_trigger("setup")
-    thread_ts = slack_notify(f"Setup started for {owner_name}/{repo_name}")
+    logger.info(
+        "Setup triggered by sender_name=%s sender_id=%d for %s/%s",
+        sender_name,
+        sender_id,
+        owner_name,
+        repo_name,
+    )
+    thread_ts = slack_notify(
+        f"Setup started for {owner_name}/{repo_name} by {sender_name} (id={sender_id})"
+    )
 
     installation = get_installation_by_owner(owner_name)
     if not installation:

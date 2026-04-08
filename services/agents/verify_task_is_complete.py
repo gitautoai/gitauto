@@ -8,6 +8,7 @@ from constants.files import (
     PHP_TEST_FILE_EXTENSIONS,
     TS_TEST_FILE_EXTENSIONS,
 )
+from services.agents.run_quality_gate import QUALITY_GATE_MESSAGE, run_quality_gate
 from services.eslint.ensure_eslint_relaxed_for_tests import (
     ensure_eslint_relaxed_for_tests,
 )
@@ -88,13 +89,35 @@ async def verify_task_is_complete(
         owner=owner, repo=repo, pr_number=pr_number, token=token
     )
 
+    trigger = base_args.get("trigger", "")
+    impl_file = base_args.get("impl_file_to_collect_coverage_from", "")
+
     if not pr_files:
-        logger.info(
-            "No PR file changes found (e.g. setup handler determined no workflows needed), skipping checks"
-        )
+        # 0 changes on a schedule/dashboard PR: fail immediately without LLM call.
+        # The schedule_handler already evaluated quality and found issues (that's why it created the PR). The LLM quality gate only runs after the agent makes changes (bottom of this function) to avoid paying for the same evaluation twice.
+        if trigger in ("schedule", "dashboard") and impl_file:
+            # First 0-change attempt: reject to nudge agent to try.
+            # Second 0-change attempt: agent genuinely can't improve, let it pass.
+            if not base_args.get("quality_gate_retried"):
+                base_args["quality_gate_retried"] = True
+                return VerifyTaskIsCompleteResult(
+                    success=False,
+                    message=f"Task NOT complete. You made 0 changes to the test file for {impl_file}. {QUALITY_GATE_MESSAGE}",
+                )
+
+            logger.info(
+                "Agent retried with 0 changes for %s, allowing completion", impl_file
+            )
+
+        logger.info("No PR file changes found, skipping file checks")
         return VerifyTaskIsCompleteResult(
             success=True, message="Task completed. No changes were needed."
         )
+
+    formatting_applied: list[str] = []
+    remaining_errors: list[str] = []
+    error_files: set[str] = set()
+    modified_files: set[str] = set()
 
     js_test_files = [
         f["filename"]
@@ -102,7 +125,6 @@ async def verify_task_is_complete(
         if f["filename"].endswith(JS_TEST_FILE_EXTENSIONS) and f["status"] != "removed"
     ]
 
-    modified_files: set[str] = set()
     if js_test_files:
         root_files = [
             f
@@ -144,9 +166,6 @@ async def verify_task_is_complete(
     non_removed_files = [f["filename"] for f in pr_files if f["status"] != "removed"]
     js_ts_files = filter_js_ts_files(non_removed_files)
 
-    formatting_applied: list[str] = []
-    remaining_errors: list[str] = []
-    error_files: set[str] = set()
     for file_path in js_ts_files:
         content = read_local_file(file_path=file_path, base_dir=clone_dir)
         if not content:
@@ -287,6 +306,15 @@ async def verify_task_is_complete(
             for err in phpunit_result.errors:
                 remaining_errors.append(f"- phpunit: {err}")
             error_files.update(phpunit_result.error_files)
+
+    # Quality gate for schedule/dashboard PRs: evaluate test quality via Claude.
+    # Runs last to avoid paying for LLM call when lint/test errors will force a retry anyway.
+    if trigger in ("schedule", "dashboard") and impl_file and not remaining_errors:
+        quality_error = run_quality_gate(
+            clone_dir=clone_dir, impl_file=impl_file, base_args=base_args
+        )
+        if quality_error:
+            remaining_errors.append(f"- {quality_error}")
 
     if remaining_errors:
         error_msg = "\n".join(remaining_errors)

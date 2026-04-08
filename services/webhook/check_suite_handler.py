@@ -244,6 +244,7 @@ async def handle_check_suite(
         "clone_dir": clone_dir,
         "workflow_id": circleci_workflow_id if is_circleci else github_run_id,
         "check_run_name": check_run_name,
+        "trigger": trigger,
         "skip_ci": True,
     }
 

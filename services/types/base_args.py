@@ -1,6 +1,7 @@
 from typing import TypedDict
 from typing_extensions import NotRequired
 
+from constants.triggers import Trigger
 from schemas.supabase.types import OwnerType
 from services.github.types.webhook.review_run_payload import ReviewSubjectType
 
@@ -38,7 +39,10 @@ class BaseArgs(TypedDict):
     latest_commit_sha: NotRequired[str]
     workflow_id: NotRequired[str | int]
     baseline_tsc_errors: NotRequired[set[str]]
+    trigger: NotRequired[Trigger]
     impl_file_to_collect_coverage_from: NotRequired[str]
+    quality_gate_retried: NotRequired[bool]
+    test_file_paths: NotRequired[list[str]]
     review_id: NotRequired[int]
     skip_ci: NotRequired[bool]
 
