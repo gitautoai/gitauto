@@ -1,6 +1,6 @@
 # Standard imports
 import base64
-from datetime import datetime, timezone
+from datetime import timezone
 import os
 
 # Third-party imports
@@ -71,14 +71,8 @@ SENTRY_DSN = os.getenv("SENTRY_DSN", "")
 
 # Stripe
 STRIPE_API_KEY = os.getenv("STRIPE_API_KEY", "")
-STRIPE_FREE_TIER_PRICE_ID = os.getenv("STRIPE_FREE_TIER_PRICE_ID", "")
-STRIPE_PRODUCT_ID_FREE = os.getenv("STRIPE_PRODUCT_ID_FREE", "")
-STRIPE_PRODUCT_ID_STANDARD = os.getenv("STRIPE_PRODUCT_ID_STANDARD", "")
 
 # General
-ONE_YEAR_FROM_NOW = datetime.now(timezone.utc).replace(
-    year=datetime.now().year + 1, microsecond=0
-)
 EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
 ENV = os.getenv("ENV", "")
 EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
@@ -99,7 +93,6 @@ UTF8 = "utf-8"
 TEST_APP_ID = 123456
 TEST_INSTALLATION_ID = 12345678
 TEST_NEW_INSTALLATION_ID = 87654321
-PRODUCT_ID_FOR_STANDARD = "prod_PqZFpCs1Jq6X4E"  # https://dashboard.stripe.com/test/products/prod_PqZFpCs1Jq6X4E
 TEST_OWNER_ID = 123456789
 TEST_OWNER_TYPE = "Organization"
 TEST_OWNER_NAME = "installation-test"

@@ -173,7 +173,6 @@ async def handle_new_pr(
         owner_id=owner_id,
         owner_name=owner_name,
         repo_name=repo_name,
-        installation_id=installation_id,
         sender_name=sender_name,
     )
 

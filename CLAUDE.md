@@ -236,8 +236,7 @@ When the user explicitly says "LGTM", execute this workflow:
 11. If fixing a Sentry issue, resolve related issues:
     - `python3 scripts/sentry/get_issue.py AGENT-XXX` to check related
     - `python3 scripts/sentry/resolve_issue.py AGENT-XXX AGENT-YYY ...` to resolve
-12. **If this LGTM addresses a real-world customer repo issue** (e.g., Foxquilt CI failures, customer repo quality gaps, features built to solve observed customer problems), write a blog post in `../website/app/blog/posts/`:
-    - **When to trigger**: When the work was motivated by a real customer/production repo issue - includes both direct bug fixes AND features built to address observed problems (e.g., quality checks built because customer repos had 100% coverage but low-quality tests). Skip only for purely internal refactoring with no customer impact.
+12. **Write a blog post** in `../website/app/blog/posts/`:
     - **Filename**: `YYYY-MM-DD-kebab-case-title.mdx`
     - **Content**: Must be useful for developers in general, not just GitAuto internals. Extract the universal engineering lesson (e.g., mutation testing, log deduplication, content-based diffs) and make that the focus. Use the GitAuto story as the vehicle, not the destination. Exception: highly technical and advanced internal content is acceptable when it showcases deep engineering capability that developers would find interesting (e.g., novel algorithms, unsolved problems, trade-off analysis across approaches).
     - **Title length**: The blog layout appends `- GitAuto Blog` (16 chars) to the title, and the meta title must be 50-60 chars total. So `metadata.title` must be **34-44 characters**. Always count before committing.
@@ -262,7 +261,7 @@ When the user explicitly says "LGTM", execute this workflow:
       ```
 
     - **Body**: `# Title` heading, then: what happened, root cause, the fix, prevention. 300-600 words, use code blocks and bullet points.
-13. **If this LGTM addresses a real-world customer repo issue**, also create or update a documentation page in `../website/app/docs/`:
+13. **Create or update a documentation page** in `../website/app/docs/`:
     - **Create NEW page** if the fix introduces a new capability not covered by existing docs
     - **Update existing page** if improving documented capability
     - **Choose the right section**: Browse `ls ../website/app/docs/` for best-fit category - don't default to `how-it-works/`

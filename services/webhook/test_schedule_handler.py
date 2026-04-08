@@ -94,9 +94,7 @@ def test_schedule_handler_access_denied(
     mock_check_availability.return_value = {
         "can_proceed": False,
         "billing_type": "credit",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "Insufficient credits",
         "log_message": "Insufficient credits for test-org/test-repo",
     }
@@ -194,9 +192,7 @@ def test_schedule_handler_skips_export_only_files(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "exception",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
@@ -305,9 +301,7 @@ def test_schedule_handler_skips_empty_files(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "exception",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
@@ -405,9 +399,7 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "exception",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
@@ -583,9 +575,7 @@ def test_schedule_handler_skips_ai_eval_when_tests_exist(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "exception",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
@@ -694,9 +684,7 @@ def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "exception",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
@@ -792,9 +780,7 @@ def test_schedule_handler_skips_file_with_open_pr_different_title_format(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "exception",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
@@ -894,9 +880,7 @@ def test_schedule_handler_skips_none_coverage_as_fully_covered(
     }
     mock_check_availability.return_value = {
         "can_proceed": True,
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
@@ -1007,9 +991,7 @@ def test_schedule_handler_all_none_coverage_treated_as_candidate(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "exception",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
@@ -1131,9 +1113,7 @@ def test_schedule_handler_partial_none_coverage_omits_none_metric(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "exception",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }
@@ -1244,9 +1224,7 @@ def test_get_file_tree_reads_from_clone_dir(
     mock_check_availability.return_value = {
         "can_proceed": True,
         "billing_type": "exception",
-        "requests_left": None,
         "credit_balance_usd": 0,
-        "period_end_date": None,
         "user_message": "",
         "log_message": "Exception owner - unlimited access.",
     }

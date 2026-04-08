@@ -105,7 +105,6 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         owner_id=owner_id,
         owner_name=owner_name,
         repo_name=repo_name,
-        installation_id=installation_id,
         sender_name=user_name,
     )
 
