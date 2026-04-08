@@ -148,12 +148,28 @@ async def test_verify_partial_fix_with_remaining_errors(
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_task_is_complete_failure_no_changes(mock_get_files, base_args):
+    # Non-schedule PR with no changes should succeed (e.g. setup handler decided no work needed)
     mock_get_files.return_value = []
 
     result = await verify_task_is_complete(base_args)
 
     assert result.success is True
     assert "No changes were needed" in result.message
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_schedule_pr_no_changes_always_fails(mock_get_files, base_args):
+    # Schedule/dashboard PR with 0 changes always fails without LLM call —
+    # the schedule_handler already determined quality is bad when it created the PR
+    mock_get_files.return_value = []
+    base_args["trigger"] = "schedule"
+    base_args["impl_file_to_collect_coverage_from"] = "src/resolvers/foo.ts"
+
+    result = await verify_task_is_complete(base_args)
+
+    assert result.success is False
+    assert "0 changes" in result.message
 
 
 @pytest.mark.asyncio

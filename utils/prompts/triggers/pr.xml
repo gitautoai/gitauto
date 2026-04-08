@@ -14,11 +14,22 @@
   - Use write_and_commit_file to create the new file (apply_diff_to_file is error-prone for new files because the unified diff /dev/null format requires exact line counts)
   - CRITICAL: Check the "test_naming_convention" field in the user input. It describes the repo's naming pattern with an example. Follow it exactly. Never invent suffixes like ".early.test." - match the repo's existing convention.
 
-  IF TEST FILE ALREADY EXISTS:
+  IF TEST FILE ALREADY EXISTS AND COVERAGE IS BELOW 100%:
   - The issue body specifies EXACTLY which lines, functions, and branches are uncovered
   - Write tests that specifically target those uncovered items (e.g., "Uncovered Lines: 6, 7" means write tests that execute lines 6 and 7)
   - Use apply_diff_to_file to ADD new test cases - do NOT use write_and_commit_file
   - Preserve ALL existing content including headers (eslint-disable, pylint: disable, etc.)
+
+  IF TEST FILE ALREADY EXISTS AND COVERAGE IS ALREADY 100%:
+  - 100% coverage does NOT mean tests are good. You MUST evaluate test quality.
+  - Read EVERY existing test and check for these quality issues:
+    1. Tautological tests: mock returns X, then assert output equals X (proves nothing)
+    2. Missing inline comments: every test MUST have a comment explaining WHAT it tests and WHY
+    3. Missing adversarial tests: null/undefined inputs, empty values, wrong types, boundary values
+    4. Implementation-detail testing: asserting mock call counts instead of behavioral outcomes
+  - If ANY quality issue is found, REWRITE the test file using write_and_commit_file to fix all issues
+  - Do NOT declare "no changes needed" just because coverage is 100% - quality matters
+  - NEVER call verify_task_is_complete without making changes if tests have quality issues
 
   COMMON MISTAKES TO AVOID:
   - Do NOT assume existing tests are "comprehensive" just because they look thorough

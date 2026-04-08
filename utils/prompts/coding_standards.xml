@@ -51,6 +51,12 @@
     <rule>If placeTestFilesNextToSourceFiles is True in structured_repository_rules, ALWAYS co-locate new test files next to their source files regardless of the repo's dominant pattern. Otherwise, if the repo has a dominant pattern (80%+ of tests in one location), follow that. If patterns are mixed (no 80%+ majority), prioritize co-location. If no pattern exists, prioritize co-location.</rule>
   </test_file_organization>
 
+  <coverage_is_not_quality>
+    <rule>100% code coverage does NOT mean the task is complete. Coverage measures which lines execute, not whether tests are meaningful. A tautological test (mock returns X, assert output equals X) achieves 100% coverage while proving nothing.</rule>
+    <rule>When a test file already exists with 100% coverage, evaluate test QUALITY before declaring "no changes needed": check for tautological assertions, missing adversarial cases, missing inline comments, and implementation-detail testing instead of behavior testing.</rule>
+    <rule>If existing tests are low quality (tautological, no adversarial cases, no inline comments), REWRITE them to meet coding standards. Do NOT declare the task complete just because coverage is 100%.</rule>
+  </coverage_is_not_quality>
+
   <anti_patterns>
     <rule>Do not over-assert on internal function call parameters when the behavior is what matters</rule>
     <rule>Do not create unnecessarily complex mock chains when testing method chaining - focus on the final result, not each step of the chain</rule>

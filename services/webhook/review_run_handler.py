@@ -219,6 +219,7 @@ async def handle_review_run(
         # "review_position": review_position,
         "review_body": review_body,
         "review_comment": review_comment,
+        "trigger": trigger,
         "skip_ci": True,
     }
 

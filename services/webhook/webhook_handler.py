@@ -8,7 +8,7 @@ from config import (
     GITHUB_CHECK_RUN_FAILURES,
     PRODUCT_ID,
 )
-from constants.triggers import Trigger
+from constants.triggers import NewPrTrigger
 from services.github.types.webhook.review_run_payload import ReviewRunPayload
 from services.github.types.github_types import (
     CheckSuiteCompletedPayload,
@@ -156,7 +156,7 @@ async def handle_webhook_event(
             return
 
         suffix = head_ref[len(prefix) :]
-        trigger = cast(Trigger, suffix.split("-")[0])
+        trigger = cast(NewPrTrigger, suffix.split("-")[0])
         await handle_new_pr(
             payload=typed_payload,
             trigger=trigger,
