@@ -19,7 +19,7 @@ def clone_repo_and_install_dependencies(
 ):
     clone_url = get_clone_url(owner, repo, token)
 
-    # Step 1: Clone base branch so it's available locally
+    # Step 1: Clone base branch (also sets git identity)
     git_clone_to_tmp(clone_dir, clone_url, base_branch)
 
     # Step 2: Fetch and checkout PR branch to work on

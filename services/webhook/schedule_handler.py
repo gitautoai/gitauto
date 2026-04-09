@@ -20,8 +20,8 @@ from schemas.supabase.types import Coverages, CoveragesInsert
 from services.claude.evaluate_condition import evaluate_condition
 from services.claude.evaluate_quality_checks import evaluate_quality_checks
 from services.aws.delete_scheduler import delete_scheduler
-from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.create_empty_commit import create_empty_commit
+from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.create_remote_branch import create_remote_branch
 from services.git.git_checkout import git_checkout
 from services.git.git_fetch import git_fetch

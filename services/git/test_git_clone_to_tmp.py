@@ -12,8 +12,9 @@ from services.git.git_clone_to_tmp import git_clone_to_tmp
 class TestGitCloneToTmpUnit:
     """Unit tests with mocked run_subprocess."""
 
+    @patch("services.git.git_clone_to_tmp.set_git_identity")
     @patch("services.git.git_clone_to_tmp.run_subprocess")
-    def test_fresh_clone(self, mock_run):
+    def test_fresh_clone(self, mock_run, _mock_identity):
         """Fresh clone when .git does not exist."""
         with tempfile.TemporaryDirectory() as clone_dir:
             result = git_clone_to_tmp(clone_dir, "https://github.com/o/r.git", "main")
@@ -33,8 +34,9 @@ class TestGitCloneToTmpUnit:
                 clone_dir,
             )
 
+    @patch("services.git.git_clone_to_tmp.set_git_identity")
     @patch("services.git.git_clone_to_tmp.run_subprocess")
-    def test_existing_clone_updates(self, mock_run):
+    def test_existing_clone_updates(self, mock_run, _mock_identity):
         """When .git exists, fetch + checkout instead of clone."""
         with tempfile.TemporaryDirectory() as clone_dir:
             os.makedirs(os.path.join(clone_dir, ".git"))
@@ -60,8 +62,9 @@ class TestGitCloneToTmpUnit:
                 in calls
             )
 
+    @patch("services.git.git_clone_to_tmp.set_git_identity")
     @patch("services.git.git_clone_to_tmp.run_subprocess")
-    def test_existing_clone_adds_origin_when_missing(self, mock_run):
+    def test_existing_clone_adds_origin_when_missing(self, mock_run, _mock_identity):
         """When origin remote is missing, add it instead of set-url."""
         with tempfile.TemporaryDirectory() as clone_dir:
             os.makedirs(os.path.join(clone_dir, ".git"))
@@ -84,8 +87,11 @@ class TestGitCloneToTmpUnit:
                 in mock_run.call_args_list
             )
 
+    @patch("services.git.git_clone_to_tmp.set_git_identity")
     @patch("services.git.git_clone_to_tmp.run_subprocess")
-    def test_creates_parent_dirs(self, mock_run):  # pylint: disable=unused-argument
+    def test_creates_parent_dirs(
+        self, mock_run, _mock_identity
+    ):  # pylint: disable=unused-argument
         """makedirs is called for fresh clone when parent doesn't exist."""
         with tempfile.TemporaryDirectory() as base:
             clone_dir = os.path.join(base, "owner", "repo")

@@ -2,7 +2,7 @@ from typing import Literal, NotRequired, TypedDict
 
 from services.github.types.installation import Installation
 from services.github.types.organization import Organization
-from services.github.types.pull_request import PullRequest
+from services.github.types.webhook_pull_request import WebhookPullRequest
 from services.github.types.repository import Repository
 from services.github.types.user import User
 
@@ -27,6 +27,6 @@ class ReviewRunPayload(TypedDict):
     comment: ReviewRunComment
     installation: Installation
     organization: NotRequired[Organization]  # Personal repos don't have this key
-    pull_request: PullRequest
+    pull_request: WebhookPullRequest
     repository: Repository
     sender: User

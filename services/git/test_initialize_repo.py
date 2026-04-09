@@ -19,8 +19,6 @@ class TestInitializeRepo:
         """Mock configuration constants."""
         with patch.multiple(
             "services.git.initialize_repo",
-            GITHUB_APP_GIT_EMAIL="161652217+gitauto-ai[bot]@users.noreply.github.com",
-            GITHUB_APP_USER_NAME="gitauto-ai[bot]",
             PRODUCT_NAME="GitAuto",
             UTF8="utf-8",
         ):
@@ -90,18 +88,9 @@ class TestInitializeRepo:
             assert "https://www.youtube.com/watch?v=demo" in written_content
 
             # Verify git commands were executed in correct order
+            # (identity is set via set_git_identity, not run_subprocess)
             expected_calls = [
                 call(["git", "init", "-b", "main"], test_repo_path),
-                call(["git", "config", "user.name", "gitauto-ai[bot]"], test_repo_path),
-                call(
-                    [
-                        "git",
-                        "config",
-                        "user.email",
-                        "161652217+gitauto-ai[bot]@users.noreply.github.com",
-                    ],
-                    test_repo_path,
-                ),  # GITHUB_APP_GIT_EMAIL
                 call(["git", "add", "README.md"], test_repo_path),
                 call(
                     ["git", "commit", "-m", "Initial commit with README"],
@@ -268,7 +257,7 @@ class TestInitializeRepo:
                 "- [GitAuto YouTube](https://youtube.com/@gitauto)" in written_content
             )
 
-    def test_initialize_repo_git_config_commands(
+    def test_initialize_repo_sets_git_identity(
         self,
         mock_config_constants,
         mock_url_constants,
@@ -276,30 +265,16 @@ class TestInitializeRepo:
         test_remote_url,
         test_token,
     ):
-        """Test that git config commands use correct user information."""
+        """Test that set_git_identity is called with the repo path."""
         with patch("os.path.exists", return_value=True), patch(
             "builtins.open", mock_open()
-        ), patch("services.git.initialize_repo.run_subprocess") as mock_run_subprocess:
+        ), patch("services.git.initialize_repo.run_subprocess"), patch(
+            "services.git.initialize_repo.set_git_identity"
+        ) as mock_identity:
 
             initialize_repo(test_repo_path, test_remote_url, test_token)
 
-            # Verify git config commands
-            config_name_call = call(
-                ["git", "config", "user.name", "gitauto-ai[bot]"],
-                test_repo_path,
-            )
-            config_email_call = call(
-                [
-                    "git",
-                    "config",
-                    "user.email",
-                    "161652217+gitauto-ai[bot]@users.noreply.github.com",
-                ],
-                test_repo_path,
-            )
-
-            assert config_name_call in mock_run_subprocess.call_args_list
-            assert config_email_call in mock_run_subprocess.call_args_list
+            mock_identity.assert_called_once_with(test_repo_path)
 
     @pytest.mark.parametrize(
         "remote_url,expected_auth_url",

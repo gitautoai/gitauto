@@ -60,8 +60,8 @@ def test_git_commit_and_push_add_fails():
     def mock_run(args, cwd):
         nonlocal call_count
         call_count += 1
-        # First two calls are git config (user.name, user.email), third is git add
-        if call_count == 3:
+        # First call is git add (identity is set upstream in clone_repo_and_install_dependencies)
+        if call_count == 1:
             raise ValueError("Command failed: fatal: pathspec 'bad.py' did not match")
         return MagicMock(returncode=0, stdout="")
 

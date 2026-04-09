@@ -2,11 +2,7 @@
 import os
 
 # Local imports
-from config import (
-    GITHUB_APP_GIT_EMAIL,
-    GITHUB_APP_USER_NAME,
-    UTF8,
-)
+from config import UTF8
 from constants.general import PRODUCT_NAME
 from constants.urls import (
     BLOG_URL,
@@ -16,8 +12,7 @@ from constants.urls import (
     PRODUCT_URL,
     PRODUCT_YOUTUBE_URL,
 )
-
-# Local imports (Utils)
+from services.git.set_git_identity import set_git_identity
 from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -36,8 +31,8 @@ def initialize_repo(repo_path: str, remote_url: str, token: str) -> None:
         f.write(readme_content)
 
     run_subprocess(["git", "init", "-b", "main"], repo_path)
-    run_subprocess(["git", "config", "user.name", GITHUB_APP_USER_NAME], repo_path)
-    run_subprocess(["git", "config", "user.email", GITHUB_APP_GIT_EMAIL], repo_path)
+    # Needed here because initialize_repo creates a fresh repo, not via clone_repo_and_install_dependencies
+    set_git_identity(repo_path)
     run_subprocess(["git", "add", "README.md"], repo_path)
     run_subprocess(["git", "commit", "-m", "Initial commit with README"], repo_path)
 

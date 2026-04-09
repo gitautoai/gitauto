@@ -262,6 +262,8 @@ When the user explicitly says "LGTM", execute this workflow:
       ```
 
     - **Body**: `# Title` heading, then: what happened, root cause, the fix, prevention. 300-600 words, use code blocks and bullet points.
+    - **Explain why the model couldn't solve it**: When the post involves a failure by Claude Opus or another model, include a section explaining WHY the model failed. People believe top models can solve anything - explain the specific gap (e.g., models reason about code not environments, models trust config files without verifying which one the runner reads, training data reinforces common patterns over rare config bugs). Position GitAuto's value as the application layer that fills what the model lacks, not as a replacement for the model.
+    - **Language-agnostic framing**: GitAuto is language-agnostic. When writing about a language-specific case (e.g., Jest/React), frame it as one example of a universal pattern and mention parallel examples in other languages (e.g., pytest/tox, JUnit/Maven, RSpec).
 13. **Create or update a documentation page** in `../website/app/docs/`:
     - **Create NEW page** if the fix introduces a new capability not covered by existing docs
     - **Update existing page** if improving documented capability

@@ -23,12 +23,17 @@ from services.git.get_clone_url import get_clone_url
 from services.git.clone_repo_and_install_dependencies import (
     clone_repo_and_install_dependencies,
 )
+from services.git.git_merge_base_into_pr import git_merge_base_into_pr
 from services.github.comments.create_comment import create_comment
+from services.github.commits.get_head_commit_count_behind_base import (
+    get_head_commit_count_behind_base,
+)
 from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.slack.slack_notify import slack_notify
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_reference import get_reference
+from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.get_review_summary import get_review_summary
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
@@ -239,6 +244,26 @@ async def handle_review_run(
         token=token,
         clone_dir=clone_dir,
     )
+
+    # Webhook payload doesn't include mergeable_state, so fetch the full PR from REST API
+    full_pr = get_pull_request(
+        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
+    )
+    mergeable_state = full_pr.get("mergeable_state") if full_pr else None
+    if mergeable_state == "dirty":
+        logger.info("Merging base branch, mergeable_state=%s", mergeable_state)
+        behind_by = get_head_commit_count_behind_base(
+            owner=owner_name,
+            repo=repo_name,
+            base=base_branch,
+            head=head_branch,
+            token=token,
+        )
+        git_merge_base_into_pr(
+            clone_dir=clone_dir, base_branch=base_branch, behind_by=behind_by
+        )
+    else:
+        logger.info("Skipping merge, mergeable_state=%s", mergeable_state)
 
     # Install dependencies (read repo files from clone_dir, cache on S3)
     node_ready = ensure_node_packages(
