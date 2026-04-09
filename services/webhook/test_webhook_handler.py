@@ -77,12 +77,6 @@ def mock_handle_check_suite():
 
 
 @pytest.fixture
-def mock_write_pr_description():
-    with patch("services.webhook.webhook_handler.write_pr_description") as mock:
-        yield mock
-
-
-@pytest.fixture
 def mock_handle_review_run():
     with patch("services.webhook.webhook_handler.handle_review_run") as mock:
         yield mock
@@ -381,18 +375,6 @@ class TestHandleWebhookEvent:
 
         mock_handle_check_suite.assert_not_called()
         mock_handle_successful_check_suite.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_handle_webhook_event_pull_request_opened(
-        self,
-        mock_write_pr_description,
-    ):
-        """Test handling of pull request opened event."""
-        payload = {"action": "opened"}
-
-        await handle_webhook_event(event_name="pull_request", payload=payload)
-
-        mock_write_pr_description.assert_called_once_with(payload=payload)
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_pull_request_closed_not_merged(self):
@@ -873,30 +855,6 @@ class TestHandleWebhookEvent:
         assert casted_payload["organization"]["login"] == "gitautoai"
         assert casted_payload["sender"]["login"] == "gitauto-for-dev[bot]"
         assert casted_payload["installation"]["id"] == 60314628
-
-    @pytest.mark.asyncio
-    async def test_pull_request_opened_type_checking_with_real_payload(
-        self,
-        mock_write_pr_description,
-    ):
-        with open("payloads/github/pull_request/opened.json", "r", encoding=UTF8) as f:
-            payload = json.load(f)
-
-        await handle_webhook_event("pull_request", payload)
-
-        mock_write_pr_description.assert_called_once()
-
-        call_args = mock_write_pr_description.call_args[1]
-        received_payload = call_args["payload"]
-
-        assert isinstance(received_payload, dict)
-        assert received_payload["action"] == "opened"
-        assert received_payload["number"] == 517
-        assert (
-            received_payload["pull_request"]["title"]
-            == "GitAuto: Add an integration test to is_repo_forked() in services/github/repo_manager.py"
-        )
-        assert received_payload["repository"]["name"] == "gitauto"
 
     @patch("services.webhook.webhook_handler.handle_successful_check_suite")
     @patch("services.webhook.webhook_handler.handle_coverage_report")

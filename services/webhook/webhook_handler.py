@@ -39,7 +39,6 @@ from services.webhook.handle_installation_repos_removed import (
     handle_installation_repos_removed,
 )
 from services.webhook.new_pr_handler import handle_new_pr
-from services.webhook.pr_body_handler import write_pr_description
 from services.webhook.push_handler import handle_push
 from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_review_inline_comments import get_review_inline_comments
@@ -162,12 +161,6 @@ async def handle_webhook_event(
             trigger=trigger,
             lambda_info=lambda_info,
         )
-        return
-
-    # Write a PR description when GitAuto opened the PR
-    # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
-    if event_name == "pull_request" and action == "opened":
-        write_pr_description(payload=payload)
         return
 
     # Track merged PRs as this is also our success status
