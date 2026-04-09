@@ -144,6 +144,11 @@ TEST_QUALIFIER_STRIP = re.compile(
 # Top-level directories that indicate a "separate test directory" convention
 TOP_LEVEL_TEST_DIRS = frozenset({"test", "tests", "spec", "specs", "t"})
 
+CRACO_CONFIG_FILES = [
+    "craco.config.js",
+    "craco.config.ts",
+]
+
 JEST_CONFIG_FILES = [
     "jest.config.js",
     "jest.config.ts",

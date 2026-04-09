@@ -399,3 +399,148 @@ def test_website_next_jest(
     written = mock_write_and_commit.call_args.kwargs["file_content"]
     assert "testTimeout: process.env.CI ? 180000 : 5000," in written
     assert written.index("testTimeout") < written.index("setupFilesAfterEnv")
+
+
+# --- Real-world craco configs (foxden-admin-portal) ---
+
+# Original craco.config.js before GitAuto fix — missing testTimeout entirely
+FOXDEN_ADMIN_PORTAL_CRACO_NO_TIMEOUT = """module.exports = {
+  style: {
+    postcss: {
+      plugins: [require('tailwindcss'), require('autoprefixer')]
+    }
+  },
+  jest: {
+    configure: {
+      roots: ['<rootDir>/src', '<rootDir>/test'],
+      testMatch: ['<rootDir>/test/**/*.{spec,test}.{js,jsx,ts,tsx}'],
+      setupFilesAfterSetup: ['<rootDir>/test/setupTests.ts'],
+      testEnvironment: 'jsdom',
+      moduleNameMapper: {
+        '\\\\.(css|less|scss|sass)$': '<rootDir>/test/__mocks__/styleMock.js'
+      }
+    }
+  }
+};
+"""
+
+# After fix — testTimeout present with sufficient value
+FOXDEN_ADMIN_PORTAL_CRACO_WITH_TIMEOUT = """module.exports = {
+  style: {
+    postcss: {
+      plugins: [require('tailwindcss'), require('autoprefixer')]
+    }
+  },
+  jest: {
+    configure: {
+      testTimeout: process.env.CI ? 180000 : 5000,
+      roots: ['<rootDir>/src', '<rootDir>/test'],
+      testMatch: ['<rootDir>/test/**/*.{spec,test}.{js,jsx,ts,tsx}'],
+      setupFilesAfterSetup: ['<rootDir>/test/setupTests.ts'],
+      testEnvironment: 'jsdom',
+      moduleNameMapper: {
+        '\\\\.(css|less|scss|sass)$': '<rootDir>/test/__mocks__/styleMock.js'
+      }
+    }
+  }
+};
+"""
+
+# Craco config with testTimeout set too low
+FOXDEN_ADMIN_PORTAL_CRACO_LOW_TIMEOUT = """module.exports = {
+  style: {
+    postcss: {
+      plugins: [require('tailwindcss'), require('autoprefixer')]
+    }
+  },
+  jest: {
+    configure: {
+      testTimeout: 10000,
+      roots: ['<rootDir>/src', '<rootDir>/test'],
+      testEnvironment: 'jsdom'
+    }
+  }
+};
+"""
+
+# Craco config without any jest section
+CRACO_NO_JEST_SECTION = """module.exports = {
+  style: {
+    postcss: {
+      plugins: [require('tailwindcss'), require('autoprefixer')]
+    }
+  }
+};
+"""
+
+
+def test_craco_injects_timeout_into_configure_block(
+    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+):
+    mock_read_local_file.return_value = FOXDEN_ADMIN_PORTAL_CRACO_NO_TIMEOUT
+    result = ensure_jest_timeout_for_ci(
+        root_files=["craco.config.js", "package.json"], base_args=BASE_ARGS
+    )
+    assert result == "craco.config.js"
+    written = mock_write_and_commit.call_args.kwargs["file_content"]
+    assert "testTimeout: process.env.CI ? 180000 : 5000," in written
+    # testTimeout should appear INSIDE configure block, before roots
+    assert written.index("testTimeout") < written.index("roots")
+    assert written.index("testTimeout") > written.index("configure")
+
+
+def test_craco_already_has_correct_timeout(
+    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+):
+    mock_read_local_file.return_value = FOXDEN_ADMIN_PORTAL_CRACO_WITH_TIMEOUT
+    result = ensure_jest_timeout_for_ci(
+        root_files=["craco.config.js"], base_args=BASE_ARGS
+    )
+    assert result is None
+    mock_write_and_commit.assert_not_called()
+
+
+def test_craco_updates_low_timeout(
+    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+):
+    mock_read_local_file.return_value = FOXDEN_ADMIN_PORTAL_CRACO_LOW_TIMEOUT
+    result = ensure_jest_timeout_for_ci(
+        root_files=["craco.config.js"], base_args=BASE_ARGS
+    )
+    assert result == "craco.config.js"
+    written = mock_write_and_commit.call_args.kwargs["file_content"]
+    assert "testTimeout: process.env.CI ? 180000 : 5000," in written
+    assert "10000" not in written
+
+
+def test_craco_takes_priority_over_jest_config(
+    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+):
+    mock_read_local_file.return_value = FOXDEN_ADMIN_PORTAL_CRACO_NO_TIMEOUT
+    result = ensure_jest_timeout_for_ci(
+        root_files=["craco.config.js", "jest.config.js"], base_args=BASE_ARGS
+    )
+    assert result == "craco.config.js"
+    written = mock_write_and_commit.call_args.kwargs["file_content"]
+    assert "testTimeout: process.env.CI ? 180000 : 5000," in written
+
+
+def test_craco_without_jest_section_falls_through_to_jest_config(
+    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+):
+    jest_config = "module.exports = {\n  preset: 'ts-jest',\n};\n"
+
+    def side_effect(file_path, base_dir):
+        if file_path == "craco.config.js":
+            return CRACO_NO_JEST_SECTION
+        if file_path == "jest.config.js":
+            return jest_config
+        return None
+
+    mock_read_local_file.side_effect = side_effect
+    result = ensure_jest_timeout_for_ci(
+        root_files=["craco.config.js", "jest.config.js"], base_args=BASE_ARGS
+    )
+    assert result == "jest.config.js"
+    written = mock_write_and_commit.call_args.kwargs["file_content"]
+    assert "testTimeout: process.env.CI ? 180000 : 5000," in written
