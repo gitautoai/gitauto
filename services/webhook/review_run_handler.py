@@ -35,9 +35,6 @@ from services.git.create_empty_commit import create_empty_commit
 from services.git.get_reference import get_reference
 from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
-from services.github.pulls.update_pr_body_with_section import (
-    update_pr_body_with_section,
-)
 from services.github.pulls.get_review_summary import get_review_summary
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.token.get_installation_token import get_installation_access_token
@@ -509,20 +506,6 @@ async def handle_review_run(
         reply_to_comment(base_args=base_args, body=completion_reason)
     else:
         update_comment(body=completion_reason, base_args=base_args)
-
-    # Update PR body with review response
-    review_target = (
-        f"`{review_path}:{review_line}`" if review_path else "general comment"
-    )
-    review_content = f"## Review Response: {review_target}\n{completion_reason}"
-    update_pr_body_with_section(
-        owner=owner_name,
-        repo=repo_name,
-        pr_number=pr_number,
-        token=token,
-        marker="GITAUTO_REVIEW_FIX",
-        content=review_content,
-    )
 
     # Update usage record
     end_time = time.time()

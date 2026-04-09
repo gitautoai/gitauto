@@ -42,9 +42,6 @@ from services.github.installations.get_installation_permissions import (
 from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_commits import get_pull_request_commits
 from services.github.pulls.get_pull_request_files import get_pull_request_files
-from services.github.pulls.update_pr_body_with_section import (
-    update_pr_body_with_section,
-)
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.github_types import CheckSuiteCompletedPayload
 from services.github.users.get_email_from_commits import get_email_from_commits
@@ -805,20 +802,6 @@ async def handle_check_suite(
         else:
             final_msg = f"I tried to fix `{check_run_name}` but verification still shows errors. Please review the changes."
         update_comment(body=final_msg, base_args=base_args)
-
-        # Update PR body with CI fix status
-        if is_completed:
-            fix_content = f"## CI Fix: `{check_run_name}`\nFixed the failing CI check and created an empty commit to re-trigger."
-        else:
-            fix_content = f"## CI Fix: `{check_run_name}`\nAttempted to fix but verification still shows errors. Please review."
-        update_pr_body_with_section(
-            owner=owner_name,
-            repo=repo_name,
-            pr_number=pr_number,
-            token=token,
-            marker="GITAUTO_FAILURE_FIX",
-            content=fix_content,
-        )
 
     # Update usage record
     end_time = time.time()
