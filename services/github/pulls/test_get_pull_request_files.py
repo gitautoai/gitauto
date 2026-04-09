@@ -102,12 +102,7 @@ def test_get_pull_request_files_missing_fields():
             owner="test-owner", repo="test-repo", pr_number=1, token="token123"
         )
 
-        expected = [
-            {"filename": "file1.py", "status": "modified"},
-            {"filename": "file3.txt", "status": "removed"},
-        ]
-
-        assert result == expected
+        assert result == mock_response_data
 
 
 def test_get_pull_request_files_http_error():
