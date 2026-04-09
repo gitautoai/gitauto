@@ -143,6 +143,19 @@ def test_integration_empty_commit_on_shallow_clone_with_new_branch(
         check=True,
         capture_output=True,
     )
+    # git_clone_to_tmp sets identity after clone; CI runners have no global git config
+    subprocess.run(
+        ["git", "config", "user.name", "test"],
+        cwd=shallow_dir,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "test@test.com"],
+        cwd=shallow_dir,
+        check=True,
+        capture_output=True,
+    )
 
     # 2. Push a new commit to bare repo (simulates Foxquilt pushing code)
     subprocess.run(
