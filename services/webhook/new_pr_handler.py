@@ -30,6 +30,9 @@ from services.github.files.get_remote_file_content_by_url import (
 )
 from services.github.markdown.render_text import render_text
 from services.github.pulls.close_pull_request import close_pull_request
+from services.github.pulls.generate_and_upsert_pr_body_section import (
+    generate_and_upsert_pr_body_section,
+)
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.types.github_types import PrLabeledPayload
 from services.github.utils.deconstruct_github_payload import deconstruct_github_payload
@@ -557,6 +560,7 @@ async def handle_new_pr(
     total_token_input = 0
     total_token_output = 0
     is_completed = False
+    completion_reason = ""
 
     system_message = create_system_message(
         trigger=trigger, repo_settings=repo_settings, clone_dir=clone_dir
@@ -587,6 +591,7 @@ async def handle_new_pr(
         )
         messages = result.messages
         is_completed = result.is_completed
+        completion_reason = result.completion_reason
         p = result.p
         total_token_input += result.token_input
         total_token_output += result.token_output
@@ -650,9 +655,24 @@ async def handle_new_pr(
     )
     update_comment(body=body_after_pr, base_args=base_args)
 
-    # Success notification
-    success_msg = f"Work completed for {owner_name}/{repo_name} PR: {pr_url}"
-    slack_notify(success_msg, thread_ts)
+    # Update PR body with LLM-generated summary of what GA did
+    pr_body_summary = generate_and_upsert_pr_body_section(
+        owner_name=owner_name,
+        repo_name=repo_name,
+        pr_number=pr_number,
+        token=token,
+        current_body=pr_body,
+        trigger=trigger,
+        context={
+            "pr_title": pr_title,
+            "trigger": trigger,
+            "changed_files": changed_files,
+            "completion_reason": completion_reason,
+        },
+    )
+
+    if pr_body_summary:
+        slack_notify(pr_body_summary, thread_ts)
 
     end_time = time.time()
     if usage_id:
@@ -686,6 +706,7 @@ async def handle_new_pr(
                         )
 
     # End notification
-    end_msg = "Completed" if is_completed else "@channel Failed"
+    status = "Completed" if is_completed else "<!channel> Failed"
+    end_msg = f"{status}: {owner_name}/{repo_name} {pr_url}"
     slack_notify(end_msg, thread_ts)
     return

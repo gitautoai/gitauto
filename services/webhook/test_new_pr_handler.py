@@ -1096,7 +1096,9 @@ async def test_retry_counter_reset_on_successful_loop(
 @patch("services.webhook.new_pr_handler.get_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.generate_and_upsert_pr_body_section")
 async def test_non_test_file_skipped_in_header_merge(
+    _mock_generate_pr_body,
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -1190,7 +1192,9 @@ async def test_non_test_file_skipped_in_header_merge(
 @patch("services.webhook.new_pr_handler.get_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.generate_and_upsert_pr_body_section")
 async def test_test_file_header_merge(
+    _mock_generate_pr_body,
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -1289,7 +1293,9 @@ async def test_test_file_header_merge(
 @patch("services.webhook.new_pr_handler.get_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.generate_and_upsert_pr_body_section")
 async def test_test_file_header_merge_no_content(
+    _mock_generate_pr_body,
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
@@ -1395,7 +1401,9 @@ async def test_test_file_header_merge_no_content(
 @patch("services.webhook.new_pr_handler.get_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.generate_and_upsert_pr_body_section")
 async def test_test_file_header_merge_no_change(
+    _mock_generate_pr_body,
     mock_deconstruct,
     mock_check_availability,
     mock_get_comments,
