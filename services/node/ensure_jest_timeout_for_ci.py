@@ -1,18 +1,24 @@
 import re
 
-from constants.files import JEST_CONFIG_FILES
+from constants.files import CRACO_CONFIG_FILES, JEST_CONFIG_FILES
 from services.git.write_and_commit_file import write_and_commit_file
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
 
-# Patterns to find the config object opening brace
-CONFIG_OBJECT_PATTERNS = [
+# Patterns to find the config object opening brace in jest config files
+JEST_CONFIG_OBJECT_PATTERNS = [
     re.compile(r"module\.exports\s*=\s*\{"),
     re.compile(r"export\s+default\s+\{"),
     re.compile(r":\s*Config(?:\.InitialOptions)?\s*=\s*\{"),
     re.compile(r"merge(?:\.recursive)?\([^{]*\{"),
+]
+
+# Patterns to find the jest.configure object in craco config files.
+# testTimeout must go inside jest: { configure: { ... } }, not at the top level.
+CRACO_CONFIGURE_OBJECT_PATTERNS = [
+    re.compile(r"configure\s*:\s*\{"),
 ]
 
 CI_TIMEOUT_MS = 180000
@@ -26,21 +32,41 @@ EXPECTED_TIMEOUT_LINE = (
 def ensure_jest_timeout_for_ci(root_files: list[str], base_args: BaseArgs):
     clone_dir = base_args["clone_dir"]
 
-    jest_config_file = None
-    for config_file in JEST_CONFIG_FILES:
-        if config_file in root_files:
-            jest_config_file = config_file
+    config_file = None
+    config_patterns = JEST_CONFIG_OBJECT_PATTERNS
+    content = None
+
+    # Craco configs take priority — `craco test` ignores jest.config.* files
+    for f in CRACO_CONFIG_FILES:
+        if f not in root_files:
+            logger.info("ensure_jest_timeout_for_ci: %s not in root_files", f)
+            continue
+        craco_content = read_local_file(file_path=f, base_dir=clone_dir)
+        if craco_content and re.search(r"configure\s*:\s*\{", craco_content):
+            config_file = f
+            config_patterns = CRACO_CONFIGURE_OBJECT_PATTERNS
+            content = craco_content
+            logger.info(
+                "ensure_jest_timeout_for_ci: Using craco jest.configure in %s", f
+            )
             break
 
-    if not jest_config_file:
-        logger.info("ensure_jest_timeout_for_ci: No Jest config file found")
+    # Fall back to standard jest config files
+    if not config_file:
+        for f in JEST_CONFIG_FILES:
+            if f in root_files:
+                config_file = f
+                logger.info("ensure_jest_timeout_for_ci: Found Jest config %s", f)
+                break
+
+    if not config_file:
+        logger.info("ensure_jest_timeout_for_ci: No Jest or CRACO config file found")
         return None
 
-    content = read_local_file(file_path=jest_config_file, base_dir=clone_dir)
     if not content:
-        logger.warning(
-            "ensure_jest_timeout_for_ci: Could not read %s", jest_config_file
-        )
+        content = read_local_file(file_path=config_file, base_dir=clone_dir)
+    if not content:
+        logger.warning("ensure_jest_timeout_for_ci: Could not read %s", config_file)
         return None
 
     # Find all testTimeout lines — duplicates cause last-key-wins in JS objects
@@ -52,7 +78,7 @@ def ensure_jest_timeout_for_ci(root_files: list[str], base_args: BaseArgs):
     # None — inject one at the top of the config object
     if len(timeout_line_nums) == 0:
         match = None
-        for pattern in CONFIG_OBJECT_PATTERNS:
+        for pattern in config_patterns:
             match = pattern.search(content)
             if match:
                 break
@@ -60,7 +86,7 @@ def ensure_jest_timeout_for_ci(root_files: list[str], base_args: BaseArgs):
         if not match:
             logger.info(
                 "ensure_jest_timeout_for_ci: Could not find config object pattern in %s",
-                jest_config_file,
+                config_file,
             )
             return None
 
@@ -81,14 +107,14 @@ def ensure_jest_timeout_for_ci(root_files: list[str], base_args: BaseArgs):
         if numbers and max(int(n) for n in numbers) >= CI_TIMEOUT_MS:
             logger.info(
                 "ensure_jest_timeout_for_ci: %s already has sufficient testTimeout",
-                jest_config_file,
+                config_file,
             )
             return None
 
         # Too low (e.g. 10000, 30000, 60000) — replace with our CI-aware value
         logger.info(
             "ensure_jest_timeout_for_ci: %s has testTimeout below %dms, updating",
-            jest_config_file,
+            config_file,
             CI_TIMEOUT_MS,
         )
         indent = re.match(r"(\s*)", existing_line)
@@ -101,7 +127,7 @@ def ensure_jest_timeout_for_ci(root_files: list[str], base_args: BaseArgs):
     else:
         logger.info(
             "ensure_jest_timeout_for_ci: %s has %d testTimeout entries, removing duplicates",
-            jest_config_file,
+            config_file,
             len(timeout_line_nums),
         )
         lines_to_remove: set[int] = set()
@@ -124,15 +150,13 @@ def ensure_jest_timeout_for_ci(root_files: list[str], base_args: BaseArgs):
 
     result = write_and_commit_file(
         file_content=updated_content,
-        file_path=jest_config_file,
+        file_path=config_file,
         base_args=base_args,
-        commit_message=f"Set testTimeout for CI stability in {jest_config_file}",
+        commit_message=f"Set testTimeout for CI stability in {config_file}",
     )
     if result.success:
-        logger.info(
-            "ensure_jest_timeout_for_ci: Added testTimeout to %s", jest_config_file
-        )
-        return jest_config_file
+        logger.info("ensure_jest_timeout_for_ci: Added testTimeout to %s", config_file)
+        return config_file
 
-    logger.warning("ensure_jest_timeout_for_ci: Failed to modify %s", jest_config_file)
+    logger.warning("ensure_jest_timeout_for_ci: Failed to modify %s", config_file)
     return None
