@@ -116,6 +116,9 @@ def _simulate_production_clone(clone_url: str, base_branch: str, pr_branch: str)
         check=True,
         capture_output=True,
     )
+    # git_clone_to_tmp sets identity after clone
+    run(["git", "config", "user.name", "test"])
+    run(["git", "config", "user.email", "test@test.com"])
     # Step 2: Fetch PR branch (matches git_fetch)
     run(["git", "fetch", "--depth", "1", clone_url, pr_branch])
     # Step 3: Checkout PR branch (matches git_checkout)

@@ -28,7 +28,7 @@ def test_create_empty_commit_with_clone_dir(base_args_with_clone):
         clone_dir = "/tmp/test-owner/test-repo/pr-123"
         clone_url = "https://x-access-token:token@github.com/test-owner/test-repo.git"
         calls = mock_subprocess.call_args_list
-        # First call is git commit (identity is set via set_git_identity, not run_subprocess)
+        # First call is git commit (identity is set by git_clone_to_tmp before this function)
         assert calls[0] == call(
             args=[
                 "git",

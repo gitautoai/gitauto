@@ -1,4 +1,3 @@
-from services.git.set_git_identity import set_git_identity
 from services.types.base_args import BaseArgs
 from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
@@ -12,9 +11,6 @@ def create_empty_commit(
     clone_url = base_args["clone_url"]
     branch = base_args["new_branch"]
     clone_dir = base_args["clone_dir"]
-
-    # Ensure git identity is set (may not be if clone path didn't go through git_clone_to_tmp)
-    set_git_identity(clone_dir)
 
     # --no-verify skips pre-commit hooks (e.g. lint-staged) that fail in Lambda sandbox because npm can't mkdir /home/sbx_user1051
     run_subprocess(
