@@ -1,4 +1,3 @@
-from config import GITHUB_APP_GIT_EMAIL, GITHUB_APP_USER_NAME
 from services.git.format_commit_message import format_commit_message
 from services.types.base_args import BaseArgs
 from utils.command.run_subprocess import run_subprocess
@@ -17,10 +16,6 @@ def git_commit_and_push(
     clone_url = base_args["clone_url"]
     new_branch = base_args["new_branch"]
     skip_ci = base_args.get("skip_ci", False)
-
-    # Set GitAuto's git identity for commit attribution
-    run_subprocess(["git", "config", "user.name", GITHUB_APP_USER_NAME], clone_dir)
-    run_subprocess(["git", "config", "user.email", GITHUB_APP_GIT_EMAIL], clone_dir)
 
     # Stage specified files (handles new, modified, and deleted files)
     run_subprocess(["git", "add"] + files, clone_dir)

@@ -167,9 +167,16 @@ async def test_handle_check_suite_skips_when_trigger_disabled(
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_skips_when_comment_exists(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     mock_create_comment,
@@ -239,9 +246,16 @@ async def test_handle_check_suite_skips_when_comment_exists(
 @patch("services.webhook.check_suite_handler.verify_task_is_complete")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_race_condition_prevention(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     _mock_verify_task,
@@ -356,9 +370,16 @@ async def test_handle_check_suite_race_condition_prevention(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_full_workflow(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     _mock_update_usage,
@@ -477,9 +498,16 @@ async def test_handle_check_suite_full_workflow(
 @patch("services.webhook.check_suite_handler.get_installation_permissions")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_with_404_logs(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     mock_get_permissions,
@@ -567,9 +595,16 @@ async def test_handle_check_suite_with_404_logs(
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_with_none_logs(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     mock_update_comment,
@@ -655,9 +690,16 @@ async def test_handle_check_suite_with_none_logs(
 @patch("services.webhook.check_suite_handler.clean_logs")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_with_existing_retry_pair(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     mock_clean_logs,
@@ -761,9 +803,16 @@ async def test_handle_check_suite_with_existing_retry_pair(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_with_closed_pr(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     _mock_update_usage,
@@ -857,9 +906,16 @@ async def test_handle_check_suite_with_closed_pr(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_with_deleted_branch(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     _mock_update_usage,
@@ -954,9 +1010,16 @@ async def test_handle_check_suite_with_deleted_branch(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_check_run_handler_token_accumulation(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     mock_update_usage,
@@ -1071,9 +1134,16 @@ async def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_suite_handler.should_bail", return_value=False)
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_skips_duplicate_older_request(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     _mock_should_bail,
@@ -1189,9 +1259,16 @@ async def test_handle_check_suite_skips_duplicate_older_request(
 @patch("services.webhook.check_suite_handler.get_codecov_commit_coverage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_codecov_failure(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     mock_get_codecov_coverage,
@@ -1316,9 +1393,16 @@ async def test_handle_check_suite_codecov_failure(
 @patch("services.webhook.check_suite_handler.get_codecov_token")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_codecov_no_token(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     mock_get_codecov_token,
@@ -1428,10 +1512,17 @@ async def test_handle_check_suite_codecov_no_token(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 @patch("services.webhook.check_suite_handler.MAX_ITERATIONS", 2)
 async def test_handle_check_suite_max_iterations_forces_verification(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     _mock_update_usage,
@@ -1538,9 +1629,16 @@ async def test_handle_check_suite_max_iterations_forces_verification(
 @patch("services.webhook.check_suite_handler.update_usage")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
 @patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
 async def test_handle_check_suite_skips_same_error_hash_across_workflow_ids(
     _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_ensure_php,
     _mock_start_async,
     mock_update_usage,

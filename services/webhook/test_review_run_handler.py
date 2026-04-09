@@ -1,8 +1,5 @@
 # pylint: disable=unused-argument
-"""Integration tests for review_run_handler.py"""
-
 # pyright: reportUnusedVariable=false
-
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -63,6 +60,7 @@ def mock_review_comment_payload():
     }
 
 
+@patch("services.webhook.review_run_handler.get_pull_request")
 @patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
 @patch("services.webhook.review_run_handler.set_npm_token_env")
@@ -82,6 +80,11 @@ def mock_review_comment_payload():
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
 @patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch(
+    "services.webhook.review_run_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.review_run_handler.git_merge_base_into_pr")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -91,6 +94,8 @@ def mock_review_comment_payload():
 async def test_review_run_handler_accumulates_tokens_correctly(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_prepare_repo,
     _mock_ensure_node_packages,
     mock_update_usage,
@@ -110,6 +115,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     _mock_set_npm_token_env,
     _mock_get_local_file_tree,
     _mock_slack_notify,
+    _mock_get_pull_request,
     mock_review_comment_payload,
 ):
     """Test that review run handler accumulates tokens from multiple chat_with_agent calls."""
@@ -185,11 +191,10 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     # Verify other expected parameters
     assert "total_seconds" in usage_call_kwargs
     assert usage_call_kwargs["pr_number"] == 123
-
-    # Verify get_repository was called with owner_id and repo_id
     mock_get_repo.assert_called_with(owner_id=11111, repo_id=98765)
 
 
+@patch("services.webhook.review_run_handler.get_pull_request")
 @patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
 @patch("services.webhook.review_run_handler.set_npm_token_env")
@@ -210,6 +215,11 @@ async def test_review_run_handler_accumulates_tokens_correctly(
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
 @patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch(
+    "services.webhook.review_run_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.review_run_handler.git_merge_base_into_pr")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -220,6 +230,8 @@ async def test_review_run_handler_accumulates_tokens_correctly(
 async def test_review_run_handler_max_iterations_forces_verification(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_prepare_repo,
     _mock_ensure_node_packages,
     _mock_update_usage,
@@ -240,6 +252,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
     _mock_set_npm_token_env,
     _mock_get_local_file_tree,
     _mock_slack_notify,
+    _mock_get_pull_request,
     mock_review_comment_payload,
 ):
     """Test that review run handler forces verify_task_is_complete when MAX_ITERATIONS is reached."""
@@ -347,6 +360,7 @@ def mock_bot_review_comment_payload():
     }
 
 
+@patch("services.webhook.review_run_handler.get_pull_request")
 @patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
 @patch("services.webhook.review_run_handler.set_npm_token_env")
@@ -366,6 +380,11 @@ def mock_bot_review_comment_payload():
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
 @patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch(
+    "services.webhook.review_run_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.review_run_handler.git_merge_base_into_pr")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -375,6 +394,8 @@ def mock_bot_review_comment_payload():
 async def test_thread_resolved_during_loop_stops_agent(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_prepare_repo,
     _mock_ensure_node,
     _mock_update_usage,
@@ -394,6 +415,7 @@ async def test_thread_resolved_during_loop_stops_agent(
     _mock_set_npm_token_env,
     _mock_get_local_file_tree,
     _mock_slack_notify,
+    _mock_get_pull_request,
     mock_review_comment_payload,
 ):
     """Thread resolved while agent is working should stop the loop before chat_with_agent."""
@@ -429,6 +451,7 @@ async def test_thread_resolved_during_loop_stops_agent(
     mock_chat_with_agent.assert_not_called()
 
 
+@patch("services.webhook.review_run_handler.get_pull_request")
 @patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
 @patch("services.webhook.review_run_handler.set_npm_token_env")
@@ -448,6 +471,11 @@ async def test_thread_resolved_during_loop_stops_agent(
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
 @patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch(
+    "services.webhook.review_run_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.review_run_handler.git_merge_base_into_pr")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -457,6 +485,8 @@ async def test_thread_resolved_during_loop_stops_agent(
 async def test_bot_first_review_comment_is_processed(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_prepare_repo,
     _mock_ensure_node,
     _mock_update_usage,
@@ -476,6 +506,7 @@ async def test_bot_first_review_comment_is_processed(
     _mock_set_npm_token_env,
     _mock_get_local_file_tree,
     _mock_slack_notify,
+    _mock_get_pull_request,
     mock_bot_review_comment_payload,
 ):
     """Bot's first review comment (no GitAuto reply in thread yet) should be processed."""
@@ -604,6 +635,7 @@ async def test_bot_reply_after_gitauto_replied_is_skipped(
     mock_chat_with_agent.assert_not_called()
 
 
+@patch("services.webhook.review_run_handler.get_pull_request")
 @patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
 @patch("services.webhook.review_run_handler.set_npm_token_env")
@@ -623,6 +655,11 @@ async def test_bot_reply_after_gitauto_replied_is_skipped(
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
 @patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch(
+    "services.webhook.review_run_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.review_run_handler.git_merge_base_into_pr")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -632,6 +669,8 @@ async def test_bot_reply_after_gitauto_replied_is_skipped(
 async def test_human_review_comment_always_processed(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_prepare_repo,
     _mock_ensure_node,
     _mock_update_usage,
@@ -651,6 +690,7 @@ async def test_human_review_comment_always_processed(
     _mock_set_npm_token_env,
     _mock_get_local_file_tree,
     _mock_slack_notify,
+    _mock_get_pull_request,
     mock_review_comment_payload,
 ):
     """Human review comment should always be processed, even if GitAuto already replied."""
@@ -752,6 +792,7 @@ def mock_pr_comment_payload():
     }
 
 
+@patch("services.webhook.review_run_handler.get_pull_request")
 @patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
 @patch("services.webhook.review_run_handler.set_npm_token_env")
@@ -772,6 +813,11 @@ def mock_pr_comment_payload():
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
 @patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch(
+    "services.webhook.review_run_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.review_run_handler.git_merge_base_into_pr")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -781,6 +827,8 @@ def mock_pr_comment_payload():
 async def test_pr_comment_uses_create_comment_not_reply(
     _mock_verify_task_is_ready,
     _mock_ensure_php,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_prepare_repo,
     _mock_ensure_node,
     _mock_update_usage,
@@ -801,6 +849,7 @@ async def test_pr_comment_uses_create_comment_not_reply(
     _mock_set_npm_token_env,
     _mock_get_local_file_tree,
     _mock_slack_notify,
+    _mock_get_pull_request,
     mock_pr_comment_payload,
 ):
     """PR comment (no review_path) should use create_comment, not reply_to_comment, and skip thread checks."""
@@ -848,6 +897,7 @@ async def test_pr_comment_uses_create_comment_not_reply(
 @pytest.mark.skip(
     reason="Integration test - calls real Claude API, costs money. Run manually to verify."
 )
+@patch("services.webhook.review_run_handler.get_pull_request")
 @patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
 @patch("services.webhook.review_run_handler.set_npm_token_env")
@@ -867,6 +917,11 @@ async def test_pr_comment_uses_create_comment_not_reply(
 @patch("services.webhook.review_run_handler.update_usage")
 @patch("services.webhook.review_run_handler.ensure_node_packages")
 @patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch(
+    "services.webhook.review_run_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.review_run_handler.git_merge_base_into_pr")
 @patch("services.webhook.review_run_handler.ensure_php_packages")
 @patch(
     "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
@@ -878,6 +933,8 @@ async def test_question_comment_agent_replies_without_code_changes(
     _mock_tools_to_call,
     _mock_verify_task_is_ready,
     _mock_ensure_php,
+    _mock_get_behind,
+    _mock_merge_base,
     _mock_prepare_repo,
     _mock_ensure_node,
     _mock_update_usage,
@@ -897,6 +954,7 @@ async def test_question_comment_agent_replies_without_code_changes(
     _mock_set_npm_token_env,
     _mock_get_local_file_tree,
     _mock_slack_notify,
+    _mock_get_pull_request,
     mock_pr_comment_payload,
 ):
     """Integration test: real Claude call for a question comment. Agent should just reply, no code changes."""

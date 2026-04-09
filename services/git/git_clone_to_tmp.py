@@ -1,5 +1,6 @@
 import os
 
+from services.git.set_git_identity import set_git_identity
 from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -26,6 +27,7 @@ def git_clone_to_tmp(clone_dir: str, clone_url: str, branch: str):
         # -f: discard local changes, -B: create or reset branch to FETCH_HEAD
         # FETCH_HEAD: ref written by git fetch pointing to the fetched commit (more reliable than origin/branch in shallow clones)
         run_subprocess(["git", "checkout", "-f", "-B", branch, "FETCH_HEAD"], clone_dir)
+        set_git_identity(clone_dir)
         logger.info("Updated clone: %s @ %s", clone_dir, branch)
         return clone_dir
 
@@ -39,5 +41,6 @@ def git_clone_to_tmp(clone_dir: str, clone_url: str, branch: str):
         ["git", "clone", "--depth", "1", "-b", branch, clone_url, clone_dir],
         clone_dir,
     )
+    set_git_identity(clone_dir)
     logger.info("Clone completed: %s @ %s", clone_dir, branch)
     return clone_dir
