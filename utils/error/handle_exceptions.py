@@ -1,4 +1,3 @@
-# flake8: noqa: E704 - overload stubs use `...` on same line as `def`
 # pylint: disable=broad-exception-caught
 
 # Standard imports

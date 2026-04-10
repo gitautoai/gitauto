@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa: E402
 # pylint: disable=wrong-import-position
 """Check billing consistency between GitHub PRs, usage table, and credits table.
 

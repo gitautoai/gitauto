@@ -20,7 +20,6 @@
       "Bash(curl :*)",
       "Bash(echo:*)",
       "Bash(find:*)",
-      "Bash(flake8:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git fetch:*)",

@@ -1,4 +1,3 @@
-# flake8: noqa: E402
 # pylint: disable=wrong-import-position
 import os
 import random

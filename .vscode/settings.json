@@ -14,7 +14,6 @@
   // Which formatter or linter to use.
   // "blackFormatter.enabled": true,
   "eslint.enable": false,
-  // "flake8.enabled": false,
   "prettier.enable": false,
   // "pylint.enabled": false,
   // "python.formatting.provider": "black",
