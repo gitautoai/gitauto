@@ -228,6 +228,7 @@ async def handle_new_pr(
         display_name=sender_display_name,
         lambda_info=lambda_info,
     )
+    base_args["usage_id"] = usage_id
 
     # Insert credit usage immediately (charge regardless of completion)
     if billing_type == "credit":

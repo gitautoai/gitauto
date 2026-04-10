@@ -46,6 +46,7 @@ class BaseArgs(TypedDict):
     review_id: NotRequired[int]
     skip_ci: NotRequired[bool]
     slack_thread_ts: NotRequired[str | None]
+    usage_id: NotRequired[int]
 
 
 class ReviewBaseArgs(BaseArgs):

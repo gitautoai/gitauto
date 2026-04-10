@@ -192,9 +192,7 @@ services/coverages/test_create_coverage_report.py
 services/coverages/test_create_empty_stats.py
 services/coverages/test_find_common_prefix.py
 services/coverages/test_parse_lcov_coverage.py
-services/duckduckgo/fetch_url.py
 services/duckduckgo/search_urls.py
-services/duckduckgo/test_fetch_url.py
 services/duckduckgo/test_search_urls.py
 services/duckduckgo/test_web_search.py
 services/duckduckgo/web_search.py
@@ -417,6 +415,10 @@ services/github/workflow_runs/test_get_workflow_run_logs.py
 services/github/workflow_runs/test_get_workflow_run_path.py
 services/github/workflow_runs/test_get_workflow_runs.py
 services/github/workflows/templates/pytest.yml
+services/http/curl.py
+services/http/test_curl.py
+services/http/test_web_fetch.py
+services/http/web_fetch.py
 services/jest/coverage_types.py
 services/jest/fixtures/coverage-final.json
 services/jest/format_coverage_comment.py
