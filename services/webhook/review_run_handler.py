@@ -355,11 +355,6 @@ async def handle_review_run(
         logger.warning("Remaining errors:\n%s", pre_existing_errors)
     fixes_applied = validation_result.fixes_applied
 
-    # Build allowed_to_edit_files from PR changed files and validation errors
-    allowed_to_edit_files = set(validation_result.files_with_errors)
-    for file_change in pr_files:
-        allowed_to_edit_files.add(file_change["filename"])
-
     # Get repository settings
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
 
@@ -453,7 +448,6 @@ async def handle_review_run(
             log_messages=log_messages,
             usage_id=usage_id,
             tools=TOOLS_FOR_REVIEW_COMMENTS,
-            allowed_to_edit_files=allowed_to_edit_files,
             model_id=None,
         )
         messages = result.messages

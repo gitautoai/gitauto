@@ -69,13 +69,11 @@ from services.supabase.usage.update_usage import update_usage
 from services.types.base_args import BaseArgs
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.should_bail import should_bail
-from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title
 from utils.files.get_local_file_tree import get_local_file_tree
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number, set_trigger
 from utils.logs.clean_logs import clean_logs
 from utils.logs.detect_infra_failure import detect_infra_failure
-from utils.logs.extract_failing_test_files import extract_failing_test_files
 from utils.logs.normalize_log_for_hashing import normalize_log_for_hashing
 from utils.logs.save_ci_log_to_file import (
     CI_LOG_PATH,
@@ -622,20 +620,6 @@ async def handle_check_suite(
         owner_id=owner_id, repo_id=repo_id, pr_number=pr_number, hashes=existing_hashes
     )
 
-    # Build allowed_to_edit_files from PR changed files, validation errors, and impl file
-    allowed_to_edit_files = set(validation_result.files_with_errors)
-    for file_change in changed_files:
-        allowed_to_edit_files.add(file_change["filename"])
-    impl_file_path = get_impl_file_from_pr_title(pr_title)
-    if impl_file_path:
-        allowed_to_edit_files.add(impl_file_path)
-
-    # Parse CI error log for failing test files (e.g. "FAIL testing/services/a.test.ts") so the agent can edit them even if they're not part of the PR's changed files
-    ci_failing_files = extract_failing_test_files(error_log)
-    if ci_failing_files:
-        logger.info("CI failing test files detected: %s", ci_failing_files)
-        allowed_to_edit_files.update(ci_failing_files)
-
     p += 5
     add_log_message("Checked out the error log from the workflow run.", log_messages)
     comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
@@ -758,7 +742,6 @@ async def handle_check_suite(
             log_messages=log_messages,
             usage_id=usage_id,
             tools=TOOLS_FOR_PRS,
-            allowed_to_edit_files=allowed_to_edit_files,
             model_id=None,
         )
         messages = result.messages

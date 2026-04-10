@@ -22,8 +22,6 @@ from services.slack.slack_notify import slack_notify
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.read_local_file import read_local_file
-from utils.files.is_target_test_file import is_target_test_file
-from utils.files.is_test_file import is_test_file
 from utils.formatting.collapse_list import collapse_list
 from utils.formatting.format_with_line_numbers import format_content_with_line_numbers
 from utils.logging.add_log_message import add_log_message
@@ -53,9 +51,6 @@ async def chat_with_agent(
     p: int = 0,
     log_messages: list[str] | None = None,
     usage_id: int,
-    allow_edit_any_file: bool = False,
-    restrict_edit_to_target_test_file_only: bool = True,
-    allowed_to_edit_files: set[str],
     model_id: ClaudeModelId | None,
 ):
     if log_messages is None:
@@ -211,63 +206,18 @@ async def chat_with_agent(
 
         if tool_name in tools_to_call:
             is_file_edit_tool = tool_name in FILE_EDIT_TOOLS
-            is_gitauto_md = False
 
-            # File edit validation
+            # Capture old GITAUTO.md content before edit for diff
+            old_gitauto_md = ""
+            is_gitauto_md = False
             if is_file_edit_tool:
                 file_path = (
                     str(tool_args.get("file_path", ""))
                     if isinstance(tool_args, dict)
                     else ""
                 )
-
-                # Always allow editing GITAUTO.md (repo-level learning file)
                 is_gitauto_md = file_path.endswith("GITAUTO.md")
-                is_markdown = file_path.endswith(".md") or file_path.endswith(".mdx")
 
-                validation_error = None
-                is_in_allowed_to_edit_files = any(
-                    file_path.endswith(f) for f in allowed_to_edit_files
-                )
-                is_target = is_target_test_file(file_path, base_args)
-                if is_gitauto_md or is_markdown:
-                    pass  # Always allowed — .md files are harmless documentation/evidence
-                elif (
-                    file_path
-                    and restrict_edit_to_target_test_file_only
-                    and not is_target
-                    and not is_in_allowed_to_edit_files
-                ):
-                    validation_error = (
-                        f"Error: Cannot modify '{file_path}'. "
-                        f"file_path={file_path}, restrict_edit_to_target_test_file_only={restrict_edit_to_target_test_file_only}, "
-                        f"is_target_test_file={is_target}, is_in_allowed_to_edit_files={is_in_allowed_to_edit_files}"
-                    )
-                elif (
-                    file_path
-                    and not allow_edit_any_file
-                    and not is_test_file(file_path)
-                    and not is_in_allowed_to_edit_files
-                ):
-                    validation_error = (
-                        f"Error: Cannot modify '{file_path}'. "
-                        f"file_path={file_path}, allow_edit_any_file={allow_edit_any_file}, "
-                        f"is_test_file={is_test_file(file_path)}, is_in_allowed_to_edit_files={is_in_allowed_to_edit_files}"
-                    )
-
-                if validation_error:
-                    logger.warning(validation_error)
-                    tool_result_blocks.append(
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": tool_use_id,
-                            "content": validation_error,
-                        }
-                    )
-                    continue
-
-            # Capture old GITAUTO.md content before edit for diff
-            old_gitauto_md = ""
             if is_gitauto_md:
                 clone_dir = base_args.get("clone_dir", "")
                 if clone_dir:
@@ -292,23 +242,10 @@ async def chat_with_agent(
                 is_completed = tool_result.success
                 tool_result_content = tool_result.message
 
-                # Allow agent to edit config files modified by verify (e.g. jest.config.ts with testTimeout)
-                if tool_result.modified_files:
-                    for f in tool_result.modified_files:
-                        logger.info(
-                            "Added %s to allowed_to_edit_files (modified by verify)", f
-                        )
-                    allowed_to_edit_files.update(tool_result.modified_files)
                 if is_completed:
                     msg = tool_result.message
                 else:
                     logger.warning(tool_result.message)
-                    # Add files with errors to allowed_to_edit_files so the agent can fix them in the next iteration
-                    if tool_result.error_files:
-                        new_files = tool_result.error_files - allowed_to_edit_files
-                        for f in new_files:
-                            logger.info("Added %s to allowed_to_edit_files", f)
-                        allowed_to_edit_files.update(new_files)
             else:
                 # Format tool result content based on result type
                 if isinstance(tool_result, FileWriteResult):
