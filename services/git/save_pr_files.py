@@ -1,13 +1,13 @@
 from typing import Sequence
 
-from services.github.pulls.get_pull_request_files import FileChange
+from services.github.types.pull_request_file import PullRequestFile
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=({}, []), raise_on_error=False)
-def save_pr_files(clone_dir: str, pr_files: Sequence[FileChange]):
+def save_pr_files(clone_dir: str, pr_files: Sequence[PullRequestFile]):
     """Read PR file contents from clone_dir before a destructive operation like rebase.
     Returns (saved_files dict, deleted_files list) where saved_files maps file_path -> content.
     """

@@ -655,7 +655,10 @@ async def handle_new_pr(
     )
     update_comment(body=body_after_pr, base_args=base_args)
 
-    # Update PR body with LLM-generated summary of what GA did
+    # Update PR body with Claude-generated summary of what GA did
+    agent_comments = get_comments(
+        pr_number=pr_number, base_args=base_args, includes_me=True
+    )
     pr_body_summary = generate_and_upsert_pr_body_section(
         owner_name=owner_name,
         repo_name=repo_name,
@@ -665,9 +668,9 @@ async def handle_new_pr(
         trigger=trigger,
         context={
             "pr_title": pr_title,
-            "trigger": trigger,
             "changed_files": changed_files,
             "completion_reason": completion_reason,
+            "agent_comments": agent_comments,
         },
     )
 

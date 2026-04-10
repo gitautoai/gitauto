@@ -6,7 +6,8 @@ from services.git.git_reset import git_reset
 from services.git.reapply_files import reapply_files
 from services.git.save_pr_files import save_pr_files
 from services.github.pulls.change_pr_base_branch import change_pr_base_branch
-from services.github.pulls.get_pull_request_files import Status, get_pull_request_files
+from services.github.pulls.get_pull_request_files import get_pull_request_files
+from services.github.types.pull_request_file import Status
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger

@@ -256,8 +256,8 @@ When the user explicitly says "LGTM", execute this workflow:
         author: "Wes Nishio",
         authorUrl: "https://www.linkedin.com/in/hiroshi-nishio/",
         tags: ["vary-tags-based-on-the-specific-failure-and-fix"],
-        createdAt: "YYYY-MM-DD",
-        updatedAt: "YYYY-MM-DD",
+        createdAt: "YYYY-MM-DDTHH:MM:SS-07:00",
+        updatedAt: "YYYY-MM-DDTHH:MM:SS-07:00",
       };
       ```
 

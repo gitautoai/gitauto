@@ -9,9 +9,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_comments(
-    pr_number: int, base_args: BaseArgs, includes_me: bool = False
-) -> list[str]:
+def get_comments(pr_number: int, base_args: BaseArgs, includes_me: bool = False):
     """https://docs.github.com/en/rest/issues/comments#list-issue-comments"""
     owner = base_args["owner"]
     repo = base_args["repo"]

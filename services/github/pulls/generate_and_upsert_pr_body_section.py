@@ -3,7 +3,7 @@ from json import dumps
 from constants.triggers import TRIGGER_TO_MARKER, TRIGGER_TO_PROMPT, Trigger
 from services.github.pulls.update_pull_request_body import update_pull_request_body
 from services.github.pulls.upsert_pr_body_section import upsert_pr_body_section
-from services.openai.chat import chat_with_ai
+from services.claude.chat_with_claude_simple import chat_with_claude_simple
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
@@ -31,7 +31,9 @@ def generate_and_upsert_pr_body_section(
         repo_name,
         pr_number,
     )
-    generated_content = chat_with_ai(system_input=prompt, user_input=dumps(context))
+    generated_content = chat_with_claude_simple(
+        system_input=prompt, user_input=dumps(context)
+    )
     if not generated_content:
         logger.warning("LLM returned empty content for %s section", marker)
         return None
