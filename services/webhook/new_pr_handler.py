@@ -672,6 +672,7 @@ async def handle_new_pr(
             "completion_reason": completion_reason,
             "agent_comments": agent_comments,
         },
+        usage_id=usage_id,
     )
 
     if pr_body_summary:
