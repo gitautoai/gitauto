@@ -102,9 +102,8 @@ def test_with_structured_rules_only(mock_read_xml_file, mock_get_trigger_prompt)
 
     structured_rules = {
         "codePatternStrategy": "Best practices first",
-        "preferredApiApproach": "GraphQL first",
-        "enforceOneFunctionPerFile": True,
-        "preferConciseCodeTechniques": True,
+        "enableCommentsInGeneratedTestCode": False,
+        "enforceComponentIsolationInTests": True,
     }
     repo_settings = create_repositories_data(structured_rules=structured_rules)
 
@@ -112,9 +111,8 @@ def test_with_structured_rules_only(mock_read_xml_file, mock_get_trigger_prompt)
 
     assert "<structured_repository_rules>" in result
     assert "codePatternStrategy: Best practices first" in result
-    assert "preferredApiApproach: GraphQL first" in result
-    assert "enforceOneFunctionPerFile: True" in result
-    assert "preferConciseCodeTechniques: True" in result
+    assert "enableCommentsInGeneratedTestCode: False" in result
+    assert "enforceComponentIsolationInTests: True" in result
     assert "</structured_repository_rules>" in result
 
 
