@@ -472,12 +472,20 @@ async def chat_with_agent(
         # search_web handler removed: DDG CAPTCHAs bots, tool disabled in tools.py
 
         elif (
-            tool_name == "fetch_url"
+            tool_name == "web_fetch"
             and isinstance(tool_args, dict)
             and isinstance((url := tool_args.get("url")), str)
             and url.strip()
         ):
             msg = f"Fetched content from `{url}`."
+
+        elif (
+            tool_name == "curl"
+            and isinstance(tool_args, dict)
+            and isinstance((url := tool_args.get("url")), str)
+            and url.strip()
+        ):
+            msg = f"Fetched raw content from `{url}`."
 
         elif (
             tool_name == "delete_file"

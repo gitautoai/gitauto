@@ -374,6 +374,7 @@ async def handle_check_suite(
         display_name=sender_info.display_name,
         lambda_info=lambda_info,
     )
+    base_args["usage_id"] = usage_id
 
     # Cancel other in_progress check runs before proceeding with the fix
     cancel_workflow_runs(

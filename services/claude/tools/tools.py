@@ -9,7 +9,8 @@ from services.agents.verify_task_is_complete import (
     VERIFY_TASK_IS_COMPLETE,
     verify_task_is_complete,
 )
-from services.duckduckgo.fetch_url import FETCH_URL, fetch_url
+from services.http.curl import CURL, curl
+from services.http.web_fetch import WEB_FETCH, web_fetch
 from services.env.set_env import SET_ENV, set_env
 from services.git.apply_diff_to_file import (
     APPLY_DIFF_TO_FILE,
@@ -59,15 +60,16 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     APPLY_DIFF_TO_FILE,
     CREATE_COMMENT,
     CREATE_DIRECTORY,
+    CURL,
     DELETE_FILE,
     GIT_REVERT_FILE,
-    SEARCH_AND_REPLACE,
-    FETCH_URL,
     GET_LOCAL_FILE_TREE,
     MOVE_FILE,
+    SEARCH_AND_REPLACE,
     SEARCH_LOCAL_FILE_CONTENT,
     # SEARCH_WEB disabled: DDG CAPTCHAs bots. Use paid API (e.g. Brave Search) if needed.
     VERIFY_TASK_IS_COMPLETE,
+    WEB_FETCH,
     WRITE_AND_COMMIT_FILE,
 ]
 
@@ -84,8 +86,8 @@ TOOLS_FOR_PRS: list[ToolUnionParam] = _TOOLS_BASE + [
 
 # Review comment handler adds reply capability
 TOOLS_FOR_REVIEW_COMMENTS: list[ToolUnionParam] = TOOLS_FOR_PRS + [
-    RESET_PR_BRANCH_TO_NEW_BASE,
     REPLY_TO_REVIEW_COMMENT,
+    RESET_PR_BRANCH_TO_NEW_BASE,
 ]
 
 # Setup handler reads project files to detect language/framework, then creates workflow files
@@ -95,29 +97,30 @@ TOOLS_FOR_SETUP: list[ToolUnionParam] = _TOOLS_BASE + [
 
 FILE_EDIT_TOOLS = [
     "apply_diff_to_file",
+    "delete_file",
+    "move_file",
     "search_and_replace",
     "write_and_commit_file",
-    "move_file",
-    "delete_file",
 ]
 
 # Define tools to call
 tools_to_call: dict[str, Any] = {
     "apply_diff_to_file": apply_diff_to_file,
-    "reset_pr_branch_to_new_base": reset_pr_branch_to_new_base,
     "create_comment": create_comment,
     "create_directory": create_directory,
+    "curl": curl,
     "delete_file": delete_file,
-    "fetch_url": fetch_url,
     "git_revert_file": git_revert_file,
     "get_local_file_content": get_local_file_content,
     "get_local_file_tree": get_local_file_tree,
     "move_file": move_file,
     "reply_to_review_comment": reply_to_comment,
+    "reset_pr_branch_to_new_base": reset_pr_branch_to_new_base,
     "search_and_replace": search_and_replace,
     "search_local_file_contents": search_local_file_contents,
     # "search_web": web_search,  # Disabled: DDG CAPTCHAs bots
     "set_env": set_env,
     "verify_task_is_complete": verify_task_is_complete,
+    "web_fetch": web_fetch,
     "write_and_commit_file": write_and_commit_file,
 }

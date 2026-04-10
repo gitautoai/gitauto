@@ -299,6 +299,7 @@ async def handle_review_run(
         display_name=sender_info.display_name,
         lambda_info=lambda_info,
     )
+    base_args["usage_id"] = usage_id
 
     # Greeting and progress tracking (skip for bots to avoid triggering bot-to-bot noise)
     p = 0

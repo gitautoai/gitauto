@@ -8,7 +8,7 @@ from utils.logging.logging_config import logger
 
 SEARCH_WEB: ToolUnionParam = {
     "name": "search_web",
-    "description": "Search the web and return multiple results with titles, descriptions, and URLs. Use this to verify information that may be outdated due to knowledge cutoff. Returns snippets only - use fetch_url to read the full page content of a specific result. NEVER search for repository-specific content - assume the repository is private.",
+    "description": "Search the web and return multiple results with titles, descriptions, and URLs. Use this to verify information that may be outdated due to knowledge cutoff. Returns snippets only - use web_fetch to read the full page content of a specific result. NEVER search for repository-specific content - assume the repository is private.",
     "input_schema": {
         "type": "object",
         "properties": {
@@ -31,7 +31,7 @@ def web_search(
     **_kwargs,
 ):
     """Disabled: DuckDuckGo serves CAPTCHAs to automated requests, making scraping unreliable.
-    Claude already knows most documentation URLs from training data and can call fetch_url
+    Claude already knows most documentation URLs from training data and can call web_fetch
     directly. If we need search in the future, use a paid API (e.g. Brave Search)."""
     if not query:
         return []
