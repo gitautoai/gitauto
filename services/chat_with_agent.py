@@ -13,6 +13,7 @@ from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.claude.chat_with_claude import chat_with_claude
 from services.claude.exceptions import ClaudeOverloadedError
 from services.claude.replace_old_file_content import replace_old_file_content
+from services.claude.replace_old_verify_results import replace_old_verify_results
 from services.claude.sanitize_tool_args import sanitize_tool_args
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
 from services.claude.tools.tools import FILE_EDIT_TOOLS, tools_to_call
@@ -242,10 +243,29 @@ async def chat_with_agent(
                 is_completed = tool_result.success
                 tool_result_content = tool_result.message
 
+                # Replace all previous verify results with placeholders to avoid accumulation
+                replace_old_verify_results(messages)
+
                 if is_completed:
                     msg = tool_result.message
+                    base_args["verify_consecutive_failures"] = 0
                 else:
                     logger.warning(tool_result.message)
+
+                    # Cap verify failures: if verify fails 3 times regardless of whether the error is identical or not, the agent is stuck. Force completion.
+                    base_args["verify_consecutive_failures"] += 1
+                    consecutive_failures = base_args["verify_consecutive_failures"]
+                    if consecutive_failures > 3:
+                        logger.warning(
+                            "verify_task_is_complete failed %d consecutive times, forcing completion",
+                            consecutive_failures,
+                        )
+                        is_completed = True
+                        tool_result_content = (
+                            f"{tool_result.message}\n\n"
+                            "NOTE: This error has persisted for 3 consecutive attempts. "
+                            "Stopping to avoid further cost."
+                        )
             else:
                 # Format tool result content based on result type
                 if isinstance(tool_result, FileWriteResult):

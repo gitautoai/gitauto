@@ -94,6 +94,8 @@ def base_args(tmp_path):
             "token": "test-token",
             "new_branch": "test-branch",
             "clone_dir": str(tmp_path),
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
 
@@ -182,6 +184,8 @@ async def test_verify_task_is_complete_no_pr_number_returns_default(mock_get_fil
             "repo": "test-repo",
             "pr_number": None,
             "token": "test-token",
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
 
@@ -607,6 +611,8 @@ async def test_baseline_tsc_errors_filtered(
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {pre_existing_error},
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -657,6 +663,8 @@ async def test_all_tsc_errors_pre_existing_passes(
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {pre_existing},
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -712,6 +720,8 @@ async def test_baseline_tsc_errors_in_pr_files_still_reported(
             "new_branch": "test-branch",
             "baseline_tsc_errors": {pr_file_error},
             "clone_dir": str(tmp_path),
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -764,6 +774,8 @@ async def test_verify_commits_updated_snapshots(
             "token": "test-token",
             "new_branch": "test-branch",
             "clone_dir": "/tmp/clone",
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -833,6 +845,8 @@ async def test_new_pr_handler_error_in_pr_file_reported(
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": set(),  # Master was clean
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -882,6 +896,8 @@ async def test_new_pr_handler_preexisting_non_pr_file_error_skipped(
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {preexisting},
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -932,6 +948,8 @@ async def test_new_pr_handler_new_non_pr_file_error_reported(
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": set(),  # Master was clean
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -990,6 +1008,8 @@ async def test_check_suite_error_in_pr_file_in_baseline_reported(
             # Baseline from PR branch contains this error
             "baseline_tsc_errors": {pr_file_error},
             "clone_dir": str(tmp_path),
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -1040,6 +1060,8 @@ async def test_check_suite_preexisting_non_pr_file_error_skipped(
             "new_branch": "test-branch",
             "baseline_tsc_errors": {preexisting},
             "clone_dir": str(tmp_path),
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -1091,6 +1113,8 @@ async def test_check_suite_new_non_pr_file_error_reported(
             "new_branch": "test-branch",
             "baseline_tsc_errors": set(),
             "clone_dir": str(tmp_path),
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -1146,6 +1170,8 @@ async def test_review_run_error_in_pr_file_in_baseline_reported(
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {pr_file_error},
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -1194,6 +1220,8 @@ async def test_review_run_preexisting_non_pr_file_error_skipped(
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": {preexisting},
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -1243,6 +1271,8 @@ async def test_review_run_new_non_pr_file_error_reported(
             "token": "test-token",
             "new_branch": "test-branch",
             "baseline_tsc_errors": set(),
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
     result = await verify_task_is_complete(args)
@@ -1458,3 +1488,34 @@ async def test_quality_gate_runs_when_fail_count_below_3(
     assert result.success is False
     assert "adversarial.null_inputs" in result.message
     assert base_args["quality_gate_fail_count"] == 2
+
+
+@pytest.mark.asyncio
+@patch(
+    "services.agents.verify_task_is_complete.run_jest_test",
+    new_callable=AsyncMock,
+    return_value=JestResult(
+        success=False,
+        errors=["Segmentation fault (core dumped)"],
+        error_files={"src/test.test.ts"},
+        runner_name="jest",
+        updated_snapshots=set(),
+    ),
+)
+@patch("services.agents.verify_task_is_complete.read_local_file")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+async def test_jest_infra_failure_skipped(
+    mock_get_files, mock_read, _mock_jest, base_args, tmp_path
+):
+    """Jest infra failures (segfault, OOM, etc.) are detected and skipped."""
+    mock_get_files.return_value = [
+        {"filename": "src/test.test.ts", "status": "added"},
+    ]
+    mock_read.return_value = "test content"
+    (tmp_path / "src/test.test.ts").parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "src/test.test.ts").touch()
+
+    result = await verify_task_is_complete(base_args)
+
+    assert result.success is True
+    assert result.message == "Task completed."

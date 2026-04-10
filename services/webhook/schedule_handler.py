@@ -631,6 +631,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         "pr_body": "",  # Set after create_pull_request below
         "pr_comments": [],
         "pr_creator": user_name,
+        "verify_consecutive_failures": 0,
+        "quality_gate_fail_count": 0,
     }
     latest_sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
     create_remote_branch(sha=latest_sha, base_args=base_args)

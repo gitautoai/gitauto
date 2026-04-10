@@ -1,0 +1,23 @@
+Task NOT complete. Fix these errors:
+- jest: yarn run v1.22.22
+$ craco test --coverage=true --findRelatedTests src/pages/Quote/components/Coverages/amtrustCoverage.test.tsx -u --forceExit
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+warning From Yarn 1.0 onwards, scripts don't require "--" for options to be forwarded. In a future version, any explicit "--" will be forwarded as-is to the scripts.
+FAIL src/pages/Quote/components/Coverages/amtrustCoverage.test.tsx
+  ● Test suite failed to run
+
+    The module '/tmp/Foxquilt/foxcom-forms/pr-1146/node_modules/segfault-handler/build/Release/segfault-handler.node'
+    was compiled against a different Node.js version using
+    NODE_MODULE_VERSION 127. This version of Node.js requires
+    NODE_MODULE_VERSION 137. Please try re-compiling or re-installing
+    the module (for instance, using `npm rebuild` or `npm install`).
+
+
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        4.215 s
+Ran all test suites related to files matching /src\/pages\/Quote\/components\/Coverages\/amtrustCoverage.test.tsx/i.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
+error Command failed with exit code 1.

@@ -32,6 +32,8 @@ class BaseArgs(TypedDict):
     pr_body: str
     pr_comments: list[str]
     pr_creator: str
+    verify_consecutive_failures: int
+    quality_gate_fail_count: int
 
     # Optional fields
     check_run_name: NotRequired[str]
@@ -41,7 +43,6 @@ class BaseArgs(TypedDict):
     baseline_tsc_errors: NotRequired[set[str]]
     trigger: NotRequired[Trigger]
     impl_file_to_collect_coverage_from: NotRequired[str]
-    quality_gate_fail_count: NotRequired[int]
     test_file_paths: NotRequired[list[str]]
     review_id: NotRequired[int]
     skip_ci: NotRequired[bool]

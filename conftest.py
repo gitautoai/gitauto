@@ -66,6 +66,8 @@ def create_test_base_args():
             "github_urls": [],
             "other_urls": [],
             "clone_dir": "/tmp/test-owner/test-repo/pr-123",
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         }
 
         # Apply any overrides

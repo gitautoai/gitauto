@@ -404,6 +404,8 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
             "token": "test-token",
             "sender_id": 1,
             "sender_name": "test-user",
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
 
@@ -459,6 +461,8 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
             "token": "test-token",
             "sender_id": 1,
             "sender_name": "test-user",
+            "verify_consecutive_failures": 0,
+            "quality_gate_fail_count": 0,
         },
     )
 

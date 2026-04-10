@@ -230,6 +230,8 @@ async def handle_review_run(
         # "review_position": review_position,
         "review_body": review_body,
         "review_comment": review_comment,
+        "verify_consecutive_failures": 0,
+        "quality_gate_fail_count": 0,
         "trigger": trigger,
         "skip_ci": True,
         "slack_thread_ts": thread_ts,

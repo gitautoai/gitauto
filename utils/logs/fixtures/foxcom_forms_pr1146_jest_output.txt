@@ -1,0 +1,244 @@
+Task NOT complete. Fix these errors:
+- jest: yarn run v1.22.22
+$ craco test --coverage=true --findRelatedTests src/pages/Quote/components/Coverages/amtrustCoverage.test.tsx -u --forceExit
+-------------------------------------------------------------------------|---------|----------|---------|---------|-------------------
+File                                                                     | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------------------------------------------------------------|---------|----------|---------|---------|-------------------
+All files                                                                |       0 |        0 |       0 |       0 |                   
+ src                                                                     |       0 |        0 |       0 |       0 |                   
+  App.tsx                                                                |       0 |      100 |       0 |       0 | 19-52             
+  apolloClient.ts                                                        |       0 |        0 |       0 |       0 | 12-36             
+  apolloLinks.ts                                                         |       0 |        0 |       0 |       0 | 8-32              
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 16-45             
+  sentry.ts                                                              |       0 |      100 |     100 |       0 | 5-7               
+  serviceWorker.ts                                                       |       0 |        0 |       0 |       0 | 13-146            
+ src/auth                                                                |       0 |        0 |       0 |       0 |                   
+  AuthProvider.tsx                                                       |       0 |        0 |       0 |       0 | 12-124            
+ src/backend-client                                                      |       0 |        0 |       0 |       0 |                   
+  createRatingQuotingBackend.ts                                          |       0 |      100 |       0 |       0 | 18-69             
+  paymentBackend.ts                                                      |       0 |        0 |       0 |       0 | 15-63             
+  paymentGraphqlBackend.ts                                               |       0 |        0 |       0 |       0 | 12-56             
+  ratingQuotingBackend.ts                                                |       0 |      100 |       0 |       0 | 18-81             
+ src/components/Address                                                  |       0 |        0 |       0 |       0 |                   
+  Address.stories.tsx                                                    |       0 |      100 |       0 |       0 | 9-19              
+  Address.tsx                                                            |       0 |        0 |       0 |       0 | 13-689            
+  AddressTypes.ts                                                        |       0 |        0 |       0 |       0 |                   
+  GeoBoundingBox.ts                                                      |       0 |      100 |     100 |       0 | 7-23              
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 12-43             
+ src/components/Banner                                                   |       0 |        0 |       0 |       0 |                   
+  Banner.tsx                                                             |       0 |        0 |       0 |       0 | 8-19              
+ src/components/Button                                                   |       0 |      100 |       0 |       0 |                   
+  Button.tsx                                                             |       0 |      100 |       0 |       0 | 11-13             
+ src/components/ContactBar                                               |       0 |      100 |       0 |       0 |                   
+  ContactBar.stories.tsx                                                 |       0 |      100 |       0 |       0 | 6                 
+  ContactBar.tsx                                                         |       0 |      100 |       0 |       0 | 10-21             
+ src/components/CoverageOption                                           |       0 |        0 |       0 |       0 |                   
+  CoverageOption.stories.tsx                                             |       0 |      100 |       0 |       0 | 9-32              
+  CoverageOption.tsx                                                     |       0 |        0 |       0 |       0 | 20-123            
+  CoverageOptionTypes.tsx                                                |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 10-69             
+ src/components/Customer                                                 |       0 |        0 |       0 |       0 |                   
+  Customer.stories.tsx                                                   |       0 |      100 |       0 |       0 | 9-32              
+  Customer.tsx                                                           |       0 |        0 |       0 |       0 | 15-84             
+  CustomerTypes.ts                                                       |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 7-34              
+ src/components/DatePicker                                               |       0 |        0 |       0 |       0 |                   
+  DatePicker.stories.tsx                                                 |       0 |      100 |       0 |       0 | 7-12              
+  DatePicker.tsx                                                         |       0 |        0 |       0 |       0 | 16-116            
+  DatePickerTypes.ts                                                     |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 7-50              
+ src/components/Header                                                   |       0 |        0 |       0 |       0 |                   
+  Header.stories.tsx                                                     |       0 |      100 |       0 |       0 | 6                 
+  HelpText.tsx                                                           |       0 |      100 |       0 |       0 | 3-14              
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 11-86             
+ src/components/Input                                                    |       0 |        0 |       0 |       0 |                   
+  Input.stories.tsx                                                      |       0 |      100 |       0 |       0 | 9-44              
+  Input.tsx                                                              |       0 |        0 |       0 |       0 | 24-86             
+  InputTypes.ts                                                          |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 7-56              
+ src/components/Loading                                                  |       0 |      100 |       0 |       0 |                   
+  Loading.stories.tsx                                                    |       0 |      100 |       0 |       0 | 6                 
+  Loading.tsx                                                            |       0 |      100 |       0 |       0 | 7-8               
+ src/components/Modal                                                    |       0 |        0 |       0 |       0 |                   
+  Modal.stories.tsx                                                      |       0 |      100 |       0 |       0 | 6                 
+  Modal.tsx                                                              |       0 |        0 |       0 |       0 | 13-15             
+ src/components/ModalWithHeader                                          |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 12-29             
+ src/components/Navigation                                               |       0 |        0 |       0 |       0 |                   
+  Navigation.stories.tsx                                                 |       0 |      100 |       0 |       0 | 6                 
+  Navigation.tsx                                                         |       0 |        0 |       0 |       0 | 13-16             
+  ProgressBar.tsx                                                        |       0 |        0 |       0 |       0 | 7-11              
+ src/components/QuotePageSelectInput                                     |       0 |        0 |       0 |       0 |                   
+  SelectInput.stories.tsx                                                |       0 |      100 |       0 |       0 | 8-114             
+  SelectInput.tsx                                                        |       0 |        0 |       0 |       0 | 25-59             
+  SelectInputTypes.ts                                                    |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 7-42              
+ src/components/SearchSelect                                             |       0 |        0 |       0 |       0 |                   
+  SearchSelect.stories.tsx                                               |       0 |      100 |       0 |       0 | 6-19              
+  SearchSelect.tsx                                                       |       0 |        0 |       0 |       0 | 20-83             
+  SearchSelectTypes.ts                                                   |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 7-43              
+ src/components/SelectInput                                              |       0 |        0 |       0 |       0 |                   
+  SelectInput.stories.tsx                                                |       0 |      100 |       0 |       0 | 8-114             
+  SelectInput.tsx                                                        |       0 |        0 |       0 |       0 | 22-66             
+  SelectInputTypes.ts                                                    |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 7-42              
+ src/components/SliderBar                                                |       0 |        0 |       0 |       0 |                   
+  SliderBar.stories.tsx                                                  |       0 |      100 |       0 |       0 | 6-36              
+  SliderBar.tsx                                                          |       0 |        0 |       0 |       0 | 21-93             
+  SliderBarTypes.ts                                                      |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 7-29              
+ src/components/Spinner                                                  |       0 |      100 |       0 |       0 |                   
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 7-8               
+ src/components/ToggleButton                                             |       0 |        0 |       0 |       0 |                   
+  Boolean.stories.tsx                                                    |       0 |      100 |       0 |       0 | 8-18              
+  Boolean.tsx                                                            |       0 |        0 |       0 |       0 | 10-103            
+  BooleanTypes.ts                                                        |       0 |        0 |       0 |       0 |                   
+  ToggleButton.tsx                                                       |       0 |        0 |       0 |       0 | 14-58             
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 8-35              
+ src/generated                                                           |       0 |        0 |       0 |       0 |                   
+  graphql.ts                                                             |       0 |      100 |       0 |       0 | 10-1897           
+  payment-graphql.ts                                                     |       0 |        0 |       0 |       0 | 1098-1141         
+  rating-quoting-graphql.ts                                              |       0 |        0 |       0 |       0 | 755-855           
+ src/graphql/forms                                                       |       0 |        0 |       0 |       0 |                   
+  CanadaProvinceResolver.ts                                              |       0 |        0 |       0 |       0 | 1-55              
+  CanadaTimeZoneResolver.ts                                              |       0 |      100 |       0 |       0 | 1-15              
+  checkApplicationDateValid.ts                                           |       0 |      100 |     100 |       0 | 3                 
+  completeApplication.ts                                                 |       0 |      100 |     100 |       0 | 3                 
+  createApplication.ts                                                   |       0 |      100 |     100 |       0 | 3                 
+  getApplicationAndOwner.ts                                              |       0 |      100 |     100 |       0 | 3                 
+  getBrokerInfoByQuoteId.ts                                              |       0 |      100 |     100 |       0 | 3                 
+  getBusinessInfo.ts                                                     |       0 |      100 |     100 |       0 | 3                 
+  getJSON..ts                                                            |       0 |      100 |     100 |       0 | 3                 
+  getJSONbyApplicationId.ts                                              |       0 |      100 |     100 |       0 | 4                 
+  getPolicyOptionsQueryStringData.ts                                     |       0 |      100 |     100 |       0 | 3                 
+  sendCancellationEail.ts                                                |       0 |      100 |     100 |       0 | 3                 
+  sendEndorsementEmail.ts                                                |       0 |      100 |     100 |       0 | 3                 
+  sendQuoteLink.ts                                                       |       0 |      100 |     100 |       0 | 3                 
+  startWc.ts                                                             |       0 |      100 |     100 |       0 | 3                 
+  tryGetWcQuestions.ts                                                   |       0 |      100 |     100 |       0 | 3                 
+  updateApplication.ts                                                   |       0 |      100 |     100 |       0 | 3                 
+  updateApplicationAnswersAndQuote.ts                                    |       0 |      100 |     100 |       0 | 3                 
+  updateEffectiveDate.ts                                                 |       0 |      100 |     100 |       0 | 3                 
+ src/graphql/payment                                                     |       0 |      100 |     100 |       0 |                   
+  getUserPaymentPlanOptionByQuoteId.ts                                   |       0 |      100 |     100 |       0 | 3                 
+  proceedToPayment.ts                                                    |       0 |      100 |     100 |       0 | 3                 
+  sendTnCESignature.ts                                                   |       0 |      100 |     100 |       0 | 3                 
+ src/graphql/rating-quoting                                              |       0 |      100 |     100 |       0 |                   
+  generateQuotePdf.ts                                                    |       0 |      100 |     100 |       0 | 3                 
+  getQuote.ts                                                            |       0 |      100 |     100 |       0 | 3                 
+  resetCoverageRecommendation.ts                                         |       0 |      100 |     100 |       0 | 3                 
+  updateCoverage.ts                                                      |       0 |      100 |     100 |       0 | 3                 
+ src/pages                                                               |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |        0 |       0 |       0 |                   
+ src/pages/BrokerComplete                                                |       0 |      100 |       0 |       0 |                   
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 8-14              
+ src/pages/Commercial                                                    |       0 |        0 |       0 |       0 |                   
+  Commercial.tsx                                                         |       0 |        0 |       0 |       0 | 29-284            
+ src/pages/Commercial/CommercialSurvey                                   |       0 |        0 |       0 |       0 |                   
+  SecondaryProfessionsMapper.ts                                          |       0 |      100 |     100 |       0 | 7                 
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 56-574            
+ src/pages/CommercialWithApplicationId                                   |       0 |        0 |       0 |       0 |                   
+  CommercialWithApplicationId.tsx                                        |       0 |        0 |       0 |       0 | 27-295            
+  supportedStates.ts                                                     |       0 |      100 |       0 |       0 | 3-54              
+  util.ts                                                                |       0 |        0 |       0 |       0 | 10-32             
+ src/pages/CommercialWithApplicationId/CommercialSurveyWithApplicationId |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 58-730            
+  toAmtrustBusinessType.ts                                               |       0 |        0 |       0 |       0 | 2-44              
+  wcHelper.tsx                                                           |       0 |        0 |       0 |       0 | 30-325            
+ src/pages/CommonCommericalSurvey                                        |       0 |        0 |       0 |       0 |                   
+  CustomExpression.ts                                                    |       0 |        0 |       0 |       0 | 21-251            
+  CustomMatrixColumn.ts                                                  |       0 |      100 |       0 |       0 | 4-16              
+  CustomProperties.ts                                                    |       0 |      100 |     100 |       0 | 4                 
+  CustomWidgets.ts                                                       |       0 |      100 |     100 |       0 | 13-38             
+  commonVariables.ts                                                     |       0 |      100 |     100 |       0 | 2                 
+ src/pages/Error                                                         |       0 |        0 |       0 |       0 |                   
+  Error.tsx                                                              |       0 |        0 |       0 |       0 | 11-15             
+ src/pages/NotFound                                                      |       0 |      100 |       0 |       0 |                   
+  NotFound.tsx                                                           |       0 |      100 |       0 |       0 | 5-6               
+ src/pages/Quote                                                         |       0 |        0 |       0 |       0 |                   
+  Quote.tsx                                                              |       0 |        0 |       0 |       0 | 46-335            
+  QuoteTypes.ts                                                          |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 47-384            
+  useQuotePageRedirect.ts                                                |       0 |        0 |       0 |       0 | 28-192            
+ src/pages/Quote/components/AdditionalInsured                            |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 33-135            
+ src/pages/Quote/components/BuyNowButton                                 |       0 |        0 |       0 |       0 |                   
+  Popup.tsx                                                              |       0 |        0 |       0 |       0 | 41-451            
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 21-275            
+ src/pages/Quote/components/Coverages                                    |       0 |        0 |       0 |       0 |                   
+  AdditionalCoverages.tsx                                                |       0 |        0 |       0 |       0 | 12-72             
+  Coverage.tsx                                                           |       0 |        0 |       0 |       0 | 27-191            
+  CoveragesDetails.ts                                                    |       0 |        0 |       0 |       0 | 32-129            
+  PopupContent.tsx                                                       |       0 |        0 |       0 |       0 | 10-70             
+  amtrustCoverage.tsx                                                    |       0 |      100 |       0 |       0 | 122-123           
+  feinInputBox.tsx                                                       |       0 |      100 |       0 |       0 | 3-16              
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 20-53             
+ src/pages/Quote/components/CustomerAgreement                            |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 23-475            
+ src/pages/Quote/components/FeinInputBox                                 |       0 |        0 |       0 |       0 |                   
+  Popup.tsx                                                              |       0 |      100 |       0 |       0 | 9-12              
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 18-64             
+ src/pages/Quote/components/PaymentMethod                                |       0 |      100 |       0 |       0 |                   
+  index.tsx                                                              |       0 |      100 |       0 |       0 | 11-12             
+ src/pages/Quote/components/Premium                                      |       0 |        0 |       0 |       0 |                   
+  PremiumSwitch.tsx                                                      |       0 |      100 |       0 |       0 | 5-57              
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 18-94             
+ src/pages/Quote/components/QuoteLinkPopup                               |       0 |        0 |       0 |       0 |                   
+  SuccessQuoteLinkEmail.tsx                                              |       0 |      100 |       0 |       0 | 10-13             
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 30-304            
+ src/pages/Quote/components/ReturnToQuotePopup                           |       0 |        0 |       0 |       0 |                   
+  ReturnToQuotePopup.tsx                                                 |       0 |        0 |       0 |       0 | 21-114            
+ src/pages/Quote/components/Summary                                      |       0 |        0 |       0 |       0 |                   
+  CoveragesTitles.ts                                                     |       0 |      100 |     100 |       0 | 6                 
+  SummaryCoverage.tsx                                                    |       0 |        0 |       0 |       0 | 17-141            
+  getAmtrustSummary.tsx                                                  |       0 |        0 |       0 |       0 |                   
+  index.tsx                                                              |       0 |        0 |       0 |       0 | 22-66             
+ src/pages/QuoteExpired                                                  |       0 |      100 |       0 |       0 |                   
+  QuoteExpired.tsx                                                       |       0 |      100 |       0 |       0 | 3-4               
+ src/types                                                               |       0 |        0 |       0 |       0 |                   
+  amtrustQuoteResponses.ts                                               |       0 |        0 |       0 |       0 |                   
+ src/utils                                                               |       0 |        0 |       0 |       0 |                   
+  SurveyJSQuestion.ts                                                    |       0 |        0 |       0 |       0 | 11-100            
+  bijectiveMap.ts                                                        |       0 |        0 |       0 |       0 | 9-17              
+  countDecimals.ts                                                       |       0 |        0 |       0 |       0 | 1-10              
+  currencyFormat.ts                                                      |       0 |      100 |     100 |       0 | 1-7               
+  filterProfession.ts                                                    |       0 |      100 |       0 |       0 | 4-14              
+  getEnv.ts                                                              |       0 |        0 |       0 |       0 | 5-45              
+  getUnderwritingUrlData.ts                                              |       0 |      100 |       0 |       0 | 18-21             
+  getVersionedUrlFromPaymentFrontend.ts                                  |       0 |      100 |       0 |       0 | 5-37              
+  isJestRunning.ts                                                       |       0 |        0 |       0 |       0 |                   
+  isLocal.ts                                                             |       0 |      100 |       0 |       0 | 3-5               
+  localizeToDateString.ts                                                |       0 |        0 |       0 |       0 | 22-23             
+  mergeArraysWithoutDuplicates.ts                                        |       0 |      100 |       0 |       0 | 3-8               
+  questionTracking.ts                                                    |       0 |        0 |       0 |       0 | 5-73              
+  setMinMaxDateForEffectiveDate.ts                                       |       0 |        0 |       0 |       0 | 17-48             
+  store.tsx                                                              |       0 |      100 |       0 |       0 | 12-30             
+  timezone.ts                                                            |       0 |        0 |       0 |       0 | 18-102            
+  useFlags.ts                                                            |       0 |      100 |       0 |       0 | 4-14              
+ src/utils/address                                                       |       0 |        0 |       0 |       0 |                   
+  isAddressType.ts                                                       |       0 |        0 |       0 |       0 | 13-29             
+  province.ts                                                            |       0 |        0 |       0 |       0 | 3-110             
+ src/utils/config                                                        |       0 |      100 |     100 |       0 |                   
+  workExclusionSpecialCases.ts                                           |       0 |      100 |     100 |       0 | 7                 
+-------------------------------------------------------------------------|---------|----------|---------|---------|-------------------
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+warning From Yarn 1.0 onwards, scripts don't require "--" for options to be forwarded. In a future version, any explicit "--" will be forwarded as-is to the scripts.
+FAIL src/pages/Quote/components/Coverages/amtrustCoverage.test.tsx
+  ● Test suite failed to run
+
+    The module '/tmp/Foxquilt/foxcom-forms/pr-1146/node_modules/segfault-handler/build/Release/segfault-handler.node'
+    was compiled against a different Node.js version using
+    NODE_MODULE_VERSION 127. This version of Node.js requires
+    NODE_MODULE_VERSION 137. Please try re-compiling or re-installing
+    the module (for instance, using `npm rebuild` or `npm install`).
+
+
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        4.215 s
+Ran all test suites related to files matching /src\/pages\/Quote\/components\/Coverages\/amtrustCoverage.test.tsx/i.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
+error Command failed with exit code 1.
