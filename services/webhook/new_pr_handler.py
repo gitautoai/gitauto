@@ -53,9 +53,6 @@ from services.supabase.email_sends.update_email_send import update_email_send
 from services.supabase.owners.get_owner import get_owner
 from services.supabase.owners.get_stripe_customer_id import get_stripe_customer_id
 from services.supabase.owners.update_stripe_customer_id import update_stripe_customer_id
-from services.supabase.repository_features.get_repository_features import (
-    get_repository_features,
-)
 from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 from services.webhook.utils.create_system_message import create_system_message
@@ -141,17 +138,6 @@ async def handle_new_pr(
     sender_email = base_args["sender_email"]
     sender_display_name = base_args["sender_display_name"]
     github_urls = base_args["github_urls"]
-
-    # Get repository features
-    repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)
-    restrict_edit_to_target_test_file_only = (
-        repo_features["restrict_edit_to_target_test_file_only"]
-        if repo_features
-        else True
-    )
-    allow_edit_any_file = (
-        repo_features["allow_edit_any_file"] if repo_features else False
-    )
 
     p += 5
     add_log_message("Extracted metadata.", log_messages)
@@ -523,10 +509,6 @@ async def handle_new_pr(
         logger.warning("Remaining errors:\n%s", pre_existing_errors)
     fixes_applied = validation_result.fixes_applied
 
-    # Notify agent of auto-fixes and remaining errors (in timeline order)
-    allowed_to_edit_files = set(validation_result.files_with_errors)
-    allowed_to_edit_files.add(impl_file_path)
-
     # If uncovered code is dead or untestable, notify agent with category-specific action
     if untestable_code_info and untestable_code_info.result:
         if untestable_code_info.category == "dead_code":
@@ -585,9 +567,6 @@ async def handle_new_pr(
             p=p,
             log_messages=log_messages,
             usage_id=usage_id,
-            allow_edit_any_file=allow_edit_any_file,
-            restrict_edit_to_target_test_file_only=restrict_edit_to_target_test_file_only,
-            allowed_to_edit_files=allowed_to_edit_files,
             model_id=None,
         )
         messages = result.messages

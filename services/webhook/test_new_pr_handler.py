@@ -78,7 +78,6 @@ def _get_test_payload():
 
 @pytest.mark.asyncio
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.create_progress_bar")
@@ -94,7 +93,6 @@ async def test_can_proceed_false_early_return(
     mock_create_progress_bar,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
 ):
     mock_deconstruct.return_value = (_get_base_args(), None)
@@ -102,10 +100,6 @@ async def test_can_proceed_false_early_return(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_check_availability.return_value = {
         "can_proceed": False,
@@ -123,15 +117,11 @@ async def test_can_proceed_false_early_return(
     mock_update_comment.assert_called()
     assert mock_slack_notify.call_count == 2
 
-    # Verify get_repository_features was called with owner_id and repo_id
-    mock_get_repo_features.assert_called_once_with(owner_id=456, repo_id=789)
-
 
 @pytest.mark.asyncio
 @patch("services.webhook.new_pr_handler.update_stripe_customer_id")
 @patch("services.webhook.new_pr_handler.create_stripe_customer")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.create_progress_bar")
@@ -147,7 +137,6 @@ async def test_stripe_customer_id_update(
     mock_create_progress_bar,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_stripe,
     mock_update_stripe,
@@ -157,10 +146,6 @@ async def test_stripe_customer_id_update(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = None
     mock_create_stripe.return_value = "cus_new123"
     mock_check_availability.return_value = {
@@ -193,7 +178,6 @@ async def test_stripe_customer_id_update(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.create_progress_bar")
@@ -211,7 +195,6 @@ async def test_image_urls_processing(
     mock_create_progress_bar,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -231,10 +214,6 @@ async def test_image_urls_processing(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -286,7 +265,6 @@ async def test_image_urls_processing(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.create_progress_bar")
@@ -304,7 +282,6 @@ async def test_image_unsupported_format_skipped(
     mock_create_progress_bar,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -323,10 +300,6 @@ async def test_image_unsupported_format_skipped(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -371,7 +344,6 @@ async def test_image_unsupported_format_skipped(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.create_progress_bar")
@@ -389,7 +361,6 @@ async def test_image_base64_fetch_failed(
     mock_create_progress_bar,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -409,10 +380,6 @@ async def test_image_base64_fetch_failed(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -463,7 +430,6 @@ async def test_image_base64_fetch_failed(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -483,7 +449,6 @@ async def test_timeout_approaching_breaks_loop(
     mock_update_usage,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -502,10 +467,6 @@ async def test_timeout_approaching_breaks_loop(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -544,7 +505,6 @@ async def test_timeout_approaching_breaks_loop(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -564,7 +524,6 @@ async def test_branch_deleted_breaks_loop(
     mock_update_usage,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -583,10 +542,6 @@ async def test_branch_deleted_breaks_loop(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -627,7 +582,6 @@ async def test_branch_deleted_breaks_loop(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -647,7 +601,6 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_update_usage,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -667,10 +620,6 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -807,7 +756,6 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -827,7 +775,6 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_update_usage,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -847,10 +794,6 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -976,7 +919,6 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -996,7 +938,6 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_update_usage,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -1015,10 +956,6 @@ async def test_retry_counter_reset_on_successful_loop(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -1086,7 +1023,6 @@ async def test_retry_counter_reset_on_successful_loop(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -1108,7 +1044,6 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_update_usage,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -1128,10 +1063,6 @@ async def test_non_test_file_skipped_in_header_merge(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -1182,7 +1113,6 @@ async def test_non_test_file_skipped_in_header_merge(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -1204,7 +1134,6 @@ async def test_test_file_header_merge(
     mock_update_usage,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -1226,10 +1155,6 @@ async def test_test_file_header_merge(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -1283,7 +1208,6 @@ async def test_test_file_header_merge(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -1305,7 +1229,6 @@ async def test_test_file_header_merge_no_content(
     mock_update_usage,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -1327,10 +1250,6 @@ async def test_test_file_header_merge_no_content(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -1391,7 +1310,6 @@ async def test_test_file_header_merge_no_content(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -1413,7 +1331,6 @@ async def test_test_file_header_merge_no_change(
     mock_update_usage,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -1435,10 +1352,6 @@ async def test_test_file_header_merge_no_change(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -1497,7 +1410,6 @@ async def test_test_file_header_merge_no_change(
 @patch("services.webhook.new_pr_handler.ensure_node_packages")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.get_stripe_customer_id")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.update_comment")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -1517,7 +1429,6 @@ async def test_credits_depleted_email_sent(
     mock_update_usage,
     mock_update_comment,
     mock_slack_notify,
-    mock_get_repo_features,
     mock_get_stripe_id,
     mock_create_user_request,
     mock_ensure_node_packages,
@@ -1543,10 +1454,6 @@ async def test_credits_depleted_email_sent(
     mock_slack_notify.return_value = "thread_1"
     mock_create_comment.return_value = "comment_url"
     mock_create_progress_bar.return_value = "progress"
-    mock_get_repo_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_get_stripe_id.return_value = "cus_existing"
     mock_get_remote_file.return_value = ("", "")
     mock_check_availability.return_value = {
@@ -1765,10 +1672,6 @@ async def test_new_pr_handler_token_accumulation(
 @patch(
     "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
 )
-@patch(
-    "services.webhook.new_pr_handler.read_local_file",
-    return_value="def calculate():\n    return 1 + 2\n",
-)
 @patch("services.webhook.new_pr_handler.insert_credit")
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.create_empty_commit")
@@ -1778,157 +1681,6 @@ async def test_new_pr_handler_token_accumulation(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.update_usage")
 @patch("services.webhook.new_pr_handler.update_comment")
-@patch("services.webhook.new_pr_handler.get_repository_features")
-@patch("services.webhook.new_pr_handler.chat_with_agent")
-@patch("services.webhook.new_pr_handler.create_user_request")
-@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
-@patch("services.webhook.new_pr_handler.ensure_node_packages")
-@patch("services.webhook.new_pr_handler.get_owner")
-@patch("services.webhook.new_pr_handler.create_comment")
-@patch("services.webhook.new_pr_handler.check_availability")
-@patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
-async def test_restrict_edit_to_target_test_file_only_passed_to_chat_with_agent(
-    mock_deconstruct_github_payload,
-    mock_render_text,
-    mock_check_availability,
-    mock_create_comment,
-    mock_get_owner,
-    mock_ensure_node_packages,
-    mock_prepare_repo,
-    mock_create_user_request,
-    mock_chat_with_agent,
-    mock_get_repository_features,
-    mock_update_comment,
-    mock_update_usage,
-    mock_create_progress_bar,
-    mock_slack_notify,
-    mock_get_comments,
-    mock_get_remote_file_content_by_url,
-    mock_create_empty_commit,
-    mock_should_bail,
-    mock_insert_credit,
-    _mock_read_local_file,
-    _mock_run_subprocess,
-):
-    mock_deconstruct_github_payload.return_value = (
-        {
-            "installation_id": 123,
-            "owner_id": 456,
-            "owner_type": "User",
-            "repo_id": 789,
-            "pr_body": "Test PR body",
-            "owner": "test_owner",
-            "repo": "test_repo",
-            "pr_number": 100,
-            "pr_title": "Schedule: Add unit tests to services/test_file.py",
-            "sender_name": "test_sender",
-            "repo_full_name": "test_owner/test_repo",
-            "pr_creator": "test_creator",
-            "sender_id": 888,
-            "token": "github_token_123",
-            "new_branch": "gitauto/dashboard-20250101-120000-Ab1C",
-            "sender_email": "test@example.com",
-            "sender_display_name": "Test Sender",
-            "github_urls": {},
-            "clone_url": "https://x-access-token:test-token@github.com/test_owner/test_repo.git",
-            "base_branch": "main",
-        },
-        None,
-    )
-    mock_render_text.return_value = "Rendered PR body"
-    mock_check_availability.return_value = {
-        "can_proceed": True,
-        "billing_type": "credit",
-        "credit_balance_usd": 50,
-        "user_message": "",
-        "log_message": "Proceeding",
-    }
-
-    mock_render_text.return_value = "Rendered PR body"
-    mock_check_availability.return_value = {
-        "can_proceed": True,
-        "billing_type": "credit",
-        "credit_balance_usd": 50,
-        "user_message": "",
-        "log_message": "Proceeding",
-    }
-    mock_create_comment.return_value = "https://api.github.com/comment/1"
-    mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 100}
-    mock_create_user_request.return_value = 999
-    mock_chat_with_agent.return_value = AgentResult(
-        messages=[],
-        token_input=10,
-        token_output=5,
-        is_completed=True,
-        completion_reason="",
-        p=0,
-        is_planned=False,
-    )
-    mock_get_repository_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
-    mock_update_comment.return_value = None
-    mock_update_usage.return_value = None
-    mock_create_progress_bar.return_value = "Progress: 0%"
-    mock_slack_notify.return_value = "thread_1"
-    mock_get_comments.return_value = []
-    mock_get_remote_file_content_by_url.return_value = ("", "")
-    mock_create_empty_commit.return_value = None
-    mock_insert_credit.return_value = None
-
-    payload = cast(
-        PrLabeledPayload,
-        {
-            "action": "labeled",
-            "number": 100,
-            "label": {"name": "gitauto"},
-            "issue": {
-                "number": 100,
-                "title": "Schedule: Add unit tests to services/test_file.py",
-                "body": "Test body",
-            },
-            "pull_request": {
-                "html_url": "https://github.com/test_owner/test_repo/pull/100",
-                "head": {"ref": "gitauto/dashboard-20250101-120000-Ab1C"},
-            },
-            "repository": {"name": "test_repo", "full_name": "test_owner/test_repo"},
-            "sender": {"login": "test_sender"},
-        },
-    )
-
-    await handle_new_pr(
-        payload=payload,
-        trigger="dashboard",
-    )
-
-    call_kwargs = mock_chat_with_agent.call_args.kwargs
-    assert call_kwargs["restrict_edit_to_target_test_file_only"] is False
-    assert call_kwargs["allow_edit_any_file"] is True
-    assert "system_message" in call_kwargs
-    assert isinstance(call_kwargs["system_message"], str)
-
-    # Verify baseline_tsc_errors is set on base_args
-    base_args = call_kwargs["base_args"]
-    assert "baseline_tsc_errors" in base_args
-    assert isinstance(base_args["baseline_tsc_errors"], set)
-
-
-@pytest.mark.asyncio
-@patch(
-    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
-)
-@patch("services.webhook.new_pr_handler.insert_credit")
-@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
-@patch("services.webhook.new_pr_handler.create_empty_commit")
-@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
-@patch("services.webhook.new_pr_handler.get_comments")
-@patch("services.webhook.new_pr_handler.slack_notify")
-@patch("services.webhook.new_pr_handler.create_progress_bar")
-@patch("services.webhook.new_pr_handler.update_usage")
-@patch("services.webhook.new_pr_handler.update_comment")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.read_local_file")
@@ -1952,7 +1704,6 @@ async def test_few_test_files_include_contents_in_prompt(
     mock_read_local_file,
     mock_create_user_request,
     mock_chat_with_agent,
-    mock_get_repository_features,
     mock_update_comment,
     mock_update_usage,
     mock_create_progress_bar,
@@ -2020,10 +1771,6 @@ async def test_few_test_files_include_contents_in_prompt(
         p=0,
         is_planned=False,
     )
-    mock_get_repository_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_update_comment.return_value = None
     mock_update_usage.return_value = None
     mock_create_progress_bar.return_value = "Progress: 0%"
@@ -2077,7 +1824,6 @@ async def test_few_test_files_include_contents_in_prompt(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.update_usage")
 @patch("services.webhook.new_pr_handler.update_comment")
-@patch("services.webhook.new_pr_handler.get_repository_features")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
 @patch("services.webhook.new_pr_handler.create_user_request")
 @patch("services.webhook.new_pr_handler.read_local_file")
@@ -2101,7 +1847,6 @@ async def test_many_test_files_include_paths_only_in_prompt(
     mock_read_local_file,
     mock_create_user_request,
     mock_chat_with_agent,
-    mock_get_repository_features,
     mock_update_comment,
     mock_update_usage,
     mock_create_progress_bar,
@@ -2165,10 +1910,6 @@ async def test_many_test_files_include_paths_only_in_prompt(
         p=0,
         is_planned=False,
     )
-    mock_get_repository_features.return_value = {
-        "restrict_edit_to_target_test_file_only": False,
-        "allow_edit_any_file": True,
-    }
     mock_update_comment.return_value = None
     mock_update_usage.return_value = None
     mock_create_progress_bar.return_value = "Progress: 0%"

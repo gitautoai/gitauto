@@ -693,7 +693,6 @@ utils/files/is_dependency_file.py
 utils/files/is_excluded_from_testing.py
 utils/files/is_migration_file.py
 utils/files/is_source_file.py
-utils/files/is_target_test_file.py
 utils/files/is_test_file.py
 utils/files/is_type_file.py
 utils/files/merge_test_file_headers.py
@@ -731,7 +730,6 @@ utils/files/test_is_dependency_file.py
 utils/files/test_is_excluded_from_testing.py
 utils/files/test_is_migration_file.py
 utils/files/test_is_source_file.py
-utils/files/test_is_target_test_file.py
 utils/files/test_is_test_file.py
 utils/files/test_is_type_file.py
 utils/files/test_merge_test_file_headers.py
@@ -766,7 +764,6 @@ utils/logging/test_logging_config.py
 utils/logs/clean_logs.py
 utils/logs/dedup_jest_errors.py
 utils/logs/detect_infra_failure.py
-utils/logs/extract_failing_test_files.py
 utils/logs/extract_jest_summary_section.py
 utils/logs/fixtures/foxden_admin_portal_pr515_minimized.txt
 utils/logs/fixtures/foxden_admin_portal_pr515_original.txt
@@ -780,7 +777,6 @@ utils/logs/strip_node_modules_from_stacktrace.py
 utils/logs/test_clean_logs.py
 utils/logs/test_dedup_jest_errors.py
 utils/logs/test_detect_infra_failure.py
-utils/logs/test_extract_failing_test_files.py
 utils/logs/test_extract_jest_summary_section.py
 utils/logs/test_minimize_jest_test_logs.py
 utils/logs/test_normalize_log_for_hashing.py

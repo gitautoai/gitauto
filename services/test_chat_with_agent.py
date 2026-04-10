@@ -32,7 +32,6 @@ async def test_chat_with_agent_passes_usage_id_to_claude(
         base_args=base_args,
         tools=[],
         usage_id=123,
-        allowed_to_edit_files=set(),
         model_id=None,
     )
 
@@ -63,7 +62,6 @@ async def test_chat_with_agent_returns_token_counts(
         base_args=base_args,
         tools=[],
         usage_id=789,
-        allowed_to_edit_files=set(),
         model_id=None,
     )
 
@@ -114,7 +112,6 @@ async def test_get_local_file_content_start_line_end_line_logging(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -176,7 +173,6 @@ async def test_delete_file_logging(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -243,7 +239,6 @@ async def test_move_file_logging(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -308,7 +303,6 @@ async def test_write_and_commit_file_handles_new_content_arg_name(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -364,7 +358,6 @@ async def test_unavailable_tool_sends_slack_notification(
                 base_args=base_args,
                 tools=[],
                 usage_id=123,
-                allowed_to_edit_files=set(),
                 model_id=None,
             )
 
@@ -373,66 +366,6 @@ async def test_unavailable_tool_sends_slack_notification(
         assert "bash" in call_args
         assert "command" in call_args
         assert "test-owner/test-repo" in call_args
-
-
-@pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
-@patch("services.chat_with_agent.is_target_test_file")
-@patch("services.chat_with_agent.update_comment")
-async def test_restrict_edit_to_target_test_file_only_blocks_non_target_test(
-    _mock_update_comment,
-    mock_is_target_test_file,
-    mock_chat_with_claude,
-    mock_get_model,
-):
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_is_target_test_file.return_value = False
-    # With parallel tool calls, validation errors are returned inline (no recursion)
-    mock_chat_with_claude.return_value = (
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-                    "id": "test_id",
-                    "name": "apply_diff_to_file",
-                    "input": {"file_path": "test_wrong.py", "diff": "some diff"},
-                }
-            ],
-        },
-        [
-            ToolCall(
-                id="test_id",
-                name="apply_diff_to_file",
-                args={"file_path": "test_wrong.py", "diff": "some diff"},
-            )
-        ],
-        15,
-        10,
-    )
-
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
-
-    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
-        mock_tools.__contains__.return_value = True
-
-        result = await chat_with_agent(
-            messages=[{"role": "user", "content": "test"}],
-            system_message="test system message",
-            base_args=base_args,
-            tools=[],
-            usage_id=123,
-            restrict_edit_to_target_test_file_only=True,
-            allowed_to_edit_files=set(),
-            model_id=None,
-        )
-
-        mock_is_target_test_file.assert_called_once_with("test_wrong.py", base_args)
-        # Validation error returned as tool_result, not recursed
-        messages = result.messages
-        last_content = cast(list, messages[-1]["content"])
-        assert "Error: Cannot modify" in last_content[0]["content"]
 
 
 @pytest.mark.asyncio
@@ -480,7 +413,6 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
         base_args=base_args,
         tools=[],
         usage_id=123,
-        allowed_to_edit_files=set(),
         model_id=None,
     )
 
@@ -536,7 +468,6 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
         base_args=base_args,
         tools=[],
         usage_id=123,
-        allowed_to_edit_files=set(),
         model_id=None,
     )
 
@@ -590,7 +521,6 @@ async def test_regular_tool_returns_is_completed_false(
                 base_args=base_args,
                 tools=[],
                 usage_id=123,
-                allowed_to_edit_files=set(),
                 model_id=None,
             )
 
@@ -620,7 +550,6 @@ async def test_no_tool_call_returns_is_completed_false(
         base_args=base_args,
         tools=[],
         usage_id=123,
-        allowed_to_edit_files=set(),
         model_id=None,
     )
 
@@ -679,8 +608,6 @@ async def test_file_write_result_success_includes_formatted_content(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            allow_edit_any_file=True,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -745,8 +672,6 @@ async def test_apply_diff_no_changes_logs_tool_result_message(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            allow_edit_any_file=True,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -821,8 +746,6 @@ async def test_file_write_result_failure_returns_message_only(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            allow_edit_any_file=True,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -887,7 +810,6 @@ async def test_file_move_result_returns_message(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -945,7 +867,6 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -1006,7 +927,6 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -1083,7 +1003,6 @@ async def test_multiple_parallel_tool_calls(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
@@ -1105,16 +1024,13 @@ async def test_multiple_parallel_tool_calls(
 @pytest.mark.asyncio
 @patch("services.chat_with_agent.get_model")
 @patch("services.chat_with_agent.chat_with_claude")
-@patch("services.chat_with_agent.is_target_test_file")
 @patch("services.chat_with_agent.update_comment")
 async def test_gitauto_md_edit_always_allowed(
     _mock_update_comment,
-    mock_is_target_test_file,
     mock_chat_with_claude,
     mock_get_model,
 ):
     mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_is_target_test_file.return_value = False
     mock_chat_with_claude.return_value = (
         {
             "role": "assistant",
@@ -1163,14 +1079,10 @@ async def test_gitauto_md_edit_always_allowed(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            restrict_edit_to_target_test_file_only=True,
-            allow_edit_any_file=False,
-            allowed_to_edit_files=set(),
             model_id=None,
         )
 
-    # GITAUTO.md should be allowed despite restrict_edit_to_target_test_file_only=True
+    # GITAUTO.md should be editable
     messages = result.messages
     last_content = cast(list, messages[-1]["content"])
-    assert "Error: Cannot modify" not in last_content[0]["content"]
     assert "Updated GITAUTO.md." in last_content[0]["content"]
