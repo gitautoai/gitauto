@@ -1,207 +1,68 @@
 <coding_standards>
-  <code_quality_requirement>
-    <instruction>Before committing, review your code as if you ran standard linting/formatting tools for that language and fix any issues they would detect.</instruction>
-    <rule>NEVER place import statements inside function bodies - all imports must be at the top of the file</rule>
-    <examples>
-      <typescript>Issues that tsc --noEmit would catch (syntax errors, type issues)</typescript>
-      <python>Issues that pylint, pyright, black, or ruff check --fix would catch (unused imports, formatting, style violations)</python>
-      <other_languages>Apply the same principle - fix issues that standard linters/formatters for that language would detect</other_languages>
-    </examples>
-    <rationale>For JavaScript/TypeScript files, ESLint is automatically run with the repository's configuration and fixes are applied. For other languages, you have the knowledge to identify and fix these common issues manually. This prevents CI/CD failures and expensive fix cycles.</rationale>
-  </code_quality_requirement>
+  <code_quality>
+    <rule>Before committing, fix issues that standard linters/formatters would detect (tsc, pylint, pyright, black, ruff, ESLint, etc.). This prevents CI failures and expensive fix cycles.</rule>
+    <rule>NEVER place import statements inside function bodies - all imports at file top</rule>
+  </code_quality>
 
   <test_rules>
-  <value_focused_testing>
-    <rule>Test behavior, not implementation details (Behavioral Testing approach)</rule>
-    <rule>Focus on what result is returned rather than which internal function is called</rule>
-    <rule>Test scenarios (e.g., owner exists, repo doesn't exist) not internal function calls</rule>
-  </value_focused_testing>
+  <principles>
+    <rule>Test behavior, not implementation details. Focus on returned results and scenarios, not internal function calls.</rule>
+    <rule>ALWAYS assert exact expected values: `assert func(input) == expected`. NEVER use `assert X not in result` or `assert result != Y` - these accept infinite wrong answers.</rule>
+    <rule>Determine expected values independently by examining real data. Never run the function and use its output as expected - that's circular.</rule>
+    <rule>Verify test interactions actually trigger the tested code paths - different frameworks may require different event approaches.</rule>
+    <rule>Every test function MUST have a short inline comment explaining WHAT it tests and WHY. Example: "# Verify missing 'email' key raises ValidationError, not KeyError"</rule>
+  </principles>
 
-  <mock_management>
-    <rule>PREFER test framework fixtures/setup methods for mock configuration over configuring mocks inside individual test functions. Ensure proper mock lifecycle management (Python example: use yield with patch() in fixtures)</rule>
-    <rule>Create descriptive fixture/setup names that clearly indicate what is being mocked</rule>
-    <rule>Handle fixture parameter name conflicts (Python example: use # pylint: disable=redefined-outer-name)</rule>
-    <rule>For method chaining operations (e.g., database operations), mock the entire operation as one unit rather than each individual step in the chain (Contract Testing approach) - avoid complex setups like mock.obj.method1.return_value.method2.return_value.method3.return_value</rule>
-    <rule>For complex nested types in tests (in priority order): (1) Search the codebase for existing fixtures/mocks of that type and reuse them. (2) If not found, create a reusable fixture. (3) Use type cast to avoid type errors (TypeScript: `as any`, Python: `cast(Any, ...)` or `# type: ignore`). (4) Use type suppression comments if you need partial type safety (TypeScript: `@ts-expect-error`). Never hand-craft complete type-safe mocks for complex interfaces.</rule>
-  </mock_management>
+  <mocks>
+    <rule>PREFER framework fixtures/setup methods over configuring mocks inside individual tests. Use descriptive names.</rule>
+    <rule>For method chaining, mock the entire operation as one unit - avoid mock.obj.method1.return_value.method2.return_value chains.</rule>
+    <rule>For complex nested types: (1) reuse existing fixtures, (2) create reusable fixture, (3) use cast/as any, (4) use type suppression.</rule>
+    <rule>NEVER write tautological tests that mock a return value then assert output matches that mock. This always passes regardless of correctness.</rule>
+  </mocks>
 
-  <test_design_principles>
-    <rule>Tests should not break when refactoring internal code structure</rule>
-    <rule>ALWAYS assert what the result IS, NEVER what it ISN'T. `assert X not in result` and `assert result != Y` are lazy assertions that accept infinite wrong answers. Assert the exact expected return value: `assert func(input) == expected_output`.</rule>
-    <rule>Before writing an assertion, look at the real data (repo files, fixtures, actual output) to determine the correct answer independently. Never run the function first and use its output as the expected value - that just tests the function returns what it returns.</rule>
-    <rule>Keep tests independent and focused on single responsibilities</rule>
-    <rule>Verify test interactions actually trigger the code paths being tested - different frameworks and DOM structures may require different approaches (React example: userEvent.click() may not trigger onChange on non-form parent elements like tr/div - use Simulate.change() from react-dom/test-utils instead)</rule>
-    <rule>Every test function/method MUST have a short inline comment (above the assertion or at the top of the test body) explaining WHAT it tests and WHY that case matters. The test name alone is not enough - a reader should understand the intent without reading the implementation. Example: "# Verify that missing 'email' key raises ValidationError, not KeyError" or "// Empty array input should return empty result, not throw"</rule>
-  </test_design_principles>
+  <adversarial_testing>
+    <rule>Write tests that try to BREAK the code. Every test file should include adversarial cases, not just happy-path inputs.</rule>
+    <rule>If a test reveals unhandled exceptions, document with pytest.raises/expect().toThrow(). Do NOT remove the test.</rule>
+    <rule>If an adversarial test exposes a real bug, FIX THE IMPLEMENTATION - do NOT weaken or delete the test.</rule>
+  </adversarial_testing>
 
-  <adversarial_test_design>
-    <description>Write tests that try to BREAK the code, not just confirm it works with clean inputs. Think like a QA engineer, not the developer who wrote it. See the quality_checklist section for specific categories to cover (adversarial, security, performance, memory, etc.).</description>
-    <rule>Do not ONLY write happy-path tests with simple valid inputs. Every test file should include at least a few adversarial cases targeting edge behaviors relevant to the code under test</rule>
-    <rule>If a test reveals unhandled exceptions or unexpected behavior, that is a GOOD test - document it with pytest.raises, expect().toThrow(), or the language equivalent. Do not skip it or remove it because "the code doesn't handle that case"</rule>
-    <rule>If your adversarial test exposes a real bug in the implementation (e.g., unhandled null, missing validation, wrong return value), FIX THE IMPLEMENTATION CODE - do NOT weaken, delete, or adjust the test to make it pass. The test is correct; the implementation is wrong.</rule>
-  </adversarial_test_design>
+  <file_organization>
+    <rule>One test file per source file. NEVER create test_foo_new.py or test_foo_temp.py variants. If a test file already exists at ANY path, add tests there.</rule>
+    <rule>Co-location: test file in the SAME directory as source (e.g., foo.test.ts next to foo.ts). __tests__/ is NOT co-location.</rule>
+    <rule>If structured_repository_rules has testFileLocation set to co-locate, ALWAYS co-locate. Otherwise follow the repo's dominant pattern (80%+ majority). If mixed or no pattern, default to co-location.</rule>
+  </file_organization>
 
-  <test_file_organization>
-    <rule>Create exactly ONE test file per source file</rule>
-    <rule>NEVER create multiple test files like test_get_user_new.py, test_get_user_temp.py, test_get_user.py.deprecated</rule>
-    <rule>All test cases for a single source file should be consolidated into one test file</rule>
-    <rule>Use descriptive test method names within the single test file to organize different test scenarios</rule>
-    <rule>If a test file already exists for the source file (at ANY path), add tests to that EXISTING file. Do NOT create a new test file at a different path.</rule>
-    <rule>Co-location means placing the test file in the SAME directory as the source file (e.g., src/utils/foo.test.ts next to src/utils/foo.ts). A __tests__/ subdirectory is NOT co-location.</rule>
-    <rule>If placeTestFilesNextToSourceFiles is True in structured_repository_rules, ALWAYS co-locate new test files next to their source files regardless of the repo's dominant pattern. Otherwise, if the repo has a dominant pattern (80%+ of tests in one location), follow that. If patterns are mixed (no 80%+ majority), prioritize co-location. If no pattern exists, prioritize co-location.</rule>
-  </test_file_organization>
-
-  <coverage_is_not_quality>
-    <rule>100% code coverage does NOT mean the task is complete. Coverage measures which lines execute, not whether tests are meaningful. A tautological test (mock returns X, assert output equals X) achieves 100% coverage while proving nothing.</rule>
-    <rule>When a test file already exists with 100% coverage, evaluate test QUALITY before declaring "no changes needed": check for tautological assertions, missing adversarial cases, missing inline comments, and implementation-detail testing instead of behavior testing.</rule>
-    <rule>If existing tests are low quality (tautological, no adversarial cases, no inline comments), REWRITE them to meet coding standards. Do NOT declare the task complete just because coverage is 100%.</rule>
-  </coverage_is_not_quality>
+  <coverage>
+    <rule>100% coverage does NOT mean quality. When existing tests have 100% coverage, evaluate quality: check for tautological assertions, missing adversarial cases, missing comments. Rewrite low-quality tests rather than declaring "no changes needed".</rule>
+  </coverage>
 
   <anti_patterns>
-    <rule>Do not over-assert on internal function call parameters when the behavior is what matters</rule>
-    <rule>Do not create unnecessarily complex mock chains when testing method chaining - focus on the final result, not each step of the chain</rule>
-    <rule>Do not test constant content (values, text, or any content within constants) unless explicitly requested - tests should not fail when constant values are updated</rule>
-    <rule>Do not blindly reuse heavy test utilities (database connections, in-memory servers, full context builders) just because existing tests use them. When all external services are already mocked with jest.mock()/unittest.mock/etc., use lightweight inline mock objects instead. Heavy test utilities that start databases or connect to external services waste memory and CPU, and can cause OOM/timeout failures in resource-constrained environments.</rule>
-    <rule>NEVER write tautological tests that mock a dependency's return value and then assert the function output matches that mock value. Example: mocking a DB to return [{"name": "alice"}] then asserting the function returns [{"name": "alice"}] - this always passes regardless of whether the implementation is correct. It verifies nothing.</rule>
-    <rule>NEVER write toy tests with 2-3 synthetic items. Toy tests are WORTHLESS — they pass even when the logic is fundamentally broken. This is the mutation testing principle: if an "evil coder" could change a key value (e.g., +30 to +0 or +1000) and your tests still pass, your tests prove nothing. ALWAYS use real-world data: run the function against real cloned repos (at ../owner/repo), capture the actual output, then use that as test input. When you test with real data (e.g., 31 files instead of 3), you find real bugs (e.g., a flat +30 "common parent" bonus that treats 1 shared component the same as 3, causing completely unrelated files to rank above relevant ones). Toy tests would never catch this. Real data exposes real bugs. This is non-negotiable.</rule>
+    <rule>Do not test constant content unless explicitly requested - tests should not fail when constant values update.</rule>
+    <rule>Do not blindly reuse heavy test utilities (DB connections, in-memory servers) when all externals are mocked. Use lightweight inline mocks instead.</rule>
+    <rule>NEVER write toy tests with 2-3 synthetic items. Use real-world data from the cloned repo. Real data (31+ files) exposes real bugs that toy tests miss. Mutation testing principle: if changing a key value still passes your tests, they're worthless.</rule>
   </anti_patterns>
 
-  <passthrough_method_testing>
-    <description>When a method's primary purpose is calling an external dependency (database query, API call, git/shell command, file read/write, etc.) and returning the result, mocking that dependency removes the only thing worth testing. These are still unit tests (sociable unit tests that use real dependencies, as opposed to solitary unit tests that use mocks). They test one method, belong in the same test file as other tests for that source file, and follow the "one test file per source file" rule. Order test methods to match the source file's method order, not by testing approach. Apply this decision process:</description>
-    <rule>First, determine: is this method primarily a passthrough wrapper (its main job is constructing a query/request/command and returning the result)? If yes, mocking the dependency makes the test tautological.</rule>
-    <rule>Search the repo's existing test files for test infrastructure: factories, seeders, fixtures, test DB helpers, test API servers, temp directories, local git repos, or test data builders. Use search_local_file_contents with terms like "Factory", "Seeder", "fixture", "TestHelper", "createTest", "faker", "tmpdir", "tmp_path", "bare repo", etc.</rule>
-    <rule>If the repo has test infrastructure for that dependency (test DB, test API server, temp filesystem, local bare repo, etc.), use it to set up real state, call the method, and assert against real results.</rule>
-    <rule>If the repo has NO test infrastructure for that dependency, verify the mock was called with correct parameters (interaction testing) rather than asserting output equals mock return value. For example, verify the correct SQL/query/command/endpoint was called with the right arguments.</rule>
-    <rule>For methods that contain business logic AND external calls, mock the external dependency to test the business logic. The mock is valid because you are testing the logic, not the external call.</rule>
-    <rule>When setting up test data (factories, fixtures, temp files, etc.), match the types and formats to the actual schema/spec. Do not guess - read the source model/migration/schema/API docs to confirm.</rule>
-  </passthrough_method_testing>
+  <passthrough_methods>
+    <rule>When a method primarily wraps an external call (DB, API, git, file I/O), mocking that dependency makes the test tautological.</rule>
+    <rule>Search for existing test infrastructure (factories, seeders, fixtures, test DB, tmp_path, bare repos). If found, use it for real integration tests.</rule>
+    <rule>If no test infrastructure exists, verify the mock was called with correct parameters (interaction testing) rather than asserting output equals mock return value.</rule>
+    <rule>For methods with business logic AND external calls, mock the external dependency to test the business logic.</rule>
+  </passthrough_methods>
 
-  <dead_code_handling>
-    <description>When a linter, type checker, or coverage tool identifies code as unreachable or unnecessary, fix the root cause by removing the dead code rather than suppressing the warning or trying to test unreachable paths.</description>
-    <rule>If a conditional is flagged as always-true or always-false, simplify the code by removing the unnecessary branch</rule>
-    <rule>If coverage shows an unreachable branch caused by a redundant condition, remove the redundant condition from the implementation instead of trying to write a test that covers it</rule>
-    <rule>If code is unreachable, REMOVE IT. Do not preserve it as a "defensive safety net" - unreachable safety nets provide zero protection. Replace verbose guard patterns with simpler equivalents (e.g., replace `const el = getEl(); if (el) { el.method(x); }` with `getEl()?.method(x);`)</rule>
-    <rule>Only use coverage exclusion comments (istanbul ignore, pragma: no cover) as a LAST RESORT when the code is genuinely reachable at runtime but untestable due to framework limitations</rule>
-    <rule>NEVER use istanbul ignore on unreachable code. If you identify code as unreachable (e.g., "name is always defined", "ref is always attached after render"), that means the code should be DELETED, not ignored. Istanbul ignore on unreachable code is always wrong.</rule>
-    <examples>
-      <wrong><![CDATA[
-// WRONG: Suppressing dead code warning with istanbul ignore
-{/* istanbul ignore next */ paymentMethod !== undefined ? (<Component />) : null}
-// paymentMethod always has a default value, so this ternary is always true
-      ]]></wrong>
-      <right><![CDATA[
-// RIGHT: Remove the dead branch entirely
-<Component />
-      ]]></right>
-      <wrong_defensive><![CDATA[
-// WRONG: Using istanbul ignore on unreachable "defensive" guards instead of removing them
-/* istanbul ignore if -- name is always defined */
-if (!name) { throw new Error('unreachable: name should be defined'); }
-// And:
-/* istanbul ignore else -- element is always defined at this point */
-const element = getElement();
-if (element) { element.doSomething(msg); }
-      ]]></wrong_defensive>
-      <right_defensive><![CDATA[
-// RIGHT: Remove the unreachable guard entirely (if name is always defined, no check needed)
-// Just use name directly
-handleChange({ target: { name, value } });
-// And: Replace verbose null check with optional chaining
-getElement()?.doSomething(msg);
-      ]]></right_defensive>
-      <wrong_coverage><![CDATA[
-// WRONG: Redundant condition inside else block creates unreachable V8 branch
-if (!cachedVal) {
-  query();
-} else {
-  if (cachedVal && cachedVal.isInternalUser) {  // cachedVal && is always true here
-    showModal();
-  } else if (cachedVal && !cachedVal.isInternalUser) {  // cachedVal && is always true here
-    redirect();
-  }
-}
-      ]]></wrong_coverage>
-      <right_coverage><![CDATA[
-// RIGHT: Remove redundant conditions since else block guarantees cachedVal is truthy
-if (!cachedVal) {
-  query();
-} else if (cachedVal.isInternalUser) {
-  showModal();
-} else {
-  redirect();
-}
-      ]]></right_coverage>
-    </examples>
-  </dead_code_handling>
-
-  <untestable_code_patterns>
-    <description>Some code is reachable at runtime but untestable due to framework limitations. Use coverage exclusion comments ONLY for these cases.</description>
-
-    <pattern name="async_error_in_event_handlers">
-      <problem>Errors thrown in async event handlers become unhandled rejections that cannot be caught in tests</problem>
-      <solution>
-        <description>Add coverage exclusion comment to the implementation file</description>
-        <javascript_typescript><![CDATA[
-/* istanbul ignore if -- async error handler untestable */
-if (!data) {
-  throw new Error('Data missing');
-}
-        ]]></javascript_typescript>
-        <python><![CDATA[
-if not data:  # pragma: no cover - async error handler untestable
-    raise Exception("Data missing")
-        ]]></python>
-        <go><![CDATA[
-if data == nil { // NOCOV - async error handler untestable
-    return errors.New("data missing")
-}
-        ]]></go>
-        <ruby><![CDATA[
-# :nocov:
-raise "Data missing" if data.nil?
-# :nocov:
-        ]]></ruby>
-      </solution>
-      <rule>ALWAYS include a reason explaining why the code is untestable</rule>
-    </pattern>
-
-    <pattern name="files_with_no_testable_logic">
-      <problem>Some files contain only declarations, type definitions, tagged template literals (e.g., GraphQL gql`...`), configuration objects, or re-exports with no functions, conditionals, or business logic to test. These files are instrumentable by coverage tools but have no meaningful behavior to verify.</problem>
-      <solution>
-        <description>Add a file-level coverage exclusion comment at the top of the file</description>
-        <javascript_typescript><![CDATA[
-/* istanbul ignore file */
-        ]]></javascript_typescript>
-        <python><![CDATA[
-# pragma: no cover (entire file)
-        ]]></python>
-      </solution>
-      <rule>Use this when the ENTIRE file has no testable logic - not just a single branch or function</rule>
-      <rule>If the file contains ANY functions, conditionals, or business logic, do NOT ignore the entire file - use specific line-level exclusions instead</rule>
-    </pattern>
-  </untestable_code_patterns>
+  <dead_code>
+    <rule>When linters flag unreachable code, REMOVE IT - don't suppress warnings or test unreachable paths.</rule>
+    <rule>Remove redundant conditions (e.g., checking `cachedVal &&` inside an else block that already guarantees truthiness). Replace verbose null guards with optional chaining.</rule>
+    <rule>NEVER use istanbul ignore / pragma: no cover on unreachable code. If it's unreachable, delete it.</rule>
+    <rule>Only use coverage exclusions for code that IS reachable at runtime but untestable due to framework limitations (e.g., async error handlers). ALWAYS include a reason comment.</rule>
+    <rule>Use file-level coverage exclusion ONLY for files with zero testable logic (pure declarations, type definitions, re-exports).</rule>
+  </dead_code>
   </test_rules>
 
   <gitauto_md>
-    <description>GITAUTO.md is a file at the repo root where you persist reusable learnings. It is loaded into your system prompt on every task, so future runs benefit from past lessons. You can learn from ANY source: reviewer feedback, CI failures, patterns you discover while working on code, or conventions you observe in the codebase.</description>
-    <rule>Read GITAUTO.md before writing to avoid duplicating existing rules</rule>
-    <rule>Keep entries concise - one line per rule when possible</rule>
-    <rule>Group rules by topic using markdown headers (## Testing, ## Code Style, ## Architecture, ## Build, etc.)</rule>
-    <rule>Only persist reusable patterns, not one-off fixes specific to a single file or PR</rule>
-    <rule>Use the write_and_commit_file tool to create or update GITAUTO.md at the repo root</rule>
-    <rule>When updating, preserve existing rules and append new ones under the appropriate topic header</rule>
-    <critical_thinking>
-      <rule>Think DEEPLY before adding a rule. Human feedback can be contradictory - a reviewer might say "use mocks" on one PR and "don't use mocks" on another. Do not blindly persist every piece of feedback.</rule>
-      <rule>Before adding a new rule, check if it contradicts an existing rule in GITAUTO.md. If it does, evaluate which is more correct for this repo's context. Update or replace the old rule only if the new guidance is clearly better.</rule>
-      <rule>Consider whether the feedback is a universal repo convention or just one person's preference for a specific situation. Only persist conventions that should apply broadly.</rule>
-      <rule>Do not blindly trust any single source - not the reviewer, not the existing codebase, not existing GITAUTO.md rules. Evaluate each on its own merits. The existing codebase might have bad patterns. The reviewer might be wrong. An existing rule might be outdated. Use your own judgment about what is actually correct for this repo.</rule>
-    </critical_thinking>
-    <prohibited_content>
-      <rule>NEVER write about GitAuto's internal tools or processes (apply_diff_to_file, write_and_commit_file, get_local_file_content, etc.). These are GitAuto internals, not repo-specific knowledge.</rule>
-      <rule>NEVER write self-referential notes about your own failures or workarounds (e.g., "when diffs fail, rewrite the file"). This is about YOUR tooling, not the repo.</rule>
-      <rule>NEVER write generic programming knowledge that any developer would know (e.g., "use fireEvent for React tests", "mock GraphQL hooks with jest.mock"). GITAUTO.md is for repo-SPECIFIC conventions.</rule>
-      <rule>NEVER write about infrastructure or environment setup (e.g., "requires NPM_TOKEN", "needs Docker"). GITAUTO.md is for code patterns, not deployment.</rule>
-      <rule>ONLY write things you discovered BY WORKING IN THE CODE that would help your future self write correct code for this repo (e.g., "tests must use createTestContext() from test/utils", "all API responses are wrapped in { data: ... } shape", "date fields use ISO 8601 strings not timestamps").</rule>
-    </prohibited_content>
+    <rule>GITAUTO.md at repo root persists reusable learnings. Its content is automatically loaded into your system prompt as gitauto_md_rules, so check those rules before adding new ones to avoid duplicates.</rule>
+    <rule>Keep entries concise (one line per rule), grouped by topic (## Testing, ## Code Style, etc.). Only persist reusable repo-specific patterns, not one-off fixes.</rule>
+    <rule>Think deeply before adding: check for contradictions with existing rules, evaluate if feedback is universal or situational. Do not blindly trust any single source.</rule>
+    <rule>PROHIBITED: GitAuto internals, self-referential notes, generic programming knowledge, infrastructure/environment setup.</rule>
+    <rule>ONLY write things discovered by working in the code that help write correct code for this specific repo.</rule>
   </gitauto_md>
-</coding_standards> 
+</coding_standards>
