@@ -201,7 +201,7 @@ When the user explicitly says "LGTM", execute this workflow:
 6. Commit: `git commit -m "descriptive message"`
    - Git pre-commit hook runs automatically (see `scripts/git/pre_commit_hook.sh`):
      - Sequential: pip-freeze, generate-types, black, ruff --fix, print check, builtin logging check
-     - Then concurrent: flake8 + pylint + pyright + pytest (via `scripts/lint/pre_commit_parallel_checks.sh`)
+     - Then concurrent: pylint + pyright + pytest (via `scripts/lint/pre_commit_parallel_checks.sh`)
    - Install hook once: `ln -sf ../../scripts/git/pre_commit_hook.sh .git/hooks/pre-commit`
    - **If hooks fail**: fix issues, re-stage affected files, commit again. Repeat until all pass.
    - **Use `--no-verify`** for trivial amendments that don't change code logic (e.g., removing a file, fixing a typo in a comment, re-staging after a hook-only change). Don't re-run the full test suite for non-code changes.

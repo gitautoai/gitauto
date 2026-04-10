@@ -1,15 +1,14 @@
 #!/bin/bash
-# Runs flake8, pylint, pyright, and pytest concurrently during pre-commit.
-# flake8/pylint run on staged Python files only; pyright/pytest run on the whole repo.
+# Runs pylint, pyright, and pytest concurrently during pre-commit.
+# pylint runs on staged Python files only; pyright/pytest run on the whole repo.
 set -uo pipefail
 
 STAGED_PY_FILES=$(git diff --cached --name-only --diff-filter=d -- '*.py' | grep -v '^venv/' | grep -v '^schemas/')
 
-FLAKE8_OUT=$(mktemp)
 PYLINT_OUT=$(mktemp)
 PYRIGHT_OUT=$(mktemp)
 PYTEST_OUT=$(mktemp)
-cleanup() { rm -f "$FLAKE8_OUT" "$PYLINT_OUT" "$PYRIGHT_OUT" "$PYTEST_OUT"; }
+cleanup() { rm -f "$PYLINT_OUT" "$PYRIGHT_OUT" "$PYTEST_OUT"; }
 trap cleanup EXIT
 
 PIDS=()
@@ -17,10 +16,6 @@ NAMES=()
 OUTPUTS=()
 
 if [ -n "$STAGED_PY_FILES" ]; then
-    # shellcheck disable=SC2086
-    flake8 $STAGED_PY_FILES > "$FLAKE8_OUT" 2>&1 &
-    PIDS+=($!); NAMES+=("flake8"); OUTPUTS+=("$FLAKE8_OUT")
-
     # shellcheck disable=SC2086
     pylint $STAGED_PY_FILES > "$PYLINT_OUT" 2>&1 &
     PIDS+=($!); NAMES+=("pylint"); OUTPUTS+=("$PYLINT_OUT")

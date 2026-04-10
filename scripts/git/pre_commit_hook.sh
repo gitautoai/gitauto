@@ -63,6 +63,6 @@ echo "--- builtin logging check ---"
 scripts/lint/check_builtin_logging.sh
 if [ $? -ne 0 ]; then exit 1; fi
 
-# Concurrent heavy checks (flake8, pylint, pyright, pytest)
-echo "--- flake8 + pylint + pyright + pytest (concurrent) ---"
+# Concurrent heavy checks (pylint, pyright, pytest)
+echo "--- pylint + pyright + pytest (concurrent) ---"
 scripts/lint/pre_commit_parallel_checks.sh

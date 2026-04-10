@@ -1,6 +1,5 @@
 .circleci/config.yml
 .claude/settings.json
-.flake8
 .gitconfig
 .github/ISSUE_TEMPLATE/bug_report.yml
 .github/ISSUE_TEMPLATE/config.yml
