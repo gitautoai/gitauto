@@ -21,27 +21,17 @@ def sample_structured_rules():
     """Fixture providing sample structured rules data."""
     return {
         "codePatternStrategy": "Best practices first",
-        "preferredApiApproach": "GraphQL first",
         "customTestConstantsPath": "",
         "preferredCommentLanguage": "Auto-detect",
-        "enforceOneFunctionPerFile": True,
         "customTestFileNamingPattern": "",
-        "preferConciseCodeTechniques": True,
-        "fixUnrelatedIssuesWhenNoticed": False,
-        "allowCreatingIntermediateLayers": False,
         "customIntegrationTestFileSuffix": "",
-        "enforceOneResponsibilityPerFile": True,
-        "includeJSDocOrDocstringComments": False,
         "separateUnitAndIntegrationTests": True,
         "testConstantsManagementStrategy": "Auto-detect from existing tests",
-        "allowTodoCommentsInGeneratedCode": False,
         "enforceComponentIsolationInTests": True,
         "enableCommentsInGeneratedTestCode": False,
-        "preferEarlyReturnsToReduceNesting": True,
         "preferredTestFileNamingConvention": "filename_test.ext (Go style)",
         "preferredIntegrationTestFileSuffix": "Auto-detect language conventions",
         "preferredTestConstantsFileLocation": "Auto-detect from project structure",
-        "enableCommentsInGeneratedSourceCode": False,
         "preferFunctionStyleOverClassStyleInTests": True,
         "enableIntegrationTestsForReadOnlyOperations": False,
         "allowRefactoringSourceCodeBeforeWritingTests": True,
@@ -74,7 +64,6 @@ def test_get_default_structured_rules_success(
     assert result == sample_structured_rules
     assert isinstance(result, dict)
     assert "codePatternStrategy" in result
-    assert "preferredApiApproach" in result
 
 
 def test_get_default_structured_rules_empty_response(mock_requests_get):
@@ -232,7 +221,7 @@ def test_get_default_structured_rules_partial_data(mock_requests_get):
     # Setup mock response with partial data
     partial_data = {
         "codePatternStrategy": "Best practices first",
-        "preferredApiApproach": "GraphQL first",
+        "enableCommentsInGeneratedTestCode": False,
     }
     mock_response = MagicMock()
     mock_response.json.return_value = partial_data
@@ -245,4 +234,4 @@ def test_get_default_structured_rules_partial_data(mock_requests_get):
     assert result == partial_data
     assert len(result) == 2
     assert "codePatternStrategy" in result
-    assert "preferredApiApproach" in result
+    assert "enableCommentsInGeneratedTestCode" in result
