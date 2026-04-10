@@ -17,6 +17,7 @@ def generate_and_upsert_pr_body_section(
     current_body: str,
     trigger: Trigger,
     context: dict,
+    usage_id: int,
 ):
     marker = TRIGGER_TO_MARKER.get(trigger)
     prompt = TRIGGER_TO_PROMPT.get(trigger)
@@ -32,7 +33,7 @@ def generate_and_upsert_pr_body_section(
         pr_number,
     )
     generated_content = chat_with_claude_simple(
-        system_input=prompt, user_input=dumps(context)
+        system_input=prompt, user_input=dumps(context), usage_id=usage_id
     )
     if not generated_content:
         logger.warning("LLM returned empty content for %s section", marker)
