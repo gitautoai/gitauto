@@ -60,4 +60,7 @@ for body in bodies:
         print("[" + str(count) + "] " + post_lines[0])
         for pl in post_lines[1:]:
             print(pl)
+
+if count == 0:
+    print("No " + section.replace("## ", "") + " sections found in last 10 merged PRs.")
 '
