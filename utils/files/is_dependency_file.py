@@ -2,6 +2,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 # Dependency dirs we support caching as tarballs for faster installs
 SUPPORTED_DEPENDENCY_DIRS = [
+    "mongodb-binaries",  # MongoMemoryServer (mongod binary, ~100MB)
     "node_modules",  # npm/yarn/pnpm (JS/TS)
     "vendor",  # Composer (PHP), Go modules
 ]
