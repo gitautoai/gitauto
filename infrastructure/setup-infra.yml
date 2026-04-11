@@ -391,16 +391,13 @@ Resources:
                     $PKG_MANAGER install
                     # Pre-download MongoDB binary to S3 cache if repo uses MongoMemoryServer.
                     # Calls our Python code directly (available because CodeBuild uses our Docker image).
-                    MONGOMS_ARCHIVE_NAME=$(PYTHONPATH=/var/task python3 -c "from services.mongoms.get_archive_name import get_mongoms_archive_name; print(get_mongoms_archive_name('$LOCAL_DIR') or '')" 2>/dev/null)
+                    MONGOMS_ARCHIVE_NAME=$(PYTHONPATH=/var/task python3 -c "from services.mongoms.get_archive_name import get_mongoms_archive_name; print(get_mongoms_archive_name('$LOCAL_DIR') or '')")
                     if [ -n "$MONGOMS_ARCHIVE_NAME" ]; then
                       export MONGOMS_ARCHIVE_NAME
-                      MONGO_VERSION=$(PYTHONPATH=/var/task python3 -c "from services.mongoms.get_mongo_version import get_mongo_version; print(get_mongo_version('$LOCAL_DIR') or '')" 2>/dev/null)
                       echo "Using MONGOMS_ARCHIVE_NAME=$MONGOMS_ARCHIVE_NAME"
-                      # 7.x requires downloadDir and version as constructor options (ignores env vars)
-                      node -e "
-                        const { MongoBinaryDownload } = require('$LOCAL_DIR/node_modules/mongodb-memory-server-core/lib/util/MongoBinaryDownload');
-                        new MongoBinaryDownload({ downloadDir: '/tmp/mongodb-binaries', version: '$MONGO_VERSION' }).download().then(() => console.log('Download complete')).catch(e => console.error(e));
-                      " || true
+                      # Download directly - MongoBinaryDownload's OS detection is broken on AL2023 (the same bug we're working around)
+                      mkdir -p /tmp/mongodb-binaries
+                      curl -fsSL "https://fastdl.mongodb.org/linux/$MONGOMS_ARCHIVE_NAME" -o "/tmp/mongodb-binaries/$MONGOMS_ARCHIVE_NAME" || true
                       if [ -d /tmp/mongodb-binaries ]; then
                         tar -czf /tmp/mongodb-binaries.tar.gz -C /tmp mongodb-binaries
                         aws s3 cp /tmp/mongodb-binaries.tar.gz "s3://$S3_BUCKET/$S3_KEY_PREFIX/mongodb-binaries.tar.gz"
