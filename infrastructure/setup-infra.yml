@@ -315,6 +315,16 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                 Resource: !Sub '${DependencyCacheBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchCheckLayerAvailability
+                Resource: !Sub 'arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/pr-agent-prod'
       Tags:
         - Key: Name
           Value: gitauto-codebuild-role
@@ -330,7 +340,9 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL # 3GB RAM, 2 vCPU, ~$0.005/min
-        Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0 # Has Node.js 24
+        # Use our Lambda Docker image from ECR so CodeBuild can call our Python code directly (no duplicated logic in buildspec). Image has Node.js, n, yarn, PHP, Composer.
+        Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/pr-agent-prod:latest'
+        ImagePullCredentialsType: SERVICE_ROLE
         PrivilegedMode: false
         EnvironmentVariables:
           - Name: S3_BUCKET
@@ -376,13 +388,17 @@ Resources:
                       export NPM_TOKEN="$NPM_TOKEN"
                     fi
                     $PKG_MANAGER install
-                    # Pre-download MongoDB binary to S3 cache if repo uses MongoMemoryServer
-                    MONGOD_SCRIPT="$CODEBUILD_SRC_DIR/download_mongod_binary.mjs"
-                    if [ -f "$LOCAL_DIR/node_modules/mongodb-memory-server-core/package.json" ]; then
-                      # Download mongod binary, upload to S3
-                      MONGOMS_DOWNLOAD_DIR="/tmp/mongodb-binaries" node -e "
+                    # Pre-download MongoDB binary to S3 cache if repo uses MongoMemoryServer.
+                    # Calls our Python code directly (available because CodeBuild uses our Docker image).
+                    MONGOMS_ARCHIVE_NAME=$(PYTHONPATH=/var/task python3 -c "from services.mongoms.get_archive_name import get_mongoms_archive_name; print(get_mongoms_archive_name('$LOCAL_DIR') or '')" 2>/dev/null)
+                    if [ -n "$MONGOMS_ARCHIVE_NAME" ]; then
+                      export MONGOMS_ARCHIVE_NAME
+                      MONGO_VERSION=$(PYTHONPATH=/var/task python3 -c "from services.mongoms.get_mongo_version import get_mongo_version; print(get_mongo_version('$LOCAL_DIR') or '')" 2>/dev/null)
+                      echo "Using MONGOMS_ARCHIVE_NAME=$MONGOMS_ARCHIVE_NAME"
+                      # 7.x requires downloadDir and version as constructor options (ignores env vars)
+                      node -e "
                         const { MongoBinaryDownload } = require('$LOCAL_DIR/node_modules/mongodb-memory-server-core/lib/util/MongoBinaryDownload');
-                        new MongoBinaryDownload({}).download().catch(e => console.error(e));
+                        new MongoBinaryDownload({ downloadDir: '/tmp/mongodb-binaries', version: '$MONGO_VERSION' }).download().then(() => console.log('Download complete')).catch(e => console.error(e));
                       " || true
                       if [ -d /tmp/mongodb-binaries ]; then
                         tar -czf /tmp/mongodb-binaries.tar.gz -C /tmp mongodb-binaries

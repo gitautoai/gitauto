@@ -1,4 +1,4 @@
-# Use Lambda base image with Python 3.13
+# Use Lambda base image with Python 3.13 (Amazon Linux 2023). If changing base image, update LAMBDA_DISTRO in constants/aws.py.
 FROM public.ecr.aws/lambda/python:3.13
 
 # Copy to Lambda root(which is specified in Lambda function, usually /var/task/ directory)

@@ -3,9 +3,9 @@ import shutil
 import subprocess
 from dataclasses import dataclass, field
 
-from constants.aws import SUBPROCESS_TIMEOUT_SECONDS
-from services.jest.get_mongoms_distro import get_mongoms_distro
+from constants.aws import LAMBDA_DISTRO, SUBPROCESS_TIMEOUT_SECONDS
 from services.jest.parse_coverage_json import Coverage, parse_coverage_json
+from services.mongoms.get_archive_name import get_mongoms_archive_name
 from services.node.detect_package_manager import detect_package_manager
 from services.node.get_test_script_name import get_test_script_name
 from services.types.base_args import BaseArgs
@@ -70,9 +70,14 @@ async def run_jest_test(
 
     # MongoMemoryServer looks for mongod binary here. CodeBuild caches it to S3 as mongodb-binaries.tar.gz, extracted alongside node_modules by download_and_extract_s3_deps into {clone_dir}/mongodb-binaries/.
     env["MONGOMS_DOWNLOAD_DIR"] = os.path.join(clone_dir, "mongodb-binaries")
-    mongoms_distro = get_mongoms_distro(clone_dir)
-    if mongoms_distro:
-        env["MONGOMS_DISTRO"] = mongoms_distro
+
+    # MONGOMS_DISTRO overrides OS auto-detection for MongoDB binary downloads. 7.x ignores this env var. 9.x+ reads it but auto-detects correctly already — safety net. Harmless if repo doesn't use mongodb-memory-server.
+    env["MONGOMS_DISTRO"] = LAMBDA_DISTRO
+
+    # MONGOMS_ARCHIVE_NAME bypasses OS auto-detection entirely by specifying the full archive filename. Works in 7.x+ (unlike DISTRO which only works in 9.x+). Requires detecting MongoDB version from package.json.
+    archive_name = get_mongoms_archive_name(clone_dir)
+    if archive_name:
+        env["MONGOMS_ARCHIVE_NAME"] = archive_name
 
     # Kill any lingering mongod processes from previous verify_task_is_complete calls.
     # MongoMemoryServer uses a fixed port (e.g. 34213) hardcoded in customer tests.

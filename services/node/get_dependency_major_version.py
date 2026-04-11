@@ -13,11 +13,17 @@ def get_dependency_major_version(clone_dir: str, package_name: str):
         return None
 
     pkg = json.loads(pkg_content)
+    if not isinstance(pkg, dict):
+        logger.info("package.json is not a dict in %s", clone_dir)
+        return None
     for deps_key in ("devDependencies", "dependencies"):
-        deps = pkg.get(deps_key, {}) if isinstance(pkg, dict) else {}
-        version_spec = deps.get(package_name, "") if isinstance(deps, dict) else ""
-        if isinstance(version_spec, str) and version_spec:
-            return int(version_spec.lstrip("^~>=< ").split(".")[0])
+        deps = pkg.get(deps_key)
+        if not isinstance(deps, dict):
+            continue
+        version_spec = deps.get(package_name)
+        if not isinstance(version_spec, str) or not version_spec:
+            continue
+        return int(version_spec.lstrip("^~>=< ").split(".")[0])
 
     logger.info("%s not found in package.json dependencies", package_name)
     return None
