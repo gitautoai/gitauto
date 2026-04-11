@@ -1,6 +1,6 @@
 #!/bin/bash
 # Runs pylint, pyright, and pytest concurrently during pre-commit.
-# pylint runs on staged Python files only; pyright/pytest run on the whole repo.
+# All three only run when Python files are staged.
 set -uo pipefail
 
 STAGED_PY_FILES=$(git diff --cached --name-only --diff-filter=d -- '*.py' | grep -v '^venv/' | grep -v '^schemas/')
@@ -15,11 +15,14 @@ PIDS=()
 NAMES=()
 OUTPUTS=()
 
-if [ -n "$STAGED_PY_FILES" ]; then
-    # shellcheck disable=SC2086
-    pylint $STAGED_PY_FILES > "$PYLINT_OUT" 2>&1 &
-    PIDS+=($!); NAMES+=("pylint"); OUTPUTS+=("$PYLINT_OUT")
+if [ -z "$STAGED_PY_FILES" ]; then
+    echo "No Python files staged, skipping pylint/pyright/pytest"
+    exit 0
 fi
+
+# shellcheck disable=SC2086
+pylint $STAGED_PY_FILES > "$PYLINT_OUT" 2>&1 &
+PIDS+=($!); NAMES+=("pylint"); OUTPUTS+=("$PYLINT_OUT")
 
 pyright > "$PYRIGHT_OUT" 2>&1 &
 PIDS+=($!); NAMES+=("pyright"); OUTPUTS+=("$PYRIGHT_OUT")
