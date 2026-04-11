@@ -146,6 +146,8 @@ async def setup_handler(
         "pr_body": SETUP_PR_BODY,
         "pr_comments": [],
         "pr_creator": sender_name,
+        "verify_consecutive_failures": 0,
+        "quality_gate_fail_count": 0,
     }
 
     sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)

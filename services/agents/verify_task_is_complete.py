@@ -38,6 +38,7 @@ from utils.files.filter_js_ts_files import filter_js_ts_files
 from utils.files.is_source_file import is_source_file
 from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
+from utils.logs.detect_infra_failure import detect_infra_failure
 
 # See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
 # No parameters needed - agent calls with empty {} (JSON Schema requires the object structure)
@@ -93,7 +94,7 @@ async def verify_task_is_complete(
     trigger = base_args.get("trigger", "")
     impl_file = base_args.get("impl_file_to_collect_coverage_from", "")
 
-    quality_gate_fail_count = base_args.get("quality_gate_fail_count", 0) or 0
+    quality_gate_fail_count = base_args["quality_gate_fail_count"]
 
     if not pr_files:
         # 0 changes on a schedule/dashboard PR: fail immediately without LLM call.
@@ -255,9 +256,16 @@ async def verify_task_is_complete(
         impl_file_to_collect_coverage_from=impl_file_to_collect_coverage_from,
     )
     if jest_result.errors:
-        for err in jest_result.errors:
-            remaining_errors.append(f"- {jest_result.runner_name}: {err}")
-        error_files.update(jest_result.error_files)
+        combined_errors = "\n".join(jest_result.errors)
+        infra_failure = detect_infra_failure(combined_errors)
+        if infra_failure:
+            logger.warning(
+                "Jest infra failure detected (%s), skipping errors", infra_failure
+            )
+        else:
+            for err in jest_result.errors:
+                remaining_errors.append(f"- {jest_result.runner_name}: {err}")
+            error_files.update(jest_result.error_files)
 
     # Post coverage results as PR comment and check for incomplete coverage
     if jest_result.coverage and not jest_result.errors:

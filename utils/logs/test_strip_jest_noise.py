@@ -72,6 +72,23 @@ def test_strip_jest_noise_removes_console_blocks():
     assert "should work" in result
 
 
+def test_strip_jest_noise_removes_coverage_table():
+    # Real 31K Jest output from foxcom-forms PR#1146 (2026-04-10) with 221-line coverage table.
+    # Expected output manually constructed by keeping lines 1-2 + 224-243 (non-table lines).
+    fixture_path = os.path.join(FIXTURES_DIR, "foxcom_forms_pr1146_jest_output.txt")
+    expected_path = os.path.join(
+        FIXTURES_DIR, "foxcom_forms_pr1146_jest_output_expected.txt"
+    )
+
+    with open(fixture_path, encoding="utf-8") as f:
+        raw = f.read()
+    with open(expected_path, encoding="utf-8") as f:
+        expected = f.read()
+
+    result = strip_jest_noise(raw)
+    assert result.strip() == expected.strip()
+
+
 def test_strip_jest_noise_real_fixture():
     fixture_path = os.path.join(FIXTURES_DIR, "raw_jest_subprocess_output.txt")
     expected_path = os.path.join(

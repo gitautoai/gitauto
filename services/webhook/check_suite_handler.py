@@ -244,6 +244,8 @@ async def handle_check_suite(
         "github_urls": [],
         "other_urls": [],
         "clone_dir": clone_dir,
+        "verify_consecutive_failures": 0,
+        "quality_gate_fail_count": 0,
         "workflow_id": circleci_workflow_id if is_circleci else github_run_id,
         "check_run_name": check_run_name,
         "trigger": trigger,

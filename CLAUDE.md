@@ -119,6 +119,8 @@ When testing code that parses external tool output (Jest, ESLint, git, CI logs, 
 
 Process: Run the real tool, capture stdout/stderr separately, verify which stream has what, use as fixture constants with documentation of source.
 
+**Save raw data as-is — stripping or extracting parts is PROHIBITED.** If the raw data from the database/API has a prefix, wrapper, or extra fields, save the whole thing. Partial extraction is not "real data" — it's synthetic data with extra steps. If the function under test only operates on a subset, the test should slice the raw fixture the same way the production code does.
+
 ### Never generate expected output from the function under test
 
 Using the function to generate its own expected output is circular and proves nothing. If the function has a bug, the expected output will have the same bug, and the test will pass. Expected fixtures must be created independently — by manual editing, external tools, or verified hand calculations.

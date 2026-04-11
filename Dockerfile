@@ -11,7 +11,9 @@ RUN dnf install -y git tar
 
 # Install Node.js (including npm) and yarn
 # https://github.com/nodesource/distributions
-RUN curl -fsSL https://rpm.nodesource.com/setup_24.x | bash - && \
+# Node 22 because express-oauth2-jwt-bearer in foxden-admin-portal-backend requires ≤22.
+# Must match DEFAULT_NODE_VERSION in services/node/detect_node_version.py so native addons compiled by CodeBuild load on Lambda.
+RUN curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - && \
     dnf install -y nodejs && \
     npm install -g yarn
 

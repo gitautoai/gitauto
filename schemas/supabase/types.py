@@ -520,8 +520,6 @@ class RepositoryFeatures(TypedDict):
     created_by: str
     updated_at: datetime.datetime
     updated_by: str
-    allow_edit_any_file: bool
-    restrict_edit_to_target_test_file_only: bool
 
 
 class RepositoryFeaturesInsert(TypedDict):
@@ -534,8 +532,6 @@ class RepositoryFeaturesInsert(TypedDict):
     merge_method: str
     created_by: str
     updated_by: str
-    allow_edit_any_file: bool
-    restrict_edit_to_target_test_file_only: bool
 
 
 class SchedulePauses(TypedDict):

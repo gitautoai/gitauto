@@ -104,6 +104,8 @@ def deconstruct_github_payload(
         "github_urls": github_urls,
         "other_urls": other_urls,
         "clone_dir": "",
+        "verify_consecutive_failures": 0,
+        "quality_gate_fail_count": 0,
     }
 
     return base_args, repo_settings

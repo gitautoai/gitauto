@@ -21,6 +21,7 @@ def strip_jest_noise(log: str):
     result: list[str] = []
     in_pass_section = False
     in_console_block = False
+    in_coverage_table = False
 
     for line in lines:
         stripped = line.strip()
@@ -59,6 +60,19 @@ def strip_jest_noise(log: str):
                 in_pass_section = False
             else:
                 continue
+
+        # Skip coverage table (lines with | separators showing file-level coverage).
+        # Coverage data is useless when tests fail — it's all 0% and can be 30K+ chars.
+        # Table format: separator lines (------|), header (File | % Stmts), data rows.
+        if re.match(r"^-+\|", stripped):
+            in_coverage_table = True
+            continue
+        if in_coverage_table:
+            if "|" in stripped and not stripped.startswith(
+                ("Test Suites:", "Tests:", "error ")
+            ):
+                continue
+            in_coverage_table = False
 
         # Skip JSON debug log lines from application console output
         if stripped.startswith("{") and stripped.endswith("}"):

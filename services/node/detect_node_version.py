@@ -8,6 +8,8 @@ from utils.versions.extract_max_major_from_constraint import (
 )
 from utils.versions.parse_major_version import parse_major_version
 
+# Node 22 because express-oauth2-jwt-bearer in foxden-admin-portal-backend requires ≤22.
+# Must match Dockerfile setup_22.x so native addons compiled by CodeBuild load on Lambda.
 DEFAULT_NODE_VERSION = "22"
 
 
