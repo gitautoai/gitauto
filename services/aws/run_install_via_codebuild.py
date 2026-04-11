@@ -1,6 +1,6 @@
 from mypy_boto3_codebuild.type_defs import EnvironmentVariableTypeDef
 
-from constants.aws import S3_DEPENDENCY_BUCKET
+from constants.aws import LAMBDA_DISTRO, S3_DEPENDENCY_BUCKET
 from constants.general import IS_PRD
 from constants.node import FALLBACK_NODE_VERSION
 from services.aws.clients import codebuild_client
@@ -25,6 +25,8 @@ def run_install_via_codebuild(
         {"name": "S3_KEY_PREFIX", "value": s3_key_prefix, "type": "PLAINTEXT"},
         {"name": "PKG_MANAGER", "value": pkg_manager, "type": "PLAINTEXT"},
         {"name": "NODE_VERSION", "value": node_version, "type": "PLAINTEXT"},
+        # MONGOMS_DISTRO: 7.x ignores this env var (not in its config), 9.x+ reads it but auto-detects correctly — safety net
+        {"name": "MONGOMS_DISTRO", "value": LAMBDA_DISTRO, "type": "PLAINTEXT"},
     ]
 
     npm_token = get_npm_token(owner_id)

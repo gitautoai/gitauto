@@ -377,9 +377,20 @@ Resources:
                     fi
                     $PKG_MANAGER install
                     # Pre-download MongoDB binary to S3 cache if repo uses MongoMemoryServer
-                    MONGOD_SCRIPT="$CODEBUILD_SRC_DIR/download_mongod_binary.mjs"
                     if [ -f "$LOCAL_DIR/node_modules/mongodb-memory-server-core/package.json" ]; then
-                      # Download mongod binary, upload to S3
+                      # Detect MongoDB version from package.json (config.mongodbMemoryServer.version or MONGOMS_VERSION in scripts)
+                      MONGO_VERSION=$(node -e "
+                        const pkg = JSON.parse(require('fs').readFileSync('$LOCAL_DIR/package.json', 'utf8'));
+                        const v = pkg.config?.mongodbMemoryServer?.version;
+                        if (v) { console.log(v); process.exit(0); }
+                        for (const s of Object.values(pkg.scripts || {})) {
+                          const m = s.match(/MONGOMS_VERSION=(\S+)/);
+                          if (m) { console.log(m[1]); process.exit(0); }
+                        }
+                      " 2>/dev/null)
+                      # MONGOMS_ARCHIVE_NAME bypasses OS auto-detection bug in mongodb-memory-server 7.x (detects AL2023 as "amazon" instead of "amazon2023")
+                      export MONGOMS_ARCHIVE_NAME="mongodb-linux-x86_64-${MONGOMS_DISTRO}-${MONGO_VERSION}.tgz"
+                      echo "Using MONGOMS_ARCHIVE_NAME=$MONGOMS_ARCHIVE_NAME"
                       MONGOMS_DOWNLOAD_DIR="/tmp/mongodb-binaries" node -e "
                         const { MongoBinaryDownload } = require('$LOCAL_DIR/node_modules/mongodb-memory-server-core/lib/util/MongoBinaryDownload');
                         new MongoBinaryDownload({}).download().catch(e => console.error(e));
