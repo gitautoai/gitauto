@@ -62,5 +62,5 @@ for body in bodies:
             print(pl)
 
 if count == 0:
-    print("No " + section.replace("## ", "") + " sections found in last 10 merged PRs.")
+    print("No recent posts found. This is not a problem - just proceed.")
 '
