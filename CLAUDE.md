@@ -205,7 +205,7 @@ When the user explicitly says "LGTM", execute this workflow:
      - Sequential: pip-freeze, generate-types, black, ruff --fix, print check, builtin logging check
      - Then concurrent: pylint + pyright + pytest (via `scripts/lint/pre_commit_parallel_checks.sh`)
    - Install hook once: `ln -sf ../../scripts/git/pre_commit_hook.sh .git/hooks/pre-commit`
-   - **If hooks fail**: fix issues, re-stage affected files, commit again. Repeat until all pass.
+   - **If hooks fail**: fix issues, re-stage affected files, commit again. Repeat until all pass. If a test failure is caused by another session's unstaged changes, fix the test but do NOT stage the other session's files. Only stage your fix to the test file.
    - **Use `--no-verify`** for trivial amendments that don't change code logic (e.g., removing a file, fixing a typo in a comment, re-staging after a hook-only change). Don't re-run the full test suite for non-code changes.
    - For test files with unused mock parameters, add `# pyright: reportUnusedVariable=false` at top
    - NO Claude Code credits, co-author lines, or `[skip ci]`

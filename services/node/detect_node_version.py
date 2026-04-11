@@ -1,5 +1,6 @@
 import json
 
+from constants.node import FALLBACK_NODE_VERSION
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
@@ -8,12 +9,8 @@ from utils.versions.extract_max_major_from_constraint import (
 )
 from utils.versions.parse_major_version import parse_major_version
 
-# Node 22 because express-oauth2-jwt-bearer in foxden-admin-portal-backend requires ≤22.
-# Must match Dockerfile setup_22.x so native addons compiled by CodeBuild load on Lambda.
-DEFAULT_NODE_VERSION = "22"
 
-
-@handle_exceptions(default_return_value=DEFAULT_NODE_VERSION, raise_on_error=False)
+@handle_exceptions(default_return_value=FALLBACK_NODE_VERSION, raise_on_error=False)
 def detect_node_version(clone_dir: str):
     """Detect the Node.js major version from repo config files. Returns e.g. '22'."""
     # 1. Check .nvmrc
@@ -49,6 +46,6 @@ def detect_node_version(clone_dir: str):
                 return parsed
 
     logger.info(
-        "node: No Node version specified, defaulting to %s", DEFAULT_NODE_VERSION
+        "node: No Node version specified, defaulting to %s", FALLBACK_NODE_VERSION
     )
-    return DEFAULT_NODE_VERSION
+    return FALLBACK_NODE_VERSION
