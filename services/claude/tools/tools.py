@@ -33,6 +33,10 @@ from services.github.comments.reply_to_comment import (
     REPLY_TO_REVIEW_COMMENT,
     reply_to_comment,
 )
+from services.node.switch_node_version import (
+    SWITCH_NODE_VERSION,
+    switch_node_version,
+)
 from services.git.reset_pr_branch_to_new_base import (
     RESET_PR_BRANCH_TO_NEW_BASE,
     reset_pr_branch_to_new_base,
@@ -68,6 +72,7 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     SEARCH_AND_REPLACE,
     SEARCH_LOCAL_FILE_CONTENT,
     # SEARCH_WEB disabled: DDG CAPTCHAs bots. Use paid API (e.g. Brave Search) if needed.
+    SWITCH_NODE_VERSION,
     VERIFY_TASK_IS_COMPLETE,
     WEB_FETCH,
     WRITE_AND_COMMIT_FILE,
@@ -120,6 +125,7 @@ tools_to_call: dict[str, Any] = {
     "search_local_file_contents": search_local_file_contents,
     # "search_web": web_search,  # Disabled: DDG CAPTCHAs bots
     "set_env": set_env,
+    "switch_node_version": switch_node_version,
     "verify_task_is_complete": verify_task_is_complete,
     "web_fetch": web_fetch,
     "write_and_commit_file": write_and_commit_file,

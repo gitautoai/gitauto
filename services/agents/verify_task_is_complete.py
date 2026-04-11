@@ -8,6 +8,7 @@ from constants.files import (
     PHP_TEST_FILE_EXTENSIONS,
     TS_TEST_FILE_EXTENSIONS,
 )
+from constants.node import FALLBACK_NODE_VERSION
 from services.agents.run_quality_gate import QUALITY_GATE_MESSAGE, run_quality_gate
 from services.eslint.ensure_eslint_relaxed_for_tests import (
     ensure_eslint_relaxed_for_tests,
@@ -20,6 +21,7 @@ from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.types.base_args import BaseArgs
 from services.jest.format_coverage_comment import format_coverage_comment
 from services.jest.run_jest_test import run_jest_test
+from services.node.detect_node_version import detect_node_version
 from services.node.ensure_jest_timeout_for_ci import ensure_jest_timeout_for_ci
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
     ensure_jest_uses_tsconfig_for_tests,
@@ -28,6 +30,7 @@ from services.node.ensure_tsconfig_relaxed_for_tests import (
     ensure_tsconfig_relaxed_for_tests,
 )
 from services.node.ensure_vitest_timeout_for_ci import ensure_vitest_timeout_for_ci
+from services.node.switch_node_version import switch_node_version
 from services.phpunit.run_phpunit_test import run_phpunit_test
 from services.prettier.run_prettier_fix import run_prettier_fix
 from services.slack.slack_notify import slack_notify
@@ -130,6 +133,11 @@ async def verify_task_is_complete(
     ]
 
     if js_test_files:
+        # Switch Node.js to the version the repo requires (no-op if already matching default)
+        detected_node = detect_node_version(clone_dir)
+        if detected_node != FALLBACK_NODE_VERSION:
+            switch_node_version(version=detected_node, base_args=base_args)
+
         root_files = [
             f
             for f in os.listdir(clone_dir)

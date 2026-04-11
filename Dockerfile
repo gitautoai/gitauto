@@ -9,13 +9,15 @@ COPY . ${LAMBDA_TASK_ROOT}
 RUN pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 RUN dnf install -y git tar
 
-# Install Node.js (including npm) and yarn
+# Install Node.js (including npm), n (version manager), and yarn
 # https://github.com/nodesource/distributions
 # Node 22 because express-oauth2-jwt-bearer in foxden-admin-portal-backend requires ≤22.
-# Must match DEFAULT_NODE_VERSION in services/node/detect_node_version.py so native addons compiled by CodeBuild load on Lambda.
-RUN curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - && \
+# FALLBACK_NODE_VERSION env var is read by constants/node.py at runtime.
+ARG NODE_VERSION=22
+ENV FALLBACK_NODE_VERSION=$NODE_VERSION
+RUN curl -fsSL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
     dnf install -y nodejs && \
-    npm install -g yarn
+    npm install -g n yarn
 
 # Install PHP CLI and Composer for PHPUnit test execution
 # Same packages are also installed in CodeBuild (infrastructure/setup-infra.yml)
@@ -27,11 +29,7 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - && \
 RUN dnf install -y php-cli php-json php-mbstring php-xml php-pdo && \
     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Install cloc directly without adding the entire EPEL repository
-RUN curl -L https://github.com/AlDanial/cloc/releases/download/v1.98/cloc-1.98.pl -o /usr/local/bin/cloc && \
-    chmod +x /usr/local/bin/cloc
-
-# Install Playwright's browser without dependencies (install-deps)
+# Install Playwright's Chromium so customer repos with Playwright/Vitest browser tests can run during verify_task_is_complete (e.g. @vitest/browser-playwright with chromium)
 # https://playwright.dev/python/docs/browsers
 RUN python -m playwright install chromium
 
