@@ -68,9 +68,8 @@ async def run_jest_test(
     env = os.environ.copy()
     env["CI"] = "true"
 
-    # MongoMemoryServer downloads mongod binary on first use (~3s on Lambda).
-    # Downloaded from S3 cache on first use (~3s on Lambda cold start).
-    env["MONGOMS_DOWNLOAD_DIR"] = "/tmp/mongodb-binaries"
+    # MongoMemoryServer looks for mongod binary here. CodeBuild caches it to S3 as mongodb-binaries.tar.gz, extracted alongside node_modules by download_and_extract_s3_deps into {clone_dir}/mongodb-binaries/.
+    env["MONGOMS_DOWNLOAD_DIR"] = os.path.join(clone_dir, "mongodb-binaries")
     mongoms_distro = get_mongoms_distro(clone_dir)
     if mongoms_distro:
         env["MONGOMS_DISTRO"] = mongoms_distro
