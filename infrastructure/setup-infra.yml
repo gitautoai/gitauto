@@ -358,6 +358,7 @@ Resources:
           phases:
             install:
               commands:
+                - pip install awscli
                 - n "$NODE_VERSION"
                 - echo "Using Node.js $(node --version)"
             build:

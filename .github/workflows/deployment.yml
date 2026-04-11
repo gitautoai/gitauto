@@ -51,8 +51,9 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         run: |
           # --provenance=false prevents OCI manifest format, which Lambda doesn't support
-          docker build --provenance=false -f ./Dockerfile -t $ECR_REGISTRY/pr-agent-prod:$IMAGE_TAG .
+          docker build --provenance=false -f ./Dockerfile -t $ECR_REGISTRY/pr-agent-prod:$IMAGE_TAG -t $ECR_REGISTRY/pr-agent-prod:latest .
           docker push $ECR_REGISTRY/pr-agent-prod:$IMAGE_TAG
+          docker push $ECR_REGISTRY/pr-agent-prod:latest
 
       - name: Deploy infrastructure stack
         run: |
