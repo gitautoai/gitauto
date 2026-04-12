@@ -110,6 +110,10 @@ def test_real_foxden_admin_portal():
     ) == ["src/components/Sidebar/SidebarDropdownItem.test.tsx"]
     # App.tsx has only mirror test (no colocated)
     assert find_test_files("src/App.tsx", all_files, None) == ["test/App.test.tsx"]
+    # NewQuote/index.tsx: colocated test matches by stem "index"
+    assert find_test_files("src/components/NewQuote/index.tsx", all_files, None) == [
+        "src/components/NewQuote/index.test.tsx"
+    ]
 
 
 def test_real_foxden_admin_portal_backend():
