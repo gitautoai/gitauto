@@ -83,7 +83,7 @@ async function postTwitter({ context }) {
   // );
 
   // Wait for a random amount of time
-  const getRandomDelay = () => Math.floor(Math.random() * 55000 + 5000);
+  const getRandomDelay = () => Math.floor(Math.random() * 10000 + 5000);
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   await sleep(getRandomDelay());
 
