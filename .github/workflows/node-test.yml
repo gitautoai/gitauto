@@ -7,11 +7,13 @@ on:
     paths:
       - "**/*.mjs"
       - "**/*.js"
+      - "!.github/**"
   push:
     branches: [main]
     paths:
       - "**/*.mjs"
       - "**/*.js"
+      - "!.github/**"
   workflow_dispatch:
 
 concurrency:
