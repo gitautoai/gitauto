@@ -9,6 +9,7 @@ from services.agents.verify_task_is_complete import (
     VERIFY_TASK_IS_COMPLETE,
     verify_task_is_complete,
 )
+from services.claude.forget_messages import FORGET_MESSAGES, forget_messages
 from services.http.curl import CURL, curl
 from services.http.web_fetch import WEB_FETCH, web_fetch
 from services.env.set_env import SET_ENV, set_env
@@ -66,6 +67,7 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     CREATE_DIRECTORY,
     CURL,
     DELETE_FILE,
+    FORGET_MESSAGES,
     GIT_REVERT_FILE,
     GET_LOCAL_FILE_TREE,
     MOVE_FILE,
@@ -115,6 +117,7 @@ tools_to_call: dict[str, Any] = {
     "create_directory": create_directory,
     "curl": curl,
     "delete_file": delete_file,
+    "forget_messages": forget_messages,
     "git_revert_file": git_revert_file,
     "get_local_file_content": get_local_file_content,
     "get_local_file_tree": get_local_file_tree,

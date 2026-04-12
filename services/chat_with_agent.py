@@ -227,12 +227,14 @@ async def chat_with_agent(
                         or ""
                     )
 
-            # Execute the tool
+            # Execute the tool (messages passed for tools like forget_messages; others absorb via **_kwargs)
             if isinstance(tool_args, dict):
+                # Pop keys we pass explicitly to avoid "got multiple values for keyword argument" TypeError
                 tool_args.pop("base_args", None)
-                tool_result = tools_to_call[tool_name](**tool_args, base_args=base_args)
-            else:
-                tool_result = tools_to_call[tool_name](base_args=base_args)
+                tool_args.pop("messages", None)
+                tool_result = tools_to_call[tool_name](
+                    **tool_args, base_args=base_args, messages=messages
+                )
             if inspect.iscoroutine(tool_result):
                 tool_result = await tool_result
 
@@ -458,6 +460,15 @@ async def chat_with_agent(
             and "new_file_path" in tool_args
         ):
             msg = f"Moved file from `{tool_args['old_file_path']}` to `{tool_args['new_file_path']}`."
+
+        elif tool_name == "forget_messages" and isinstance(tool_args, dict):
+            file_paths = tool_args.get("file_paths", [])
+            count = len(file_paths) if isinstance(file_paths, list) else 0
+            msg = f"Forgot {count} file(s) from context."
+            slack_notify(
+                f"🧪 forget_messages called: {file_paths}",
+                thread_ts=base_args.get("slack_thread_ts"),
+            )
 
         elif not msg:
             msg = f"Calling `{tool_name}()` with `{tool_args}`."

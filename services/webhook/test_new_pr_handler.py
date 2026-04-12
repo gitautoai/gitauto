@@ -1802,13 +1802,20 @@ async def test_few_test_files_include_contents_in_prompt(
 
     await handle_new_pr(payload=payload, trigger="dashboard")
 
-    # Verify test_files contents are included in the prompt (not just paths)
+    # Verify test file paths listed in JSON and contents as separate messages
     call_kwargs = mock_chat_with_agent.call_args.kwargs
     messages = call_kwargs["messages"]
     user_input = json.loads(messages[0]["content"])
-    assert "test_files" in user_input
+    assert "test_files_included" in user_input
+    assert len(user_input["test_files_included"]) == 3
     assert "test_file_paths" not in user_input
-    assert len(user_input["test_files"]) == 3
+    # Test file contents should be separate messages in ```path format
+    test_file_msgs = [
+        m
+        for m in messages[1:]
+        if isinstance(m["content"], str) and m["content"].startswith("```tests/")
+    ]
+    assert len(test_file_msgs) == 3
 
 
 @pytest.mark.asyncio
@@ -1941,13 +1948,20 @@ async def test_many_test_files_include_paths_only_in_prompt(
 
     await handle_new_pr(payload=payload, trigger="dashboard")
 
-    # Verify top 5 test files have contents and remaining 2 are paths-only
+    # Verify top 5 test files have paths in JSON and contents as separate messages
     call_kwargs = mock_chat_with_agent.call_args.kwargs
     messages = call_kwargs["messages"]
     user_input = json.loads(messages[0]["content"])
-    assert "test_files" in user_input
-    assert len(user_input["test_files"]) == 5
+    assert "test_files_included" in user_input
+    assert len(user_input["test_files_included"]) == 5
     assert "test_file_paths" in user_input
     assert len(user_input["test_file_paths"]) == 2
+    # Test file contents should be separate messages in ```path format
+    test_file_msgs = [
+        m
+        for m in messages[1:]
+        if isinstance(m["content"], str) and m["content"].startswith("```tests/")
+    ]
+    assert len(test_file_msgs) == 5
     # read_local_file called: 1 for impl file + 5 for top test files = 6
     assert mock_read_local_file.call_count == 6
