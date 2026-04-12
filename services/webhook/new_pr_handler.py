@@ -276,7 +276,10 @@ async def handle_new_pr(
         )
         file_path, content = get_remote_file_content_by_url(url=url, token=token)
         logger.info("```%s\n%s```\n", url, content)
-        reference_files[file_path] = content
+        if file_path and content:
+            reference_files[file_path] = format_content_with_line_numbers(
+                file_path=file_path, content=content
+            )
 
     today = datetime.now().strftime("%Y-%m-%d")
 
@@ -447,7 +450,8 @@ async def handle_new_pr(
         if target_dir_files:
             user_input_obj["target_dir_files"] = target_dir_files
     if test_files:
-        user_input_obj["test_files"] = test_files
+        # list() needed: dict_keys is not JSON serializable; content is in separate messages
+        user_input_obj["test_files_included"] = list(test_files.keys())
     if remaining_test_paths:
         user_input_obj["test_file_paths"] = remaining_test_paths
     if not test_files and not remaining_test_paths:
@@ -486,10 +490,12 @@ async def handle_new_pr(
             file_path=impl_file_path, content=impl_file_content
         )
         messages.append({"role": "user", "content": formatted_impl})
-    for path, c in reference_files.items():
+    for path, content in test_files.items():
+        messages.append({"role": "user", "content": content})
+    for path, content in reference_files.items():
         if path == impl_file_path:
             continue
-        messages.append({"role": "user", "content": c})
+        messages.append({"role": "user", "content": content})
 
     # Validate files for syntax issues before editing
     files_to_validate = list(
