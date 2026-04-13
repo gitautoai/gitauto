@@ -14,6 +14,7 @@ Trigger = Union[
         "installation_repositories",
         "pr_merged",
         "push",
+        "retarget",
         "setup",
         "test_failure",
         "workflow_run_completed",

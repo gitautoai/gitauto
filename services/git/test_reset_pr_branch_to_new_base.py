@@ -32,7 +32,7 @@ def _make_base_args():
 @patch("services.git.reset_pr_branch_to_new_base.git_fetch")
 @patch(
     "services.git.reset_pr_branch_to_new_base.change_pr_base_branch",
-    return_value="Changed base branch of PR #123 to 'release/20260422'",
+    return_value=True,
 )
 @patch(
     "services.git.reset_pr_branch_to_new_base.save_pr_files",
@@ -48,7 +48,7 @@ def _make_base_args():
 def test_reset_pr_branch_commits_per_file(
     mock_get_pr_files,
     mock_save,
-    mock_change_base,
+    mock_update_pr,
     mock_fetch,
     mock_reset,
     mock_reapply,
@@ -57,8 +57,7 @@ def test_reset_pr_branch_commits_per_file(
     result = reset_pr_branch_to_new_base(
         base_args=_make_base_args(), new_base_branch="release/20260422"
     )
-    assert result is not None
-    assert "Reset 2 files" in result
+    assert result == "Reset 2 files onto release/20260422."
     assert mock_commit_push.call_count == 2
     # First commit gets force=True, second gets force=False
     assert mock_commit_push.call_args_list[0].kwargs["force"] is True
@@ -74,7 +73,7 @@ def test_reset_pr_branch_commits_per_file(
 @patch("services.git.reset_pr_branch_to_new_base.git_fetch")
 @patch(
     "services.git.reset_pr_branch_to_new_base.change_pr_base_branch",
-    return_value="Changed base branch of PR #123 to 'main'",
+    return_value=True,
 )
 @patch("services.git.reset_pr_branch_to_new_base.save_pr_files", return_value=({}, []))
 @patch(
@@ -83,7 +82,7 @@ def test_reset_pr_branch_commits_per_file(
 def test_reset_pr_branch_no_files_skips_commit(
     mock_get_pr_files,
     mock_save,
-    mock_change_base,
+    mock_update_pr,
     mock_fetch,
     mock_reset,
     mock_reapply,
@@ -92,13 +91,12 @@ def test_reset_pr_branch_no_files_skips_commit(
     result = reset_pr_branch_to_new_base(
         base_args=_make_base_args(), new_base_branch="main"
     )
-    assert result is not None
-    assert "Changed base branch" in result
+    assert result == "Changed base to main, no files to rewrite"
     mock_commit_push.assert_not_called()
 
 
 @patch(
-    "services.git.reset_pr_branch_to_new_base.change_pr_base_branch", return_value=None
+    "services.git.reset_pr_branch_to_new_base.change_pr_base_branch", return_value=False
 )
 @patch("services.git.reset_pr_branch_to_new_base.save_pr_files", return_value=({}, []))
 @patch(
@@ -107,7 +105,7 @@ def test_reset_pr_branch_no_files_skips_commit(
 def test_reset_pr_branch_returns_none_on_api_failure(
     mock_get_pr_files,
     mock_save,
-    mock_change_base,
+    mock_update_pr,
 ):
     result = reset_pr_branch_to_new_base(
         base_args=_make_base_args(), new_base_branch="main"

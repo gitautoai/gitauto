@@ -56,8 +56,14 @@ def reset_pr_branch_to_new_base(base_args: BaseArgs, new_base_branch: str, **_kw
 
     # 3. Change the base branch on GitHub (metadata only)
     logger.info("Changing base branch to %s on GitHub", new_base_branch)
-    result = change_pr_base_branch(base_args=base_args, new_base_branch=new_base_branch)
-    if not result:
+    changed = change_pr_base_branch(
+        owner=owner,
+        repo=repo,
+        pr_number=pr_number,
+        token=token,
+        new_base_branch=new_base_branch,
+    )
+    if not changed:
         logger.error("Failed to change base branch to %s", new_base_branch)
         return None
 
@@ -73,7 +79,7 @@ def reset_pr_branch_to_new_base(base_args: BaseArgs, new_base_branch: str, **_kw
     )
     if not files_to_commit:
         logger.info("No files to rewrite after reset")
-        return result
+        return f"Changed base to {new_base_branch}, no files to rewrite"
 
     # 6. Commit per file and force push (first push forces because local history diverged from remote after reset)
     base_args["base_branch"] = new_base_branch
@@ -97,4 +103,4 @@ def reset_pr_branch_to_new_base(base_args: BaseArgs, new_base_branch: str, **_kw
         )
 
     logger.info("Reset %d files onto %s", len(files_to_commit), new_base_branch)
-    return f"{result}. Reset {len(files_to_commit)} files onto {new_base_branch}."
+    return f"Reset {len(files_to_commit)} files onto {new_base_branch}."

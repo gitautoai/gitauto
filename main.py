@@ -2,6 +2,7 @@
 import json
 from typing import Any, cast
 import urllib.parse
+from uuid import uuid4
 
 # Third-party imports
 from fastapi import BackgroundTasks, FastAPI, Header, Request
@@ -16,6 +17,7 @@ from constants.general import PRODUCT_NAME
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
 from payloads.aws.setup_installed_repository_event import SetupInstalledRepositoryEvent
 from services.aws.cleanup_tmp import cleanup_tmp
+from services.github.token.get_installation_token import get_installation_access_token
 from services.github.utils.verify_webhook_signature import verify_webhook_signature
 from services.sentry.before_send import before_send
 from services.slack.slack_notify import slack_notify
@@ -26,6 +28,7 @@ from services.webhook.setup_installed_repository import setup_installed_reposito
 from services.webhook.schedule_handler import schedule_handler
 from services.webhook.setup_handler import setup_handler
 from services.webhook.webhook_handler import handle_webhook_event
+from services.website.retarget_pr import retarget_pr
 from services.website.sync_files_from_github_to_coverage import (
     sync_files_from_github_to_coverage,
 )
@@ -34,8 +37,10 @@ from utils.aws.extract_lambda_info import extract_lambda_info
 from utils.logging.logging_config import (
     clear_state,
     logger,
+    set_event_action,
     set_owner_repo,
     set_request_id,
+    set_trigger,
 )
 
 # https://us-west-1.console.aws.amazon.com/lambda/home?region=us-west-1#/functions/pr-agent-prod?subtab=envVars&tab=configure
@@ -202,6 +207,37 @@ async def api_sync_files_from_github_to_coverage(
         api_key=api_key,
     )
     return {"status": "syncing"}
+
+
+class RetargetRequest(BaseModel):
+    installation_id: int
+    new_base_branch: str
+    pr_number: int
+
+
+@app.post(path="/api/{owner}/{repo}/retarget_pr")
+async def api_retarget_pr(
+    owner: str,
+    repo: str,
+    body: RetargetRequest,
+    api_key: str = Header(..., alias="X-API-Key"),
+):
+    verify_api_key(api_key)
+    set_request_id(str(uuid4()))
+    set_owner_repo(owner, repo)
+    set_event_action("website", "retarget_pr")
+    set_trigger("retarget")
+
+    token = get_installation_access_token(installation_id=body.installation_id)
+    retarget_pr(
+        owner_name=owner,
+        repo_name=repo,
+        token=token,
+        new_base_branch=body.new_base_branch,
+        pr_number=body.pr_number,
+        installation_id=body.installation_id,
+    )
+    return {"status": "processing"}
 
 
 @app.post(path="/api/{owner}/{repo}/setup_coverage_workflow")
