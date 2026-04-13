@@ -22,6 +22,7 @@ from main import (
     handle_webhook,
     handler,
     root,
+    api_retarget_pr,
     api_sync_files_from_github_to_coverage,
 )
 from payloads.aws.event_bridge_scheduler.event_types import EventBridgeSchedulerEvent
@@ -858,6 +859,36 @@ class TestTypeAnnotations:
 
         assert isinstance(result, dict)
         assert all(isinstance(k, str) for k in result.keys())
+
+
+class TestApiRetargetPr:
+    @patch("main.retarget_pr")
+    @patch("main.get_installation_access_token", return_value="fake-token")
+    @pytest.mark.asyncio
+    async def test_api_retarget_pr_uses_background_task(
+        self, mock_get_token, mock_retarget
+    ):
+        mock_background_tasks = MagicMock()
+
+        result = await api_retarget_pr(
+            owner="test-owner",
+            repo="test-repo",
+            body=MagicMock(
+                installation_id=123, new_base_branch="develop", pr_number=42
+            ),
+            background_tasks=mock_background_tasks,
+            api_key="test-api-key",
+        )
+
+        mock_background_tasks.add_task.assert_called_once()
+        call_kwargs = mock_background_tasks.add_task.call_args.kwargs
+        assert call_kwargs["owner_name"] == "test-owner"
+        assert call_kwargs["repo_name"] == "test-repo"
+        assert call_kwargs["token"] == "fake-token"
+        assert call_kwargs["new_base_branch"] == "develop"
+        assert call_kwargs["pr_number"] == 42
+        assert call_kwargs["installation_id"] == 123
+        assert result == {"status": "processing"}
 
 
 class TestApiSyncFilesFromGithubToCoverage:

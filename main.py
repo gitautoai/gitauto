@@ -195,7 +195,7 @@ async def api_sync_files_from_github_to_coverage(
     background_tasks: BackgroundTasks,
     api_key: str = Header(..., alias="X-API-Key"),
 ):
-    """Sync repository files from local clone to coverage database. Returns immediately, runs in background."""
+    """Sync repository files from local clone to coverage database. Returns immediately via background_tasks.add_task."""
     background_tasks.add_task(
         sync_files_from_github_to_coverage,
         owner=owner,
@@ -220,8 +220,10 @@ async def api_retarget_pr(
     owner: str,
     repo: str,
     body: RetargetRequest,
+    background_tasks: BackgroundTasks,
     api_key: str = Header(..., alias="X-API-Key"),
 ):
+    """Retarget a PR to a new base branch. Returns immediately via background_tasks.add_task."""
     verify_api_key(api_key)
     set_request_id(str(uuid4()))
     set_owner_repo(owner, repo)
@@ -229,7 +231,8 @@ async def api_retarget_pr(
     set_trigger("retarget")
 
     token = get_installation_access_token(installation_id=body.installation_id)
-    retarget_pr(
+    background_tasks.add_task(
+        retarget_pr,
         owner_name=owner,
         repo_name=repo,
         token=token,
