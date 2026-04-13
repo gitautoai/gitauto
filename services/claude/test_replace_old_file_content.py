@@ -26,7 +26,10 @@ def test_replace_old_file_content_replaces_matching_file():
 
     content = messages[0]["content"]
     assert isinstance(content, list)
-    assert content[0]["content"] == "[Outdated 'src/main.py' content removed]"
+    assert (
+        content[0]["content"]
+        == "['src/main.py' content removed because file was re-read or edited]"
+    )
 
 
 def test_replace_old_file_content_no_change_when_different_file():
@@ -81,7 +84,10 @@ def test_replace_old_file_content_replaces_string_content():
 
     replace_old_file_content(messages, "src/main.py", is_full_file_read=True)
 
-    assert messages[0]["content"] == "[Outdated 'src/main.py' content removed]"
+    assert (
+        messages[0]["content"]
+        == "['src/main.py' content removed because file was re-read or edited]"
+    )
 
 
 def test_replace_old_file_content_string_no_change_when_different_file():
@@ -147,7 +153,10 @@ def test_replace_old_file_content_handles_multiple_tool_results():
 
     content = messages[0]["content"]
     assert isinstance(content, list)
-    assert content[0]["content"] == "[Outdated 'src/main.py' content removed]"
+    assert (
+        content[0]["content"]
+        == "['src/main.py' content removed because file was re-read or edited]"
+    )
     assert content[1]["content"] == "```src/other.py\n1\tprint('other')\n```"
 
 
@@ -182,8 +191,14 @@ def test_replace_old_file_content_replaces_all_occurrences():
     content_2 = messages[2]["content"]
     assert isinstance(content_0, list)
     assert isinstance(content_2, list)
-    assert content_0[0]["content"] == "[Outdated 'src/main.py' content removed]"
-    assert content_2[0]["content"] == "[Outdated 'src/main.py' content removed]"
+    assert (
+        content_0[0]["content"]
+        == "['src/main.py' content removed because file was re-read or edited]"
+    )
+    assert (
+        content_2[0]["content"]
+        == "['src/main.py' content removed because file was re-read or edited]"
+    )
 
 
 def test_replace_old_file_content_handles_empty_messages():
@@ -283,7 +298,10 @@ def test_partial_read_only_removes_exact_match():
 
     content = messages[0]["content"]
     assert isinstance(content, list)
-    assert content[0]["content"] == "[Outdated 'src/main.py#L10-L20' content removed]"
+    assert (
+        content[0]["content"]
+        == "['src/main.py#L10-L20' content removed because file was re-read or edited]"
+    )
 
 
 def test_partial_read_does_not_remove_different_range():
@@ -342,8 +360,14 @@ def test_full_read_removes_partial_reads():
     content_1 = messages[1]["content"]
     assert isinstance(content_0, list)
     assert isinstance(content_1, list)
-    assert content_0[0]["content"] == "[Outdated 'src/main.py' content removed]"
-    assert content_1[0]["content"] == "[Outdated 'src/main.py' content removed]"
+    assert (
+        content_0[0]["content"]
+        == "['src/main.py' content removed because file was re-read or edited]"
+    )
+    assert (
+        content_1[0]["content"]
+        == "['src/main.py' content removed because file was re-read or edited]"
+    )
 
 
 def test_partial_read_preserves_different_file_same_lines():

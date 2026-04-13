@@ -470,6 +470,13 @@ async def chat_with_agent(
                 thread_ts=base_args.get("slack_thread_ts"),
             )
 
+        elif tool_name == "query_file" and isinstance(tool_args, dict):
+            msg = f"Queried `{tool_args.get('file_path', '')}`."
+            slack_notify(
+                f"🧪 query_file: {tool_args.get('file_path', '')}",
+                thread_ts=base_args.get("slack_thread_ts"),
+            )
+
         elif not msg:
             msg = f"Calling `{tool_name}()` with `{tool_args}`."
 

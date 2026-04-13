@@ -10,6 +10,7 @@ from services.agents.verify_task_is_complete import (
     verify_task_is_complete,
 )
 from services.claude.forget_messages import FORGET_MESSAGES, forget_messages
+from services.claude.query_file import QUERY_FILE, query_file
 from services.http.curl import CURL, curl
 from services.http.web_fetch import WEB_FETCH, web_fetch
 from services.env.set_env import SET_ENV, set_env
@@ -71,6 +72,7 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     GIT_REVERT_FILE,
     GET_LOCAL_FILE_TREE,
     MOVE_FILE,
+    QUERY_FILE,
     SEARCH_AND_REPLACE,
     SEARCH_LOCAL_FILE_CONTENT,
     # SEARCH_WEB disabled: DDG CAPTCHAs bots. Use paid API (e.g. Brave Search) if needed.
@@ -122,6 +124,7 @@ tools_to_call: dict[str, Any] = {
     "get_local_file_content": get_local_file_content,
     "get_local_file_tree": get_local_file_tree,
     "move_file": move_file,
+    "query_file": query_file,
     "reply_to_review_comment": reply_to_comment,
     "reset_pr_branch_to_new_base": reset_pr_branch_to_new_base,
     "search_and_replace": search_and_replace,

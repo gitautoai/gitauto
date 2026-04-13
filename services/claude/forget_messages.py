@@ -43,7 +43,12 @@ def forget_messages(
     count = 0
     for fp in file_paths:
         logger.info("Forgetting file content for: %s", fp)
-        replace_old_file_content(messages, fp, is_full_file_read=True)
+        replace_old_file_content(
+            messages,
+            fp,
+            is_full_file_read=True,
+            reason="agent already extracted needed patterns",
+        )
         count += 1
     chars_after = measure_messages_chars(messages)
     chars_saved = chars_before - chars_after

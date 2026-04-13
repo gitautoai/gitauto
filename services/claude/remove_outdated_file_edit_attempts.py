@@ -252,7 +252,9 @@ def remove_outdated_file_edit_attempts(
                 new_item = dict(item)
                 new_input = dict(input_data)
                 if "file_content" in new_input:
-                    new_input["file_content"] = "[Outdated file content removed]"
+                    new_input["file_content"] = (
+                        "[file content removed because file was re-read or edited]"
+                    )
                 new_item["input"] = new_input
                 new_content.append(new_item)
                 continue
