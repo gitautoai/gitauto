@@ -7,21 +7,20 @@ from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
-def change_pr_base_branch(
+def reopen_pull_request(
     owner: str,
     repo: str,
     pr_number: int,
     token: str,
-    new_base_branch: str,
 ):
-    """Change the base branch of a PR via GitHub API.
+    """Reopen a closed PR. Safe to call on already-open PRs — GitHub treats state=open as a no-op.
     https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request
     """
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls/{pr_number}"
     headers = create_headers(token=token)
-    body = {"base": new_base_branch}
+    body = {"state": "open"}
 
     response = requests.patch(url=url, headers=headers, json=body, timeout=TIMEOUT)
     response.raise_for_status()
-    logger.info("Changed base of PR #%d to %s", pr_number, new_base_branch)
+    logger.info("Reopened PR #%d", pr_number)
     return True
