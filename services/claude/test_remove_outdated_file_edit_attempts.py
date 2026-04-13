@@ -1567,7 +1567,7 @@ def test_write_and_commit_file_input_stripped_when_outdated():
     # First write_and_commit input: stripped
     assert (
         result[0]["content"][0]["input"]["file_content"]
-        == "[Outdated file content removed]"
+        == "[file content removed because file was re-read or edited]"
     )
     # First tool_result: stripped
     assert (

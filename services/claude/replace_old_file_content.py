@@ -13,14 +13,18 @@ def is_tool_result(item: object) -> TypeGuard[ToolResultBlockParam]:
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def replace_old_file_content(
-    messages: list[MessageParam], identifier: str, is_full_file_read: bool
+    messages: list[MessageParam],
+    identifier: str,
+    is_full_file_read: bool,
+    reason: str = "file was re-read or edited",
 ):
     """Replace old file content with placeholder.
 
     - Full file read (is_full_file_read=True): identifier is file_path, removes ALL content
     - Partial read (is_full_file_read=False): identifier is file_path#L10-L20, removes exact match only
+    - reason: why the content was removed, shown in placeholder
     """
-    placeholder = f"[Outdated '{identifier}' content removed]"
+    placeholder = f"['{identifier}' content removed because {reason}]"
 
     for msg in messages:
         # Skip assistant messages (file content only appears in user messages)

@@ -35,7 +35,7 @@ def test_forget_single_file_from_real_conversation():
         base_args={},
     )
 
-    placeholder = "[Outdated '.circleci/config.yml' content removed]"
+    placeholder = "['.circleci/config.yml' content removed because agent already extracted needed patterns]"
     assert config_block[0]["content"] == placeholder
     chars_after = measure_messages_chars(messages)
     chars_saved = chars_before - chars_after
@@ -72,15 +72,15 @@ def test_forget_multiple_files_preserves_others():
     # Forgotten files replaced
     assert (
         messages[13]["content"][0]["content"]
-        == "[Outdated 'package.json' content removed]"
+        == "['package.json' content removed because agent already extracted needed patterns]"
     )
     assert (
         messages[39]["content"][0]["content"]
-        == "[Outdated '.circleci/config.yml' content removed]"
+        == "['.circleci/config.yml' content removed because agent already extracted needed patterns]"
     )
     assert (
         messages[41]["content"][0]["content"]
-        == "[Outdated 'src/App.test.tsx' content removed]"
+        == "['src/App.test.tsx' content removed because agent already extracted needed patterns]"
     )
     # Kept files untouched
     assert messages[17]["content"][0]["content"] == keep_msg_17

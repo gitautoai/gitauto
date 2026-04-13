@@ -40,7 +40,9 @@ def test_measure_after_forgetting_is_exact_diff():
     assert isinstance(config_block, list)
     original_content = config_block[0]["content"]
     assert original_content.startswith("```.circleci/config.yml")
-    placeholder = "[Outdated '.circleci/config.yml' content removed]"
+    placeholder = (
+        "['.circleci/config.yml' content removed because file was re-read or edited]"
+    )
     config_block[0]["content"] = placeholder
 
     chars_after = measure_messages_chars(messages)
