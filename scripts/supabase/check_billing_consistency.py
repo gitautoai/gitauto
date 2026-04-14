@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # pylint: disable=wrong-import-position
+# ruff: noqa: E402
 """Check billing consistency between GitHub PRs, usage table, and credits table.
 
 Source of truth: GitHub PRs created by gitauto-ai[bot].
@@ -14,13 +15,23 @@ Usage:
 
 import argparse
 from datetime import datetime, timedelta, timezone
+import os
 from pathlib import Path
 import sys
 
+from dotenv import load_dotenv
 import requests
 
 # Add repo root to Python path so imports work
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
+load_dotenv()
+
+# Billing checks must always run against PROD Supabase
+os.environ["SUPABASE_URL"] = os.environ.get("SUPABASE_URL_PRD", "")
+os.environ["SUPABASE_SERVICE_ROLE_KEY"] = os.environ.get(
+    "SUPABASE_SERVICE_ROLE_KEY_PRD", ""
+)
 
 from scripts.github.get_installation_token import get_installation_token
 from scripts.supabase.compare_billing_records import compare_billing_records

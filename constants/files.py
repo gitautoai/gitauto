@@ -118,6 +118,7 @@ TEST_DIR_NAMES = {
     "tests",  # Python, PHP, general
     "test",  # Java/Maven, Go
     "spec",  # RSpec (Ruby), Jasmine
+    "specs",  # Jasmine/Mocha plural convention
     "e2e",  # End-to-end tests
     "unit",  # PHPUnit/Laravel Unit tests
     "feature",  # PHPUnit/Laravel Feature tests
