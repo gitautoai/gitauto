@@ -998,3 +998,213 @@ async def test_question_comment_agent_replies_without_code_changes(
 
     # Empty commit NOT created (agent just replied, no code changes)
     mock_create_empty_commit.assert_not_called()
+
+
+@pytest.fixture
+def mock_bot_pr_comment_payload():
+    """Bot PR-level comment payload (no file path, from a bot like github-actions)."""
+    return {
+        "action": "created",
+        "comment": {
+            "id": 66666,
+            "node_id": "IC_66666",
+            "body": "AWS Security Hub found 100 medium severity CVEs",
+            "user": {"login": "github-actions[bot]", "type": "Bot"},
+            "path": "",
+            "subject_type": "pr_comment",
+            "line": 0,
+            "side": "",
+        },
+        "pull_request": {
+            "number": 85,
+            "title": "Low Test Coverage: rates.go",
+            "body": "Adds tests for rates.go",
+            "url": "https://api.github.com/repos/test-owner/test-repo/pulls/85",
+            "user": {"login": "gitauto-ai[bot]"},
+            "head": {
+                "ref": f"{PRODUCT_ID}/coverage-20250101-Ab1C",
+                "sha": "aaa111bbb222",
+            },
+            "base": {"ref": "develop"},
+        },
+        "repository": {
+            "id": 98765,
+            "name": "test-repo",
+            "owner": {
+                "id": 11111,
+                "login": "test-owner",
+                "type": "Organization",
+            },
+            "clone_url": "https://github.com/test-owner/test-repo.git",
+            "fork": False,
+        },
+        "sender": {
+            "id": 55555,
+            "login": "github-actions[bot]",
+        },
+        "installation": {
+            "id": 33333,
+        },
+    }
+
+
+@patch("services.webhook.review_run_handler.set_npm_token_env")
+@patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
+@patch("services.webhook.review_run_handler.get_pull_request_files")
+@patch("services.webhook.review_run_handler.chat_with_agent")
+@patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
+@pytest.mark.asyncio
+async def test_bot_pr_comment_irrelevant_to_pr_files_is_skipped(
+    mock_chat_with_agent,
+    mock_get_pr_files,
+    mock_get_user_public_info,
+    mock_get_token,
+    _mock_set_npm_token_env,
+    mock_bot_pr_comment_payload,
+):
+    """Bot PR-level comment that doesn't mention any PR file paths should be skipped."""
+    mock_get_token.return_value = "ghs_test_token"
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "bot@test.com", "display_name": "GH Actions"}
+    )()
+    mock_get_pr_files.return_value = [
+        {"filename": "internal/models/core/rates_test.go", "status": "added"},
+    ]
+
+    await handle_review_run(mock_bot_pr_comment_payload, trigger="pr_comment")
+
+    mock_chat_with_agent.assert_not_called()
+
+
+@patch("services.webhook.review_run_handler.set_npm_token_env")
+@patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
+@patch("services.webhook.review_run_handler.get_pull_request_files")
+@patch("services.webhook.review_run_handler.get_all_comments")
+@patch("services.webhook.review_run_handler.chat_with_agent")
+@patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
+@pytest.mark.asyncio
+async def test_bot_pr_comment_skipped_when_gitauto_already_commented(
+    mock_chat_with_agent,
+    mock_get_all_comments,
+    mock_get_pr_files,
+    mock_get_user_public_info,
+    mock_get_token,
+    _mock_set_npm_token_env,
+    mock_bot_pr_comment_payload,
+):
+    """Bot PR-level comment should be skipped if GitAuto already commented on the PR."""
+    # Make the comment mention a PR file so it passes the relevance check
+    mock_bot_pr_comment_payload["comment"]["body"] = "Lint error in internal/models/core/rates_test.go"
+    mock_get_token.return_value = "ghs_test_token"
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "bot@test.com", "display_name": "GH Actions"}
+    )()
+    mock_get_pr_files.return_value = [
+        {"filename": "internal/models/core/rates_test.go", "status": "added"},
+    ]
+    mock_get_all_comments.return_value = [
+        {"user": {"login": "github-actions[bot]"}, "body": "Security scan results"},
+        {"user": {"login": "gitauto-ai[bot]"}, "body": "I'm working on this PR"},
+    ]
+
+    await handle_review_run(mock_bot_pr_comment_payload, trigger="pr_comment")
+
+    mock_chat_with_agent.assert_not_called()
+
+
+@patch("services.webhook.review_run_handler.get_pull_request")
+@patch("services.webhook.review_run_handler.slack_notify")
+@patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
+@patch("services.webhook.review_run_handler.set_npm_token_env")
+@patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
+@patch("services.webhook.review_run_handler.get_repository")
+@patch("services.webhook.review_run_handler.create_user_request")
+@patch("services.webhook.review_run_handler.get_review_thread_comments")
+@patch("services.webhook.review_run_handler.reply_to_comment")
+@patch("services.webhook.review_run_handler.create_comment")
+@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch("services.webhook.review_run_handler.get_pull_request_files")
+@patch("services.webhook.review_run_handler.update_comment")
+@patch("services.webhook.review_run_handler.should_bail", return_value=False)
+@patch("services.webhook.review_run_handler.chat_with_agent")
+@patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
+@patch("services.webhook.review_run_handler.update_usage")
+@patch("services.webhook.review_run_handler.ensure_node_packages")
+@patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch(
+    "services.webhook.review_run_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.review_run_handler.git_merge_base_into_pr")
+@patch("services.webhook.review_run_handler.ensure_php_packages")
+@patch(
+    "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
+)
+@patch("services.webhook.review_run_handler.get_all_comments")
+@patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
+@pytest.mark.asyncio
+async def test_bot_pr_comment_processed_when_gitauto_has_not_commented(
+    _mock_get_all_comments,
+    _mock_verify_task_is_ready,
+    _mock_ensure_php,
+    _mock_get_behind,
+    _mock_merge_base,
+    _mock_prepare_repo,
+    _mock_ensure_node,
+    _mock_update_usage,
+    _mock_get_reference,
+    _mock_create_empty_commit,
+    mock_chat_with_agent,
+    _mock_should_bail,
+    _mock_update_comment,
+    mock_get_pr_files,
+    _mock_get_file_content,
+    mock_create_comment,
+    mock_reply_to_comment,
+    mock_get_thread_comments,
+    mock_create_user_request,
+    mock_get_repo,
+    mock_get_user_public_info,
+    mock_get_token,
+    _mock_set_npm_token_env,
+    _mock_get_local_file_tree,
+    _mock_slack_notify,
+    _mock_get_pull_request,
+    mock_bot_pr_comment_payload,
+):
+    """Bot PR-level comment should be processed if GitAuto has not commented yet."""
+    # Make the comment mention a PR file so it passes the relevance check
+    mock_bot_pr_comment_payload["comment"]["body"] = "Lint error in internal/models/core/rates_test.go"
+    mock_get_token.return_value = "ghs_test_token"
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "bot@test.com", "display_name": "GH Actions"}
+    )()
+    mock_get_repo.return_value = {"id": 98765, "trigger_on_review_comment": True}
+    mock_create_user_request.return_value = 777
+    mock_create_comment.return_value = "http://new-comment-url"
+    mock_get_pr_files.return_value = [
+        {"filename": "internal/models/core/rates_test.go", "status": "added"},
+    ]
+    _mock_verify_task_is_ready.return_value = VerifyTaskIsReadyResult()
+    # No GitAuto comment in the PR yet
+    _mock_get_all_comments.return_value = [
+        {"user": {"login": "github-actions[bot]"}, "body": "Security scan results"},
+    ]
+
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[{"role": "user", "content": "review"}],
+        token_input=100,
+        token_output=50,
+        is_completed=True,
+        completion_reason="Addressed the security findings.",
+        p=40,
+        is_planned=False,
+    )
+
+    await handle_review_run(mock_bot_pr_comment_payload, trigger="pr_comment")
+
+    mock_chat_with_agent.assert_called_once()

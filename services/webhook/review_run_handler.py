@@ -25,6 +25,7 @@ from services.git.clone_repo_and_install_dependencies import (
 )
 from services.git.git_merge_base_into_pr import git_merge_base_into_pr
 from services.github.comments.create_comment import create_comment
+from services.github.comments.get_all_comments import get_all_comments
 from services.github.commits.get_head_commit_count_behind_base import (
     get_head_commit_count_behind_base,
 )
@@ -142,8 +143,37 @@ async def handle_review_run(
         if summary_body and summary_body.strip():
             review_summary = summary_body
 
-    # For inline review comments, get thread context and check resolved status
+    # For PR-level comments (no file path), check bot relevance and loop prevention
+    bot_pr_files = None
     if not review_path:
+        if review_author_is_bot:
+            # Check if bot comment mentions any PR file paths (skip irrelevant bot comments like Security Hub scans)
+            bot_pr_files = get_pull_request_files(
+                owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
+            )
+            pr_file_paths = [f["filename"] for f in bot_pr_files]
+            mentions_pr_file = any(path in review_body for path in pr_file_paths)
+            if not mentions_pr_file:
+                logger.info(
+                    "Ignoring bot PR comment from %s - does not mention any PR file paths: %s",
+                    review_author["login"],
+                    pr_file_paths,
+                )
+                return
+            # Check if GitAuto already commented on this PR to prevent bot-to-bot loops
+            pr_comments = get_all_comments(
+                owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
+            )
+            gitauto_already_commented = any(
+                c.get("user") and c["user"].get("login") == GITHUB_APP_USER_NAME
+                for c in pr_comments
+            )
+            if gitauto_already_commented:
+                logger.info(
+                    "Ignoring bot PR comment from %s - GitAuto already commented on this PR",
+                    review_author["login"],
+                )
+                return
         review_comment = review_body
     else:
         # Get all comments in the review thread
@@ -332,7 +362,7 @@ async def handle_review_run(
             update_comment(body=comment_body, base_args=base_args)
 
     # Get list of changed files in the PR (filenames only, not contents)
-    pr_files = get_pull_request_files(
+    pr_files = bot_pr_files or get_pull_request_files(
         owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
     if not review_author_is_bot:
