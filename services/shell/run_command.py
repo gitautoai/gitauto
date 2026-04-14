@@ -41,6 +41,8 @@ RUN_COMMAND: ToolUnionParam = {
 def run_command(base_args: BaseArgs, command: str, **_kwargs):
     if not any(command.startswith(prefix) for prefix in ALLOWED_PREFIXES):
         logger.info("Command blocked: %s", command)
+        thread_ts = base_args.get("slack_thread_ts")
+        slack_notify(f"⛔ Blocked command: `{command}`", thread_ts)
         return f"Command not allowed. Allowed prefixes: {', '.join(ALLOWED_PREFIXES)}"
 
     logger.info("Running command: %s", command)
@@ -54,6 +56,8 @@ def run_command(base_args: BaseArgs, command: str, **_kwargs):
             resolved = os.path.realpath(arg)
             if not resolved.startswith("/tmp"):
                 logger.info("Path blocked: %s resolves to %s", arg, resolved)
+                thread_ts = base_args.get("slack_thread_ts")
+                slack_notify(f"⛔ Blocked path: `{command}` (resolved to `{resolved}`)", thread_ts)
                 return f"Path not allowed: {arg}. File access is restricted to /tmp."
     try:
         result = run_subprocess(args=args, cwd="/tmp")
