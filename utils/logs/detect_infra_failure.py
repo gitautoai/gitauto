@@ -22,6 +22,9 @@ INFRA_FAILURE_PATTERNS = [
     "out of memory",
     "exit code 137",
     "ENOMEM",
+    # MongoMemoryServer binary crash (version/distro mismatch with cached S3 binary)
+    "MongoMemoryServer Instance failed",
+    'signal "SIGABRT"',
 ]
 
 
