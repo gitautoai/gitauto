@@ -39,9 +39,10 @@ def reply_to_comment(base_args: ReviewBaseArgs, body: str, **_kwargs):
             f"pr_number is required for reply_to_comment but got: {pr_number}"
         )
 
-    # PR-level reviews (no file path) use the issue comments API, not the inline comment reply API
+    # PR-level comments (no file path) use the issue comments API, not the inline comment reply API
+    # "pr_review" = PR-level review, "pr_comment" = general PR comment (adapted from issue_comment)
     review_subject_type = base_args.get("review_subject_type")
-    if review_subject_type == "pr_review":
+    if review_subject_type in ("pr_review", "pr_comment"):
         url = f"{GITHUB_API_URL}/repos/{owner}/{repo}/issues/{pr_number}/comments"
     else:
         if not comment_id:
