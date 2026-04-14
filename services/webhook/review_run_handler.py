@@ -142,8 +142,24 @@ async def handle_review_run(
         if summary_body and summary_body.strip():
             review_summary = summary_body
 
-    # For inline review comments, get thread context and check resolved status
+    # Get list of changed files in the PR (used for bot relevance check and later for file processing)
+    pr_files = get_pull_request_files(
+        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
+    )
+
+    # For PR-level comments (no file path), check bot relevance and loop prevention
     if not review_path:
+        if review_author_is_bot:
+            # Check if bot comment mentions any PR file paths (skip irrelevant bot comments like Security Hub scans)
+            pr_file_paths = [f["filename"] for f in pr_files]
+            mentions_pr_file = any(path in review_body for path in pr_file_paths)
+            if not mentions_pr_file:
+                logger.info(
+                    "Ignoring bot PR comment from %s - does not mention any PR file paths: %s",
+                    review_author["login"],
+                    pr_file_paths,
+                )
+                return
         review_comment = review_body
     else:
         # Get all comments in the review thread
@@ -331,10 +347,6 @@ async def handle_review_run(
             comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
             update_comment(body=comment_body, base_args=base_args)
 
-    # Get list of changed files in the PR (filenames only, not contents)
-    pr_files = get_pull_request_files(
-        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
-    )
     if not review_author_is_bot:
         p += 5
         add_log_message(f"Found {len(pr_files)} changed files in the PR.", log_messages)
