@@ -1,6 +1,5 @@
 import os
 import shlex
-import uuid
 
 from anthropic.types import ToolUnionParam
 
@@ -11,7 +10,7 @@ from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
-# Output longer than this is saved to /tmp instead of returned inline
+# Output longer than this is truncated
 INLINE_OUTPUT_LIMIT = 2_000
 
 RUN_COMMAND: ToolUnionParam = {
@@ -57,7 +56,10 @@ def run_command(base_args: BaseArgs, command: str, **_kwargs):
             if not resolved.startswith("/tmp"):
                 logger.info("Path blocked: %s resolves to %s", arg, resolved)
                 thread_ts = base_args.get("slack_thread_ts")
-                slack_notify(f"⛔ Blocked path: `{command}` (resolved to `{resolved}`)", thread_ts)
+                slack_notify(
+                    f"⛔ Blocked path: `{command}` (resolved to `{resolved}`)",
+                    thread_ts,
+                )
                 return f"Path not allowed: {arg}. File access is restricted to /tmp."
     try:
         result = run_subprocess(args=args, cwd="/tmp")
@@ -69,13 +71,10 @@ def run_command(base_args: BaseArgs, command: str, **_kwargs):
     logger.info("Command completed: %s, len=%d", command, len(output))
 
     if len(output) > INLINE_OUTPUT_LIMIT:
-        file_path = os.path.join("/tmp", f"cmd_{uuid.uuid4().hex[:8]}.txt")
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(output)
-        logger.info("Large output saved to %s (%d chars)", file_path, len(output))
+        logger.info("Large output truncated: %s (%d chars)", command, len(output))
         thread_ts = base_args.get("slack_thread_ts")
-        slack_notify(f"🖥️ Command: `{command}` (saved to file)", thread_ts)
-        return f"Output too large for inline ({len(output):,} chars). Saved to: {file_path}\nUse get_local_file_content to read it."
+        slack_notify(f"🖥️ Command: `{command}` (truncated)", thread_ts)
+        return f"{output[:INLINE_OUTPUT_LIMIT]}\n\n... (truncated, showing {INLINE_OUTPUT_LIMIT:,} of {len(output):,} chars)"
 
     thread_ts = base_args.get("slack_thread_ts")
     slack_notify(f"🖥️ Command: `{command}`", thread_ts)
