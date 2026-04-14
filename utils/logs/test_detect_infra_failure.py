@@ -64,6 +64,17 @@ def test_detect_infra_failure_real_segfault_log():
         ),
         ("bash: line 1: 12345 Killed (exit code 137)", "exit code 137"),
         ("Cannot allocate memory (errno: ENOMEM)", "ENOMEM"),
+        # MongoMemoryServer binary crash
+        (
+            "Starting the MongoMemoryServer Instance failed, enable debug log for more information. Error:\n"
+            ' UnexpectedCloseError: Instance closed unexpectedly with code "null" and signal "SIGABRT"',
+            "MongoMemoryServer Instance failed",
+        ),
+        (
+            'Instance closed unexpectedly with code "null" and signal "SIGABRT"\n'
+            "    at ChildProcess.emit (node:events:519:28)",
+            'signal "SIGABRT"',
+        ),
     ],
     ids=[
         "yarn_502",
@@ -78,6 +89,8 @@ def test_detect_infra_failure_real_segfault_log():
         "oom_js_heap",
         "exit_code_137",
         "enomem",
+        "mongoms_instance_failed",
+        "sigabrt",
     ],
 )
 def test_detect_infra_failure_matches(error_log, expected):
