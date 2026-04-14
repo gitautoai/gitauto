@@ -51,9 +51,8 @@ class TestRunCommand:
         # npm view express (no field) returns lots of metadata
         result = run_command(base_args, "npm view express")
         assert result is not None
-        if "Saved to:" in result:
-            assert "/tmp/cmd_" in result
-            assert "get_local_file_content" in result
+        if "truncated" in result:
+            assert "showing 2,000 of" in result
 
     @patch("services.shell.run_command.slack_notify")
     def test_cat_blocked_outside_tmp(self, _mock_slack, create_test_base_args):
