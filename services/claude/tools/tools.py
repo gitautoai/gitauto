@@ -35,6 +35,7 @@ from services.github.comments.reply_to_comment import (
     REPLY_TO_REVIEW_COMMENT,
     reply_to_comment,
 )
+from services.shell.run_command import RUN_COMMAND, run_command
 from services.node.switch_node_version import (
     SWITCH_NODE_VERSION,
     switch_node_version,
@@ -73,6 +74,7 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     GET_LOCAL_FILE_TREE,
     MOVE_FILE,
     QUERY_FILE,
+    RUN_COMMAND,
     SEARCH_AND_REPLACE,
     SEARCH_LOCAL_FILE_CONTENT,
     # SEARCH_WEB disabled: DDG CAPTCHAs bots. Use paid API (e.g. Brave Search) if needed.
@@ -126,6 +128,7 @@ tools_to_call: dict[str, Any] = {
     "move_file": move_file,
     "query_file": query_file,
     "reply_to_review_comment": reply_to_comment,
+    "run_command": run_command,
     "reset_pr_branch_to_new_base": reset_pr_branch_to_new_base,
     "search_and_replace": search_and_replace,
     "search_local_file_contents": search_local_file_contents,
