@@ -11,6 +11,7 @@ def test_skips_when_target_dirs_exist(tmp_path):
     os.makedirs(os.path.join(clone_dir, "mongodb-binaries"))
     os.makedirs(os.path.join(clone_dir, "node_modules"))
     os.makedirs(os.path.join(clone_dir, "vendor"))
+    os.makedirs(os.path.join(clone_dir, "venv"))
 
     with patch("services.aws.s3.download_and_extract_dependency.s3_client") as mock_s3:
         download_and_extract_s3_deps("owner", "repo", clone_dir)
@@ -43,6 +44,6 @@ def test_downloads_and_extracts_tarball(tmp_path):
 
         download_and_extract_s3_deps("owner", "repo", clone_dir)
 
-        # Should have called download_file for mongodb-binaries, node_modules, and vendor
-        assert mock_s3.download_file.call_count == 3
-        assert mock_run.call_count == 3
+        # Should have called download_file for mongodb-binaries, node_modules, vendor, and venv
+        assert mock_s3.download_file.call_count == 4
+        assert mock_run.call_count == 4

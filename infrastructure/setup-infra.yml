@@ -383,6 +383,24 @@ Resources:
                     tar -czf /tmp/vendor.tar.gz -C "$LOCAL_DIR" vendor vendor-bin
                     aws s3 cp /tmp/vendor.tar.gz "s3://$S3_BUCKET/$S3_KEY_PREFIX/vendor.tar.gz" \
                       --metadata "manifest-hash=$MANIFEST_HASH"
+                  elif [ "$PKG_MANAGER" = "pip" ] || [ "$PKG_MANAGER" = "poetry" ] || [ "$PKG_MANAGER" = "pipenv" ]; then
+                    cd "$LOCAL_DIR"
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    if [ "$PKG_MANAGER" = "poetry" ]; then
+                      pip install poetry
+                      poetry install --no-interaction
+                    elif [ "$PKG_MANAGER" = "pipenv" ]; then
+                      pip install pipenv
+                      pipenv install --deploy --system
+                    elif [ -f "requirements.txt" ]; then
+                      pip install -r requirements.txt
+                    elif [ -f "pyproject.toml" ]; then
+                      pip install .
+                    fi
+                    tar -czf /tmp/venv.tar.gz -C "$LOCAL_DIR" venv
+                    aws s3 cp /tmp/venv.tar.gz "s3://$S3_BUCKET/$S3_KEY_PREFIX/venv.tar.gz" \
+                      --metadata "manifest-hash=$MANIFEST_HASH"
                   else
                     cd "$LOCAL_DIR"
                     if [ -n "$NPM_TOKEN" ]; then

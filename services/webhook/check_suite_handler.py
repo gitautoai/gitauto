@@ -400,8 +400,6 @@ async def handle_check_suite(
     validation_result = await verify_task_is_ready(
         base_args=base_args,
         file_paths=files_to_validate,
-        run_tsc=True,
-        run_jest=True,
         run_phpunit=False,
     )
     base_args["baseline_tsc_errors"] = set(validation_result.tsc_errors)
