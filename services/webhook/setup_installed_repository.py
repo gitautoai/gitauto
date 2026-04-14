@@ -19,6 +19,7 @@ from services.github.repositories.is_repo_forked import is_repo_forked
 from services.github.token.get_installation_token import get_installation_access_token
 from services.node.ensure_node_packages import ensure_node_packages
 from services.php.ensure_php_packages import ensure_php_packages
+from services.python.ensure_python_packages import ensure_python_packages
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
     ensure_jest_uses_tsconfig_for_tests,
 )
@@ -93,6 +94,12 @@ def setup_installed_repository(
         repo_name=repo_name,
     )
     ensure_php_packages(
+        owner_id=owner_id,
+        clone_dir=clone_dir,
+        owner_name=owner_name,
+        repo_name=repo_name,
+    )
+    ensure_python_packages(
         owner_id=owner_id,
         clone_dir=clone_dir,
         owner_name=owner_name,

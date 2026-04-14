@@ -5,6 +5,7 @@ SUPPORTED_DEPENDENCY_DIRS = [
     "mongodb-binaries",  # MongoMemoryServer (mongod binary, ~100MB)
     "node_modules",  # npm/yarn/pnpm (JS/TS)
     "vendor",  # Composer (PHP), Go modules
+    "venv",  # virtualenv (Python)
 ]
 
 # All third-party dependency directories by language/ecosystem (for file filtering)
@@ -20,7 +21,6 @@ DEPENDENCY_DIRS = SUPPORTED_DEPENDENCY_DIRS + [
     "jspm_packages",  # jspm (JS)
     "Packages",  # NuGet (C#), Swift Package Manager
     "Pods",  # CocoaPods (iOS)
-    "venv",  # virtualenv (Python)
 ]
 
 

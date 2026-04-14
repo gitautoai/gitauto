@@ -169,6 +169,9 @@ JS_TS_FILE_EXTENSIONS = (".js", ".jsx", ".ts", ".tsx")
 
 PHP_TEST_FILE_EXTENSIONS = ("Test.php",)
 
+# Python test files use prefix (test_foo.py), not suffix
+PYTHON_TEST_FILE_PREFIX = "test_"
+
 TS_TEST_FILE_EXTENSIONS = (
     ".test.ts",
     ".test.tsx",

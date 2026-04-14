@@ -37,7 +37,7 @@ def ensure_php_packages(
         repo_name=repo_name,
         owner_id=owner_id,
         pkg_manager="composer",
-        tarball_name="vendor.tar.gz",
+        tarball_name="vendor.tar.gz",  # Must match SUPPORTED_DEPENDENCY_DIRS in utils/files/is_dependency_file.py
         manifest_hash=manifest_hash,
         manifest_files=manifest_files,
         log_prefix="php",

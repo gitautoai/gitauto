@@ -33,11 +33,13 @@ from services.node.ensure_vitest_timeout_for_ci import ensure_vitest_timeout_for
 from services.node.switch_node_version import switch_node_version
 from services.phpunit.run_phpunit_test import run_phpunit_test
 from services.prettier.run_prettier_fix import run_prettier_fix
+from services.pytest.run_pytest_test import run_pytest_test
 from services.slack.slack_notify import slack_notify
 from services.tsc.create_tsc_issue import create_tsc_issue
 from services.tsc.run_tsc_check import run_tsc_check
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.filter_js_ts_files import filter_js_ts_files
+from utils.files.is_python_test_file import is_python_test_file
 from utils.files.is_source_file import is_source_file
 from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
@@ -309,7 +311,6 @@ async def verify_task_is_complete(
         )
         formatting_applied.append(f"- {snap_path}: Snapshot updated")
 
-    # PHPUnit disabled by default: tests fail due to Lambda environment limitations
     if run_phpunit:
         php_test_files = [
             f["filename"]
@@ -325,6 +326,20 @@ async def verify_task_is_complete(
             for err in phpunit_result.errors:
                 remaining_errors.append(f"- phpunit: {err}")
             error_files.update(phpunit_result.error_files)
+
+    py_test_files = [
+        f["filename"]
+        for f in pr_files
+        if is_python_test_file(f["filename"]) and f["status"] != "removed"
+    ]
+    pytest_result = await run_pytest_test(
+        base_args=base_args,
+        test_file_paths=py_test_files,
+    )
+    if pytest_result.errors:
+        for err in pytest_result.errors:
+            remaining_errors.append(f"- pytest: {err}")
+        error_files.update(pytest_result.error_files)
 
     # Quality gate for schedule/dashboard PRs: evaluate test quality via Claude.
     # Runs last to avoid paying for LLM call when lint/test errors will force a retry anyway.

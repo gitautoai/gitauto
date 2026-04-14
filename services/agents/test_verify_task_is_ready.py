@@ -38,10 +38,8 @@ async def test_valid_file_returns_success(
     )
     result = await verify_task_is_ready(
         base_args=base_args,
-        file_paths=["src/index.ts"],
-        run_tsc=False,
-        run_jest=False,
         run_phpunit=False,
+        file_paths=["src/index.ts"],
     )
     assert result.success is True
     assert result.errors == []
@@ -77,10 +75,8 @@ async def test_prettier_fails_returns_errors(
     )
     result = await verify_task_is_ready(
         base_args=base_args,
-        file_paths=["src/broken.ts"],
-        run_tsc=False,
-        run_jest=False,
         run_phpunit=False,
+        file_paths=["src/broken.ts"],
     )
     assert result.success is False
     assert len(result.errors) == 1
@@ -117,10 +113,8 @@ async def test_eslint_fails_returns_errors(
     )
     result = await verify_task_is_ready(
         base_args=base_args,
-        file_paths=["src/broken.ts"],
-        run_tsc=False,
-        run_jest=False,
         run_phpunit=False,
+        file_paths=["src/broken.ts"],
     )
     assert result.success is False
     assert len(result.errors) == 1
@@ -144,10 +138,8 @@ async def test_non_js_files_skipped(mock_read_local_file):
     )
     result = await verify_task_is_ready(
         base_args=base_args,
-        file_paths=["README.md", "config.json"],
-        run_tsc=False,
-        run_jest=False,
         run_phpunit=False,
+        file_paths=["README.md", "config.json"],
     )
     assert result.success is True
     assert result.errors == []
@@ -170,10 +162,8 @@ async def test_empty_file_list():
     )
     result = await verify_task_is_ready(
         base_args=base_args,
-        file_paths=[],
-        run_tsc=False,
-        run_jest=False,
         run_phpunit=False,
+        file_paths=[],
     )
     assert result.success is True
     assert result.errors == []
@@ -202,10 +192,8 @@ async def test_file_not_found_skipped(
     )
     result = await verify_task_is_ready(
         base_args=base_args,
-        file_paths=["src/missing.ts"],
-        run_tsc=False,
-        run_jest=False,
         run_phpunit=False,
+        file_paths=["src/missing.ts"],
     )
     assert result.success is True
     assert result.errors == []
@@ -242,10 +230,8 @@ async def test_fixes_applied_and_pushed(
     )
     result = await verify_task_is_ready(
         base_args=base_args,
-        file_paths=["src/index.ts"],
-        run_tsc=False,
-        run_jest=False,
         run_phpunit=False,
+        file_paths=["src/index.ts"],
     )
     assert result.success is True
     assert result.errors == []
@@ -284,10 +270,8 @@ async def test_eslint_partial_fix_pushes_and_reports_errors(
     )
     result = await verify_task_is_ready(
         base_args=base_args,
-        file_paths=["src/index.ts"],
-        run_tsc=False,
-        run_jest=False,
         run_phpunit=False,
+        file_paths=["src/index.ts"],
     )
     # Lint-only errors (no-unused-vars) are ignored by verify_task_is_ready
     # Only coverage-relevant errors cause failure
@@ -328,10 +312,8 @@ async def test_no_explicit_any_ignored(
     )
     result = await verify_task_is_ready(
         base_args=base_args,
-        file_paths=["src/utils/auth0.ts"],
-        run_tsc=False,
-        run_jest=False,
         run_phpunit=False,
+        file_paths=["src/utils/auth0.ts"],
     )
     # no-explicit-any is a lint-only error, not coverage-relevant
     # Previously this caused the agent to loop for 900s trying to fix unfixable errors
@@ -375,10 +357,8 @@ async def test_run_tsc_reports_type_errors(
     )
     result = await verify_task_is_ready(
         base_args=base_args,
-        file_paths=["src/index.ts"],
-        run_tsc=True,
-        run_jest=False,
         run_phpunit=False,
+        file_paths=["src/index.ts"],
     )
     assert result.success is False
     assert len(result.errors) == 1
@@ -424,10 +404,8 @@ async def test_run_jest_reports_test_failures(
     )
     result = await verify_task_is_ready(
         base_args=base_args,
-        file_paths=["src/index.test.ts"],
-        run_tsc=False,
-        run_jest=True,
         run_phpunit=False,
+        file_paths=["src/index.test.ts"],
     )
     assert result.success is False
     assert len(result.errors) == 2

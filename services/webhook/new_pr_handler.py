@@ -40,6 +40,7 @@ from services.node.ensure_node_packages import ensure_node_packages
 from services.node.set_npm_token_env import set_npm_token_env
 from services.openai.vision import describe_image
 from services.php.ensure_php_packages import ensure_php_packages
+from services.python.ensure_python_packages import ensure_python_packages
 from services.resend.send_email import send_email
 from services.resend.text.credits_depleted_email import get_credits_depleted_email_text
 from services.slack.slack_notify import slack_notify
@@ -327,6 +328,14 @@ async def handle_new_pr(
     )
     logger.info("php: ready=%s", php_ready)
 
+    python_ready = ensure_python_packages(
+        owner_id=owner_id,
+        clone_dir=clone_dir,
+        owner_name=owner_name,
+        repo_name=repo_name,
+    )
+    logger.info("python: ready=%s", python_ready)
+
     # Read impl file from local clone and skip if no testable code
     impl_file_content = (
         read_local_file(file_path=impl_file_path, base_dir=clone_dir) or ""
@@ -504,8 +513,6 @@ async def handle_new_pr(
     validation_result = await verify_task_is_ready(
         base_args=base_args,
         file_paths=files_to_validate,
-        run_tsc=True,
-        run_jest=False,
         run_phpunit=False,
     )
     base_args["baseline_tsc_errors"] = set(validation_result.tsc_errors)
