@@ -1,0 +1,117 @@
+# 🔍 AWS Security Hub Scan Results
+
+<details>
+<summary><b>Click to view all findings in detail.</b></summary>
+
+| Severity | Finding | Resource |
+|----------|---------|----------|
+| 🟡 | Lambda.2 Lambda functions should use supported runtimes | landingzone-aws-backup-service-opt-in |
+| 🟡 | CVE-2025-61724 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2026-27142 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-58185 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-22866 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-58189 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-61730 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-4673 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-0913 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-47906 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-61727 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-61728 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-58186 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-58183 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-47912 - go/stdlib | aggregator_dev_parkwhiz |
+| 🟡 | CVE-2025-22870 - golang.org/x/net | aggregator_dev_extractor |
+| 🟡 | CVE-2025-22872 - golang.org/x/net | aggregator_dev_extractor |
+| 🟡 | CVE-2024-45338 - golang.org/x/net | aggregator_dev_extractor |
+| 🟡 | CVE-2020-8911 - github.com/aws/aws-sdk-go | aggregator_dev_extractor |
+| 🟡 | CVE-2025-58190 - golang.org/x/net | aggregator_dev_extractor |
+| 🟡 | CVE-2025-47911 - golang.org/x/net | aggregator_dev_extractor |
+| 🟡 | CVE-2025-61730 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-47906 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-22866 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2026-27142 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-58185 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-58183 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-58186 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-61724 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-58189 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-47912 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-4673 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-61727 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-0913 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-61728 - go/stdlib | aggregator_dev_extractor |
+| 🟡 | CVE-2025-58185 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-58183 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-4673 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-58186 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-47906 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-61728 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-61730 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2026-27142 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-22866 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-47912 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-58189 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-0913 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-61727 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-61724 - go/stdlib | aggregator_dev_spothero |
+| 🟡 | CVE-2025-47906 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-22866 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-61730 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2026-27142 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-58186 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-58185 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-61724 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-58183 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-4673 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-58189 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-47912 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-0913 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-61728 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2025-61727 - go/stdlib | aggregator_dev_processor |
+| 🟡 | CVE-2020-8911 - github.com/aws/aws-sdk-go | aggregator_dev_processor |
+| 🟡 | CVE-2025-61730 - go/stdlib | aggregator-dev-event-dedupe |
+| 🟡 | CVE-2026-27142 - go/stdlib | aggregator-dev-event-dedupe |
+| 🟡 | CVE-2025-61728 - go/stdlib | aggregator-dev-event-dedupe |
+| 🟡 | CVE-2026-27142 - go/stdlib | aggregator-dev-event-enrich |
+| 🟡 | CVE-2025-61730 - go/stdlib | aggregator-dev-event-enrich |
+| 🟡 | CVE-2025-61728 - go/stdlib | aggregator-dev-event-enrich |
+| 🟡 | CVE-2026-27142 - go/stdlib | aggregator-dev-spothero-events |
+| 🟡 | CVE-2025-61730 - go/stdlib | aggregator-dev-spothero-events |
+| 🟡 | CVE-2025-61728 - go/stdlib | aggregator-dev-spothero-events |
+| 🟡 | CVE-2026-27142 - go/stdlib | aggregator-dev-venue-normalize |
+| 🟡 | CVE-2025-61730 - go/stdlib | aggregator-dev-venue-normalize |
+| 🟡 | CVE-2025-61728 - go/stdlib | aggregator-dev-venue-normalize |
+| 🟡 | CVE-2026-27142 - go/stdlib | aggregator-dev-event-normalize |
+| 🟡 | CVE-2025-61730 - go/stdlib | aggregator-dev-event-normalize |
+| 🟡 | CVE-2025-61728 - go/stdlib | aggregator-dev-event-normalize |
+| 🟡 | CVE-2026-27142 - go/stdlib | token-rotator |
+| 🟡 | CVE-2025-61730 - go/stdlib | token-rotator |
+| 🟡 | CVE-2025-4673 - go/stdlib | token-rotator |
+| 🟡 | CVE-2025-0913 - go/stdlib | token-rotator |
+| 🟡 | CVE-2025-61728 - go/stdlib | token-rotator |
+| 🟡 | CVE-2025-61730 - go/stdlib | aggregator_dev_be |
+| 🟡 | CVE-2026-27142 - go/stdlib | aggregator_dev_be |
+| 🟡 | CVE-2025-4673 - go/stdlib | aggregator_dev_be |
+| 🟡 | CVE-2025-0913 - go/stdlib | aggregator_dev_be |
+| 🟡 | CVE-2025-61728 - go/stdlib | aggregator_dev_be |
+| 🟡 | CVE-2026-27142 - go/stdlib | aggregator_dev_apds_transformer |
+| 🟡 | CVE-2025-61730 - go/stdlib | aggregator_dev_apds_transformer |
+| 🟡 | CVE-2025-4673 - go/stdlib | aggregator_dev_apds_transformer |
+| 🟡 | CVE-2025-0913 - go/stdlib | aggregator_dev_apds_transformer |
+| 🟡 | CVE-2025-61728 - go/stdlib | aggregator_dev_apds_transformer |
+| 🟡 | CVE-2025-61727 - go/stdlib | aggregator-dev-venue-normalize |
+| 🟡 | CVE-2025-61727 - go/stdlib | aggregator-dev-event-enrich |
+| 🟡 | CVE-2025-61727 - go/stdlib | aggregator-dev-event-dedupe |
+| 🟡 | CVE-2025-61727 - go/stdlib | aggregator-dev-event-normalize |
+| 🟡 | CVE-2025-61727 - go/stdlib | aggregator-dev-spothero-events |
+| 🟡 | CVE-2025-22866 - go/stdlib | token-rotator |
+
+</details>
+
+**Summary of Findings**:
+🔴 0 Critical
+🟠 0 High
+🟡 100 Medium
+🔵 0 Low/Info
+
+*Last updated: 2026-04-13 18:05 UTC*
