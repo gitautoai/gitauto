@@ -411,3 +411,47 @@ async def test_run_jest_reports_test_failures(
     assert len(result.errors) == 2
     assert "jest:" in result.errors[0]
     assert result.files_with_errors == {"src/index.test.ts"}
+
+
+@pytest.mark.asyncio
+@patch("services.agents.verify_task_is_ready.run_jest_test")
+@patch("services.agents.verify_task_is_ready.git_commit_and_push")
+@patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_ready.read_local_file")
+async def test_impl_files_excluded_from_jest(
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, mock_jest
+):
+    """Impl files must NOT be passed to run_jest_test at all.
+
+    Previously all JS/TS files were passed as test_file_paths, causing
+    jest --findRelatedTests on impl files which OOMed Lambda for MongoDB repos.
+    verify_task_is_ready only validates existing test files; running related
+    tests for impl files is verify_task_is_complete's job.
+    """
+    mock_read_local_file.return_value = "export function foo() { return 1; }"
+    mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
+    mock_eslint.return_value = ESLintResult(
+        success=True, content=None, lint_errors=None, coverage_errors=None
+    )
+    mock_jest.return_value = JestResult()
+
+    base_args = cast(
+        BaseArgs,
+        {
+            "owner": "test",
+            "repo": "test",
+            "token": "test",
+            "base_branch": "main",
+            "clone_dir": "/tmp/clone",
+        },
+    )
+    await verify_task_is_ready(
+        base_args=base_args,
+        run_phpunit=False,
+        file_paths=["src/models/Foo.ts", "src/models/Foo.test.ts"],
+    )
+    mock_jest.assert_called_once()
+    call_kwargs = mock_jest.call_args[1]
+    assert call_kwargs["test_file_paths"] == ["src/models/Foo.test.ts"]
+    assert call_kwargs["source_file_paths"] == []

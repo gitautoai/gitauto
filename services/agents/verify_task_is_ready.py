@@ -12,6 +12,7 @@ from services.tsc.run_tsc_check import run_tsc_check
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.filter_js_ts_files import filter_js_ts_files
 from utils.files.is_python_test_file import is_python_test_file
+from utils.files.is_test_file import is_test_file
 from utils.files.read_local_file import read_local_file
 from utils.logging.logging_config import logger
 
@@ -110,9 +111,10 @@ async def verify_task_is_ready(
             errors.append(f"- tsc: {err}")
         files_with_errors.update(tsc_result.error_files)
 
+    js_ts_test_files = [f for f in js_ts_files if is_test_file(f)]
     jest_result = await run_jest_test(
         base_args=base_args,
-        test_file_paths=js_ts_files,
+        test_file_paths=js_ts_test_files,
         source_file_paths=[],
         impl_file_to_collect_coverage_from="",
     )
