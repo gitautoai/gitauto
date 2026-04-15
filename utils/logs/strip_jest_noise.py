@@ -2,6 +2,7 @@ import re
 
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
+from utils.logs.is_test_setup_noise import is_test_setup_noise
 
 
 @handle_exceptions(default_return_value=lambda log: log, raise_on_error=False)
@@ -9,7 +10,8 @@ def strip_jest_noise(log: str):
     """Strip noise from raw jest/vitest subprocess output.
 
     Removes JSON debug lines from console.log, passing test indicator lines,
-    MongoDB download progress, PASS test suite sections, and ANSI color codes.
+    MongoDB download progress, PASS test suite sections, ANSI color codes,
+    and MongoDB/test-setup noise (ObjectId dumps, seed data, migration files).
     """
     if not log:
         return log
@@ -22,6 +24,7 @@ def strip_jest_noise(log: str):
     in_pass_section = False
     in_console_block = False
     in_coverage_table = False
+    in_noise_error_block = False
 
     for line in lines:
         stripped = line.strip()
@@ -85,6 +88,23 @@ def strip_jest_noise(log: str):
         # Skip MongoDB download progress
         if "Downloading MongoDB" in line:
             continue
+
+        # Skip MongoDB/test-setup noise: ObjectId dumps, seed data, config, migrations.
+        # foxden-billing alone produces 80K chars of this noise (630 ObjectId lines,
+        # 351 E&C lines, 102 migration files) that gets re-sent on every LLM call.
+        if is_test_setup_noise(stripped):
+            # When a noise error line is stripped (e.g. "Failed to fetch...from SSM"),
+            # its stack trace + AWS metadata closing "}" remain orphaned. Track this
+            # so we can skip the trailing stack trace and closing braces.
+            if stripped.startswith("Failed to fetch "):
+                in_noise_error_block = True
+            continue
+
+        # Skip orphaned stack traces and closing braces from stripped error blocks
+        if in_noise_error_block:
+            if stripped.startswith("at ") or stripped in ("}", "},"):
+                continue
+            in_noise_error_block = False
 
         result.append(line)
 

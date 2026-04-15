@@ -216,7 +216,6 @@ src/resolvers/isInvoiceNumberRegisteredResolver.test.ts:270:28 - error TS2722: C
 Found 31 errors in the same file, starting at: src/resolvers/isInvoiceNumberRegisteredResolver.test.ts:34
 
 error Command failed with exit code 2.
-info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
 
 Exited with code exit status 2
 

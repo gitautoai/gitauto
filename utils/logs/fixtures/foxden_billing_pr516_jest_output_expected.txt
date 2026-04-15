@@ -1,0 +1,21 @@
+yarn run v1.22.22
+$ jest --findRelatedTests src/services/billingJob/emails/sendInvoiceLinkForFailedAutoPayEmail.ts -u --forceExit
+Error in MongoDB operation: AccessDeniedException: User: arn:aws:sts::948023073771:assumed-role/pr-agent-prod-role/pr-agent-prod is not authorized to perform: secretsmanager:GetSecretValue on resource: dev/foxden-billing because no identity-based policy allows the secretsmanager:GetSecretValue action
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getSecrets (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:3206:7)
+    at async updateSubcriptionMetadata (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:3156:7)
+    at async up (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:85:5)
+    at async /tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:34:9
+    at async /tmp/Foxquilt/foxden-billing/pr-516/src/context/mongodb.ts:22:20
+    at async exports.default (/tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:32:5)
+AccessDeniedException: User: arn:aws:sts::948023073771:assumed-role/pr-agent-prod-role/pr-agent-prod is not authorized to perform: secretsmanager:GetSecretValue on resource: dev/foxden-billing because no identity-based policy allows the secretsmanager:GetSecretValue action
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getSecrets (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:3206:7)
+    at async updateSubcriptionMetadata (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:3156:7)
+    at async up (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:85:5)
+    at async /tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:34:9
+    at async /tmp/Foxquilt/foxden-billing/pr-516/src/context/mongodb.ts:22:20
+    at async exports.default (/tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:32:5)
+error Command failed with exit code 1.
+
+Read the latest file content before making changes.
