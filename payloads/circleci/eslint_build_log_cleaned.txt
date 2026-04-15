@@ -26,6 +26,5 @@ Please only submit bug reports when using the officially supported version.
   5 errors and 0 warnings potentially fixable with the `--fix` option.
 
 error Command failed with exit code 1.
-info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
 
 Exited with code exit status 1

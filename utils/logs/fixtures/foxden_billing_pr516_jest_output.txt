@@ -1,0 +1,1676 @@
+yarn run v1.22.22
+$ jest --findRelatedTests src/services/billingJob/emails/sendInvoiceLinkForFailedAutoPayEmail.ts -u --forceExit
+Using default value 10 for maxPoolSize
+Using default value 10000 for maxIdleTimeMS
+Using default value 3000 for serverSelectionTimeoutMS
+Using default value 5000 for heartbeatFrequencyMS
+Using default value true for turnOnEmfileProbe
+[EMFILE investigation] Starting investigation in 2026/04/14/pr-agent-prod[$LATEST]240188908d784bf38c1735b93151240c for MongoDBConnection...
+*** new process, emfiles count: 27
+Connected to MongoDB (maxPoolSize: 10, maxIdleTimeMS: 10000)
+stage is undefined
+policy number: P20210225V3OS69
+invoice number: I20210225R8COV3
+quoteNumber: Q20210225BB3RKN
+{
+  Application: new ObjectId("603818c2d2e5bf000745ff49"),
+  ApplicationAnswers: new ObjectId("6038199bd2e5bf000745ff4c"),
+  Quote: new ObjectId("603819a0d2e5bf000745ff4e"),
+  ApplicationOwner: new ObjectId("60381a20af7f360008bb8383"),
+  Invoice: new ObjectId("60381a6da9ff7000084a07c0"),
+  Payment: new ObjectId("60381a7aaf7f360008bb8384"),
+  PaymentResult: new ObjectId("60381aa507aa4a00084aa4cb")
+}
+Payment was removed
+PaymentResult was removed
+17645612
+18839777
+E&C: Application inserted with id: 69de42fdc97e3218b3fa49ac
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa49ad
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa49b0
+E&C: ApplicationOwner inserted with id: 69de42fdc97e3218b3fa49b1
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa49b2
+E&C: No such field in flow or policy - Payment
+E&C: No such field in flow or policy - PaymentResult
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa49b3
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa49ac"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa49ad"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa49b0"),
+  ApplicationOwner: new ObjectId("69de42fdc97e3218b3fa49b1"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa49b2"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa49b3")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa49b4
+stage is undefined
+policy number: P20210525YO1OL7
+invoice number: I20210525OSYWGW
+quoteNumber: Q20210525D2HHMF
+{
+  Application: new ObjectId("60ad6602ae3ff300099af1bd"),
+  ApplicationAnswers: new ObjectId("60ad6770ae3ff300099af1c5"),
+  Quote: new ObjectId("60ad6775ae3ff300099af1c7"),
+  ApplicationOwner: new ObjectId("60ad6a0f9d18010009c5d174"),
+  Invoice: new ObjectId("60ad6b78deb16d00080bb54c"),
+  Payment: new ObjectId("60ad6be6320fc80008a37d1f"),
+  PaymentResult: new ObjectId("60ad6c7f011c7800080252f0")
+}
+Payment was removed
+PaymentResult was removed
+19339788
+17946236
+E&C: Application inserted with id: 69de42fdc97e3218b3fa49b8
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa49b9
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa49bc
+E&C: ApplicationOwner inserted with id: 69de42fdc97e3218b3fa49bd
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa49be
+E&C: No such field in flow or policy - Payment
+E&C: No such field in flow or policy - PaymentResult
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa49bf
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa49b8"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa49b9"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa49bc"),
+  ApplicationOwner: new ObjectId("69de42fdc97e3218b3fa49bd"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa49be"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa49bf")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa49c0
+stage is undefined
+policy number: P202102019BEC6O
+invoice number: I2021020145LKCJ
+quoteNumber: Q20210201Q1FA4B
+{
+  Application: new ObjectId("60183c29b074e900083b84f1"),
+  ApplicationAnswers: new ObjectId("60183c2eb074e900083b84f3"),
+  Quote: new ObjectId("60183c33b074e900083b84f5"),
+  ApplicationOwner: new ObjectId("60183c4dad6e54000949374a"),
+  Invoice: new ObjectId("60183c6cc3c7a60008ce808c"),
+  Payment: new ObjectId("60183c7bad6e54000949374b"),
+  PaymentResult: new ObjectId("60183c9caaa28f00085dd2a1")
+}
+Payment was removed
+PaymentResult was removed
+12912177
+18380312
+E&C: Application inserted with id: 69de42fdc97e3218b3fa49c2
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa49c3
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa49c5
+E&C: ApplicationOwner inserted with id: 69de42fdc97e3218b3fa49c6
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa49c7
+E&C: No such field in flow or policy - Payment
+E&C: No such field in flow or policy - PaymentResult
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa49c8
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa49c2"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa49c3"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa49c5"),
+  ApplicationOwner: new ObjectId("69de42fdc97e3218b3fa49c6"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa49c7"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa49c8")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa49c9
+stage is undefined
+policy number: P20210201Y22UEK
+invoice number: I20210201Q8GRD8
+quoteNumber: Q20210201BLUMX5
+{
+  Application: new ObjectId("60184dd111a9140008781187"),
+  ApplicationAnswers: new ObjectId("60184dd611a9140008781189"),
+  Quote: new ObjectId("60184ddb11a914000878118b"),
+  ApplicationOwner: new ObjectId("60184deadc7c5d0009504572"),
+  Invoice: new ObjectId("60184e26883daa0008acb911"),
+  Payment: new ObjectId("60184e3ddc7c5d0009504573"),
+  PaymentResult: new ObjectId("60184e609c68660009a0c0e8")
+}
+Payment was removed
+PaymentResult was removed
+19728629
+16116158
+E&C: Application inserted with id: 69de42fdc97e3218b3fa49cb
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa49cc
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa49ce
+E&C: ApplicationOwner inserted with id: 69de42fdc97e3218b3fa49cf
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa49d0
+E&C: No such field in flow or policy - Payment
+E&C: No such field in flow or policy - PaymentResult
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa49d1
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa49cb"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa49cc"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa49ce"),
+  ApplicationOwner: new ObjectId("69de42fdc97e3218b3fa49cf"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa49d0"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa49d1")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa49d2
+stage is undefined
+policy number: P202102011HNNHV
+invoice number: I20210201PIFBVK
+quoteNumber: Q202102013UXIRP
+{
+  Application: new ObjectId("6017677a7e2a0f0008b6d3ea"),
+  ApplicationAnswers: new ObjectId("60176782fafa3b00080ed222"),
+  Quote: new ObjectId("60176786fafa3b00080ed224"),
+  ApplicationOwner: new ObjectId("60176795225a0500088875e3"),
+  Invoice: new ObjectId("601767b028788e0009ddec0e"),
+  Payment: new ObjectId("601767b9225a0500088875e4"),
+  PaymentResult: new ObjectId("601767d8a46b18000996bb41")
+}
+Payment was removed
+PaymentResult was removed
+15794350
+16164619
+E&C: Application inserted with id: 69de42fdc97e3218b3fa49d5
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa49d6
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa49d8
+E&C: ApplicationOwner's id was updated in Policy: 60176795225a0500088875e3
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa49d9
+E&C: No such field in flow or policy - Payment
+E&C: No such field in flow or policy - PaymentResult
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa49da
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa49d5"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa49d6"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa49d8"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa49d9"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa49da")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa49db
+stage is undefined
+policy number: P2022031595X06U
+invoice number: I20220315JPS9WX
+quoteNumber: Q20220315DECDSW
+{
+  Application: new ObjectId("6230bc1db0e0ac0009e45ebe"),
+  ApplicationAnswers: new ObjectId("6230bd5eb0e0ac0009e45ed0"),
+  Quote: new ObjectId("6230bd5eb0e0ac0009e45ed1"),
+  ApplicationOwner: new ObjectId("6230bdd3b70ceb00095b482a"),
+  Invoice: new ObjectId("6230be385d560e000915aa9a"),
+  Payment: new ObjectId("6230be6d42fcbc0009d1abb5"),
+  PaymentResult: new ObjectId("6230becb4bc5df00098711b6")
+}
+Payment was removed
+PaymentResult was removed
+15006906
+19937933
+E&C: Application inserted with id: 69de42fdc97e3218b3fa49dd
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa49de
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa49e3
+E&C: ApplicationOwner's id was updated in Policy: 6230bdd3b70ceb00095b482a
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa49e4
+E&C: No such field in flow or policy - Payment
+E&C: No such field in flow or policy - PaymentResult
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa49e5
+E&C: PolicyPaymentSchedule inserted with id: 69de42fdc97e3218b3fa49e6
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa49dd"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa49de"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa49e3"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa49e4"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa49e5"),
+  PolicyPaymentSchedule: new ObjectId("69de42fdc97e3218b3fa49e6")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa49e7
+stage is undefined
+policy number: P20210503RLZY6Y
+invoice number: I202105032MIVSY
+quoteNumber: Q20210503H6XDG5
+{
+  Application: new ObjectId("609007d0f001bb00089e3930"),
+  ApplicationAnswers: new ObjectId("609007e7f001bb00089e3934"),
+  Quote: new ObjectId("609007ecf001bb00089e3936"),
+  ApplicationOwner: new ObjectId("6090087649f101000857c207"),
+  Invoice: new ObjectId("6090092c5cb67c00089600e9"),
+  Payment: new ObjectId("6090093f49f101000857c208"),
+  PaymentResult: new ObjectId("609009715b4baa0009c2abb5")
+}
+Payment was removed
+PaymentResult was removed
+16371001
+13238923
+E&C: Application inserted with id: 69de42fdc97e3218b3fa49e9
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa49ea
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa49ed
+E&C: ApplicationOwner's id was updated in Policy: 6090087649f101000857c207
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa49ee
+E&C: No such field in flow or policy - Payment
+E&C: No such field in flow or policy - PaymentResult
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa49ef
+E&C: PolicyPaymentSchedule inserted with id: 69de42fdc97e3218b3fa49f0
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa49e9"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa49ea"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa49ed"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa49ee"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa49ef"),
+  PolicyPaymentSchedule: new ObjectId("69de42fdc97e3218b3fa49f0")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa49f1
+stage is undefined
+policy number: P20210201OTKV70
+invoice number: I20210201OWAIB8
+quoteNumber: Q202102019VACSV
+{
+  Application: new ObjectId("60180370c866cc0008062607"),
+  ApplicationAnswers: new ObjectId("60180379fa04be000893f842"),
+  Quote: new ObjectId("6018037efa04be000893f844"),
+  ApplicationOwner: new ObjectId("601803953c953900088e6cc4"),
+  Invoice: new ObjectId("601803bc995ddf00081d1bcb"),
+  Payment: new ObjectId("601803c43c953900088e6cc5"),
+  PaymentResult: new ObjectId("601803e058611600098f6b3d")
+}
+Payment was removed
+PaymentResult was removed
+15629184
+13806420
+E&C: Application inserted with id: 69de42fdc97e3218b3fa49f3
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa49f4
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa49f6
+E&C: ApplicationOwner's id was updated in Policy: 601803953c953900088e6cc4
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa49f7
+E&C: No such field in flow or policy - Payment
+E&C: No such field in flow or policy - PaymentResult
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa49f8
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa49f3"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa49f4"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa49f6"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa49f7"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa49f8")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa49f9
+stage is undefined
+policy number: P20210721LXJ2OX
+invoice number: I20210721J0SPWW
+quoteNumber: Q202107214IL078
+{
+  Application: new ObjectId("60f8a4f6ea8a89000833a022"),
+  ApplicationAnswers: new ObjectId("60f8a5bdea8a89000833a027"),
+  Quote: new ObjectId("60f8a5c3ea8a89000833a029"),
+  ApplicationOwner: new ObjectId("60f8a625e738090008c51e2e"),
+  Invoice: new ObjectId("60f8a6489095df000835d942"),
+  Payment: new ObjectId("60f8a6a1fc34bf00081e271d"),
+  PaymentResult: new ObjectId("60f8a6cedad1520008f11f7d")
+}
+Payment was removed
+PaymentResult was removed
+16129487
+17473492
+E&C: Application inserted with id: 69de42fdc97e3218b3fa49fc
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa49fd
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa4a01
+E&C: ApplicationOwner's id was updated in Policy: 60f8a625e738090008c51e2e
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa4a02
+E&C: No such field in flow or policy - Payment
+E&C: No such field in flow or policy - PaymentResult
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa4a03
+E&C: PolicyPaymentSchedule inserted with id: 69de42fdc97e3218b3fa4a04
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa49fc"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa49fd"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa4a01"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa4a02"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa4a03"),
+  PolicyPaymentSchedule: new ObjectId("69de42fdc97e3218b3fa4a04")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa4a05
+stage is undefined
+policy number: P20210201K72F4R
+invoice number: I20210201XXDMYJ
+quoteNumber: Q20210201FI7BYC
+{
+  Application: new ObjectId("60188935c627f000082396cc"),
+  ApplicationAnswers: new ObjectId("6018894bc627f000082396ce"),
+  Quote: new ObjectId("60188950c627f000082396d0"),
+  ApplicationOwner: new ObjectId("60188976aa1fa500084f7f7e"),
+  Invoice: new ObjectId("601889f94a118e0008bd0c41"),
+  Payment: new ObjectId("60188a20aa1fa500084f7f7f"),
+  PaymentResult: new ObjectId("60188a667f2980000810dfcb")
+}
+11331107
+10735382
+E&C: Application inserted with id: 69de42fdc97e3218b3fa4a08
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa4a09
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa4a0b
+E&C: ApplicationOwner inserted with id: 69de42fdc97e3218b3fa4a0c
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa4a0d
+E&C: Payment inserted with id: 69de42fdc97e3218b3fa4a0e
+E&C: PaymentResult inserted with id: 69de42fdc97e3218b3fa4a0f
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa4a10
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa4a08"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa4a09"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa4a0b"),
+  ApplicationOwner: new ObjectId("69de42fdc97e3218b3fa4a0c"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa4a0d"),
+  Payment: new ObjectId("69de42fdc97e3218b3fa4a0e"),
+  PaymentResult: new ObjectId("69de42fdc97e3218b3fa4a0f"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa4a10")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa4a11
+stage is undefined
+policy number: P20210217VB331A
+invoice number: I20210217SRNEXB
+quoteNumber: Q20210217M5ORSP
+{
+  Application: new ObjectId("602d3edecb88100009f1397c"),
+  ApplicationAnswers: new ObjectId("602d3f02cd6de20008b52a62"),
+  Quote: new ObjectId("602d3f06cd6de20008b52a64"),
+  ApplicationOwner: new ObjectId("602d3f327f67ae00088ed192"),
+  Invoice: new ObjectId("602d40957337280008817efa"),
+  Payment: new ObjectId("602d5c0b4e3ee30008096d8c"),
+  PaymentResult: new ObjectId("602d631ad7a72300086508c3")
+}
+12571993
+18758582
+E&C: Application inserted with id: 69de42fdc97e3218b3fa4a13
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa4a14
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa4a16
+E&C: ApplicationOwner inserted with id: 69de42fdc97e3218b3fa4a17
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa4a18
+E&C: Payment inserted with id: 69de42fdc97e3218b3fa4a19
+E&C: PaymentResult inserted with id: 69de42fdc97e3218b3fa4a1a
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa4a1b
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa4a13"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa4a14"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa4a16"),
+  ApplicationOwner: new ObjectId("69de42fdc97e3218b3fa4a17"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa4a18"),
+  Payment: new ObjectId("69de42fdc97e3218b3fa4a19"),
+  PaymentResult: new ObjectId("69de42fdc97e3218b3fa4a1a"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa4a1b")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa4a1c
+stage is undefined
+policy number: P20210302B3WCFH
+invoice number: I20210302WV4ZTA
+quoteNumber: Q20210302G70IUE
+{
+  Application: new ObjectId("603e60e349229700083f49ea"),
+  ApplicationAnswers: new ObjectId("603e612249229700083f49ed"),
+  Quote: new ObjectId("603e612349229700083f49ef"),
+  ApplicationOwner: new ObjectId("603e6439d2732e0008eb64a7"),
+  Invoice: new ObjectId("603e64965b46d7000885c63d"),
+  Payment: new ObjectId("603e64b0d2732e0008eb64a8"),
+  PaymentResult: new ObjectId("603e64e055e5fc00086aca9c")
+}
+11857871
+17552855
+E&C: Application inserted with id: 69de42fdc97e3218b3fa4a1e
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa4a1f
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa4a22
+E&C: ApplicationOwner inserted with id: 69de42fdc97e3218b3fa4a23
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa4a24
+E&C: Payment inserted with id: 69de42fdc97e3218b3fa4a25
+E&C: PaymentResult inserted with id: 69de42fdc97e3218b3fa4a26
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa4a27
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa4a1e"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa4a1f"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa4a22"),
+  ApplicationOwner: new ObjectId("69de42fdc97e3218b3fa4a23"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa4a24"),
+  Payment: new ObjectId("69de42fdc97e3218b3fa4a25"),
+  PaymentResult: new ObjectId("69de42fdc97e3218b3fa4a26"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa4a27")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa4a28
+stage is undefined
+policy number: P20210721VFOTTQ
+invoice number: I20210721AU65GZ
+quoteNumber: Q20210721W5O7PI
+{
+  Application: new ObjectId("60f8a87ff007fb0008b19e16"),
+  ApplicationAnswers: new ObjectId("60f8a9b0f007fb0008b19e1b"),
+  Quote: new ObjectId("60f8a9b7f007fb0008b19e1d"),
+  ApplicationOwner: new ObjectId("60f8a9e1643b9a0008078356"),
+  Invoice: new ObjectId("60f8aa0a84e2ed0008ad404e"),
+  Payment: new ObjectId("60f8aa1ea51da70008ceeef0"),
+  PaymentResult: new ObjectId("60f8aa3c22b23e000937a8bf")
+}
+Payment was removed
+PaymentResult was removed
+PolicyPaymentSchedule was removed
+10673780
+11374437
+E&C: Application inserted with id: 69de42fdc97e3218b3fa4a2a
+E&C: ApplicationAnswers inserted with id: 69de42fdc97e3218b3fa4a2b
+E&C: Quote inserted with id: 69de42fdc97e3218b3fa4a2f
+E&C: ApplicationOwner's id was updated in Policy: 60f8a9e1643b9a0008078356
+E&C: Invoice inserted with id: 69de42fdc97e3218b3fa4a30
+E&C: No such field in flow or policy - Payment
+E&C: No such field in flow or policy - PaymentResult
+E&C: Policy inserted with id: 69de42fdc97e3218b3fa4a31
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fdc97e3218b3fa4a2a"),
+  ApplicationAnswers: new ObjectId("69de42fdc97e3218b3fa4a2b"),
+  Quote: new ObjectId("69de42fdc97e3218b3fa4a2f"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa4a30"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa4a31")
+}
+inserted ActivePolicy with id: 69de42fdc97e3218b3fa4a32
+stage is undefined
+policy number: P20210226903T2Z
+invoice number: I20210226FLTDZC
+quoteNumber: Q20210226YGLDH2
+{
+  Application: new ObjectId("60383e4a67860900084faebc"),
+  ApplicationAnswers: new ObjectId("60383e9d67860900084faebf"),
+  Quote: new ObjectId("60383ea267860900084faec1"),
+  ApplicationOwner: new ObjectId("60383edd0521af0008fdc31b"),
+  Invoice: new ObjectId("603840c3e60dfe00086b91b6"),
+  Payment: new ObjectId("603840df5993b300084659a6"),
+  PaymentResult: new ObjectId("603841a940f3eb0009c71176")
+}
+11640144
+16794894
+E&C: Application inserted with id: 69de42fec97e3218b3fa4a35
+E&C: ApplicationAnswers inserted with id: 69de42fec97e3218b3fa4a36
+E&C: Quote inserted with id: 69de42fec97e3218b3fa4a39
+E&C: ApplicationOwner's id was updated in Policy: 60383edd0521af0008fdc31b
+E&C: Invoice inserted with id: 69de42fec97e3218b3fa4a3a
+E&C: Payment inserted with id: 69de42fec97e3218b3fa4a3b
+E&C: PaymentResult inserted with id: 69de42fec97e3218b3fa4a3c
+E&C: Policy inserted with id: 69de42fec97e3218b3fa4a3d
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fec97e3218b3fa4a35"),
+  ApplicationAnswers: new ObjectId("69de42fec97e3218b3fa4a36"),
+  Quote: new ObjectId("69de42fec97e3218b3fa4a39"),
+  Invoice: new ObjectId("69de42fec97e3218b3fa4a3a"),
+  Payment: new ObjectId("69de42fec97e3218b3fa4a3b"),
+  PaymentResult: new ObjectId("69de42fec97e3218b3fa4a3c"),
+  Policy: new ObjectId("69de42fec97e3218b3fa4a3d")
+}
+inserted ActivePolicy with id: 69de42fec97e3218b3fa4a3e
+stage is undefined
+policy number: P20210304VV1T5S
+invoice number: I202103049MCZ62
+quoteNumber: Q20210304RGU3NE
+{
+  Application: new ObjectId("60411258a8673e00085fca4d"),
+  ApplicationAnswers: new ObjectId("6041129ba8673e00085fca50"),
+  Quote: new ObjectId("604112a1a8673e00085fca52"),
+  ApplicationOwner: new ObjectId("604112cd2599ea0008ca7d36"),
+  Invoice: new ObjectId("604113c5d6263e000819032a"),
+  Payment: new ObjectId("6041151c2599ea0008ca7d37"),
+  PaymentResult: new ObjectId("60411560eff48700083f8af2")
+}
+18578785
+10623061
+E&C: Application inserted with id: 69de42fec97e3218b3fa4a40
+E&C: ApplicationAnswers inserted with id: 69de42fec97e3218b3fa4a41
+E&C: Quote inserted with id: 69de42fec97e3218b3fa4a44
+E&C: ApplicationOwner's id was updated in Policy: 604112cd2599ea0008ca7d36
+E&C: Invoice inserted with id: 69de42fec97e3218b3fa4a45
+E&C: Payment inserted with id: 69de42fec97e3218b3fa4a46
+E&C: PaymentResult inserted with id: 69de42fec97e3218b3fa4a47
+E&C: Policy inserted with id: 69de42fec97e3218b3fa4a48
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fec97e3218b3fa4a40"),
+  ApplicationAnswers: new ObjectId("69de42fec97e3218b3fa4a41"),
+  Quote: new ObjectId("69de42fec97e3218b3fa4a44"),
+  Invoice: new ObjectId("69de42fec97e3218b3fa4a45"),
+  Payment: new ObjectId("69de42fec97e3218b3fa4a46"),
+  PaymentResult: new ObjectId("69de42fec97e3218b3fa4a47"),
+  Policy: new ObjectId("69de42fec97e3218b3fa4a48")
+}
+inserted ActivePolicy with id: 69de42fec97e3218b3fa4a49
+stage is undefined
+policy number: P20210302413N7A
+invoice number: I2021030292L8JM
+quoteNumber: Q202103024C8THI
+{
+  Application: new ObjectId("603e64c86e7e790008618a74"),
+  ApplicationAnswers: new ObjectId("603e65036e7e790008618a78"),
+  Quote: new ObjectId("603e65046e7e790008618a7a"),
+  ApplicationOwner: new ObjectId("603e6514d2732e0008eb64a9"),
+  Invoice: new ObjectId("603e65315b46d7000885c63e"),
+  Payment: new ObjectId("603e6544d2732e0008eb64aa"),
+  PaymentResult: new ObjectId("603e655b55e5fc00086acaa0")
+}
+15393286
+18290804
+E&C: Application inserted with id: 69de42fec97e3218b3fa4a4b
+E&C: ApplicationAnswers inserted with id: 69de42fec97e3218b3fa4a4c
+E&C: Quote inserted with id: 69de42fec97e3218b3fa4a50
+E&C: ApplicationOwner's id was updated in Policy: 603e6514d2732e0008eb64a9
+E&C: Invoice inserted with id: 69de42fec97e3218b3fa4a51
+E&C: Payment's id was updated in Policy: 603e6544d2732e0008eb64aa
+E&C: PaymentResult's id was updated in Policy: 603e655b55e5fc00086acaa0
+E&C: Policy inserted with id: 69de42fec97e3218b3fa4a52
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fec97e3218b3fa4a4b"),
+  ApplicationAnswers: new ObjectId("69de42fec97e3218b3fa4a4c"),
+  Quote: new ObjectId("69de42fec97e3218b3fa4a50"),
+  Invoice: new ObjectId("69de42fec97e3218b3fa4a51"),
+  Policy: new ObjectId("69de42fec97e3218b3fa4a52")
+}
+inserted ActivePolicy with id: 69de42fec97e3218b3fa4a53
+stage is undefined
+policy number: P20210412888R8Z
+invoice number: I2021041241W37S
+quoteNumber: Q202104121WBNFC
+{
+  Application: new ObjectId("60749c85cbc51e0009475668"),
+  ApplicationAnswers: new ObjectId("60749e5a547cd00008df6c06"),
+  Quote: new ObjectId("60749e5b547cd00008df6c08"),
+  ApplicationOwner: new ObjectId("60749f3d9c8435000916821f"),
+  Invoice: new ObjectId("60749f95a4103700081ff18f"),
+  Payment: new ObjectId("60749fa19c84350009168220"),
+  PaymentResult: new ObjectId("6074a010f591b300097815d5")
+}
+19400508
+10579536
+E&C: Application inserted with id: 69de42fec97e3218b3fa4a56
+E&C: ApplicationAnswers inserted with id: 69de42fec97e3218b3fa4a57
+E&C: Quote inserted with id: 69de42fec97e3218b3fa4a5a
+E&C: ApplicationOwner inserted with id: 69de42fec97e3218b3fa4a5b
+E&C: Invoice inserted with id: 69de42fec97e3218b3fa4a5c
+E&C: Payment inserted with id: 69de42fec97e3218b3fa4a5d
+E&C: PaymentResult inserted with id: 69de42fec97e3218b3fa4a5e
+E&C: Policy inserted with id: 69de42fec97e3218b3fa4a5f
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fec97e3218b3fa4a56"),
+  ApplicationAnswers: new ObjectId("69de42fec97e3218b3fa4a57"),
+  Quote: new ObjectId("69de42fec97e3218b3fa4a5a"),
+  ApplicationOwner: new ObjectId("69de42fec97e3218b3fa4a5b"),
+  Invoice: new ObjectId("69de42fec97e3218b3fa4a5c"),
+  Payment: new ObjectId("69de42fec97e3218b3fa4a5d"),
+  PaymentResult: new ObjectId("69de42fec97e3218b3fa4a5e"),
+  Policy: new ObjectId("69de42fec97e3218b3fa4a5f")
+}
+inserted ActivePolicy with id: 69de42fec97e3218b3fa4a60
+stage is undefined
+policy number: P20210331XMVENN
+invoice number: I20210331YPQCNJ
+quoteNumber: Q20210331RZE7W6
+{
+  Application: new ObjectId("6064c4c6b648340008306c3e"),
+  ApplicationAnswers: new ObjectId("6064c5a9b648340008306c41"),
+  Quote: new ObjectId("6064c5aeb648340008306c43"),
+  ApplicationOwner: new ObjectId("6064c60d4d317c0008f5b388"),
+  Invoice: new ObjectId("6064c6363e68e60008d07d3d"),
+  Payment: new ObjectId("6064c64c4d317c0008f5b389"),
+  PaymentResult: new ObjectId("6064c693a236140008259c2a")
+}
+15046473
+15872547
+E&C: Application inserted with id: 69de42fec97e3218b3fa4a62
+E&C: ApplicationAnswers inserted with id: 69de42fec97e3218b3fa4a63
+E&C: Quote inserted with id: 69de42fec97e3218b3fa4a66
+E&C: ApplicationOwner inserted with id: 69de42fec97e3218b3fa4a67
+E&C: Invoice inserted with id: 69de42fec97e3218b3fa4a68
+E&C: Payment inserted with id: 69de42fec97e3218b3fa4a69
+E&C: PaymentResult inserted with id: 69de42fec97e3218b3fa4a6a
+E&C: Policy inserted with id: 69de42fec97e3218b3fa4a6b
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fec97e3218b3fa4a62"),
+  ApplicationAnswers: new ObjectId("69de42fec97e3218b3fa4a63"),
+  Quote: new ObjectId("69de42fec97e3218b3fa4a66"),
+  ApplicationOwner: new ObjectId("69de42fec97e3218b3fa4a67"),
+  Invoice: new ObjectId("69de42fec97e3218b3fa4a68"),
+  Payment: new ObjectId("69de42fec97e3218b3fa4a69"),
+  PaymentResult: new ObjectId("69de42fec97e3218b3fa4a6a"),
+  Policy: new ObjectId("69de42fec97e3218b3fa4a6b")
+}
+inserted ActivePolicy with id: 69de42fec97e3218b3fa4a6c
+stage is undefined
+policy number: P20210225V3OS69
+invoice number: I20210225R8COV3
+quoteNumber: Q20210225BB3RKN
+{
+  Application: new ObjectId("603818c2d2e5bf000745ff49"),
+  ApplicationAnswers: new ObjectId("6038199bd2e5bf000745ff4c"),
+  Quote: new ObjectId("603819a0d2e5bf000745ff4e"),
+  ApplicationOwner: new ObjectId("60381a20af7f360008bb8383"),
+  Invoice: new ObjectId("60381a6da9ff7000084a07c0"),
+  Payment: new ObjectId("60381a7aaf7f360008bb8384"),
+  PaymentResult: new ObjectId("60381aa507aa4a00084aa4cb")
+}
+10533338
+18557484
+E&C: Application inserted with id: 69de42fec97e3218b3fa4a6e
+E&C: ApplicationAnswers inserted with id: 69de42fec97e3218b3fa4a6f
+E&C: Quote inserted with id: 69de42fec97e3218b3fa4a72
+E&C: ApplicationOwner's id was updated in Policy: 60381a20af7f360008bb8383
+E&C: Invoice inserted with id: 69de42fec97e3218b3fa4a73
+E&C: Payment's id was updated in Policy: 60381a7aaf7f360008bb8384
+E&C: PaymentResult's id was updated in Policy: 60381aa507aa4a00084aa4cb
+E&C: Policy inserted with id: 69de42fec97e3218b3fa4a74
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fec97e3218b3fa4a6e"),
+  ApplicationAnswers: new ObjectId("69de42fec97e3218b3fa4a6f"),
+  Quote: new ObjectId("69de42fec97e3218b3fa4a72"),
+  Invoice: new ObjectId("69de42fec97e3218b3fa4a73"),
+  Policy: new ObjectId("69de42fec97e3218b3fa4a74")
+}
+inserted ActivePolicy with id: 69de42fec97e3218b3fa4a75
+stage is undefined
+policy number: P20210330WTO6N3
+invoice number: I20210330O3QEEZ
+quoteNumber: Q20210330GR6QOZ
+{
+  Application: new ObjectId("60635d340f64680008cbeaa1"),
+  ApplicationAnswers: new ObjectId("60635d460f64680008cbeaa4"),
+  Quote: new ObjectId("60635d4b0f64680008cbeaa6"),
+  ApplicationOwner: new ObjectId("60635d5fc2b54b00081c7c2d"),
+  Invoice: new ObjectId("60635dc43fd5c60008f0e4e4"),
+  Payment: new ObjectId("60635e19c2b54b00081c7c2e"),
+  PaymentResult: new ObjectId("60635e559e5057000811e741")
+}
+15778048
+11472528
+E&C: Application inserted with id: 69de42fec97e3218b3fa4a77
+E&C: ApplicationAnswers inserted with id: 69de42fec97e3218b3fa4a78
+E&C: Quote inserted with id: 69de42fec97e3218b3fa4a7b
+E&C: ApplicationOwner's id was updated in Policy: 60635d5fc2b54b00081c7c2d
+E&C: Invoice inserted with id: 69de42fec97e3218b3fa4a7c
+E&C: Payment's id was updated in Policy: 60635e19c2b54b00081c7c2e
+E&C: PaymentResult's id was updated in Policy: 60635e559e5057000811e741
+E&C: Policy inserted with id: 69de42fec97e3218b3fa4a7d
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fec97e3218b3fa4a77"),
+  ApplicationAnswers: new ObjectId("69de42fec97e3218b3fa4a78"),
+  Quote: new ObjectId("69de42fec97e3218b3fa4a7b"),
+  Invoice: new ObjectId("69de42fec97e3218b3fa4a7c"),
+  Policy: new ObjectId("69de42fec97e3218b3fa4a7d")
+}
+inserted ActivePolicy with id: 69de42fec97e3218b3fa4a7e
+stage is undefined
+policy number: P202104226S8OC7
+invoice number: I202104228D4JYW
+quoteNumber: Q20210422EXWKGN
+{
+  Application: new ObjectId("6081d3d73c15a0000995779f"),
+  ApplicationAnswers: new ObjectId("6081d4233c15a000099577a3"),
+  Quote: new ObjectId("6081d4283c15a000099577a5"),
+  ApplicationOwner: new ObjectId("6081d4571fa5df0008712169"),
+  Invoice: new ObjectId("6081d527f8a8520008d598f3"),
+  Payment: new ObjectId("6081d5481fa5df000871216a"),
+  PaymentResult: new ObjectId("6081d55dfa65a300082448fa")
+}
+10305968
+17366674
+E&C: Application inserted with id: 69de42fec97e3218b3fa4a80
+E&C: ApplicationAnswers inserted with id: 69de42fec97e3218b3fa4a81
+E&C: Quote inserted with id: 69de42fec97e3218b3fa4a84
+E&C: ApplicationOwner's id was updated in Policy: 6081d4571fa5df0008712169
+E&C: Invoice inserted with id: 69de42fec97e3218b3fa4a85
+E&C: Payment's id was updated in Policy: 6081d5481fa5df000871216a
+E&C: PaymentResult's id was updated in Policy: 6081d55dfa65a300082448fa
+E&C: Policy inserted with id: 69de42fec97e3218b3fa4a86
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fec97e3218b3fa4a80"),
+  ApplicationAnswers: new ObjectId("69de42fec97e3218b3fa4a81"),
+  Quote: new ObjectId("69de42fec97e3218b3fa4a84"),
+  Invoice: new ObjectId("69de42fec97e3218b3fa4a85"),
+  Policy: new ObjectId("69de42fec97e3218b3fa4a86")
+}
+inserted ActivePolicy with id: 69de42fec97e3218b3fa4a87
+stage is undefined
+policy number: P202104192CBU1W
+invoice number: I20210419ID5GEC
+quoteNumber: Q20210419UI3YP1
+{
+  Application: new ObjectId("607dacf3f5c7de0009467bfb"),
+  ApplicationAnswers: new ObjectId("607dad15f5c7de0009467bfe"),
+  Quote: new ObjectId("607dad1bf5c7de0009467c00"),
+  ApplicationOwner: new ObjectId("607daf6adfb9f1000821effb"),
+  Invoice: new ObjectId("607dafc43930bb00096eb871"),
+  Payment: new ObjectId("607dafd3dfb9f1000821effc"),
+  PaymentResult: new ObjectId("607db0070de16d00088746ea")
+}
+19035265
+16720092
+E&C: Application inserted with id: 69de42fec97e3218b3fa4a89
+E&C: ApplicationAnswers inserted with id: 69de42fec97e3218b3fa4a8a
+E&C: Quote inserted with id: 69de42fec97e3218b3fa4a8d
+E&C: ApplicationOwner's id was updated in Policy: 607daf6adfb9f1000821effb
+E&C: Invoice inserted with id: 69de42fec97e3218b3fa4a8e
+E&C: Payment's id was updated in Policy: 607dafd3dfb9f1000821effc
+E&C: PaymentResult's id was updated in Policy: 607db0070de16d00088746ea
+E&C: Policy inserted with id: 69de42fec97e3218b3fa4a8f
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fec97e3218b3fa4a89"),
+  ApplicationAnswers: new ObjectId("69de42fec97e3218b3fa4a8a"),
+  Quote: new ObjectId("69de42fec97e3218b3fa4a8d"),
+  Invoice: new ObjectId("69de42fec97e3218b3fa4a8e"),
+  Policy: new ObjectId("69de42fec97e3218b3fa4a8f")
+}
+inserted ActivePolicy with id: 69de42fec97e3218b3fa4a90
+stage is undefined
+policy number: P20210310SRO8BQ
+invoice number: I20210310YD0GDI
+quoteNumber: Q202103102AZQ88
+{
+  Application: new ObjectId("604914f26a03c00008ef43ae"),
+  ApplicationAnswers: new ObjectId("604915d46a03c00008ef43b1"),
+  Quote: new ObjectId("604915d96a03c00008ef43b3"),
+  ApplicationOwner: new ObjectId("604918c64c2ed90008d9828f"),
+  Invoice: new ObjectId("6049199d8674e80008d2d0e0"),
+  Payment: new ObjectId("604919d94c2ed90008d98290"),
+  PaymentResult: new ObjectId("604919f8b5531300085710f4")
+}
+18536480
+16899710
+E&C: Application inserted with id: 69de42fec97e3218b3fa4a92
+E&C: ApplicationAnswers inserted with id: 69de42fec97e3218b3fa4a93
+E&C: Quote inserted with id: 69de42fec97e3218b3fa4a96
+E&C: ApplicationOwner's id was updated in Policy: 604918c64c2ed90008d9828f
+E&C: Invoice inserted with id: 69de42fec97e3218b3fa4a97
+E&C: Payment's id was updated in Policy: 604919d94c2ed90008d98290
+E&C: PaymentResult's id was updated in Policy: 604919f8b5531300085710f4
+E&C: Policy inserted with id: 69de42fec97e3218b3fa4a98
+E&C: No such field in flow or policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de42fec97e3218b3fa4a92"),
+  ApplicationAnswers: new ObjectId("69de42fec97e3218b3fa4a93"),
+  Quote: new ObjectId("69de42fec97e3218b3fa4a96"),
+  Invoice: new ObjectId("69de42fec97e3218b3fa4a97"),
+  Policy: new ObjectId("69de42fec97e3218b3fa4a98")
+}
+inserted ActivePolicy with id: 69de42fec97e3218b3fa4a99
+getIds for issues appear in the data review, P20210721VFOTTQ's latest ids are
+{
+  ActivePolicy: new ObjectId("69de42fdc97e3218b3fa4a32"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa4a31"),
+  Application: new ObjectId("69de42fdc97e3218b3fa4a2a"),
+  ApplicationAnswers: [
+    new ObjectId("69de42fdc97e3218b3fa4a2b"),
+    new ObjectId("69de42fdc97e3218b3fa4a2c"),
+    new ObjectId("69de42fdc97e3218b3fa4a2d"),
+    new ObjectId("69de42fdc97e3218b3fa4a2e")
+  ],
+  Quote: new ObjectId("69de42fdc97e3218b3fa4a2f"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa4a30")
+}
+getIds for issues appear in the data review, P20210721VFOTTQ's latest ids are
+{
+  ActivePolicy: new ObjectId("69de42fdc97e3218b3fa4a32"),
+  Policy: new ObjectId("69de42fdc97e3218b3fa4a31"),
+  Application: new ObjectId("69de42fdc97e3218b3fa4a2a"),
+  ApplicationAnswers: [
+    new ObjectId("69de42fdc97e3218b3fa4a2b"),
+    new ObjectId("69de42fdc97e3218b3fa4a2c"),
+    new ObjectId("69de42fdc97e3218b3fa4a2d"),
+    new ObjectId("69de42fdc97e3218b3fa4a2e")
+  ],
+  Quote: new ObjectId("69de42fdc97e3218b3fa4a2f"),
+  Invoice: new ObjectId("69de42fdc97e3218b3fa4a30")
+}
+getIds for issues appear in the data review, P202202044X2CIP's latest ids are
+{
+  ActivePolicy: new ObjectId("627bb915431f19000901e5b1"),
+  Policy: new ObjectId("627c2427989a930009ee6989"),
+  Application: new ObjectId("627c2417400c67000a067023"),
+  ApplicationAnswers: [
+    new ObjectId("627c2417400c67000a067024"),
+    new ObjectId("627c24196f5ef30009cf8331")
+  ],
+  Quote: new ObjectId("627c241b6f5ef30009cf8332"),
+  Invoice: new ObjectId("627c2422989a930009ee6986"),
+  PolicyPaymentSchedule: new ObjectId("627c2428989a930009ee698c")
+}
+getIds for issues appear in the data review, P20211231LWID03's latest ids are
+{
+  ActivePolicy: new ObjectId("627bbe39fe911800093ea889"),
+  Policy: new ObjectId("627c776ddc75740009949498"),
+  Application: new ObjectId("627c770c2f1a090009657cdd"),
+  ApplicationAnswers: [
+    new ObjectId("627c770c2f1a090009657cde"),
+    new ObjectId("627c7711cb884f00099f34ab")
+  ],
+  Quote: new ObjectId("627c7717cb884f00099f34ac"),
+  Invoice: new ObjectId("627c7769dc75740009949497"),
+  PolicyPaymentSchedule: new ObjectId("627c776ddc7574000994949b")
+}
+getIds for issues appear in the data review, P20220314KETD0C's latest ids are
+{
+  ActivePolicy: new ObjectId("628473a3e09b490009d0e81e"),
+  Policy: new ObjectId("628474907edf330009dc6c75"),
+  Application: new ObjectId("62847412518ec40009c45e44"),
+  ApplicationAnswers: [
+    new ObjectId("62847412518ec40009c45e45"),
+    new ObjectId("6284741736e4ac000900643e")
+  ],
+  ApplicationOwner: new ObjectId("6284746d7edf330009dc6c72"),
+  Quote: new ObjectId("6284741936e4ac000900643f"),
+  Invoice: new ObjectId("62847487b731f00009d002db"),
+  PolicyPaymentSchedule: new ObjectId("628474917edf330009dc6c78")
+}
+getIds for issues appear in the data review, P202202107NNFHX's latest ids are
+{
+  ActivePolicy: new ObjectId("627bbb6ea8e3dc0009097fb6"),
+  Policy: new ObjectId("627c2365989a930009ee6982"),
+  Application: new ObjectId("627c2305400c67000a067021"),
+  ApplicationAnswers: [
+    new ObjectId("627c2305400c67000a067022"),
+    new ObjectId("627c23076f5ef30009cf832f")
+  ],
+  Quote: new ObjectId("627c23096f5ef30009cf8330"),
+  Invoice: new ObjectId("627c2360989a930009ee697f"),
+  PolicyPaymentSchedule: new ObjectId("627c2365989a930009ee6985")
+}
+getIds for issues appear in the data review, P20211103KV64DU's latest ids are
+{
+  ActivePolicy: new ObjectId("627becbca30a7300092b06b7"),
+  Policy: new ObjectId("62846e3d826bfa000952334c"),
+  Application: new ObjectId("62846dd4e3eefd0009685e61"),
+  ApplicationAnswers: [
+    new ObjectId("62846dd4e3eefd0009685e62"),
+    new ObjectId("62846dd9a87a8600092693c7")
+  ],
+  Quote: new ObjectId("62846ddea87a8600092693c8"),
+  Invoice: new ObjectId("62846e23826bfa0009523349"),
+  PolicyPaymentSchedule: new ObjectId("62846e3d826bfa000952334f")
+}
+getIds for issues appear in the data review, P20220315NX0T20's latest ids are
+{
+  ActivePolicy: new ObjectId("628bca9f1956e8000918f542"),
+  Policy: new ObjectId("62a01a8cba7dcc00091628aa"),
+  Application: new ObjectId("62a01a1c4cab0a00094d5cf8"),
+  ApplicationAnswers: [
+    new ObjectId("62a01a1c4cab0a00094d5cf9"),
+    new ObjectId("62a01a21a152130009b284b2")
+  ],
+  Quote: new ObjectId("62a01a22a152130009b284b3"),
+  Invoice: new ObjectId("62a01a61ba7dcc00091628a7"),
+  PolicyPaymentSchedule: new ObjectId("62a01a8dba7dcc00091628ad")
+}
+stage is undefined
+policy number: P20210501Y4WKN9
+invoice number: I20210501P7QM2E
+quoteNumber: Q20210501LC7UF5
+{
+  Application: new ObjectId("608cc52321a239000873a579"),
+  ApplicationAnswers: new ObjectId("608cc59221a239000873a57d"),
+  Quote: new ObjectId("608cc59721a239000873a57f"),
+  ApplicationOwner: new ObjectId("608cc608f5adb5000832cfce"),
+  Invoice: new ObjectId("608cc64f92068c00089bc978"),
+  Payment: new ObjectId("608cc665f5adb5000832cfcf"),
+  PaymentResult: new ObjectId("608cc680b766e600088c69d8")
+}
+15091673
+10953912
+E&C: Application inserted with id: 69de4300c97e3218b3fa4ac3
+E&C: ApplicationAnswers inserted with id: 69de4300c97e3218b3fa4ac4
+E&C: Quote inserted with id: 69de4300c97e3218b3fa4ac7
+E&C: ApplicationOwner's id was updated in Policy: 608cc608f5adb5000832cfce
+E&C: Invoice inserted with id: 69de4300c97e3218b3fa4ac8
+E&C: Payment inserted with id: 69de4300c97e3218b3fa4ac9
+E&C: PaymentResult inserted with id: 69de4300c97e3218b3fa4aca
+E&C: Policy inserted with id: 69de4300c97e3218b3fa4acb
+E&C: PolicyPaymentSchedule inserted with id: 69de4300c97e3218b3fa4acc
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4300c97e3218b3fa4ac3"),
+  ApplicationAnswers: new ObjectId("69de4300c97e3218b3fa4ac4"),
+  Quote: new ObjectId("69de4300c97e3218b3fa4ac7"),
+  Invoice: new ObjectId("69de4300c97e3218b3fa4ac8"),
+  Payment: new ObjectId("69de4300c97e3218b3fa4ac9"),
+  PaymentResult: new ObjectId("69de4300c97e3218b3fa4aca"),
+  Policy: new ObjectId("69de4300c97e3218b3fa4acb"),
+  PolicyPaymentSchedule: new ObjectId("69de4300c97e3218b3fa4acc")
+}
+inserted ActivePolicy with id: 69de4300c97e3218b3fa4acd
+stage is undefined
+policy number: P20210426C0T1NX
+invoice number: I20210426TKYWO0
+quoteNumber: Q20210426DQEHTF
+{
+  Application: new ObjectId("6086ed1a5fbd80000999abbf"),
+  ApplicationAnswers: new ObjectId("6086ed4a5fbd80000999abc3"),
+  Quote: new ObjectId("6086ed4f5fbd80000999abc5"),
+  ApplicationOwner: new ObjectId("6086ed70c04a190008a0834f"),
+  Invoice: new ObjectId("6086ede184355e0009e05dcc"),
+  Payment: new ObjectId("6086edfdc04a190008a08350"),
+  PaymentResult: new ObjectId("6086ee889288b300097b411a")
+}
+13019048
+16495040
+E&C: Application inserted with id: 69de4300c97e3218b3fa4acf
+E&C: ApplicationAnswers inserted with id: 69de4300c97e3218b3fa4ad0
+E&C: Quote inserted with id: 69de4300c97e3218b3fa4ad3
+E&C: ApplicationOwner's id was updated in Policy: 6086ed70c04a190008a0834f
+E&C: Invoice inserted with id: 69de4300c97e3218b3fa4ad4
+E&C: Payment inserted with id: 69de4300c97e3218b3fa4ad5
+E&C: PaymentResult inserted with id: 69de4300c97e3218b3fa4ad6
+E&C: Policy inserted with id: 69de4300c97e3218b3fa4ad7
+E&C: PolicyPaymentSchedule inserted with id: 69de4300c97e3218b3fa4ad8
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4300c97e3218b3fa4acf"),
+  ApplicationAnswers: new ObjectId("69de4300c97e3218b3fa4ad0"),
+  Quote: new ObjectId("69de4300c97e3218b3fa4ad3"),
+  Invoice: new ObjectId("69de4300c97e3218b3fa4ad4"),
+  Payment: new ObjectId("69de4300c97e3218b3fa4ad5"),
+  PaymentResult: new ObjectId("69de4300c97e3218b3fa4ad6"),
+  Policy: new ObjectId("69de4300c97e3218b3fa4ad7"),
+  PolicyPaymentSchedule: new ObjectId("69de4300c97e3218b3fa4ad8")
+}
+inserted ActivePolicy with id: 69de4300c97e3218b3fa4ad9
+stage is undefined
+policy number: P20210503RLZY6Y
+invoice number: I202105032MIVSY
+quoteNumber: Q20210503H6XDG5
+{
+  Application: new ObjectId("609007d0f001bb00089e3930"),
+  ApplicationAnswers: new ObjectId("609007e7f001bb00089e3934"),
+  Quote: new ObjectId("609007ecf001bb00089e3936"),
+  ApplicationOwner: new ObjectId("6090087649f101000857c207"),
+  Invoice: new ObjectId("6090092c5cb67c00089600e9"),
+  Payment: new ObjectId("6090093f49f101000857c208"),
+  PaymentResult: new ObjectId("609009715b4baa0009c2abb5")
+}
+16315092
+14471953
+E&C: Application inserted with id: 69de4300c97e3218b3fa4adb
+E&C: ApplicationAnswers inserted with id: 69de4300c97e3218b3fa4adc
+E&C: Quote inserted with id: 69de4300c97e3218b3fa4adf
+E&C: ApplicationOwner's id was updated in Policy: 6090087649f101000857c207
+E&C: Invoice inserted with id: 69de4300c97e3218b3fa4ae0
+E&C: Payment inserted with id: 69de4300c97e3218b3fa4ae1
+E&C: PaymentResult inserted with id: 69de4300c97e3218b3fa4ae2
+E&C: Policy inserted with id: 69de4300c97e3218b3fa4ae3
+E&C: PolicyPaymentSchedule inserted with id: 69de4300c97e3218b3fa4ae4
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4300c97e3218b3fa4adb"),
+  ApplicationAnswers: new ObjectId("69de4300c97e3218b3fa4adc"),
+  Quote: new ObjectId("69de4300c97e3218b3fa4adf"),
+  Invoice: new ObjectId("69de4300c97e3218b3fa4ae0"),
+  Payment: new ObjectId("69de4300c97e3218b3fa4ae1"),
+  PaymentResult: new ObjectId("69de4300c97e3218b3fa4ae2"),
+  Policy: new ObjectId("69de4300c97e3218b3fa4ae3"),
+  PolicyPaymentSchedule: new ObjectId("69de4300c97e3218b3fa4ae4")
+}
+inserted ActivePolicy with id: 69de4300c97e3218b3fa4ae5
+stage is undefined
+policy number: P20210604VMSR58
+invoice number: I202204281EE194
+quoteNumber: Q202204282OILTE
+{
+  Application: new ObjectId("626abc98b535960009384818"),
+  ApplicationAnswers: new ObjectId("626abd30b53596000938481d"),
+  Quote: new ObjectId("626abd36b53596000938481f"),
+  ApplicationOwner: new ObjectId("626abd67aa0acd00096b8664"),
+  Invoice: new ObjectId("626abd7b3e81d4000af1daa3"),
+  Payment: new ObjectId("626abd87aa0acd00096b8665"),
+  PaymentResult: new ObjectId("626abd979b8e5d0009383cb3")
+}
+E&C: Application inserted with id: 69de4300c97e3218b3fa4aeb
+E&C: ApplicationAnswers inserted with id: 69de4300c97e3218b3fa4aec
+E&C: Quote inserted with id: 69de4300c97e3218b3fa4af0
+E&C: ApplicationOwner inserted with id: 69de4300c97e3218b3fa4af1
+E&C: Invoice inserted with id: 69de4300c97e3218b3fa4af2
+E&C: Payment inserted with id: 69de4300c97e3218b3fa4af3
+E&C: PaymentResult inserted with id: 69de4300c97e3218b3fa4af4
+E&C: Policy inserted with id: 69de4300c97e3218b3fa4af5
+E&C: PolicyPaymentSchedule inserted with id: 69de4300c97e3218b3fa4af6
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4300c97e3218b3fa4aeb"),
+  ApplicationAnswers: new ObjectId("69de4300c97e3218b3fa4aec"),
+  Quote: new ObjectId("69de4300c97e3218b3fa4af0"),
+  ApplicationOwner: new ObjectId("69de4300c97e3218b3fa4af1"),
+  Invoice: new ObjectId("69de4300c97e3218b3fa4af2"),
+  Payment: new ObjectId("69de4300c97e3218b3fa4af3"),
+  PaymentResult: new ObjectId("69de4300c97e3218b3fa4af4"),
+  Policy: new ObjectId("69de4300c97e3218b3fa4af5"),
+  PolicyPaymentSchedule: new ObjectId("69de4300c97e3218b3fa4af6")
+}
+inserted ActivePolicy with id: 69de4300c97e3218b3fa4af7
+stage is undefined
+policy number: P20210607G2GBET
+invoice number: I20220428RQHYDB
+quoteNumber: Q20220428TEX3RD
+{
+  Application: new ObjectId("626abec0b535960009384820"),
+  ApplicationAnswers: new ObjectId("626abf99b535960009384828"),
+  Quote: new ObjectId("626abf99b535960009384829"),
+  ApplicationOwner: new ObjectId("626abfca3d65c300098b7207"),
+  Invoice: new ObjectId("626ac02af4b6d8000930636c"),
+  Payment: new ObjectId("626ac07a3d65c300098b7208"),
+  PaymentResult: new ObjectId("626ac08a05a6da0009896676")
+}
+E&C: Application inserted with id: 69de4301c97e3218b3fa4af9
+E&C: ApplicationAnswers inserted with id: 69de4301c97e3218b3fa4afa
+E&C: Quote inserted with id: 69de4301c97e3218b3fa4aff
+E&C: ApplicationOwner inserted with id: 69de4301c97e3218b3fa4b00
+E&C: Invoice inserted with id: 69de4301c97e3218b3fa4b01
+E&C: Payment inserted with id: 69de4301c97e3218b3fa4b02
+E&C: PaymentResult inserted with id: 69de4301c97e3218b3fa4b03
+E&C: Policy inserted with id: 69de4301c97e3218b3fa4b04
+E&C: PolicyPaymentSchedule inserted with id: 69de4301c97e3218b3fa4b05
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4301c97e3218b3fa4af9"),
+  ApplicationAnswers: new ObjectId("69de4301c97e3218b3fa4afa"),
+  Quote: new ObjectId("69de4301c97e3218b3fa4aff"),
+  ApplicationOwner: new ObjectId("69de4301c97e3218b3fa4b00"),
+  Invoice: new ObjectId("69de4301c97e3218b3fa4b01"),
+  Payment: new ObjectId("69de4301c97e3218b3fa4b02"),
+  PaymentResult: new ObjectId("69de4301c97e3218b3fa4b03"),
+  Policy: new ObjectId("69de4301c97e3218b3fa4b04"),
+  PolicyPaymentSchedule: new ObjectId("69de4301c97e3218b3fa4b05")
+}
+inserted ActivePolicy with id: 69de4301c97e3218b3fa4b06
+stage is undefined
+policy number: P20210630CEMQMK
+invoice number: I20220502W19M8D
+quoteNumber: Q202205021QZCPZ
+{
+  Application: new ObjectId("627031078312990009780c4f"),
+  ApplicationAnswers: new ObjectId("62703208a779370009843799"),
+  Quote: new ObjectId("6270320fa77937000984379b"),
+  ApplicationOwner: new ObjectId("62703245ce9fe80009c7d979"),
+  Invoice: new ObjectId("62703258686b260009c88d39"),
+  Payment: new ObjectId("62703287ce9fe80009c7d97a"),
+  PaymentResult: new ObjectId("627032993381810009021548")
+}
+E&C: Application inserted with id: 69de4301c97e3218b3fa4b08
+E&C: ApplicationAnswers inserted with id: 69de4301c97e3218b3fa4b09
+E&C: Quote inserted with id: 69de4301c97e3218b3fa4b0d
+E&C: ApplicationOwner inserted with id: 69de4301c97e3218b3fa4b0e
+E&C: Invoice inserted with id: 69de4301c97e3218b3fa4b0f
+E&C: Payment inserted with id: 69de4301c97e3218b3fa4b10
+E&C: PaymentResult inserted with id: 69de4301c97e3218b3fa4b11
+E&C: Policy inserted with id: 69de4301c97e3218b3fa4b12
+E&C: PolicyPaymentSchedule inserted with id: 69de4301c97e3218b3fa4b13
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4301c97e3218b3fa4b08"),
+  ApplicationAnswers: new ObjectId("69de4301c97e3218b3fa4b09"),
+  Quote: new ObjectId("69de4301c97e3218b3fa4b0d"),
+  ApplicationOwner: new ObjectId("69de4301c97e3218b3fa4b0e"),
+  Invoice: new ObjectId("69de4301c97e3218b3fa4b0f"),
+  Payment: new ObjectId("69de4301c97e3218b3fa4b10"),
+  PaymentResult: new ObjectId("69de4301c97e3218b3fa4b11"),
+  Policy: new ObjectId("69de4301c97e3218b3fa4b12"),
+  PolicyPaymentSchedule: new ObjectId("69de4301c97e3218b3fa4b13")
+}
+inserted ActivePolicy with id: 69de4301c97e3218b3fa4b14
+stage is undefined
+policy number: P20210526N3BN7X
+invoice number: I20220428NXPZL3
+quoteNumber: Q20220428ZSXY5O
+{
+  Application: new ObjectId("626ac34ab53596000938484e"),
+  ApplicationAnswers: new ObjectId("626ac421b53596000938485e"),
+  Quote: new ObjectId("626ac423b535960009384860"),
+  ApplicationOwner: new ObjectId("626ac4463d65c300098b7213"),
+  Invoice: new ObjectId("626ac45d5e678000097598cb"),
+  Payment: new ObjectId("626ac4673d65c300098b7214"),
+  PaymentResult: new ObjectId("626ac47302de700009acccd8")
+}
+E&C: Application inserted with id: 69de4301c97e3218b3fa4b16
+E&C: ApplicationAnswers inserted with id: 69de4301c97e3218b3fa4b17
+E&C: Quote inserted with id: 69de4301c97e3218b3fa4b1b
+E&C: ApplicationOwner inserted with id: 69de4301c97e3218b3fa4b1c
+E&C: Invoice inserted with id: 69de4301c97e3218b3fa4b1d
+E&C: Payment inserted with id: 69de4301c97e3218b3fa4b1e
+E&C: PaymentResult inserted with id: 69de4301c97e3218b3fa4b1f
+E&C: Policy inserted with id: 69de4301c97e3218b3fa4b20
+E&C: PolicyPaymentSchedule inserted with id: 69de4301c97e3218b3fa4b21
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4301c97e3218b3fa4b16"),
+  ApplicationAnswers: new ObjectId("69de4301c97e3218b3fa4b17"),
+  Quote: new ObjectId("69de4301c97e3218b3fa4b1b"),
+  ApplicationOwner: new ObjectId("69de4301c97e3218b3fa4b1c"),
+  Invoice: new ObjectId("69de4301c97e3218b3fa4b1d"),
+  Payment: new ObjectId("69de4301c97e3218b3fa4b1e"),
+  PaymentResult: new ObjectId("69de4301c97e3218b3fa4b1f"),
+  Policy: new ObjectId("69de4301c97e3218b3fa4b20"),
+  PolicyPaymentSchedule: new ObjectId("69de4301c97e3218b3fa4b21")
+}
+inserted ActivePolicy with id: 69de4301c97e3218b3fa4b22
+stage is undefined
+policy number: P20210603NT9MN8
+invoice number: I20220503CQZDR2
+quoteNumber: Q20220503RSAMGW
+{
+  Application: new ObjectId("6271395827cb87000970a324"),
+  ApplicationAnswers: new ObjectId("627139aa7da5a8000955ecb7"),
+  Quote: new ObjectId("627139b27da5a8000955ecb9"),
+  ApplicationOwner: new ObjectId("627139f8e8db0800092202ba"),
+  Invoice: new ObjectId("62713a1beac1be000960a900"),
+  Payment: new ObjectId("62713a2ce8db0800092202bb"),
+  PaymentResult: new ObjectId("62713a493ff3100009ee645b")
+}
+E&C: Application inserted with id: 69de4301c97e3218b3fa4b24
+E&C: ApplicationAnswers inserted with id: 69de4301c97e3218b3fa4b25
+E&C: Quote inserted with id: 69de4301c97e3218b3fa4b29
+E&C: ApplicationOwner inserted with id: 69de4301c97e3218b3fa4b2a
+E&C: Invoice inserted with id: 69de4301c97e3218b3fa4b2b
+E&C: Payment inserted with id: 69de4301c97e3218b3fa4b2c
+E&C: PaymentResult inserted with id: 69de4301c97e3218b3fa4b2d
+E&C: Policy inserted with id: 69de4301c97e3218b3fa4b2e
+E&C: PolicyPaymentSchedule inserted with id: 69de4301c97e3218b3fa4b2f
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4301c97e3218b3fa4b24"),
+  ApplicationAnswers: new ObjectId("69de4301c97e3218b3fa4b25"),
+  Quote: new ObjectId("69de4301c97e3218b3fa4b29"),
+  ApplicationOwner: new ObjectId("69de4301c97e3218b3fa4b2a"),
+  Invoice: new ObjectId("69de4301c97e3218b3fa4b2b"),
+  Payment: new ObjectId("69de4301c97e3218b3fa4b2c"),
+  PaymentResult: new ObjectId("69de4301c97e3218b3fa4b2d"),
+  Policy: new ObjectId("69de4301c97e3218b3fa4b2e"),
+  PolicyPaymentSchedule: new ObjectId("69de4301c97e3218b3fa4b2f")
+}
+inserted ActivePolicy with id: 69de4301c97e3218b3fa4b30
+stage is undefined
+policy number: P202107062UXJEO
+invoice number: I20220509BWRWCB
+quoteNumber: Q20220509YLHW9K
+{
+  Application: new ObjectId("62792c9746bfd50009931625"),
+  ApplicationAnswers: new ObjectId("62792d0246bfd5000993162c"),
+  Quote: new ObjectId("62792d0946bfd5000993162e"),
+  ApplicationOwner: new ObjectId("62792f6997b30b0009eaec35"),
+  Invoice: new ObjectId("62792f8fe1d1b50009393e7d"),
+  Payment: new ObjectId("62792fbd97b30b0009eaec36"),
+  PaymentResult: new ObjectId("62792fd218c06b00097f6fcb")
+}
+E&C: Application inserted with id: 69de4301c97e3218b3fa4b32
+E&C: ApplicationAnswers inserted with id: 69de4301c97e3218b3fa4b33
+E&C: Quote inserted with id: 69de4301c97e3218b3fa4b37
+E&C: ApplicationOwner inserted with id: 69de4301c97e3218b3fa4b38
+E&C: Invoice inserted with id: 69de4301c97e3218b3fa4b39
+E&C: Payment inserted with id: 69de4301c97e3218b3fa4b3a
+E&C: PaymentResult inserted with id: 69de4301c97e3218b3fa4b3b
+E&C: Policy inserted with id: 69de4301c97e3218b3fa4b3c
+E&C: PolicyPaymentSchedule inserted with id: 69de4301c97e3218b3fa4b3d
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4301c97e3218b3fa4b32"),
+  ApplicationAnswers: new ObjectId("69de4301c97e3218b3fa4b33"),
+  Quote: new ObjectId("69de4301c97e3218b3fa4b37"),
+  ApplicationOwner: new ObjectId("69de4301c97e3218b3fa4b38"),
+  Invoice: new ObjectId("69de4301c97e3218b3fa4b39"),
+  Payment: new ObjectId("69de4301c97e3218b3fa4b3a"),
+  PaymentResult: new ObjectId("69de4301c97e3218b3fa4b3b"),
+  Policy: new ObjectId("69de4301c97e3218b3fa4b3c"),
+  PolicyPaymentSchedule: new ObjectId("69de4301c97e3218b3fa4b3d")
+}
+inserted ActivePolicy with id: 69de4301c97e3218b3fa4b3e
+stage is undefined
+policy number: P20210726VCY585
+invoice number: I20220615Y1VWGX
+quoteNumber: Q20220615081UR2
+{
+  Application: new ObjectId("62aa2341a6f155afee4a0f9d"),
+  ApplicationAnswers: new ObjectId("62aa2484a6f155afee4a0fa7"),
+  Quote: new ObjectId("62aa2484a6f155afee4a0fa8"),
+  ApplicationOwner: new ObjectId("62aa24cb2e606d00093c004d"),
+  Invoice: new ObjectId("62aa24f1a949d1000a1a0dd9"),
+  Payment: new ObjectId("62aa24fcdc836d0009d84842"),
+  PaymentResult: new ObjectId("62aa251a5c94df000946764e")
+}
+E&C: Application inserted with id: 69de4301c97e3218b3fa4b40
+E&C: ApplicationAnswers inserted with id: 69de4301c97e3218b3fa4b41
+E&C: Quote inserted with id: 69de4301c97e3218b3fa4b46
+E&C: ApplicationOwner inserted with id: 69de4301c97e3218b3fa4b47
+E&C: Invoice inserted with id: 69de4301c97e3218b3fa4b48
+E&C: Payment inserted with id: 69de4301c97e3218b3fa4b49
+E&C: PaymentResult inserted with id: 69de4301c97e3218b3fa4b4a
+E&C: Policy inserted with id: 69de4301c97e3218b3fa4b4b
+E&C: PolicyPaymentSchedule inserted with id: 69de4301c97e3218b3fa4b4c
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4301c97e3218b3fa4b40"),
+  ApplicationAnswers: new ObjectId("69de4301c97e3218b3fa4b41"),
+  Quote: new ObjectId("69de4301c97e3218b3fa4b46"),
+  ApplicationOwner: new ObjectId("69de4301c97e3218b3fa4b47"),
+  Invoice: new ObjectId("69de4301c97e3218b3fa4b48"),
+  Payment: new ObjectId("69de4301c97e3218b3fa4b49"),
+  PaymentResult: new ObjectId("69de4301c97e3218b3fa4b4a"),
+  Policy: new ObjectId("69de4301c97e3218b3fa4b4b"),
+  PolicyPaymentSchedule: new ObjectId("69de4301c97e3218b3fa4b4c")
+}
+inserted ActivePolicy with id: 69de4301c97e3218b3fa4b4d
+stage is undefined
+policy number: P20210816N9C909
+invoice number: I20220714TX4WNM
+quoteNumber: Q202207149MFQX8
+{
+  Application: new ObjectId("62d0793cfdf576ad2ee0f238"),
+  ApplicationAnswers: new ObjectId("62d079c0fdf576ad2ee0f23d"),
+  Quote: new ObjectId("62d079c8fdf576ad2ee0f23f"),
+  ApplicationOwner: new ObjectId("62d079f1f4465a00096d1112"),
+  Invoice: new ObjectId("62d07a1b2f29f90009accb13"),
+  Payment: new ObjectId("62d07a40f4465a00096d1113"),
+  PaymentResult: new ObjectId("62d07a5dece3270009950eb7")
+}
+E&C: Application inserted with id: 69de4301c97e3218b3fa4b4f
+E&C: ApplicationAnswers inserted with id: 69de4301c97e3218b3fa4b50
+E&C: Quote inserted with id: 69de4301c97e3218b3fa4b54
+E&C: ApplicationOwner inserted with id: 69de4301c97e3218b3fa4b55
+E&C: Invoice inserted with id: 69de4301c97e3218b3fa4b56
+E&C: Payment inserted with id: 69de4301c97e3218b3fa4b57
+E&C: PaymentResult inserted with id: 69de4301c97e3218b3fa4b58
+E&C: Policy inserted with id: 69de4301c97e3218b3fa4b59
+E&C: PolicyPaymentSchedule inserted with id: 69de4301c97e3218b3fa4b5a
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4301c97e3218b3fa4b4f"),
+  ApplicationAnswers: new ObjectId("69de4301c97e3218b3fa4b50"),
+  Quote: new ObjectId("69de4301c97e3218b3fa4b54"),
+  ApplicationOwner: new ObjectId("69de4301c97e3218b3fa4b55"),
+  Invoice: new ObjectId("69de4301c97e3218b3fa4b56"),
+  Payment: new ObjectId("69de4301c97e3218b3fa4b57"),
+  PaymentResult: new ObjectId("69de4301c97e3218b3fa4b58"),
+  Policy: new ObjectId("69de4301c97e3218b3fa4b59"),
+  PolicyPaymentSchedule: new ObjectId("69de4301c97e3218b3fa4b5a")
+}
+inserted ActivePolicy with id: 69de4301c97e3218b3fa4b5b
+stage is undefined
+policy number: P20210611BX46S4
+invoice number: I202206151RT8RU
+quoteNumber: Q202206157K26RJ
+{
+  Application: new ObjectId("62aa39fb6799744b56471cfd"),
+  ApplicationAnswers: new ObjectId("62aa3da56799744b56471d14"),
+  Quote: new ObjectId("62aa3da76799744b56471d16"),
+  ApplicationOwner: new ObjectId("62aa3df789cc380009254292"),
+  Invoice: new ObjectId("62aa3e215d150b0009c14ba0"),
+  Payment: new ObjectId("62aa3e2b89cc380009254293"),
+  PaymentResult: new ObjectId("62aa3e4ad65cd50009a88acd")
+}
+E&C: Application inserted with id: 69de4301c97e3218b3fa4b5d
+E&C: ApplicationAnswers inserted with id: 69de4301c97e3218b3fa4b5e
+E&C: Quote inserted with id: 69de4301c97e3218b3fa4b62
+E&C: ApplicationOwner inserted with id: 69de4301c97e3218b3fa4b63
+E&C: Invoice inserted with id: 69de4301c97e3218b3fa4b64
+E&C: Payment inserted with id: 69de4301c97e3218b3fa4b65
+E&C: PaymentResult inserted with id: 69de4301c97e3218b3fa4b66
+E&C: Policy inserted with id: 69de4301c97e3218b3fa4b67
+E&C: PolicyPaymentSchedule inserted with id: 69de4301c97e3218b3fa4b68
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4301c97e3218b3fa4b5d"),
+  ApplicationAnswers: new ObjectId("69de4301c97e3218b3fa4b5e"),
+  Quote: new ObjectId("69de4301c97e3218b3fa4b62"),
+  ApplicationOwner: new ObjectId("69de4301c97e3218b3fa4b63"),
+  Invoice: new ObjectId("69de4301c97e3218b3fa4b64"),
+  Payment: new ObjectId("69de4301c97e3218b3fa4b65"),
+  PaymentResult: new ObjectId("69de4301c97e3218b3fa4b66"),
+  Policy: new ObjectId("69de4301c97e3218b3fa4b67"),
+  PolicyPaymentSchedule: new ObjectId("69de4301c97e3218b3fa4b68")
+}
+inserted ActivePolicy with id: 69de4301c97e3218b3fa4b69
+stage is undefined
+policy number: P20210708OYYX3M
+invoice number: I20220510KO3KRY
+quoteNumber: Q20220510VO08UX
+{
+  Application: new ObjectId("627a8a6084a2a2000a204f27"),
+  ApplicationAnswers: new ObjectId("627a8ac484a2a2000a204f2c"),
+  Quote: new ObjectId("627a8acb84a2a2000a204f2e"),
+  ApplicationOwner: new ObjectId("627a8b0897328200092f8089"),
+  Invoice: new ObjectId("627a8b7651b2090009a8c217"),
+  Payment: new ObjectId("627a8b8097328200092f808a"),
+  PaymentResult: new ObjectId("627a8b96f0da1a00097d78e7")
+}
+E&C: Application inserted with id: 69de4301c97e3218b3fa4b6b
+E&C: ApplicationAnswers inserted with id: 69de4301c97e3218b3fa4b6c
+E&C: Quote inserted with id: 69de4301c97e3218b3fa4b70
+E&C: ApplicationOwner inserted with id: 69de4301c97e3218b3fa4b71
+E&C: Invoice inserted with id: 69de4301c97e3218b3fa4b72
+E&C: Payment inserted with id: 69de4301c97e3218b3fa4b73
+E&C: PaymentResult inserted with id: 69de4301c97e3218b3fa4b74
+E&C: Policy inserted with id: 69de4301c97e3218b3fa4b75
+E&C: PolicyPaymentSchedule inserted with id: 69de4301c97e3218b3fa4b76
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4301c97e3218b3fa4b6b"),
+  ApplicationAnswers: new ObjectId("69de4301c97e3218b3fa4b6c"),
+  Quote: new ObjectId("69de4301c97e3218b3fa4b70"),
+  ApplicationOwner: new ObjectId("69de4301c97e3218b3fa4b71"),
+  Invoice: new ObjectId("69de4301c97e3218b3fa4b72"),
+  Payment: new ObjectId("69de4301c97e3218b3fa4b73"),
+  PaymentResult: new ObjectId("69de4301c97e3218b3fa4b74"),
+  Policy: new ObjectId("69de4301c97e3218b3fa4b75"),
+  PolicyPaymentSchedule: new ObjectId("69de4301c97e3218b3fa4b76")
+}
+inserted ActivePolicy with id: 69de4301c97e3218b3fa4b77
+stage is undefined
+policy number: P20210725XP166V
+invoice number: I202206141LQE8O
+quoteNumber: Q20220614OQ72J7
+{
+  Application: new ObjectId("62a8ec9ff4387a3ad15ff480"),
+  ApplicationAnswers: new ObjectId("62a8eda8f374755f54862907"),
+  Quote: new ObjectId("62a8edaff374755f54862909"),
+  ApplicationOwner: new ObjectId("62a8edeb01e8c900091573f5"),
+  Invoice: new ObjectId("62a8ee11876495000924289c"),
+  Payment: new ObjectId("62a8ee1b01e8c900091573f6"),
+  PaymentResult: new ObjectId("62a8ee38d015da00090c48dc")
+}
+E&C: Application inserted with id: 69de4301c97e3218b3fa4b79
+E&C: ApplicationAnswers inserted with id: 69de4301c97e3218b3fa4b7a
+E&C: Quote inserted with id: 69de4301c97e3218b3fa4b7e
+E&C: ApplicationOwner inserted with id: 69de4301c97e3218b3fa4b7f
+E&C: Invoice inserted with id: 69de4301c97e3218b3fa4b80
+E&C: Payment inserted with id: 69de4301c97e3218b3fa4b81
+E&C: PaymentResult inserted with id: 69de4301c97e3218b3fa4b82
+E&C: Policy inserted with id: 69de4301c97e3218b3fa4b83
+E&C: PolicyPaymentSchedule inserted with id: 69de4301c97e3218b3fa4b84
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4301c97e3218b3fa4b79"),
+  ApplicationAnswers: new ObjectId("69de4301c97e3218b3fa4b7a"),
+  Quote: new ObjectId("69de4301c97e3218b3fa4b7e"),
+  ApplicationOwner: new ObjectId("69de4301c97e3218b3fa4b7f"),
+  Invoice: new ObjectId("69de4301c97e3218b3fa4b80"),
+  Payment: new ObjectId("69de4301c97e3218b3fa4b81"),
+  PaymentResult: new ObjectId("69de4301c97e3218b3fa4b82"),
+  Policy: new ObjectId("69de4301c97e3218b3fa4b83"),
+  PolicyPaymentSchedule: new ObjectId("69de4301c97e3218b3fa4b84")
+}
+inserted ActivePolicy with id: 69de4301c97e3218b3fa4b85
+stage is undefined
+policy number: P20210709LWA3BJ
+invoice number: I20220510PS4I8M
+quoteNumber: Q20220510DAMUR2
+{
+  Application: new ObjectId("627ab5e62c2ce600099b1dc0"),
+  ApplicationAnswers: new ObjectId("627ab77c2c2ce600099b1dd0"),
+  Quote: new ObjectId("627ab77d2c2ce600099b1dd1"),
+  ApplicationOwner: new ObjectId("627ab7c9156a7c0009590b20"),
+  Invoice: new ObjectId("627ab80b16a48200094f4f1e"),
+  Payment: new ObjectId("627ab817156a7c0009590b21"),
+  PaymentResult: new ObjectId("627ab84f0b3a17000918240c")
+}
+E&C: Application inserted with id: 69de4301c97e3218b3fa4b87
+E&C: ApplicationAnswers inserted with id: 69de4301c97e3218b3fa4b88
+E&C: Quote inserted with id: 69de4301c97e3218b3fa4b91
+E&C: ApplicationOwner inserted with id: 69de4301c97e3218b3fa4b92
+E&C: Invoice inserted with id: 69de4301c97e3218b3fa4b93
+E&C: Payment inserted with id: 69de4301c97e3218b3fa4b94
+E&C: PaymentResult inserted with id: 69de4301c97e3218b3fa4b95
+E&C: Policy inserted with id: 69de4301c97e3218b3fa4b96
+E&C: PolicyPaymentSchedule inserted with id: 69de4301c97e3218b3fa4b97
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4301c97e3218b3fa4b87"),
+  ApplicationAnswers: new ObjectId("69de4301c97e3218b3fa4b88"),
+  Quote: new ObjectId("69de4301c97e3218b3fa4b91"),
+  ApplicationOwner: new ObjectId("69de4301c97e3218b3fa4b92"),
+  Invoice: new ObjectId("69de4301c97e3218b3fa4b93"),
+  Payment: new ObjectId("69de4301c97e3218b3fa4b94"),
+  PaymentResult: new ObjectId("69de4301c97e3218b3fa4b95"),
+  Policy: new ObjectId("69de4301c97e3218b3fa4b96"),
+  PolicyPaymentSchedule: new ObjectId("69de4301c97e3218b3fa4b97")
+}
+inserted ActivePolicy with id: 69de4301c97e3218b3fa4b98
+getIds for issues appear in the data review, P202203146G6872's latest ids are
+{
+  ActivePolicy: new ObjectId("62c8973d0184f500093c6985"),
+  Policy: new ObjectId("62d62fd862c2430009076478"),
+  Application: new ObjectId("62d62fb99be54000092da88b"),
+  ApplicationAnswers: [
+    new ObjectId("62d62fba9be54000092da88c"),
+    new ObjectId("62d62fbfcb41370009c0dc4e")
+  ],
+  Quote: new ObjectId("62d62fc4cb41370009c0dc4f"),
+  Invoice: new ObjectId("62d62fd262c2430009076475"),
+  PolicyPaymentSchedule: new ObjectId("62d62fd862c243000907647b")
+}
+stage is undefined
+policy number: P20210901H3DVHW
+invoice number: I20220722V9A8CM
+quoteNumber: Q20220722KKR81X
+{
+  Application: new ObjectId("62db05292c227c1c2413872f"),
+  ApplicationAnswers: new ObjectId("62db06612c227c1c2413873d"),
+  Quote: new ObjectId("62db06622c227c1c2413873e"),
+  ApplicationOwner: new ObjectId("62db0696d900ee0009667863"),
+  Invoice: new ObjectId("62db06b8ddcdca00097db3b5"),
+  Payment: new ObjectId("62db06c1d900ee0009667864"),
+  PaymentResult: new ObjectId("62db06da5ba81c0009197a46")
+}
+E&C: Application inserted with id: 69de4302c97e3218b3fa4b9e
+E&C: ApplicationAnswers inserted with id: 69de4302c97e3218b3fa4b9f
+E&C: Quote inserted with id: 69de4302c97e3218b3fa4ba7
+E&C: ApplicationOwner inserted with id: 69de4302c97e3218b3fa4ba8
+E&C: Invoice inserted with id: 69de4302c97e3218b3fa4ba9
+E&C: Payment inserted with id: 69de4302c97e3218b3fa4baa
+E&C: PaymentResult inserted with id: 69de4302c97e3218b3fa4bab
+E&C: Policy inserted with id: 69de4302c97e3218b3fa4bac
+E&C: PolicyPaymentSchedule inserted with id: 69de4302c97e3218b3fa4bad
+No such field in policy when insert id into policy - PolicyPaymentSchedule
+{
+  Application: new ObjectId("69de4302c97e3218b3fa4b9e"),
+  ApplicationAnswers: new ObjectId("69de4302c97e3218b3fa4b9f"),
+  Quote: new ObjectId("69de4302c97e3218b3fa4ba7"),
+  ApplicationOwner: new ObjectId("69de4302c97e3218b3fa4ba8"),
+  Invoice: new ObjectId("69de4302c97e3218b3fa4ba9"),
+  Payment: new ObjectId("69de4302c97e3218b3fa4baa"),
+  PaymentResult: new ObjectId("69de4302c97e3218b3fa4bab"),
+  Policy: new ObjectId("69de4302c97e3218b3fa4bac"),
+  PolicyPaymentSchedule: new ObjectId("69de4302c97e3218b3fa4bad")
+}
+inserted ActivePolicy with id: 69de4302c97e3218b3fa4bae
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+warning From Yarn 1.0 onwards, scripts don't require "--" for options to be forwarded. In a future version, any explicit "--" will be forwarded as-is to the scripts.
+(node:1966) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Failed to fetch maxPoolSize from SSM, falling back to default: 10 AccessDeniedException: User: arn:aws:sts::948023073771:assumed-role/pr-agent-prod-role/pr-agent-prod is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:us-west-1:948023073771:parameter/foxden-local/mongodb/connection/maxPoolSize because no identity-based policy allows the ssm:GetParameter action
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async exports.default (/tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:28:20)
+  '$fault': 'client',
+  '$metadata': {
+    httpStatusCode: 400,
+    requestId: '0783164c-dc8a-48df-97d7-dffd9d3e9f78',
+    extendedRequestId: undefined,
+    cfId: undefined,
+    attempts: 1,
+    totalRetryDelay: 0
+  },
+  __type: 'AccessDeniedException'
+}
+Failed to fetch maxIdleTimeMS from SSM, falling back to default: 10000 AccessDeniedException: User: arn:aws:sts::948023073771:assumed-role/pr-agent-prod-role/pr-agent-prod is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:us-west-1:948023073771:parameter/foxden-local/mongodb/connection/maxIdleTimeMS because no identity-based policy allows the ssm:GetParameter action
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async exports.default (/tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:28:20)
+  '$fault': 'client',
+  '$metadata': {
+    httpStatusCode: 400,
+    requestId: 'cbcbf2f2-d267-4079-a03a-9e9bf168ee55',
+    extendedRequestId: undefined,
+    cfId: undefined,
+    attempts: 1,
+    totalRetryDelay: 0
+  },
+  __type: 'AccessDeniedException'
+}
+Failed to fetch serverSelectionTimeoutMS from SSM, falling back to default: 3000 AccessDeniedException: User: arn:aws:sts::948023073771:assumed-role/pr-agent-prod-role/pr-agent-prod is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:us-west-1:948023073771:parameter/foxden-local/mongodb/connection/serverSelectionTimeoutMS because no identity-based policy allows the ssm:GetParameter action
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async exports.default (/tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:28:20)
+  '$fault': 'client',
+  '$metadata': {
+    httpStatusCode: 400,
+    requestId: '2628fa11-0e57-48d0-81ad-cc2d5bfbf6fe',
+    extendedRequestId: undefined,
+    cfId: undefined,
+    attempts: 1,
+    totalRetryDelay: 0
+  },
+  __type: 'AccessDeniedException'
+}
+Failed to fetch heartbeatFrequencyMS from SSM, falling back to default: 5000 AccessDeniedException: User: arn:aws:sts::948023073771:assumed-role/pr-agent-prod-role/pr-agent-prod is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:us-west-1:948023073771:parameter/foxden-local/mongodb/connection/heartbeatFrequencyMS because no identity-based policy allows the ssm:GetParameter action
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async exports.default (/tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:28:20)
+  '$fault': 'client',
+  '$metadata': {
+    httpStatusCode: 400,
+    requestId: '89cbe0d4-36bd-4e52-ab42-b10ecfda3d6a',
+    extendedRequestId: undefined,
+    cfId: undefined,
+    attempts: 1,
+    totalRetryDelay: 0
+  },
+  __type: 'AccessDeniedException'
+}
+Failed to fetch turnOnEmfileProbe from SSM, falling back to default: true AccessDeniedException: User: arn:aws:sts::948023073771:assumed-role/pr-agent-prod-role/pr-agent-prod is not authorized to perform: ssm:GetParameter on resource: arn:aws:ssm:us-west-1:948023073771:parameter/foxden-local/mongodb/connection/turnOnEmfileProbe because no identity-based policy allows the ssm:GetParameter action
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async exports.default (/tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:28:20)
+  '$fault': 'client',
+  '$metadata': {
+    httpStatusCode: 400,
+    requestId: 'd6ed7803-b203-45fd-a4f1-ace480e96f80',
+    extendedRequestId: undefined,
+    cfId: undefined,
+    attempts: 1,
+    totalRetryDelay: 0
+  },
+  __type: 'AccessDeniedException'
+}
+Error in MongoDB operation: AccessDeniedException: User: arn:aws:sts::948023073771:assumed-role/pr-agent-prod-role/pr-agent-prod is not authorized to perform: secretsmanager:GetSecretValue on resource: dev/foxden-billing because no identity-based policy allows the secretsmanager:GetSecretValue action
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getSecrets (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:3206:7)
+    at async updateSubcriptionMetadata (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:3156:7)
+    at async up (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:85:5)
+    at async /tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:34:9
+    at async /tmp/Foxquilt/foxden-billing/pr-516/src/context/mongodb.ts:22:20
+    at async exports.default (/tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:32:5)
+  migrated: [
+    '20210709174855-add-billing-check-configuration.js',
+    '20211105200950-convert-to-new-policyPaymentSchedule.js',
+    '20220315185203-manual-endorsement-update-P20220218XOKZ7L.js',
+    '20220317203045-manual-endorsement-update-P20220107V8D8L3.js',
+    '20220321151200-manual-endorsement-update-P20220302WMRCT0.js',
+    '20220322180758-manual-endorsement-update-policyNumber-in-purchase-flow.js',
+    '20220322194605-manual-endorsement-update-P20211230D7KDZD.js',
+    '20220323184259-manual-endorsement-update-P20220202HOFTYI.js',
+    '20220323205534-manual-endorsement-update-P202111308DDYB1.js',
+    '20220323234752-manual-endorsement-update-P20211228OQEUL7.js',
+    '20220324153828-manual-endorsement-update-P20211001FHPYKF.js',
+    '20220328182708-manual-endorsement-add-lost-fields-in-P20220218XOKZ7L.js',
+    '20220331145344-manual-endorsement-update-email-P20220218XOKZ7L.js',
+    '20220404215654-manual-endorsement-add-lost-fields-2nd-time-in-P20220218XOKZ7L.js',
+    '20220405180730-manual-endorsement-P20220310CTGU5D.js',
+    '20220405215358-manual-endorsement-P20220211P6YAKU.js',
+    '20220406005357-manual-endorsement-P20220215RP450A.js',
+    '20220406162716-manual-endorsement-P20220203XDPMRG.js',
+    '20220406202336-manual-endorsement-update-staging-US.js',
+    '20220411154146-manual-endorsement-P20210723K0Y278.js',
+    '20220411200656-manual-endorsement-correct-policyPaymentSchedule-in-P202111308DDYB1.js',
+    '20220411213740-manual-endorsement-P20211113P3A56L.js',
+    '20220412140039-manual-endorsement-update-timestamp-in-payment-and-paymentResult-P20220202HOFTYI.js',
+    '20220413160204-manual-endorsement-update-P20220215RP450A.js',
+    '20220413174304-manual-endorsement-update-P20220203XDPMRG.js',
+    '20220418200811-manual-endorsement-P20220210S3GVNM.js',
+    '20220420025547-manual-endorsement-P20210913V4FCPF.js',
+    '20220420154612-manual-endorsement-P2021082668FX52.js',
+    '20220420182144-manual-endorsement-P20211007014UN9.js',
+    '20220420183343-manual-endorsement-P20211014YTKN3U.js',
+    '20220422082733-manual-endorsement-update-P2021082600UZJJ.js',
+    '20220426082822-manual-endorsement-update-P20210225V3OS69.js',
+    '20220426154355-manual-endorsement-update-munich-policy-id-P20210814H5QNMV.js',
+    '20220426160744-manual-endorsement-cancellation-test-policy-P2021020144J7T5.js',
+    '20220427103904-manual-endorsement-update-P20210525YO1OL7.js',
+    '20220502070752-manual-endorsement-cancellation-P202102019BEC6O.js',
+    '20220502073402-manual-endorsement-cancellation-P20210201Y22UEK.js',
+    '20220502161600-manual-endorsement-update-P20211001FHPYKF-2.js',
+    '20220502163920-manual-endorsement-update-test-policy-P202102011HNNHV.js',
+    '20220503162907-manual-endorsement-P2022031595X06U.js',
+    '20220503203306-manual-endorsement-P20210503RLZY6Y.js',
+    '20220503215507-manual-endorsement-P20210201OTKV70.js',
+    '20220504171934-manual-endorsement-fix-issues-P20210723K0Y278.js',
+    '20220504200931-manual-endorsement-test-policy-cancellation-P20210721LXJ2OX.js',
+    '20220505003142-manual-endorsement-fix-issues-P20211007014UN9.js',
+    '20220505100233-manual-renewal-policy-P20210201K72F4R.js',
+    '20220505104220-manual-renewal-policy-P20210217VB331A.js',
+    '20220505105222-manual-renewal-policy-P20210302B3WCFH.js',
+    '20220505134722-manual-endorsement-P20210721VFOTTQ.js',
+    '20220505160805-manual-endorsement-fix-issues-P2021082668FX52.js',
+    '20220505182751-manual-renewal-policy-P20210226903T2Z.js',
+    '20220505183627-manual-renewal-policy-P20210304VV1T5S.js',
+    '20220506135137-manual-renewal-P20210302413N7A.js',
+    '20220509205143-manual-endorsement-P20210503RLZY6Y-fix-issues.js',
+    '20220510094909-manual-renewal-P20210412888R8Z.js',
+    '20220510095745-manual-renewal-P20210331XMVENN.js',
+    '20220510142115-manual-renewal-P20210225V3OS69.js',
+    '20220510150241-manual-renewal-P20210330WTO6N3.js',
+    '20220510193802-manual-renewal-P202104226S8OC7.js',
+    '20220510194208-manual-renewal-P202104192CBU1W.js',
+    '20220511145108-manual-renewal-P20210310SRO8BQ.js',
+    '20220511214616-manual-endorsement-P20210721VFOTTQ-fix-issues.js',
+    '20220512104529-manual-cancellation-P20211231LWID03.js',
+    '20220512145012-manual-endorsement-P20210721VFOTTQ-fix-issues-2.js',
+    '20220513074247-manual-cancellation-P202202107NNFHX.js',
+    '20220513085841-manual-cancellation-P202202044X2CIP.js',
+    '20220516104142-manual-cancellation-policy-P20210831KNKL9I.js',
+    '20220516111026-manual-cancellation-policy-P20220218GR2UYH.js',
+    '20220516194842-manual-endorsement-P20210717P2HSFH.js',
+    '20220517223053-manual-cancellation-P20210628YIZHIZ.js',
+    '20220518100059-manual-cancellation-P20220314KETD0C.js',
+    '20220519065223-manual-cancellation-update-P202202044X2CIP.js',
+    '20220519070821-manual-cancellation-update-P20211231LWID03.js',
+    '20220519091302-manual-cancellation-P20211103KV64DU.js',
+    '20220519095905-manual-cancellation-P2021121437D2M2.js',
+    '20220519140934-manual-cancellation-P20210827WOX2YI.js',
+    '20220520063426-manual-cancellation-update-P20220314KETD0C.js',
+    '20220520064400-manual-cancellation-update-P202202107NNFHX.js',
+    '20220524081024-manual-cancellation-P202203044F5O4E.js',
+    '20220524150116-manual-cancellation-P20210907EP4GQF.js',
+    '20220525172107-manual-cancellation-update-P20211103KV64DU.js',
+    '20220527075923-manual-endorsememnt-update-P20220218XOKZ7L.js',
+    '20220608110608-manual-cancellation-P20220315NX0T20.js',
+    '20220608111011-manual-cancellation-P202202183EE72J.js',
+    '20220608111212-manual-cancellation-P20211213VHZYTR.js',
+    '20220609095546-manual-cancellation-P20211119P31I27.js',
+    '20220610103204-manual-cancellation-P20220318ARUMKX.js',
+    '20220610105159-manual-cancellation-P202201263T3IYE.js',
+    '20220613135541-manual-cancellation-update-P20210907EP4GQF.js',
+    '20220614132811-manual-cancellation-P20211227PKQJK1.js',
+    '20220614190414-manual-cancellation-P20220203XDPMRG.js',
+    '20220615175347-manual-cancellation-P202203047MQ1YA.js',
+    '20220616134912-manual-cancellation-update-P20220315NX0T20.js',
+    '20220621163506-manual-cancelaltion-update-P20211227PKQJK1.js',
+    '20220622140137-manual-cancellation-update-P20220203XDPMRG.js',
+    '20220624083616-manual-renewal-P20210501Y4WKN9.js',
+    '20220624084634-manual-renewal-P20210426C0T1NX.js',
+    '20220624085319-manual-renewal-P20210503RLZY6Y.js',
+    '20220720124332-manual-cancellation-P20211122TWNXV0.js',
+    '20220720162306-manual-cancellation-P20220405B0MMUB.js',
+    ... 18 more items
+  ]
+}
+AccessDeniedException: User: arn:aws:sts::948023073771:assumed-role/pr-agent-prod-role/pr-agent-prod is not authorized to perform: secretsmanager:GetSecretValue on resource: dev/foxden-billing because no identity-based policy allows the secretsmanager:GetSecretValue action
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async getSecrets (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:3206:7)
+    at async updateSubcriptionMetadata (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:3156:7)
+    at async up (/tmp/Foxquilt/foxden-billing/pr-516/migrate-mongo/migrations/20220927134000-manual-renewal-P20210901H3DVHW.js:85:5)
+    at async /tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:34:9
+    at async /tmp/Foxquilt/foxden-billing/pr-516/src/context/mongodb.ts:22:20
+    at async exports.default (/tmp/Foxquilt/foxden-billing/pr-516/testing/setup.ts:32:5)
+error Command failed with exit code 1.
+
+Read the latest file content before making changes.

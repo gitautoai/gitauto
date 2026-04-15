@@ -1,8 +1,6 @@
 Task NOT complete. Fix these errors:
 - jest: yarn run v1.22.22
 $ craco test --coverage=true --findRelatedTests src/pages/Quote/components/Coverages/amtrustCoverage.test.tsx -u --forceExit
-info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
-warning From Yarn 1.0 onwards, scripts don't require "--" for options to be forwarded. In a future version, any explicit "--" will be forwarded as-is to the scripts.
 FAIL src/pages/Quote/components/Coverages/amtrustCoverage.test.tsx
   ● Test suite failed to run
 

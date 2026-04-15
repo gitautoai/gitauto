@@ -102,3 +102,21 @@ def test_strip_jest_noise_real_fixture():
 
     result = strip_jest_noise(raw)
     assert result.strip() == expected.strip()
+
+
+def test_strip_jest_noise_mongodb_setup_noise():
+    # Real 80K Jest output from foxden-billing PR#516 (2026-04-14) with MongoDB test setup
+    # noise: 630 ObjectId lines, 351 E&C seed data lines, 102 migration files, MongoDB
+    # config, business data. Only the error + stack trace should survive.
+    fixture_path = os.path.join(FIXTURES_DIR, "foxden_billing_pr516_jest_output.txt")
+    expected_path = os.path.join(
+        FIXTURES_DIR, "foxden_billing_pr516_jest_output_expected.txt"
+    )
+
+    with open(fixture_path, encoding="utf-8") as f:
+        raw = f.read()
+    with open(expected_path, encoding="utf-8") as f:
+        expected = f.read()
+
+    result = strip_jest_noise(raw)
+    assert result.strip() == expected.strip()
