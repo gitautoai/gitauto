@@ -6,16 +6,18 @@ from services.supabase.installations.is_installation_valid import is_installatio
 from services.supabase.users.upsert_user import upsert_user
 from services.webhook.process_repositories import process_repositories
 from utils.error.handle_exceptions import handle_exceptions
-from utils.logging.logging_config import set_trigger
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(raise_on_error=True)
 def handle_installation_repos_added(
     payload: InstallationRepositoriesPayload,
 ):
-    set_trigger("installation_repositories")
     installation_id = payload["installation"]["id"]
     if not is_installation_valid(installation_id=installation_id):
+        logger.info(
+            "Installation %s is not valid, skipping repos added", installation_id
+        )
         return
 
     token = get_installation_access_token(installation_id=installation_id)

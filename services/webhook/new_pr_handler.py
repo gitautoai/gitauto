@@ -8,7 +8,7 @@ import time
 from anthropic.types import MessageParam
 
 # Local imports
-from constants.agent import MAX_ITERATIONS
+from constants.agent import COST_CAP_RATIO, MAX_ITERATIONS
 from constants.messages import SETTINGS_LINKS
 from constants.triggers import NewPrTrigger
 from services.agents.verify_task_is_complete import verify_task_is_complete
@@ -49,6 +49,7 @@ from services.stripe.create_stripe_customer import create_stripe_customer
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.create_user_request import create_user_request
 from services.supabase.credits.check_purchase_exists import check_purchase_exists
+from services.supabase.credits.get_credit_cost import get_credit_cost
 from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.email_sends.insert_email_send import insert_email_send
 from services.supabase.email_sends.update_email_send import update_email_send
@@ -75,7 +76,7 @@ from utils.files.should_skip_test import should_skip_test
 from utils.formatting.format_with_line_numbers import format_content_with_line_numbers
 from utils.images.get_base64 import get_base64
 from utils.logging.add_log_message import add_log_message
-from utils.logging.logging_config import logger, set_pr_number, set_trigger
+from utils.logging.logging_config import logger
 from utils.memory.gc_collect_and_log import gc_collect_and_log
 from utils.pr_templates.schedule import SCHEDULE_PREFIX_INCREASE
 from utils.progress_bar.progress_bar import create_progress_bar
@@ -88,7 +89,6 @@ async def handle_new_pr(
     trigger: NewPrTrigger,
     lambda_info: dict[str, str | None] | None = None,
 ) -> None:
-    set_trigger(trigger)
     current_time: float = time.time()
 
     # Deconstruct payload
@@ -311,8 +311,6 @@ async def handle_new_pr(
     test_files: dict[str, str] = {}
     parent = str(Path(impl_file_path).parent)
     target_dir = parent if parent != "." else None
-
-    set_pr_number(pr_number)
 
     # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
@@ -570,8 +568,11 @@ async def handle_new_pr(
     # Loop a process explore repo and commit changes until the ticket is resolved
     total_token_input = 0
     total_token_output = 0
+    total_cost_usd = 0.0
     is_completed = False
     completion_reason = ""
+    revenue_usd = get_credit_cost(model_id)
+    cost_cap_usd = revenue_usd * COST_CAP_RATIO
 
     system_message = create_system_message(
         trigger=trigger, repo_settings=repo_settings, clone_dir=clone_dir
@@ -603,6 +604,17 @@ async def handle_new_pr(
         p = result.p
         total_token_input += result.token_input
         total_token_output += result.token_output
+        total_cost_usd += result.cost_usd
+
+        if total_cost_usd >= cost_cap_usd:
+            logger.warning(
+                "Cost cap reached: $%.2f >= $%.2f (%.0f%% of $%d revenue). Stopping.",
+                total_cost_usd,
+                cost_cap_usd,
+                COST_CAP_RATIO * 100,
+                revenue_usd,
+            )
+            break
 
         if is_completed:
             logger.info(

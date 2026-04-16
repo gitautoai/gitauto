@@ -36,6 +36,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
 
     # Skip if no PR associated with this check run
     if not pull_requests:
+        logger.info("No PRs associated with check_suite, skipping auto-merge")
         return
 
     pull_request = pull_requests[0]
@@ -45,6 +46,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
 
     # Only auto-merge PRs created by GitAuto (check early to avoid unnecessary work)
     if not pr_branch.lower().startswith(f"{PRODUCT_ID.lower()}/"):
+        logger.info("Not a GitAuto PR branch: %s, skipping auto-merge", pr_branch)
         return
 
     # Get repository info

@@ -72,7 +72,10 @@ python3 scripts/aws/filter_log_events_across_streams.py --hours 12 --owner Foxqu
 
 - **No DOCSTRINGS**: Don't add unless told. Don't delete existing unless outdated.
 - **COMMENTS**: Don't delete unless outdated. Preserve URLs. One line when possible.
-- **LOGGERS**: Every `continue`, `break`, `return` inside a function MUST have a preceding `logger.info(...)` (or warning/error).
+- **LOGGERS**: Every `continue`, `break`, `return` inside a function MUST have a preceding `logger.info(...)` (or warning/error). Also log at every conditional branch to show which path was taken.
+- **`set_xxx` EARLIEST**: Call `set_trigger`, `set_owner_repo`, `set_pr_number` etc. at the earliest point in each handler, right after the value is known.
+- **Don't repeat structured log context**: `set_owner_repo` in `main.py` already adds `owner_repo` to every log entry. Don't repeat owner/repo in individual logger messages.
+- **`target_branch` is for custom overrides only**: Empty = use default branch at runtime via `get_default_branch()`. This is correct because repos may change their default branch.
 - **API URLS**: Verify via WebFetch before using.
 - **NO `->` return type hints**: Can't validate at runtime.
 - **NO `type: ignore`**: Fix underlying issues.
@@ -133,9 +136,11 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
 9. Check recent posts: `scripts/git/recent_social_posts.sh gitauto` and `scripts/git/recent_social_posts.sh wes`
 10. `gh pr create --title "PR title" --body "PR description" --assignee @me`
     - Technical, descriptive title. **No `## Test plan`**.
-    - **Two posts** (last section, customer-facing only): GitAuto (product voice) + Wes (personal voice, don't emphasize "GitAuto")
+    - **Two posts** (last section, customer-facing only): GitAuto (changelog) + Wes (personal voice, don't emphasize "GitAuto")
     - Format: `## Social Media Post (GitAuto)` and `## Social Media Post (Wes)` headers (parsed by `extract-social-posts.js`)
-    - Guidelines: No em dashes (—). Under 280 chars. No marketing keywords. No negative framing. No internal names. No small numbers — use relative language. Honest stories. Vary openers — check recent posts first.
+    - **GitAuto post**: Changelog format — one-liner headline + change bullets. No storytelling.
+    - **Wes post**: Honest stories. Vary openers — check recent posts first.
+    - Guidelines: No em dashes (—). Under 280 chars. No marketing keywords. No negative framing. No internal names. No small numbers — use relative language.
 11. If Sentry issue: `python3 scripts/sentry/get_issue.py AGENT-XXX` then `python3 scripts/sentry/resolve_issue.py AGENT-XXX ...`
 12. **Blog post** in `../website/app/blog/posts/`:
     - `YYYY-MM-DD-kebab-case-title.mdx`. Universal dev lesson, not GitAuto internals (exception: deep technical content).
