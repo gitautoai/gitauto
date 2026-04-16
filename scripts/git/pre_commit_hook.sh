@@ -5,6 +5,14 @@ set -uo pipefail
 
 echo "=== Pre-commit hook ==="
 
+# Auto-increment patch version (major version updated manually)
+CURRENT=$(grep '^version' pyproject.toml | sed 's/.*"\(.*\)"/\1/')
+MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+MINOR=$(echo "$CURRENT" | cut -d. -f2)
+PATCH=$(echo "$CURRENT" | cut -d. -f3)
+NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+sed -i '' "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+
 # Lock dependencies (pyproject.toml → uv.lock)
 uv lock --quiet && git add pyproject.toml uv.lock
 
