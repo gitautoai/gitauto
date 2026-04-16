@@ -151,13 +151,13 @@ def test_free_user_selects_sonnet_4_6():
     assert result == ClaudeModelId.SONNET_4_6
 
 
-# --- Free user with premium models (override to default free) ---
+# --- Free user with premium models (DB setting honored regardless of tier) ---
 
 
-def test_free_user_selects_opus_4_6_overridden():
+def test_free_user_selects_opus_4_6_honored():
     settings = cast(Repositories, {"preferred_model": ClaudeModelId.OPUS_4_6})
     result = get_preferred_model(repo_settings=settings, is_paid=False)
-    assert result == DEFAULT_FREE_MODEL
+    assert result == ClaudeModelId.OPUS_4_6
 
 
 # --- Paid user with each user-selectable model ---
@@ -207,22 +207,14 @@ def test_all_free_tier_models_honored_for_free():
         assert result == model, f"Free user selecting {model} got {result}"
 
 
-# --- Exhaustive: premium-only selectable models are overridden for free users ---
+# --- Exhaustive: all user-selectable models honored for free users (DB overrides tier) ---
 
 
-def test_premium_only_selectable_models_overridden_for_free():
-    premium_selectable = [
-        m for m in USER_SELECTABLE_MODELS if m not in FREE_TIER_MODELS
-    ]
-    assert (
-        len(premium_selectable) > 0
-    ), "Expected at least one premium-only selectable model"
-    for model in premium_selectable:
+def test_all_user_selectable_models_honored_for_free():
+    for model in USER_SELECTABLE_MODELS:
         settings = cast(Repositories, {"preferred_model": model.value})
         result = get_preferred_model(repo_settings=settings, is_paid=False)
-        assert (
-            result == DEFAULT_FREE_MODEL
-        ), f"Free user selecting premium {model} should get {DEFAULT_FREE_MODEL}, got {result}"
+        assert result == model, f"Free user selecting {model} got {result}"
 
 
 # --- Exhaustive: every non-selectable model falls back for both tiers ---

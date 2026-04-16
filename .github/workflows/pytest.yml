@@ -109,9 +109,9 @@ jobs:
 
         run: |
           if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            python -m pytest --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
+            uv run pytest --cov-branch --cov=./ --cov-report=lcov:coverage/lcov.info
           else
-            python -m pytest
+            uv run pytest
           fi
 
       - name: Check resources on failure
