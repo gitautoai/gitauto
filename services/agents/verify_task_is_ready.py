@@ -4,7 +4,7 @@ from constants.files import PHP_TEST_FILE_EXTENSIONS
 from services.eslint.run_eslint_fix import run_eslint_fix
 from services.git.git_commit_and_push import git_commit_and_push
 from services.types.base_args import BaseArgs
-from services.jest.run_jest_test import run_jest_test
+from services.jest.run_js_ts_test import run_js_ts_test
 from services.phpunit.run_phpunit_test import run_phpunit_test
 from services.prettier.run_prettier_fix import run_prettier_fix
 from services.pytest.run_pytest_test import run_pytest_test
@@ -112,7 +112,7 @@ async def verify_task_is_ready(
         files_with_errors.update(tsc_result.error_files)
 
     js_ts_test_files = [f for f in js_ts_files if is_test_file(f)]
-    jest_result = await run_jest_test(
+    jest_result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=js_ts_test_files,
         source_file_paths=[],

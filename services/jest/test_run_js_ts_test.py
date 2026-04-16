@@ -4,13 +4,13 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from services.jest.run_jest_test import run_jest_test
+from services.jest.run_js_ts_test import run_js_ts_test
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_success(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_success(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     mock_exists.return_value = True
@@ -21,7 +21,7 @@ async def test_run_jest_test_success(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -33,13 +33,13 @@ async def test_run_jest_test_success(
 
 
 @pytest.mark.asyncio
-async def test_run_jest_test_no_test_files(create_test_base_args):
+async def test_run_js_ts_test_no_test_files(create_test_base_args):
     base_args = create_test_base_args(
         owner="test",
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.ts", "README.md"],
         source_file_paths=[],
@@ -50,13 +50,13 @@ async def test_run_jest_test_no_test_files(create_test_base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_jest_test_no_clone_dir(create_test_base_args):
+async def test_run_js_ts_test_no_clone_dir(create_test_base_args):
     base_args = create_test_base_args(
         owner="test",
         repo="test",
         clone_dir="",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -67,8 +67,8 @@ async def test_run_jest_test_no_clone_dir(create_test_base_args):
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_no_runner(mock_exists, create_test_base_args):
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_no_runner(mock_exists, create_test_base_args):
     mock_exists.return_value = False
 
     base_args = create_test_base_args(
@@ -76,7 +76,7 @@ async def test_run_jest_test_no_runner(mock_exists, create_test_base_args):
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -87,9 +87,9 @@ async def test_run_jest_test_no_runner(mock_exists, create_test_base_args):
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_with_failures(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_with_failures(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     mock_exists.return_value = True
@@ -104,7 +104,7 @@ async def test_run_jest_test_with_failures(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -116,9 +116,9 @@ async def test_run_jest_test_with_failures(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_detects_updated_snapshots(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_detects_updated_snapshots(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     mock_exists.return_value = True
@@ -135,7 +135,7 @@ async def test_run_jest_test_detects_updated_snapshots(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -149,9 +149,9 @@ async def test_run_jest_test_detects_updated_snapshots(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_no_snapshots_updated(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_no_snapshots_updated(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     mock_exists.return_value = True
@@ -165,7 +165,7 @@ async def test_run_jest_test_no_snapshots_updated(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -176,9 +176,9 @@ async def test_run_jest_test_no_snapshots_updated(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_uses_vitest_when_no_jest(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_uses_vitest_when_no_jest(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     def exists_side_effect(path):
@@ -195,7 +195,7 @@ async def test_run_jest_test_uses_vitest_when_no_jest(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -209,9 +209,9 @@ async def test_run_jest_test_uses_vitest_when_no_jest(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_spec_files(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_spec_files(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     mock_exists.return_value = True
@@ -222,7 +222,7 @@ async def test_run_jest_test_spec_files(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/utils.spec.ts", "src/helper.spec.jsx"],
         source_file_paths=[],
@@ -235,9 +235,9 @@ async def test_run_jest_test_spec_files(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_one_of_three_fails(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_one_of_three_fails(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     mock_exists.return_value = True
@@ -252,7 +252,7 @@ async def test_run_jest_test_one_of_three_fails(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/a.test.ts", "src/b.test.ts", "src/c.test.ts"],
         source_file_paths=[],
@@ -265,9 +265,9 @@ async def test_run_jest_test_one_of_three_fails(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_two_of_three_fail(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_two_of_three_fail(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     mock_exists.return_value = True
@@ -282,7 +282,7 @@ async def test_run_jest_test_two_of_three_fail(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/a.test.ts", "src/b.test.ts", "src/c.test.ts"],
         source_file_paths=[],
@@ -295,9 +295,9 @@ async def test_run_jest_test_two_of_three_fail(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_all_three_fail(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_all_three_fail(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     mock_exists.return_value = True
@@ -312,7 +312,7 @@ async def test_run_jest_test_all_three_fail(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/a.test.ts", "src/b.test.ts", "src/c.test.ts"],
         source_file_paths=[],
@@ -325,9 +325,9 @@ async def test_run_jest_test_all_three_fail(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_type_error_in_output(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_type_error_in_output(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     mock_exists.return_value = True
@@ -342,7 +342,7 @@ async def test_run_jest_test_type_error_in_output(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -353,9 +353,9 @@ async def test_run_jest_test_type_error_in_output(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_sets_mongoms_download_dir(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_sets_mongoms_download_dir(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     """Verify MONGOMS_DOWNLOAD_DIR points to {clone_dir}/mongodb-binaries for S3 cache extraction."""
@@ -365,7 +365,7 @@ async def test_run_jest_test_sets_mongoms_download_dir(
     base_args = create_test_base_args(
         clone_dir="/tmp/clone",
     )
-    await run_jest_test(
+    await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -380,7 +380,7 @@ async def test_run_jest_test_sets_mongoms_download_dir(
 
 # Real Jest output captured from foxden-rating-quoting-backend on 2026-03-23.
 # Jest writes PASS/FAIL to stderr, coverage tables to stdout.
-# This was the root cause of a bug where run_jest_test checked only result.stdout.
+# This was the root cause of a bug where run_js_ts_test checked only result.stdout.
 REAL_JEST_PASS_STDERR = (
     "PASS unit src/services/query/getQuote/fetchQuote.test.ts\n"
     "  fetchQuote\n"
@@ -475,10 +475,10 @@ Ran all test suites matching /tests\\/js\\/unit\\/annotation\\/print_dialog.kyud
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.get_test_script_name", return_value=None)
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_captures_full_esm_error(
+@patch("services.jest.run_js_ts_test.get_test_script_name", return_value=(None, ""))
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_captures_full_esm_error(
     mock_exists, mock_subprocess, _mock_get_test_script_name, create_test_base_args
 ):
     """Verify the full error output is kept, including the file path and stack trace."""
@@ -494,7 +494,7 @@ async def test_run_jest_test_captures_full_esm_error(
         repo="SPIDERPLUS-web",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["tests/js/unit/annotation/print_dialog.kyuden.test.js"],
         source_file_paths=[],
@@ -510,12 +510,15 @@ async def test_run_jest_test_captures_full_esm_error(
 
 @pytest.mark.asyncio
 @patch(
-    "services.jest.run_jest_test.detect_package_manager", return_value=("npm", "", "")
+    "services.jest.run_js_ts_test.detect_package_manager", return_value=("npm", "", "")
 )
-@patch("services.jest.run_jest_test.get_test_script_name", return_value="test:unit")
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_uses_test_unit_script(
+@patch(
+    "services.jest.run_js_ts_test.get_test_script_name",
+    return_value=("test:unit", "jest --selectProjects unit"),
+)
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_uses_test_unit_script(
     mock_exists,
     mock_subprocess,
     _mock_get_test_script_name,
@@ -534,7 +537,7 @@ async def test_run_jest_test_uses_test_unit_script(
         new_branch="feature",
         token="token",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["tests/js/unit/annotation/print_dialog.kyuden.test.js"],
         source_file_paths=[],
@@ -549,9 +552,9 @@ async def test_run_jest_test_uses_test_unit_script(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_exit_code_1_all_pass_in_stderr_treated_as_success(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_exit_code_1_all_pass_in_stderr_treated_as_success(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     """Real Jest output: PASS goes to stderr, not stdout (captured from
@@ -569,7 +572,7 @@ async def test_run_jest_test_exit_code_1_all_pass_in_stderr_treated_as_success(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/services/query/getQuote/fetchQuote.test.ts"],
         source_file_paths=[],
@@ -581,9 +584,9 @@ async def test_run_jest_test_exit_code_1_all_pass_in_stderr_treated_as_success(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_forcexit_pass_in_stderr_treated_as_success(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_forcexit_pass_in_stderr_treated_as_success(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     """Real Jest --forceExit output: tests pass but exit code 1 because of
@@ -601,7 +604,7 @@ async def test_run_jest_test_forcexit_pass_in_stderr_treated_as_success(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["test/testing/foxden_quoting/fetchQuote.test.ts"],
         source_file_paths=[],
@@ -613,9 +616,9 @@ async def test_run_jest_test_forcexit_pass_in_stderr_treated_as_success(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_real_fail_in_stderr_treated_as_failure(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_real_fail_in_stderr_treated_as_failure(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     """Real Jest FAIL output (captured 2026-03-23): FAIL goes to stderr.
@@ -632,7 +635,7 @@ async def test_run_jest_test_real_fail_in_stderr_treated_as_failure(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/fail_test.test.ts"],
         source_file_paths=[],
@@ -644,10 +647,10 @@ async def test_run_jest_test_real_fail_in_stderr_treated_as_failure(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.kill_processes_by_name")
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_kills_mongod_before_tests(
+@patch("services.jest.run_js_ts_test.kill_processes_by_name")
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_kills_mongod_before_tests(
     mock_exists, mock_subprocess, mock_kill, create_test_base_args
 ):
     """Verify kill_processes_by_name('mongod') is called before running tests."""
@@ -659,7 +662,7 @@ async def test_run_jest_test_kills_mongod_before_tests(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    await run_jest_test(
+    await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -670,9 +673,9 @@ async def test_run_jest_test_kills_mongod_before_tests(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_includes_force_exit(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_includes_force_exit(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     """Verify --forceExit is in the jest command to prevent hangs from
@@ -685,7 +688,7 @@ async def test_run_jest_test_includes_force_exit(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    await run_jest_test(
+    await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -698,9 +701,9 @@ async def test_run_jest_test_includes_force_exit(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_find_related_tests_with_only_test_files(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_find_related_tests_with_only_test_files(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     """--findRelatedTests with only test files (no source files) should work.
@@ -713,7 +716,7 @@ async def test_run_jest_test_find_related_tests_with_only_test_files(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=["src/index.test.ts"],
@@ -727,9 +730,9 @@ async def test_run_jest_test_find_related_tests_with_only_test_files(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_find_related_tests_with_both(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_find_related_tests_with_both(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     """When both test files and source files are provided, --findRelatedTests
@@ -743,7 +746,7 @@ async def test_run_jest_test_find_related_tests_with_both(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=["src/utils.ts"],
@@ -758,9 +761,9 @@ async def test_run_jest_test_find_related_tests_with_both(
 
 
 @pytest.mark.asyncio
-@patch("services.jest.run_jest_test.subprocess.run")
-@patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_always_uses_find_related_tests(
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_always_uses_find_related_tests(
     mock_exists, mock_subprocess, create_test_base_args
 ):
     """--findRelatedTests is always used, even when no source files are provided."""
@@ -772,7 +775,7 @@ async def test_run_jest_test_always_uses_find_related_tests(
         repo="test",
         clone_dir="/tmp/clone",
     )
-    result = await run_jest_test(
+    result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=["src/index.test.ts"],
         source_file_paths=[],
@@ -783,3 +786,87 @@ async def test_run_jest_test_always_uses_find_related_tests(
     cmd = mock_subprocess.call_args_list[0][0][0]
     assert "--findRelatedTests" in cmd
     assert "src/index.test.ts" in cmd
+
+
+@pytest.mark.asyncio
+@patch(
+    "services.jest.run_js_ts_test.detect_package_manager", return_value=("npm", "", "")
+)
+@patch(
+    "services.jest.run_js_ts_test.get_test_script_name",
+    return_value=("test", "jest"),
+)
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_vitest_binary_but_jest_script_uses_find_related_tests(
+    mock_exists,
+    mock_subprocess,
+    _mock_get_test_script_name,
+    _mock_detect_pm,
+    create_test_base_args,
+):
+    """Bug fix from gitautoai/website: "test": "jest" but both jest AND vitest
+    binaries exist in node_modules/.bin/. Runner detection must use the script
+    value, not binary existence. Should use --findRelatedTests (jest), not --related (vitest).
+    """
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
+    )
+    result = await run_js_ts_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        source_file_paths=[],
+        impl_file_to_collect_coverage_from="",
+    )
+    assert result.success is True
+    assert result.runner_name == "jest"
+
+    cmd = mock_subprocess.call_args_list[0][0][0]
+    assert "--findRelatedTests" in cmd
+    assert "--related" not in cmd
+
+
+@pytest.mark.asyncio
+@patch(
+    "services.jest.run_js_ts_test.detect_package_manager", return_value=("npm", "", "")
+)
+@patch(
+    "services.jest.run_js_ts_test.get_test_script_name",
+    return_value=("test", "vitest run"),
+)
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_jest_binary_but_vitest_script_uses_related(
+    mock_exists,
+    mock_subprocess,
+    _mock_get_test_script_name,
+    _mock_detect_pm,
+    create_test_base_args,
+):
+    """Inverse case from ghostwriter: "test": "vitest run" but jest binary also
+    exists. Should use --related (vitest flag), not --findRelatedTests (jest flag)."""
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
+    )
+    result = await run_js_ts_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        source_file_paths=[],
+        impl_file_to_collect_coverage_from="",
+    )
+    assert result.success is True
+    assert result.runner_name == "vitest"
+
+    cmd = mock_subprocess.call_args_list[0][0][0]
+    assert "--related" in cmd
+    assert "--findRelatedTests" not in cmd

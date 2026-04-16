@@ -7,7 +7,7 @@ import pytest
 
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.eslint.run_eslint_fix import ESLintResult
-from services.jest.run_jest_test import JestResult
+from services.jest.run_js_ts_test import JsTsTestResult
 from services.phpunit.run_phpunit_test import PhpunitResult
 from services.prettier.run_prettier_fix import PrettierResult
 from services.pytest.run_pytest_test import PytestResult
@@ -36,11 +36,11 @@ def mock_create_tsc_issue():
 
 @pytest.fixture(autouse=True)
 def mock_jest_test():
-    """Auto-mock run_jest_test for all tests to prevent actual test execution."""
+    """Auto-mock run_js_ts_test for all tests to prevent actual test execution."""
     with patch(
-        "services.agents.verify_task_is_complete.run_jest_test",
+        "services.agents.verify_task_is_complete.run_js_ts_test",
         new_callable=AsyncMock,
-        return_value=JestResult(
+        return_value=JsTsTestResult(
             success=True,
             errors=[],
             error_files=set(),
@@ -518,7 +518,7 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
@@ -532,7 +532,7 @@ async def test_verify_fails_when_jest_tests_fail(
     ]
     mock_get_raw.return_value = "const x = 1;"
     mock_tsc.return_value = TscResult(success=True, errors=[], error_files=set())
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=False,
         errors=["FAIL src/index.test.js", "Expected true to be false"],
         error_files={"src/index.test.js"},
@@ -549,7 +549,7 @@ async def test_verify_fails_when_jest_tests_fail(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_eslint_fix")
 @patch("services.agents.verify_task_is_complete.run_prettier_fix")
@@ -580,7 +580,7 @@ async def test_verify_error_files_collected_from_eslint_and_jest(
         coverage_errors=None,
     )
     mock_tsc.return_value = TscResult(success=True, errors=[], error_files=set())
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=False,
         errors=["FAIL src/index.test.js"],
         error_files={"src/index.test.js"},
@@ -597,7 +597,7 @@ async def test_verify_error_files_collected_from_eslint_and_jest(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_baseline_tsc_errors_filtered(
@@ -620,7 +620,7 @@ async def test_baseline_tsc_errors_filtered(
         errors=[pre_existing_error, new_error],
         error_files={"src/passport-oidc.ts", "src/index.ts"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -646,7 +646,7 @@ async def test_baseline_tsc_errors_filtered(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_all_tsc_errors_pre_existing_passes(
@@ -662,7 +662,7 @@ async def test_all_tsc_errors_pre_existing_passes(
         errors=[pre_existing],
         error_files={"src/old.ts"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -683,7 +683,7 @@ async def test_all_tsc_errors_pre_existing_passes(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_baseline_tsc_errors_in_pr_files_still_reported(
@@ -713,7 +713,7 @@ async def test_baseline_tsc_errors_in_pr_files_still_reported(
         errors=[pr_file_error],
         error_files={"src/models/InProgressPolicy.test.ts"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -739,7 +739,7 @@ async def test_baseline_tsc_errors_in_pr_files_still_reported(
     return_value="// snapshot content",
 )
 @patch("services.agents.verify_task_is_complete.write_and_commit_file")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.os.listdir", return_value=[])
@@ -759,7 +759,7 @@ async def test_verify_commits_updated_snapshots(
     ]
     mock_get_raw.return_value = "const x = 1;"
     mock_tsc.return_value = TscResult(success=True, errors=[], error_files=set())
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -797,7 +797,7 @@ async def test_verify_commits_updated_snapshots(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_new_pr_handler_error_in_pr_file_reported(
@@ -818,7 +818,7 @@ async def test_new_pr_handler_error_in_pr_file_reported(
         errors=[pr_file_error],
         error_files={"src/utils.ts"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -838,7 +838,7 @@ async def test_new_pr_handler_error_in_pr_file_reported(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_new_pr_handler_preexisting_non_pr_file_error_skipped(
@@ -859,7 +859,7 @@ async def test_new_pr_handler_preexisting_non_pr_file_error_skipped(
         errors=[preexisting],
         error_files={"src/legacy.ts"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -880,7 +880,7 @@ async def test_new_pr_handler_preexisting_non_pr_file_error_skipped(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_new_pr_handler_new_non_pr_file_error_reported(
@@ -901,7 +901,7 @@ async def test_new_pr_handler_new_non_pr_file_error_reported(
         errors=[new_error],
         error_files={"src/consumer.ts"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -924,7 +924,7 @@ async def test_new_pr_handler_new_non_pr_file_error_reported(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_check_suite_error_in_pr_file_in_baseline_reported(
@@ -954,7 +954,7 @@ async def test_check_suite_error_in_pr_file_in_baseline_reported(
         errors=[pr_file_error],
         error_files={"src/models/Policy.test.ts"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -976,7 +976,7 @@ async def test_check_suite_error_in_pr_file_in_baseline_reported(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_check_suite_preexisting_non_pr_file_error_skipped(
@@ -1002,7 +1002,7 @@ async def test_check_suite_preexisting_non_pr_file_error_skipped(
         errors=[preexisting],
         error_files={"src/passport-oidc.ts"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -1024,7 +1024,7 @@ async def test_check_suite_preexisting_non_pr_file_error_skipped(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_check_suite_new_non_pr_file_error_reported(
@@ -1050,7 +1050,7 @@ async def test_check_suite_new_non_pr_file_error_reported(
         errors=[new_error],
         error_files={"src/auth.ts"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -1074,7 +1074,7 @@ async def test_check_suite_new_non_pr_file_error_reported(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_review_run_error_in_pr_file_in_baseline_reported(
@@ -1098,7 +1098,7 @@ async def test_review_run_error_in_pr_file_in_baseline_reported(
         errors=[pr_file_error],
         error_files={"src/components/Form.tsx"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -1118,7 +1118,7 @@ async def test_review_run_error_in_pr_file_in_baseline_reported(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_review_run_preexisting_non_pr_file_error_skipped(
@@ -1138,7 +1138,7 @@ async def test_review_run_preexisting_non_pr_file_error_skipped(
         errors=[preexisting],
         error_files={"src/legacy-auth.ts"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -1159,7 +1159,7 @@ async def test_review_run_preexisting_non_pr_file_error_skipped(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.create_tsc_issue")
-@patch("services.agents.verify_task_is_complete.run_jest_test", new_callable=AsyncMock)
+@patch("services.agents.verify_task_is_complete.run_js_ts_test", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_review_run_new_non_pr_file_error_reported(
@@ -1179,7 +1179,7 @@ async def test_review_run_new_non_pr_file_error_reported(
         errors=[new_error],
         error_files={"src/validators.ts"},
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=True,
         errors=[],
         error_files=set(),
@@ -1442,9 +1442,9 @@ async def test_quality_gate_runs_when_fail_count_below_3(
 
 @pytest.mark.asyncio
 @patch(
-    "services.agents.verify_task_is_complete.run_jest_test",
+    "services.agents.verify_task_is_complete.run_js_ts_test",
     new_callable=AsyncMock,
-    return_value=JestResult(
+    return_value=JsTsTestResult(
         success=False,
         errors=["Segmentation fault (core dumped)"],
         error_files={"src/test.test.ts"},

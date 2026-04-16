@@ -22,7 +22,7 @@ from utils.process.kill_processes_by_name import kill_processes_by_name
 
 
 @dataclass
-class JestResult:
+class JsTsTestResult:
     success: bool = True
     errors: list[str] = field(default_factory=list)
     error_files: set[str] = field(default_factory=set)
@@ -32,10 +32,10 @@ class JestResult:
 
 
 @handle_exceptions(
-    default_return_value=JestResult(),
+    default_return_value=JsTsTestResult(),
     raise_on_error=False,
 )
-async def run_jest_test(
+async def run_js_ts_test(
     *,
     base_args: BaseArgs,
     test_file_paths: list[str],
@@ -44,31 +44,32 @@ async def run_jest_test(
 ):
     if not test_file_paths and not source_file_paths:
         logger.info("test: No test or source files to run")
-        return JestResult()
+        return JsTsTestResult()
 
     clone_dir = base_args.get("clone_dir", "")
     if not clone_dir:
         logger.warning("test: No clone_dir provided, skipping")
-        return JestResult()
+        return JsTsTestResult()
 
-    # Determine runner name for logging (jest vs vitest)
+    # Check which binaries exist
     jest_bin = os.path.join(clone_dir, "node_modules", ".bin", "jest")
     vitest_bin = os.path.join(clone_dir, "node_modules", ".bin", "vitest")
-    if os.path.exists(vitest_bin):
-        runner_name = "vitest"
-    elif os.path.exists(jest_bin):
-        runner_name = "jest"
-    else:
+    if not os.path.exists(vitest_bin) and not os.path.exists(jest_bin):
         logger.info("test: No test runner (jest/vitest) installed locally, skipping")
-        return JestResult()
+        return JsTsTestResult()
 
-    # Build base command
-    test_script_name = get_test_script_name(clone_dir)
+    # Build base command and determine actual runner name. The test script in package.json may invoke a different runner than the binary (e.g. vitest binary exists but "test" script runs jest). runner_name must match the actual runner because CLI flags differ (--related vs --findRelatedTests).
+    test_script_name, test_script_value = get_test_script_name(clone_dir)
     if test_script_name:
         pkg_manager, _, _ = detect_package_manager(clone_dir)
         base_cmd = [pkg_manager, "run", test_script_name, "--"]
+        runner_name = "vitest" if "vitest" in test_script_value else "jest"
+    elif os.path.exists(vitest_bin):
+        runner_name = "vitest"
+        base_cmd = [vitest_bin]
     else:
-        base_cmd = [vitest_bin if runner_name == "vitest" else jest_bin]
+        runner_name = "jest"
+        base_cmd = [jest_bin]
 
     # CI=true disables watch mode and interactive prompts for both jest and vitest
     env = os.environ.copy()
@@ -198,7 +199,7 @@ async def run_jest_test(
 
     if not error_files:
         logger.info("%s: All tests passed", runner_name)
-        return JestResult(
+        return JsTsTestResult(
             success=True,
             errors=[],
             error_files=set(),
@@ -207,7 +208,7 @@ async def run_jest_test(
             coverage=coverage,
         )
 
-    return JestResult(
+    return JsTsTestResult(
         success=False,
         errors=all_errors,
         error_files=error_files,
