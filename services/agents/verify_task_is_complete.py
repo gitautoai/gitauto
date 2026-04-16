@@ -20,7 +20,7 @@ from services.eslint.get_eslint_config import get_eslint_config
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.types.base_args import BaseArgs
 from services.jest.format_coverage_comment import format_coverage_comment
-from services.jest.run_jest_test import run_jest_test
+from services.jest.run_js_ts_test import run_js_ts_test
 from services.node.detect_node_version import detect_node_version
 from services.node.ensure_jest_timeout_for_ci import ensure_jest_timeout_for_ci
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
@@ -252,14 +252,14 @@ async def verify_task_is_complete(
             )
             create_tsc_issue(base_args=base_args, unrelated_errors=unrelated_tsc_errors)
 
-    # Set by new_pr_handler for schedule PRs so run_jest_test collects coverage using Istanbul instead of V8.
+    # Set by new_pr_handler for schedule PRs so run_js_ts_test collects coverage using Istanbul instead of V8.
     impl_file_to_collect_coverage_from = base_args.get(
         "impl_file_to_collect_coverage_from", ""
     )
 
     # Always pass source files so jest --findRelatedTests can discover dependent tests
     # (e.g., dead code removal from a source file may break tests not in the PR).
-    jest_result = await run_jest_test(
+    jest_result = await run_js_ts_test(
         base_args=base_args,
         test_file_paths=js_test_files,
         source_file_paths=[f for f in js_ts_files if is_source_file(f)],

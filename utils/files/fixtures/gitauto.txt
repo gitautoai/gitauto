@@ -424,11 +424,11 @@ services/jest/fixtures/coverage-final.json
 services/jest/format_coverage_comment.py
 services/jest/get_mongoms_distro.py
 services/jest/parse_coverage_json.py
-services/jest/run_jest_test.py
+services/jest/run_js_ts_test.py
 services/jest/test_format_coverage_comment.py
 services/jest/test_get_mongoms_distro.py
 services/jest/test_parse_coverage_json.py
-services/jest/test_run_jest_test.py
+services/jest/test_run_js_ts_test.py
 services/jest/test_validate_istanbul_file_data.py
 services/jest/validate_istanbul_file_data.py
 services/model_selection.py

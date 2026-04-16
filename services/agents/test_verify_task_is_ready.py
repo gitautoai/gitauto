@@ -6,7 +6,7 @@ import pytest
 
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.eslint.run_eslint_fix import ESLintResult
-from services.jest.run_jest_test import JestResult
+from services.jest.run_js_ts_test import JsTsTestResult
 from services.prettier.run_prettier_fix import PrettierResult
 from services.tsc.run_tsc_check import TscResult
 
@@ -286,7 +286,7 @@ async def test_run_tsc_reports_type_errors(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.run_jest_test")
+@patch("services.agents.verify_task_is_ready.run_js_ts_test")
 @patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
@@ -306,7 +306,7 @@ async def test_run_jest_reports_test_failures(
     mock_eslint.return_value = ESLintResult(
         success=True, content=None, lint_errors=None, coverage_errors=None
     )
-    mock_jest.return_value = JestResult(
+    mock_jest.return_value = JsTsTestResult(
         success=False,
         errors=["FAIL src/index.test.ts", "Expected true to be false"],
         error_files={"src/index.test.ts"},
@@ -326,7 +326,7 @@ async def test_run_jest_reports_test_failures(
 
 
 @pytest.mark.asyncio
-@patch("services.agents.verify_task_is_ready.run_jest_test")
+@patch("services.agents.verify_task_is_ready.run_js_ts_test")
 @patch("services.agents.verify_task_is_ready.git_commit_and_push")
 @patch("services.agents.verify_task_is_ready.run_eslint_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
@@ -339,7 +339,7 @@ async def test_impl_files_excluded_from_jest(
     mock_jest,
     create_test_base_args,
 ):
-    """Impl files must NOT be passed to run_jest_test at all.
+    """Impl files must NOT be passed to run_js_ts_test at all.
 
     Previously all JS/TS files were passed as test_file_paths, causing
     jest --findRelatedTests on impl files which OOMed Lambda for MongoDB repos.
@@ -351,7 +351,7 @@ async def test_impl_files_excluded_from_jest(
     mock_eslint.return_value = ESLintResult(
         success=True, content=None, lint_errors=None, coverage_errors=None
     )
-    mock_jest.return_value = JestResult()
+    mock_jest.return_value = JsTsTestResult()
 
     base_args = create_test_base_args()
     await verify_task_is_ready(
