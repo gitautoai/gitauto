@@ -38,7 +38,6 @@ if [ -n "$STAGED_IMPL_NEW" ]; then
 fi
 
 # Check 2: Changed impl files with existing test files must have test also staged
-# Exception: if the test file has no unstaged changes (identical to HEAD), it's fine
 if [ -n "$STAGED_IMPL_MODIFIED" ]; then
     for file in $STAGED_IMPL_MODIFIED; do
         dir=$(dirname "$file")
@@ -46,11 +45,8 @@ if [ -n "$STAGED_IMPL_MODIFIED" ]; then
         test_file="$dir/test_$base"
         if [ -f "$test_file" ]; then
             if ! echo "$STAGED_ALL" | grep -qF "$test_file"; then
-                # Allow if test file is unchanged from HEAD (e.g. import-only refactors)
-                if ! git diff --quiet HEAD -- "$test_file" 2>/dev/null; then
-                    echo "TEST NOT UPDATED: $file changed but $test_file is not staged"
-                    FAIL=1
-                fi
+                echo "TEST NOT STAGED: $file changed but $test_file is not staged"
+                FAIL=1
             fi
         fi
     done
