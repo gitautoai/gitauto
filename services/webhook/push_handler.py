@@ -1,3 +1,5 @@
+from services.git.get_clone_url import get_clone_url
+from services.git.get_default_branch import get_default_branch
 from services.github.branches.get_required_status_checks import (
     get_required_status_checks,
 )
@@ -24,24 +26,37 @@ def handle_push(payload: PushWebhookPayload):
     ref = payload["ref"]
 
     if not ref.startswith("refs/heads/"):
-        # Only process branch pushes (both local-to-remote and remote-to-remote) like refs/heads/main, ignore tag pushes like refs/tags/v1.0.0
+        logger.info(
+            "Only process branch pushes (both local-to-remote and remote-to-remote) like refs/heads/main, ignore tag pushes like refs/tags/v1.0.0: %s",
+            ref,
+        )
         return None
 
     pushed_branch = ref.replace("refs/heads/", "")
 
-    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
-    if not repo_settings:
-        # Repository settings not found in database
-        return None
-
-    target_branch = repo_settings.get("target_branch")
-    if not target_branch or pushed_branch != target_branch:
-        # Only update PRs when the configured target branch is pushed
-        # NOT handled: local feature -> remote feature, remote feature -> remote staging
-        # HANDLED: local main -> remote main, remote feature -> remote main (PR merge)
-        return None
-
     token = get_installation_access_token(installation_id=installation_id)
+
+    # Fallback to default branch when target_branch is not configured (same as schedule_handler and handle_coverage_report)
+    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+    target_branch = repo_settings.get("target_branch") if repo_settings else ""
+    if target_branch:
+        logger.info("Using custom target_branch: %s", target_branch)
+    else:
+        logger.info(
+            "No custom target_branch configured, falling back to default branch"
+        )
+        clone_url = get_clone_url(owner=owner_name, repo=repo_name, token=token)
+        target_branch = get_default_branch(clone_url=clone_url)
+        if not target_branch:
+            logger.info("Could not determine default branch")
+            return None
+
+    # Only update PRs when the configured target branch is pushed
+    # NOT handled: local feature -> remote feature, remote feature -> remote staging
+    # HANDLED: local main -> remote main, remote feature -> remote main (PR merge)
+    if pushed_branch != target_branch:
+        logger.info("Ignoring push to %s (target: %s)", pushed_branch, target_branch)
+        return None
 
     # Check if this is a test-only push and the repo doesn't require up-to-date branches
     commits = payload.get("commits", [])
@@ -52,6 +67,10 @@ def handle_push(payload: PushWebhookPayload):
             all_files.update(commit.get("modified", []))
             all_files.update(commit.get("removed", []))
         if all_files and all(is_test_file(f) for f in all_files):
+            logger.info(
+                "Test-only push detected (%d files), checking branch protection",
+                len(all_files),
+            )
             protection = get_required_status_checks(
                 owner=owner_name, repo=repo_name, branch=target_branch, token=token
             )
@@ -65,7 +84,7 @@ def handle_push(payload: PushWebhookPayload):
     open_prs = get_open_pull_requests(owner=owner_name, repo=repo_name, token=token)
 
     if not open_prs:
-        # No GitAuto PRs targeting this branch
+        logger.info("No open GitAuto PRs targeting %s", target_branch)
         return None
 
     updated_count = 0
