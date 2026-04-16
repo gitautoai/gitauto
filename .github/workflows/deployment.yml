@@ -28,10 +28,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # https://github.com/actions/checkout
+        uses: actions/checkout@v6 # https://github.com/actions/checkout
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4 # https://github.com/aws-actions/configure-aws-credentials
+        uses: aws-actions/configure-aws-credentials@v6 # https://github.com/aws-actions/configure-aws-credentials
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
