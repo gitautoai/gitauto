@@ -113,6 +113,7 @@ def handler(event, context):
     try:
         asyncio.get_event_loop()
     except RuntimeError:
+        logger.info("No event loop found, creating one for Mangum")
         asyncio.set_event_loop(asyncio.new_event_loop())
 
     # mangum_handler converts requests from API Gateway to FastAPI routing system
