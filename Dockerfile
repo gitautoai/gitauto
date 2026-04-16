@@ -10,6 +10,7 @@ COPY . ${LAMBDA_TASK_ROOT}
 # --no-dev: skip [dependency-groups].dev packages (linters, test tools, type stubs)
 # --no-hashes: skip hash verification (pip freeze didn't have hashes either)
 # --target: install into Lambda root, not system Python
+# -r -: read requirements from stdin (piped from uv export)
 RUN pip install uv && \
     uv export --frozen --no-dev --no-hashes | \
     uv pip install --target "${LAMBDA_TASK_ROOT}" -r -
