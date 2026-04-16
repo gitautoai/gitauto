@@ -13,17 +13,12 @@ NC='\033[0m' # No Color
 
 echo -e "Starting GitAuto development environment..."
 
-# Create venv if it doesn't exist
-if [ ! -d "venv" ]; then
-    echo -e "Creating virtual environment..."
-    python3 -m venv --upgrade-deps venv
-    source venv/bin/activate
+# Create .venv if it doesn't exist (uv's default)
+if [ ! -d ".venv" ]; then
     echo -e "Installing dependencies..."
     uv sync
-else
-    # Activate existing virtual environment
-    source venv/bin/activate
 fi
+source .venv/bin/activate
 
 echo -e "${GREEN}Virtual environment ready${NC}"
 

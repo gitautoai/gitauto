@@ -1,11 +1,11 @@
-# Use Lambda base image with Python 3.13 (Amazon Linux 2023).
-FROM public.ecr.aws/lambda/python:3.13
+# Use Lambda base image with Python 3.14 (Amazon Linux 2023).
+FROM public.ecr.aws/lambda/python:3.14
 
 # Copy to Lambda root(which is specified in Lambda function, usually /var/task/ directory)
 COPY . ${LAMBDA_TASK_ROOT}
 
 # Install uv (fast Python package manager) and prod-only dependencies
-# For Amazon Linux 2023-based images (Python 3.13): https://aws.amazon.com/blogs/compute/python-3-13-runtime-now-available-in-aws-lambda/
+# For Amazon Linux 2023-based images (Python 3.14): https://aws.amazon.com/blogs/compute/python-3-14-runtime-now-available-in-aws-lambda/
 # --frozen: use uv.lock exactly, no re-resolution
 # --no-dev: skip [dependency-groups].dev packages (linters, test tools, type stubs)
 # --no-hashes: skip hash verification (pip freeze didn't have hashes either)
