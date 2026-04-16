@@ -1,42 +1,11 @@
-# pylint: disable=unused-argument,redefined-outer-name
-from typing import cast
+# pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 from unittest.mock import Mock, patch
+
 import pytest
 import requests
+
 from services.github.pulls.add_reviewers import add_reviewers
-from services.types.base_args import BaseArgs
-
-
-@pytest.fixture
-def base_args(test_owner, test_repo):
-    return {
-        "owner": test_owner,
-        "repo": test_repo,
-        "pr_number": 123,
-        "token": "test-token-mock",
-        "reviewers": ["reviewer1", "reviewer2", "reviewer3"],
-    }
-
-
-@pytest.fixture
-def base_args_no_pr_number(test_owner, test_repo):
-    return {
-        "owner": test_owner,
-        "repo": test_repo,
-        "token": "test-token-mock",
-        "reviewers": ["reviewer1", "reviewer2"],
-    }
-
-
-@pytest.fixture
-def base_args_empty_reviewers(test_owner, test_repo):
-    return {
-        "owner": test_owner,
-        "repo": test_repo,
-        "pr_number": 123,
-        "token": "test-token-mock",
-        "reviewers": [],
-    }
 
 
 @pytest.fixture
@@ -68,9 +37,18 @@ def test_add_reviewers_success_all_valid(
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
-    base_args,
+    test_owner,
+    test_repo,
     mock_success_response,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2", "reviewer3"],
+    )
     # All reviewers are collaborators
     mock_check_collaborator.return_value = True
     mock_post.return_value = mock_success_response
@@ -110,9 +88,19 @@ def test_add_reviewers_success_partial_valid(
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
-    base_args,
+    test_owner,
+    test_repo,
     mock_success_response,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2", "reviewer3"],
+    )
+
     # Only some reviewers are collaborators
     def collaborator_side_effect(owner, repo, user, token):
         return user in ["reviewer1", "reviewer3"]
@@ -140,8 +128,17 @@ def test_add_reviewers_success_partial_valid(
 @patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
 def test_add_reviewers_no_valid_reviewers(
     mock_check_collaborator,
-    base_args,
+    test_owner,
+    test_repo,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2", "reviewer3"],
+    )
     # No reviewers are collaborators
     mock_check_collaborator.return_value = False
 
@@ -156,9 +153,18 @@ def test_add_reviewers_no_valid_reviewers(
 @patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
 def test_add_reviewers_empty_reviewers_list(
     mock_check_collaborator,
-    base_args_empty_reviewers,
+    test_owner,
+    test_repo,
+    create_test_base_args,
 ):
-    result = add_reviewers(base_args_empty_reviewers)
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=[],
+    )
+    result = add_reviewers(base_args)
 
     assert result is None
 
@@ -171,25 +177,31 @@ def test_add_reviewers_missing_reviewers_key(
     mock_check_collaborator,
     test_owner,
     test_repo,
+    create_test_base_args,
 ):
     # base_args without "reviewers" key at all (AGENT-2TF scenario)
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": test_owner,
-            "repo": test_repo,
-            "pr_number": 123,
-            "token": "test-token-mock",
-        },
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
     )
+    del base_args["reviewers"]
     result = add_reviewers(base_args)
 
     assert result is None
     mock_check_collaborator.assert_not_called()
 
 
-def test_add_reviewers_missing_pr_number(base_args_no_pr_number):
-    result = add_reviewers(base_args_no_pr_number)
+def test_add_reviewers_missing_pr_number(test_owner, test_repo, create_test_base_args):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2"],
+    )
+    del base_args["pr_number"]
+    result = add_reviewers(base_args)
 
     assert result is None  # handle_exceptions decorator returns None on error
 
@@ -215,9 +227,18 @@ def test_add_reviewers_http_error(
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
-    base_args,
+    test_owner,
+    test_repo,
     mock_error_response,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2", "reviewer3"],
+    )
     mock_check_collaborator.return_value = True
     mock_post.return_value = mock_error_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
@@ -238,8 +259,17 @@ def test_add_reviewers_requests_exception(
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
-    base_args,
+    test_owner,
+    test_repo,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2", "reviewer3"],
+    )
     mock_check_collaborator.return_value = True
     mock_post.side_effect = requests.RequestException("Network error")
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
@@ -255,8 +285,17 @@ def test_add_reviewers_requests_exception(
 def test_add_reviewers_create_headers_exception(
     mock_check_collaborator,
     mock_create_headers,
-    base_args,
+    test_owner,
+    test_repo,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2", "reviewer3"],
+    )
     mock_check_collaborator.return_value = True
     mock_create_headers.side_effect = Exception("Header creation error")
 
@@ -269,8 +308,17 @@ def test_add_reviewers_create_headers_exception(
 @patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
 def test_add_reviewers_collaborator_check_exception(
     mock_check_collaborator,
-    base_args,
+    test_owner,
+    test_repo,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2", "reviewer3"],
+    )
     mock_check_collaborator.side_effect = Exception("Collaborator check error")
 
     result = add_reviewers(base_args)
@@ -321,8 +369,17 @@ def test_add_reviewers_422_unprocessable_entity(
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
-    base_args,
+    test_owner,
+    test_repo,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2", "reviewer3"],
+    )
     mock_check_collaborator.return_value = True
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
 
@@ -362,9 +419,19 @@ def test_add_reviewers_mixed_collaborator_results(
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
-    base_args,
+    test_owner,
+    test_repo,
     mock_success_response,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2", "reviewer3"],
+    )
+
     # Mix of collaborators and non-collaborators with some exceptions
     def collaborator_side_effect(owner, repo, user, token):
         if user == "reviewer1":
@@ -395,8 +462,17 @@ def test_add_reviewers_timeout_error(
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
-    base_args,
+    test_owner,
+    test_repo,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2", "reviewer3"],
+    )
     mock_check_collaborator.return_value = True
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
     mock_post.side_effect = requests.Timeout("Request timeout")
@@ -414,8 +490,17 @@ def test_add_reviewers_connection_error(
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
-    base_args,
+    test_owner,
+    test_repo,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        pr_number=123,
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2", "reviewer3"],
+    )
     mock_check_collaborator.return_value = True
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
     mock_post.side_effect = requests.ConnectionError("Connection failed")

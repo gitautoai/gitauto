@@ -8,9 +8,9 @@ import inspect
 from anthropic.types import MessageParam, ToolResultBlockParam, ToolUnionParam
 
 # Local imports
-from constants.claude import ClaudeModelId
+from constants.models import ModelId
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
-from services.claude.chat_with_claude import chat_with_claude
+from services.chat_with_model import chat_with_model
 from services.claude.exceptions import ClaudeOverloadedError
 from services.claude.replace_old_file_content import replace_old_file_content
 from services.claude.replace_old_verify_results import replace_old_verify_results
@@ -18,7 +18,7 @@ from services.claude.sanitize_tool_args import sanitize_tool_args
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
 from services.claude.tools.tools import FILE_EDIT_TOOLS, tools_to_call
 from services.github.comments.update_comment import update_comment
-from services.model_selection import get_model, try_next_model
+from services.get_fallback_models import get_fallback_models
 from services.slack.slack_notify import slack_notify
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
@@ -52,15 +52,18 @@ async def chat_with_agent(
     p: int = 0,
     log_messages: list[str] | None = None,
     usage_id: int,
-    model_id: ClaudeModelId | None,
+    model_id: ModelId,
 ):
     if log_messages is None:
         log_messages = []
 
+    fallbacks = get_fallback_models(model_id)
     max_overload_retries = 2
     overload_retries = 0
+    current_model = model_id
+    fallback_index = 0
+
     while True:
-        current_model = model_id or get_model()
         logger.info("Using model: %s", current_model)
 
         try:
@@ -69,7 +72,7 @@ async def chat_with_agent(
                 tool_calls,
                 token_input,
                 token_output,
-            ) = chat_with_claude(
+            ) = chat_with_model(
                 messages=messages,
                 system_content=system_message,
                 tools=tools,
@@ -94,23 +97,31 @@ async def chat_with_agent(
                 continue
 
             overload_retries = 0
-            has_next, next_model = try_next_model()
-            if not has_next:
+            if fallback_index >= len(fallbacks):
                 logger.error("All models exhausted after overload retries, raising")
                 raise
+
+            previous_model = current_model
+            current_model = fallbacks[fallback_index]
+            fallback_index += 1
             logger.warning(
                 "Overload retries exhausted for %s, falling back to %s",
+                previous_model,
                 current_model,
-                next_model,
             )
 
         except Exception:  # pylint: disable=broad-except
-            has_next, next_model = try_next_model()
-            if not has_next:
+            if fallback_index >= len(fallbacks):
                 logger.error("All models exhausted, raising")
                 raise
+
+            previous_model = current_model
+            current_model = fallbacks[fallback_index]
+            fallback_index += 1
             logger.warning(
-                "Error with %s, falling back to %s", current_model, next_model
+                "Error with %s, falling back to %s",
+                previous_model,
+                current_model,
             )
 
     # Return if no tool calls (agent returned text without calling a tool)

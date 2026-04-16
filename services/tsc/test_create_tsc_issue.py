@@ -1,29 +1,18 @@
 # pylint: disable=unused-argument
-from typing import cast
 from unittest.mock import patch
 
 from services.tsc.create_tsc_issue import create_tsc_issue
-from services.types.base_args import BaseArgs
-
-
-def _make_base_args():
-    return cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "token": "test-token",
-        },
-    )
 
 
 @patch("services.tsc.create_tsc_issue.issue_exists", return_value=False)
 @patch("services.tsc.create_tsc_issue.create_issue")
-def test_creates_issue_when_none_exists(mock_create_issue, mock_exists):
+def test_creates_issue_when_none_exists(
+    mock_create_issue, mock_exists, create_test_base_args
+):
     mock_create_issue.return_value = (200, {"html_url": "https://github.com/test/1"})
 
     create_tsc_issue(
-        base_args=_make_base_args(),
+        base_args=create_test_base_args(),
         unrelated_errors=["src/a.ts(10,5): error TS2339: Property 'x' does not exist"],
     )
 
@@ -36,9 +25,9 @@ def test_creates_issue_when_none_exists(mock_create_issue, mock_exists):
 
 @patch("services.tsc.create_tsc_issue.issue_exists", return_value=True)
 @patch("services.tsc.create_tsc_issue.create_issue")
-def test_skips_when_issue_exists(mock_create_issue, mock_exists):
+def test_skips_when_issue_exists(mock_create_issue, mock_exists, create_test_base_args):
     create_tsc_issue(
-        base_args=_make_base_args(),
+        base_args=create_test_base_args(),
         unrelated_errors=["src/a.ts(10,5): error TS2339: Property 'x' does not exist"],
     )
 
@@ -47,12 +36,12 @@ def test_skips_when_issue_exists(mock_create_issue, mock_exists):
 
 @patch("services.tsc.create_tsc_issue.issue_exists", return_value=False)
 @patch("services.tsc.create_tsc_issue.create_issue")
-def test_caps_errors_at_50(mock_create_issue, mock_exists):
+def test_caps_errors_at_50(mock_create_issue, mock_exists, create_test_base_args):
     mock_create_issue.return_value = (200, {"html_url": "https://github.com/test/1"})
 
     errors = [f"file{i}.ts(1,1): error TS0000: msg" for i in range(100)]
     create_tsc_issue(
-        base_args=_make_base_args(),
+        base_args=create_test_base_args(),
         unrelated_errors=errors,
     )
 
@@ -63,11 +52,11 @@ def test_caps_errors_at_50(mock_create_issue, mock_exists):
 
 @patch("services.tsc.create_tsc_issue.issue_exists", return_value=False)
 @patch("services.tsc.create_tsc_issue.create_issue")
-def test_handles_issues_disabled(mock_create_issue, mock_exists):
+def test_handles_issues_disabled(mock_create_issue, mock_exists, create_test_base_args):
     mock_create_issue.return_value = (410, None)
 
     create_tsc_issue(
-        base_args=_make_base_args(),
+        base_args=create_test_base_args(),
         unrelated_errors=["src/a.ts(10,5): error TS2339: msg"],
     )
 

@@ -1,13 +1,11 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
-from typing import cast
 from unittest.mock import MagicMock, patch
 
 from services.claude.tools.file_modify_result import FileWriteResult
 from services.node.ensure_jest_uses_tsconfig_for_tests import (
     ensure_jest_uses_tsconfig_for_tests,
 )
-from services.types.base_args import BaseArgs
 
 
 def _mock_success_result(file_path: str = "test.py"):
@@ -17,22 +15,11 @@ def _mock_success_result(file_path: str = "test.py"):
     )
 
 
-def _make_base_args():
-    return cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "clone_dir": "/tmp/test",
-        },
-    )
-
-
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.read_local_file")
-def test_pattern1_ts_jest_string(mock_get_raw: MagicMock, mock_replace: MagicMock):
+def test_pattern1_ts_jest_string(
+    mock_get_raw: MagicMock, mock_replace: MagicMock, create_test_base_args
+):
     """Pattern 1: ts-jest as string in transform.
 
     Before: '^.+\\.tsx?$': 'ts-jest'
@@ -47,7 +34,9 @@ def test_pattern1_ts_jest_string(mock_get_raw: MagicMock, mock_replace: MagicMoc
     mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
-        root_files, _make_base_args(), "tsconfig.test.json"
+        root_files,
+        create_test_base_args(),
+        "tsconfig.test.json",
     )
 
     assert path == "jest.config.js"
@@ -58,7 +47,9 @@ def test_pattern1_ts_jest_string(mock_get_raw: MagicMock, mock_replace: MagicMoc
 
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.read_local_file")
-def test_pattern2_ts_jest_array(mock_get_raw: MagicMock, mock_replace: MagicMock):
+def test_pattern2_ts_jest_array(
+    mock_get_raw: MagicMock, mock_replace: MagicMock, create_test_base_args
+):
     """Pattern 2: ts-jest as array with options in transform.
 
     Before: '^.+\\.tsx?$': ['ts-jest', { isolatedModules: true }]
@@ -73,7 +64,9 @@ def test_pattern2_ts_jest_array(mock_get_raw: MagicMock, mock_replace: MagicMock
     mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
-        root_files, _make_base_args(), "tsconfig.test.json"
+        root_files,
+        create_test_base_args(),
+        "tsconfig.test.json",
     )
 
     assert path == "jest.config.js"
@@ -86,7 +79,7 @@ def test_pattern2_ts_jest_array(mock_get_raw: MagicMock, mock_replace: MagicMock
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.read_local_file")
 def test_skips_when_already_uses_test_tsconfig(
-    mock_get_raw: MagicMock, mock_replace: MagicMock
+    mock_get_raw: MagicMock, mock_replace: MagicMock, create_test_base_args
 ):
     """Test that we skip if already using the test tsconfig."""
     root_files = ["jest.config.js", "tsconfig.json"]
@@ -97,7 +90,9 @@ def test_skips_when_already_uses_test_tsconfig(
 };"""
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
-        root_files, _make_base_args(), "tsconfig.test.json"
+        root_files,
+        create_test_base_args(),
+        "tsconfig.test.json",
     )
 
     assert path == "jest.config.js"
@@ -108,7 +103,7 @@ def test_skips_when_already_uses_test_tsconfig(
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.read_local_file")
 def test_skips_when_any_tsconfig_configured(
-    mock_get_raw: MagicMock, mock_replace: MagicMock
+    mock_get_raw: MagicMock, mock_replace: MagicMock, create_test_base_args
 ):
     """Test that we skip if any tsconfig is already configured to avoid duplicates."""
     root_files = ["jest.config.js", "tsconfig.json"]
@@ -119,7 +114,9 @@ def test_skips_when_any_tsconfig_configured(
 };"""
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
-        root_files, _make_base_args(), "tsconfig.test.json"
+        root_files,
+        create_test_base_args(),
+        "tsconfig.test.json",
     )
 
     assert path == "jest.config.js"
@@ -129,7 +126,9 @@ def test_skips_when_any_tsconfig_configured(
 
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.read_local_file")
-def test_pattern3_preset_only(mock_get_raw: MagicMock, mock_replace: MagicMock):
+def test_pattern3_preset_only(
+    mock_get_raw: MagicMock, mock_replace: MagicMock, create_test_base_args
+):
     """Pattern 3: preset only, no transform block.
 
     Before: preset: 'ts-jest'
@@ -143,7 +142,9 @@ def test_pattern3_preset_only(mock_get_raw: MagicMock, mock_replace: MagicMock):
     mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
-        root_files, _make_base_args(), "tsconfig.test.json"
+        root_files,
+        create_test_base_args(),
+        "tsconfig.test.json",
     )
 
     assert path == "jest.config.js"
@@ -158,7 +159,7 @@ def test_pattern3_preset_only(mock_get_raw: MagicMock, mock_replace: MagicMock):
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.read_local_file")
 def test_pattern4_preset_with_existing_transform(
-    mock_get_raw: MagicMock, mock_replace: MagicMock
+    mock_get_raw: MagicMock, mock_replace: MagicMock, create_test_base_args
 ):
     """Pattern 4: preset with existing transform block.
 
@@ -175,7 +176,9 @@ def test_pattern4_preset_with_existing_transform(
     mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
-        root_files, _make_base_args(), "tsconfig.test.json"
+        root_files,
+        create_test_base_args(),
+        "tsconfig.test.json",
     )
 
     assert path == "jest.config.js"
@@ -189,7 +192,9 @@ def test_pattern4_preset_with_existing_transform(
 
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.read_local_file")
-def test_returns_none_when_no_pattern(mock_get_raw: MagicMock, mock_replace: MagicMock):
+def test_returns_none_when_no_pattern(
+    mock_get_raw: MagicMock, mock_replace: MagicMock, create_test_base_args
+):
     """Test that None is returned when no ts-jest pattern found."""
     root_files = ["jest.config.js", "tsconfig.json"]
     mock_get_raw.return_value = """module.exports = {
@@ -197,7 +202,9 @@ def test_returns_none_when_no_pattern(mock_get_raw: MagicMock, mock_replace: Mag
 };"""
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
-        root_files, _make_base_args(), "tsconfig.test.json"
+        root_files,
+        create_test_base_args(),
+        "tsconfig.test.json",
     )
 
     assert path is None
@@ -207,7 +214,9 @@ def test_returns_none_when_no_pattern(mock_get_raw: MagicMock, mock_replace: Mag
 
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.read_local_file")
-def test_handles_double_quotes(mock_get_raw: MagicMock, mock_replace: MagicMock):
+def test_handles_double_quotes(
+    mock_get_raw: MagicMock, mock_replace: MagicMock, create_test_base_args
+):
     """Test handling double quotes in Jest config."""
     root_files = ["jest.config.js", "tsconfig.json"]
     mock_get_raw.return_value = """module.exports = {
@@ -218,7 +227,9 @@ def test_handles_double_quotes(mock_get_raw: MagicMock, mock_replace: MagicMock)
     mock_replace.return_value = _mock_success_result()
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
-        root_files, _make_base_args(), "tsconfig.test.json"
+        root_files,
+        create_test_base_args(),
+        "tsconfig.test.json",
     )
 
     assert path == "jest.config.js"
@@ -227,12 +238,16 @@ def test_handles_double_quotes(mock_get_raw: MagicMock, mock_replace: MagicMock)
 
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.write_and_commit_file")
 @patch("services.node.ensure_jest_uses_tsconfig_for_tests.read_local_file")
-def test_skips_when_no_jest_config(mock_get_raw: MagicMock, mock_replace: MagicMock):
+def test_skips_when_no_jest_config(
+    mock_get_raw: MagicMock, mock_replace: MagicMock, create_test_base_args
+):
     """Test that None is returned when no Jest config exists."""
     root_files = ["tsconfig.json", "package.json"]
 
     path, status = ensure_jest_uses_tsconfig_for_tests(
-        root_files, _make_base_args(), "tsconfig.test.json"
+        root_files,
+        create_test_base_args(),
+        "tsconfig.test.json",
     )
 
     assert path is None

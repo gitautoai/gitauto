@@ -3,8 +3,6 @@
 import json
 from unittest.mock import patch
 
-import pytest
-
 from services.eslint.get_eslint_config import get_eslint_config
 
 REAL_CUSTOMER_ESLINTRC = """{
@@ -54,18 +52,8 @@ REAL_CUSTOMER_ESLINTRC = """{
 }"""
 
 
-@pytest.fixture
-def base_args():
-    return {
-        "owner": "test_owner",
-        "repo": "test_repo",
-        "token": "test_token",
-        "base_branch": "main",
-        "clone_dir": "/tmp/test_owner/test_repo/pr-123",
-    }
-
-
-def test_get_eslint_config_finds_eslintrc_json(base_args):
+def test_get_eslint_config_finds_eslintrc_json(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.eslint.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
@@ -82,7 +70,8 @@ def test_get_eslint_config_finds_eslintrc_json(base_args):
         assert result["content"] == REAL_CUSTOMER_ESLINTRC
 
 
-def test_get_eslint_config_finds_eslintrc_js(base_args):
+def test_get_eslint_config_finds_eslintrc_js(create_test_base_args):
+    base_args = create_test_base_args()
     eslintrc_js = """module.exports = {
   parser: '@typescript-eslint/parser',
   rules: {
@@ -106,7 +95,8 @@ def test_get_eslint_config_finds_eslintrc_js(base_args):
         assert result["content"] == eslintrc_js
 
 
-def test_get_eslint_config_finds_eslintrc_yml(base_args):
+def test_get_eslint_config_finds_eslintrc_yml(create_test_base_args):
+    base_args = create_test_base_args()
     eslintrc_yml = """parser: '@typescript-eslint/parser'
 rules:
   no-console: warn"""
@@ -127,7 +117,8 @@ rules:
         assert result["content"] == eslintrc_yml
 
 
-def test_get_eslint_config_finds_eslintrc_yaml(base_args):
+def test_get_eslint_config_finds_eslintrc_yaml(create_test_base_args):
+    base_args = create_test_base_args()
     eslintrc_yaml = """parser: '@typescript-eslint/parser'
 rules:
   no-console: error"""
@@ -148,7 +139,8 @@ rules:
         assert result["content"] == eslintrc_yaml
 
 
-def test_get_eslint_config_finds_eslintrc(base_args):
+def test_get_eslint_config_finds_eslintrc(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.eslint.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
@@ -169,7 +161,8 @@ def test_get_eslint_config_finds_eslintrc(base_args):
         assert "simple-import-sort/imports" in config["rules"]
 
 
-def test_get_eslint_config_finds_eslint_config_js(base_args):
+def test_get_eslint_config_finds_eslint_config_js(create_test_base_args):
+    base_args = create_test_base_args()
     eslint_config_js = """export default {
   parser: '@typescript-eslint/parser',
   rules: {
@@ -193,7 +186,8 @@ def test_get_eslint_config_finds_eslint_config_js(base_args):
         assert result["content"] == eslint_config_js
 
 
-def test_get_eslint_config_finds_eslint_config_mjs(base_args):
+def test_get_eslint_config_finds_eslint_config_mjs(create_test_base_args):
+    base_args = create_test_base_args()
     eslint_config_mjs = """export default {
   parser: '@typescript-eslint/parser',
   rules: {
@@ -217,7 +211,8 @@ def test_get_eslint_config_finds_eslint_config_mjs(base_args):
         assert result["content"] == eslint_config_mjs
 
 
-def test_get_eslint_config_finds_eslint_config_cjs(base_args):
+def test_get_eslint_config_finds_eslint_config_cjs(create_test_base_args):
+    base_args = create_test_base_args()
     eslint_config_cjs = """module.exports = {
   parser: '@typescript-eslint/parser',
   rules: {
@@ -241,7 +236,8 @@ def test_get_eslint_config_finds_eslint_config_cjs(base_args):
         assert result["content"] == eslint_config_cjs
 
 
-def test_get_eslint_config_finds_in_package_json(base_args):
+def test_get_eslint_config_finds_in_package_json(create_test_base_args):
+    base_args = create_test_base_args()
     package_json_content = """{
   "name": "test-package",
   "version": "1.0.0",
@@ -270,7 +266,8 @@ def test_get_eslint_config_finds_in_package_json(base_args):
         assert config["rules"]["no-console"] == "error"
 
 
-def test_get_eslint_config_package_json_without_eslint_config(base_args):
+def test_get_eslint_config_package_json_without_eslint_config(create_test_base_args):
+    base_args = create_test_base_args()
     package_json_content = """{
   "name": "test-package",
   "version": "1.0.0",
@@ -293,7 +290,8 @@ def test_get_eslint_config_package_json_without_eslint_config(base_args):
         assert result is None
 
 
-def test_get_eslint_config_not_found(base_args):
+def test_get_eslint_config_not_found(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.eslint.get_eslint_config.read_local_file") as mock_read:
         mock_read.return_value = None
 
@@ -302,7 +300,8 @@ def test_get_eslint_config_not_found(base_args):
         assert result is None
 
 
-def test_get_eslint_config_priority_order(base_args):
+def test_get_eslint_config_priority_order(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.eslint.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
@@ -320,7 +319,8 @@ def test_get_eslint_config_priority_order(base_args):
         assert result["filename"] == ".eslintrc.js"
 
 
-def test_get_eslint_config_tries_all_config_files(base_args):
+def test_get_eslint_config_tries_all_config_files(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.eslint.get_eslint_config.read_local_file") as mock_read:
         mock_read.return_value = None
 
@@ -330,7 +330,8 @@ def test_get_eslint_config_tries_all_config_files(base_args):
         assert mock_read.call_count >= 8
 
 
-def test_get_eslint_config_with_empty_package_json(base_args):
+def test_get_eslint_config_with_empty_package_json(create_test_base_args):
+    base_args = create_test_base_args()
     package_json_content = "{}"
 
     with patch("services.eslint.get_eslint_config.read_local_file") as mock_read:
@@ -347,7 +348,10 @@ def test_get_eslint_config_with_empty_package_json(base_args):
         assert result is None
 
 
-def test_get_eslint_config_with_complex_eslint_config_in_package_json(base_args):
+def test_get_eslint_config_with_complex_eslint_config_in_package_json(
+    create_test_base_args,
+):
+    base_args = create_test_base_args()
     package_json_content = """{
   "name": "complex-package",
   "version": "2.0.0",
@@ -389,7 +393,8 @@ def test_get_eslint_config_with_complex_eslint_config_in_package_json(base_args)
         assert config["env"]["node"] is True
 
 
-def test_get_eslint_config_handles_exception_gracefully(base_args):
+def test_get_eslint_config_handles_exception_gracefully(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.eslint.get_eslint_config.read_local_file") as mock_read:
         mock_read.side_effect = Exception("Network error")
 
@@ -398,7 +403,8 @@ def test_get_eslint_config_handles_exception_gracefully(base_args):
         assert result is None
 
 
-def test_get_eslint_config_handles_json_decode_error(base_args):
+def test_get_eslint_config_handles_json_decode_error(create_test_base_args):
+    base_args = create_test_base_args()
     invalid_json = "{ invalid json content"
 
     with patch("services.eslint.get_eslint_config.read_local_file") as mock_read:
@@ -415,8 +421,9 @@ def test_get_eslint_config_handles_json_decode_error(base_args):
         assert result is None
 
 
-def test_get_eslint_config_first_found_wins(base_args):
+def test_get_eslint_config_first_found_wins(create_test_base_args):
     """Test that flat configs are checked before legacy configs."""
+    base_args = create_test_base_args()
     with patch("services.eslint.get_eslint_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
@@ -437,7 +444,10 @@ def test_get_eslint_config_first_found_wins(base_args):
         assert result["filename"] == "eslint.config.mjs"
 
 
-def test_get_eslint_config_skips_to_package_json_when_no_config_files(base_args):
+def test_get_eslint_config_skips_to_package_json_when_no_config_files(
+    create_test_base_args,
+):
+    base_args = create_test_base_args()
     package_json_content = """{
   "name": "test-package",
   "eslintConfig": {

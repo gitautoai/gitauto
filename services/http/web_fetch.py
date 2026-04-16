@@ -4,7 +4,7 @@ from anthropic.types import ToolUnionParam
 from bs4 import BeautifulSoup
 
 from config import TIMEOUT
-from constants.claude import ClaudeModelId
+from constants.models import ClaudeModelId
 from constants.requests import USER_AGENT
 from services.claude.chat_with_claude_simple import chat_with_claude_simple
 from services.slack.slack_notify import slack_notify

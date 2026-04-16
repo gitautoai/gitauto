@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 from anthropic.types import MessageParam
 
-from constants.claude import ClaudeModelId
+from constants.models import ClaudeModelId
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 
 
@@ -23,7 +23,7 @@ def test_insert_llm_request_success(mock_calculate_costs, mock_supabase):
     result = insert_llm_request(
         usage_id=123,
         provider="claude",
-        model_id=ClaudeModelId.SONNET_4_0,
+        model_id=ClaudeModelId.SONNET_4_6,
         input_messages=input_messages,
         input_tokens=10,
         output_message=output_message,
@@ -34,13 +34,13 @@ def test_insert_llm_request_success(mock_calculate_costs, mock_supabase):
 
     assert result == {"id": 1}
     mock_calculate_costs.assert_called_once_with(
-        "claude", ClaudeModelId.SONNET_4_0, 10, 5
+        "claude", ClaudeModelId.SONNET_4_6, 10, 5
     )
 
     expected_data = {
         "usage_id": 123,
         "provider": "claude",
-        "model_id": ClaudeModelId.SONNET_4_0,
+        "model_id": ClaudeModelId.SONNET_4_6,
         "input_content": json.dumps(input_messages, ensure_ascii=False),
         "input_length": len(json.dumps(input_messages, ensure_ascii=False)),
         "input_tokens": 10,
@@ -66,7 +66,7 @@ def test_insert_llm_request_database_error(mock_supabase):
     result = insert_llm_request(
         usage_id=123,
         provider="claude",
-        model_id=ClaudeModelId.SONNET_4_0,
+        model_id=ClaudeModelId.SONNET_4_6,
         input_messages=[{"role": "user", "content": "test"}],
         input_tokens=10,
         output_message={"role": "assistant", "content": "response"},

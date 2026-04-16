@@ -54,6 +54,7 @@ from services.node.set_npm_token_env import set_npm_token_env
 from services.php.ensure_php_packages import ensure_php_packages
 from services.slack.slack_notify import slack_notify
 from services.supabase.check_suites.insert_check_suite import insert_check_suite
+from services.supabase.credits.check_purchase_exists import check_purchase_exists
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 from services.supabase.codecov_tokens.get_codecov_token import get_codecov_token
 from services.supabase.create_user_request import create_user_request
@@ -68,6 +69,7 @@ from services.supabase.usage.update_retry_error_hashes import (
 from services.supabase.usage.update_usage import update_usage
 from services.types.base_args import BaseArgs
 from services.webhook.utils.create_system_message import create_system_message
+from services.webhook.utils.get_preferred_model import get_preferred_model
 from services.webhook.utils.should_bail import should_bail
 from utils.files.get_local_file_tree import get_local_file_tree
 from utils.logging.add_log_message import add_log_message
@@ -212,6 +214,12 @@ async def handle_check_suite(
     if not repo_settings or not repo_settings.get("trigger_on_test_failure"):
         return
 
+    has_purchased = check_purchase_exists(owner_id=owner_id)
+    model_id = get_preferred_model(
+        repo_settings=repo_settings,
+        is_paid=has_purchased,
+    )
+
     # Start notification
     start_msg = f"Check run handler started for `{check_run_name}` in PR #{pr_number} in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
@@ -244,6 +252,7 @@ async def handle_check_suite(
         "github_urls": [],
         "other_urls": [],
         "clone_dir": clone_dir,
+        "model_id": model_id,
         "verify_consecutive_failures": 0,
         "quality_gate_fail_count": 0,
         "workflow_id": circleci_workflow_id if is_circleci else github_run_id,
@@ -742,7 +751,7 @@ async def handle_check_suite(
             log_messages=log_messages,
             usage_id=usage_id,
             tools=TOOLS_FOR_PRS,
-            model_id=None,
+            model_id=model_id,
         )
         messages = result.messages
         is_completed = result.is_completed

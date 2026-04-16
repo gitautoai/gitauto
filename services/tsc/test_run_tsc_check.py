@@ -1,28 +1,25 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
-from typing import cast
 from unittest.mock import patch, MagicMock
 
 import pytest
 
 from services.tsc.run_tsc_check import run_tsc_check
-from services.types.base_args import BaseArgs
 
 
 @pytest.mark.asyncio
 @patch("services.tsc.run_tsc_check.subprocess.run")
 @patch("services.tsc.run_tsc_check.os.path.exists")
-async def test_run_tsc_check_success(mock_exists, mock_subprocess):
+async def test_run_tsc_check_success(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_tsc_check(base_args=base_args, file_paths=["src/index.ts"])
     assert result.success is True
@@ -30,14 +27,11 @@ async def test_run_tsc_check_success(mock_exists, mock_subprocess):
 
 
 @pytest.mark.asyncio
-async def test_run_tsc_check_no_ts_files():
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+async def test_run_tsc_check_no_ts_files(create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_tsc_check(
         base_args=base_args, file_paths=["src/index.js", "README.md"]
@@ -47,14 +41,11 @@ async def test_run_tsc_check_no_ts_files():
 
 
 @pytest.mark.asyncio
-async def test_run_tsc_check_no_clone_dir():
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "",
-        },
+async def test_run_tsc_check_no_clone_dir(create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="",
     )
     result = await run_tsc_check(base_args=base_args, file_paths=["src/index.ts"])
     assert result.success is True
@@ -63,16 +54,13 @@ async def test_run_tsc_check_no_clone_dir():
 
 @pytest.mark.asyncio
 @patch("services.tsc.run_tsc_check.os.path.exists")
-async def test_run_tsc_check_no_tsconfig(mock_exists):
+async def test_run_tsc_check_no_tsconfig(mock_exists, create_test_base_args):
     mock_exists.return_value = False
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_tsc_check(base_args=base_args, file_paths=["src/index.ts"])
     assert result.success is True
@@ -82,7 +70,9 @@ async def test_run_tsc_check_no_tsconfig(mock_exists):
 @pytest.mark.asyncio
 @patch("services.tsc.run_tsc_check.subprocess.run")
 @patch("services.tsc.run_tsc_check.os.path.exists")
-async def test_run_tsc_check_with_errors(mock_exists, mock_subprocess):
+async def test_run_tsc_check_with_errors(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
@@ -90,13 +80,10 @@ async def test_run_tsc_check_with_errors(mock_exists, mock_subprocess):
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_tsc_check(base_args=base_args, file_paths=["src/index.ts"])
     assert result.success is False
@@ -109,7 +96,7 @@ async def test_run_tsc_check_with_errors(mock_exists, mock_subprocess):
 @patch("services.tsc.run_tsc_check.subprocess.run")
 @patch("services.tsc.run_tsc_check.os.path.exists")
 async def test_run_tsc_check_errors_in_node_modules_excluded(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, create_test_base_args
 ):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
@@ -118,13 +105,10 @@ async def test_run_tsc_check_errors_in_node_modules_excluded(
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_tsc_check(base_args=base_args, file_paths=["src/index.ts"])
     # Errors in node_modules still cause failure but excluded from error_files
@@ -135,7 +119,7 @@ async def test_run_tsc_check_errors_in_node_modules_excluded(
 
 @pytest.mark.asyncio
 @patch("services.tsc.run_tsc_check.os.path.exists")
-async def test_run_tsc_check_no_tsc_binary(mock_exists):
+async def test_run_tsc_check_no_tsc_binary(mock_exists, create_test_base_args):
     def exists_side_effect(path):
         # tsconfig exists but tsc binary does not
         if "node_modules" in path:
@@ -144,13 +128,10 @@ async def test_run_tsc_check_no_tsc_binary(mock_exists):
 
     mock_exists.side_effect = exists_side_effect
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_tsc_check(base_args=base_args, file_paths=["src/index.ts"])
     assert result.success is True
@@ -160,7 +141,9 @@ async def test_run_tsc_check_no_tsc_binary(mock_exists):
 @pytest.mark.asyncio
 @patch("services.tsc.run_tsc_check.subprocess.run")
 @patch("services.tsc.run_tsc_check.os.path.exists")
-async def test_run_tsc_check_with_empty_lines_in_output(mock_exists, mock_subprocess):
+async def test_run_tsc_check_with_empty_lines_in_output(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
@@ -168,13 +151,10 @@ async def test_run_tsc_check_with_empty_lines_in_output(mock_exists, mock_subpro
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_tsc_check(base_args=base_args, file_paths=["src/index.ts"])
     assert result.success is False
@@ -186,17 +166,16 @@ async def test_run_tsc_check_with_empty_lines_in_output(mock_exists, mock_subpro
 @pytest.mark.asyncio
 @patch("services.tsc.run_tsc_check.subprocess.run")
 @patch("services.tsc.run_tsc_check.os.path.exists")
-async def test_run_tsc_check_disables_incremental(mock_exists, mock_subprocess):
+async def test_run_tsc_check_disables_incremental(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     await run_tsc_check(base_args=base_args, file_paths=["src/index.ts"])
 
@@ -210,7 +189,7 @@ async def test_run_tsc_check_disables_incremental(mock_exists, mock_subprocess):
 @patch("services.tsc.run_tsc_check.subprocess.run")
 @patch("services.tsc.run_tsc_check.os.path.exists")
 async def test_run_tsc_check_uses_test_config_when_only_one(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, create_test_base_args
 ):
     def exists_side_effect(path):
         # Only tsconfig.test.json exists
@@ -219,13 +198,10 @@ async def test_run_tsc_check_uses_test_config_when_only_one(
     mock_exists.side_effect = exists_side_effect
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     await run_tsc_check(base_args=base_args, file_paths=["src/index.ts"])
 
@@ -239,7 +215,7 @@ async def test_run_tsc_check_uses_test_config_when_only_one(
 @patch("services.tsc.run_tsc_check.subprocess.run")
 @patch("services.tsc.run_tsc_check.os.path.exists")
 async def test_run_tsc_check_uses_base_config_when_multiple_test_configs(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, create_test_base_args
 ):
     def exists_side_effect(path):
         # Multiple test configs exist, plus base config
@@ -253,13 +229,10 @@ async def test_run_tsc_check_uses_base_config_when_multiple_test_configs(
     mock_exists.side_effect = exists_side_effect
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     await run_tsc_check(base_args=base_args, file_paths=["src/index.ts"])
 

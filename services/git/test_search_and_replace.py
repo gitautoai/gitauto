@@ -10,29 +10,12 @@ Fixture files saved from CPython 3.13 (PSF license) in services/git/fixtures/:
 import os
 import subprocess
 import tempfile
-from typing import cast
 
 import pytest
 
 from services.claude.tools.file_modify_result import FileWriteResult
 from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.search_and_replace import search_and_replace
-from services.types.base_args import BaseArgs
-
-
-@pytest.fixture
-def sample_base_args(tmp_path):
-    return cast(
-        BaseArgs,
-        {
-            "owner": "test_owner",
-            "repo": "test_repo",
-            "token": "test_token",
-            "new_branch": "test_branch",
-            "skip_ci": False,
-            "clone_dir": str(tmp_path),
-        },
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -70,14 +53,15 @@ def typing_source():
 # ---------------------------------------------------------------------------
 
 
-def test_successful_replacement(sample_base_args, tmp_path):
+def test_successful_replacement(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("print('hello world')\nprint('goodbye')\n")
 
     result = search_and_replace(
         old_string="hello world",
         new_string="hello modified world",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -88,12 +72,13 @@ def test_successful_replacement(sample_base_args, tmp_path):
     ).read_text() == "print('hello modified world')\nprint('goodbye')\n"
 
 
-def test_file_not_found(sample_base_args):
+def test_file_not_found(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     result = search_and_replace(
         old_string="hello",
         new_string="world",
         file_path="nonexistent.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -101,14 +86,15 @@ def test_file_not_found(sample_base_args):
     assert "not found" in result.message
 
 
-def test_directory_path_error(sample_base_args, tmp_path):
+def test_directory_path_error(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "my_dir").mkdir()
 
     result = search_and_replace(
         old_string="old",
         new_string="new",
         file_path="my_dir",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -116,14 +102,15 @@ def test_directory_path_error(sample_base_args, tmp_path):
     assert "directory" in result.message
 
 
-def test_empty_old_string(sample_base_args, tmp_path):
+def test_empty_old_string(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("content\n")
 
     result = search_and_replace(
         old_string="",
         new_string="new",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -131,14 +118,15 @@ def test_empty_old_string(sample_base_args, tmp_path):
     assert "must not be empty" in result.message
 
 
-def test_old_string_not_found(sample_base_args, tmp_path):
+def test_old_string_not_found(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("print('hello')\n")
 
     result = search_and_replace(
         old_string="nonexistent text",
         new_string="replacement",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -146,14 +134,15 @@ def test_old_string_not_found(sample_base_args, tmp_path):
     assert "not found" in result.message
 
 
-def test_multiple_occurrences(sample_base_args, tmp_path):
+def test_multiple_occurrences(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("foo\nfoo\nbar\n")
 
     result = search_and_replace(
         old_string="foo",
         new_string="baz",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -162,14 +151,15 @@ def test_multiple_occurrences(sample_base_args, tmp_path):
     assert "more surrounding context" in result.message
 
 
-def test_no_change_when_old_equals_new(sample_base_args, tmp_path):
+def test_no_change_when_old_equals_new(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("hello world\n")
 
     result = search_and_replace(
         old_string="hello world",
         new_string="hello world",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -177,14 +167,15 @@ def test_no_change_when_old_equals_new(sample_base_args, tmp_path):
     assert "No changes" in result.message
 
 
-def test_preserve_crlf_line_endings(sample_base_args, tmp_path):
+def test_preserve_crlf_line_endings(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.txt").write_text("line1\r\nline2\r\nline3\r\n", newline="")
 
     result = search_and_replace(
         old_string="line2",
         new_string="modified_line2",
         file_path="test.txt",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -194,7 +185,8 @@ def test_preserve_crlf_line_endings(sample_base_args, tmp_path):
     assert "\r\n" in content
 
 
-def test_nested_file_path(sample_base_args, tmp_path):
+def test_nested_file_path(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     nested_dir = tmp_path / "src" / "utils"
     nested_dir.mkdir(parents=True)
     (nested_dir / "helper.py").write_text("old_function()\n")
@@ -203,7 +195,7 @@ def test_nested_file_path(sample_base_args, tmp_path):
         old_string="old_function()",
         new_string="new_function()",
         file_path="src/utils/helper.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -211,14 +203,15 @@ def test_nested_file_path(sample_base_args, tmp_path):
     assert (nested_dir / "helper.py").read_text() == "new_function()\n"
 
 
-def test_extra_kwargs_ignored(sample_base_args, tmp_path):
+def test_extra_kwargs_ignored(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("old\n")
 
     result = search_and_replace(
         old_string="old",
         new_string="new",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
         extra_param="ignored",
     )
 
@@ -226,14 +219,15 @@ def test_extra_kwargs_ignored(sample_base_args, tmp_path):
     assert result.success is True
 
 
-def test_diff_included_in_message(sample_base_args, tmp_path):
+def test_diff_included_in_message(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("alpha\nbeta\ngamma\n")
 
     result = search_and_replace(
         old_string="beta",
         new_string="delta",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -256,17 +250,17 @@ def test_diff_included_in_message(sample_base_args, tmp_path):
 
 
 def test_pydecimal_convert_other_block_rejected_14_matches(
-    sample_base_args, tmp_path, pydecimal_source
+    create_test_base_args, tmp_path, pydecimal_source
 ):
-    """The _convert_other + NotImplemented guard appears 14 times in _pydecimal.py.
-    Matching on just these 3 lines must be rejected."""
+    # The _convert_other + NotImplemented guard appears 14 times — must be rejected
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "_pydecimal.py").write_text(pydecimal_source)
 
     result = search_and_replace(
         old_string="        other = _convert_other(other)\n        if other is NotImplemented:\n            return other",
         new_string="        other = _convert_other(other)\n        if other is NotImplemented:\n            return NotImplemented",
         file_path="_pydecimal.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -275,16 +269,17 @@ def test_pydecimal_convert_other_block_rejected_14_matches(
 
 
 def test_pydecimal_context_getcontext_block_rejected_39_matches(
-    sample_base_args, tmp_path, pydecimal_source
+    create_test_base_args, tmp_path, pydecimal_source
 ):
-    """'if context is None: context = getcontext()' appears 39 times. Must reject."""
+    # 'if context is None: context = getcontext()' appears 39 times — must reject
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "_pydecimal.py").write_text(pydecimal_source)
 
     result = search_and_replace(
         old_string="        if context is None:\n            context = getcontext()",
         new_string="        if context is None:\n            context = getcontext()\n            # patched",
         file_path="_pydecimal.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -293,9 +288,10 @@ def test_pydecimal_context_getcontext_block_rejected_39_matches(
 
 
 def test_pydecimal_add_method_unique_with_docstring(
-    sample_base_args, tmp_path, pydecimal_source
+    create_test_base_args, tmp_path, pydecimal_source
 ):
-    """__add__ with its docstring is unique. Replacement should succeed on a 6300-line file."""
+    # __add__ with its docstring is unique — should succeed on a 6300-line file
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "_pydecimal.py").write_text(pydecimal_source)
 
     old = '    def __add__(self, other, context=None):\n        """Returns self + other.\n\n        -INF + INF (or the reverse) cause InvalidOperation errors.\n        """'
@@ -305,7 +301,7 @@ def test_pydecimal_add_method_unique_with_docstring(
         old_string=old,
         new_string=new,
         file_path="_pydecimal.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -324,9 +320,10 @@ def test_pydecimal_add_method_unique_with_docstring(
 
 
 def test_pydecimal_disambiguate_convert_other_via_method_signature(
-    sample_base_args, tmp_path, pydecimal_source
+    create_test_base_args, tmp_path, pydecimal_source
 ):
-    """Including __add__ signature before the _convert_other block makes it unique."""
+    # Including __add__ signature before the _convert_other block makes it unique
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "_pydecimal.py").write_text(pydecimal_source)
 
     old = '    def __add__(self, other, context=None):\n        """Returns self + other.\n\n        -INF + INF (or the reverse) cause InvalidOperation errors.\n        """\n        other = _convert_other(other)\n        if other is NotImplemented:\n            return other'
@@ -336,7 +333,7 @@ def test_pydecimal_disambiguate_convert_other_via_method_signature(
         old_string=old,
         new_string=new,
         file_path="_pydecimal.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -365,16 +362,17 @@ def test_pydecimal_disambiguate_convert_other_via_method_signature(
 
 
 def test_argparse_call_signature_rejected_11_matches(
-    sample_base_args, tmp_path, argparse_source
+    create_test_base_args, tmp_path, argparse_source
 ):
-    """The __call__ signature appears 11 times across Action subclasses."""
+    # The __call__ signature appears 11 times across Action subclasses
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "argparse.py").write_text(argparse_source)
 
     result = search_and_replace(
         old_string="    def __call__(self, parser, namespace, values, option_string=None):",
         new_string="    def __call__(self, parser, namespace, values, option_string=None):  # patched",
         file_path="argparse.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -383,16 +381,17 @@ def test_argparse_call_signature_rejected_11_matches(
 
 
 def test_argparse_init_option_strings_rejected_12_matches(
-    sample_base_args, tmp_path, argparse_source
+    create_test_base_args, tmp_path, argparse_source
 ):
-    """The __init__(self, option_strings, ...) pattern appears 12 times."""
+    # The __init__(self, option_strings, ...) pattern appears 12 times
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "argparse.py").write_text(argparse_source)
 
     result = search_and_replace(
         old_string="    def __init__(self,\n                 option_strings,",
         new_string="    def __init__(self,\n                 option_strings,  # patched",
         file_path="argparse.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -402,9 +401,10 @@ def test_argparse_init_option_strings_rejected_12_matches(
 
 
 def test_argparse_help_action_call_unique_with_body(
-    sample_base_args, tmp_path, argparse_source
+    create_test_base_args, tmp_path, argparse_source
 ):
-    """_HelpAction.__call__ body (print_help + exit) is unique across all Action subclasses."""
+    # _HelpAction.__call__ body (print_help + exit) is unique across all Action subclasses
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "argparse.py").write_text(argparse_source)
 
     old = "    def __call__(self, parser, namespace, values, option_string=None):\n        parser.print_help()\n        parser.exit()"
@@ -414,7 +414,7 @@ def test_argparse_help_action_call_unique_with_body(
         old_string=old,
         new_string=new,
         file_path="argparse.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -436,9 +436,10 @@ def test_argparse_help_action_call_unique_with_body(
 
 
 def test_argparse_disambiguate_call_via_class_context(
-    sample_base_args, tmp_path, argparse_source
+    create_test_base_args, tmp_path, argparse_source
 ):
-    """Including the class definition makes the __call__ signature unique."""
+    # Including the class definition makes the __call__ signature unique
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "argparse.py").write_text(argparse_source)
 
     old = "class _HelpAction(Action):\n\n    def __init__(self,\n                 option_strings,"
@@ -448,7 +449,7 @@ def test_argparse_disambiguate_call_via_class_context(
         old_string=old,
         new_string=new,
         file_path="argparse.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -473,15 +474,18 @@ def test_argparse_disambiguate_call_via_class_context(
 # ---------------------------------------------------------------------------
 
 
-def test_typing_reduce_rejected_7_matches(sample_base_args, tmp_path, typing_source):
-    """'def __reduce__(self):' appears 7 times across alias classes."""
+def test_typing_reduce_rejected_7_matches(
+    create_test_base_args, tmp_path, typing_source
+):
+    # 'def __reduce__(self):' appears 7 times across alias classes
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "typing.py").write_text(typing_source)
 
     result = search_and_replace(
         old_string="    def __reduce__(self):",
         new_string="    def __reduce__(self):  # patched",
         file_path="typing.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -489,15 +493,18 @@ def test_typing_reduce_rejected_7_matches(sample_base_args, tmp_path, typing_sou
     assert "7 times" in result.message
 
 
-def test_typing_repr_rejected_11_matches(sample_base_args, tmp_path, typing_source):
-    """'def __repr__(self):' appears 11 times."""
+def test_typing_repr_rejected_11_matches(
+    create_test_base_args, tmp_path, typing_source
+):
+    # 'def __repr__(self):' appears 11 times
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "typing.py").write_text(typing_source)
 
     result = search_and_replace(
         old_string="    def __repr__(self):",
         new_string="    def __repr__(self):  # patched",
         file_path="typing.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -505,8 +512,11 @@ def test_typing_repr_rejected_11_matches(sample_base_args, tmp_path, typing_sour
     assert "11 times" in result.message
 
 
-def test_typing_special_form_class_unique(sample_base_args, tmp_path, typing_source):
-    """'class _SpecialForm' appears exactly once - replacement should succeed."""
+def test_typing_special_form_class_unique(
+    create_test_base_args, tmp_path, typing_source
+):
+    # 'class _SpecialForm' appears exactly once — replacement should succeed
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "typing.py").write_text(typing_source)
 
     # Find the actual first line after class _SpecialForm
@@ -528,7 +538,7 @@ def test_typing_special_form_class_unique(sample_base_args, tmp_path, typing_sou
         old_string=old,
         new_string=new,
         file_path="typing.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -548,10 +558,10 @@ def test_typing_special_form_class_unique(sample_base_args, tmp_path, typing_sou
 
 
 def test_pydecimal_replacement_preserves_file_size(
-    sample_base_args, tmp_path, pydecimal_source
+    create_test_base_args, tmp_path, pydecimal_source
 ):
-    """After replacing one 5-line block in a 6300-line file, the total size
-    should change minimally - no accidental truncation or collapse."""
+    # After replacing one 5-line block in a 6300-line file, total size should change minimally
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "_pydecimal.py").write_text(pydecimal_source)
     original_lines = len(pydecimal_source.split("\n"))
 
@@ -562,7 +572,7 @@ def test_pydecimal_replacement_preserves_file_size(
         old_string=old,
         new_string=new,
         file_path="_pydecimal.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -575,9 +585,10 @@ def test_pydecimal_replacement_preserves_file_size(
 
 
 def test_argparse_replacement_does_not_corrupt_other_classes(
-    sample_base_args, tmp_path, argparse_source
+    create_test_base_args, tmp_path, argparse_source
 ):
-    """After editing _HelpAction, verify all other Action subclasses still parse correctly."""
+    # After editing _HelpAction, verify all other Action subclasses still parse correctly
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "argparse.py").write_text(argparse_source)
 
     old = "    def __call__(self, parser, namespace, values, option_string=None):\n        parser.print_help()\n        parser.exit()"
@@ -587,7 +598,7 @@ def test_argparse_replacement_does_not_corrupt_other_classes(
         old_string=old,
         new_string=new,
         file_path="argparse.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -612,15 +623,16 @@ def test_argparse_replacement_does_not_corrupt_other_classes(
 # ---------------------------------------------------------------------------
 
 
-def test_tabs_vs_spaces_mismatch_not_found(sample_base_args, tmp_path):
-    """File uses tabs, old_string uses spaces - must fail, not silently match."""
+def test_tabs_vs_spaces_mismatch_not_found(create_test_base_args, tmp_path):
+    # File uses tabs, old_string uses spaces — must fail, not silently match
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("def foo():\n\treturn 1\n")
 
     result = search_and_replace(
         old_string="def foo():\n    return 1",
         new_string="def foo():\n    return 2",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -628,8 +640,9 @@ def test_tabs_vs_spaces_mismatch_not_found(sample_base_args, tmp_path):
     assert "not found" in result.message
 
 
-def test_crlf_multiline_old_string_with_lf_input(sample_base_args, tmp_path):
-    """File uses CRLF but Claude sends LF in old_string - normalization should handle it."""
+def test_crlf_multiline_old_string_with_lf_input(create_test_base_args, tmp_path):
+    # File uses CRLF but Claude sends LF in old_string — normalization should handle it
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.cs").write_text(
         "public class Foo {\r\n    int x = 1;\r\n    int y = 2;\r\n}\r\n",
         newline="",
@@ -639,7 +652,7 @@ def test_crlf_multiline_old_string_with_lf_input(sample_base_args, tmp_path):
         old_string="    int x = 1;\n    int y = 2;",
         new_string="    int x = 10;\n    int y = 20;",
         file_path="test.cs",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -656,8 +669,9 @@ def test_crlf_multiline_old_string_with_lf_input(sample_base_args, tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_regex_metacharacters_treated_as_literal(sample_base_args, tmp_path):
-    """Regex metacharacters in old_string must be treated as literal text."""
+def test_regex_metacharacters_treated_as_literal(create_test_base_args, tmp_path):
+    # Regex metacharacters in old_string must be treated as literal text
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     content = 'pattern = r"^(foo|bar)\\.(baz)+$"\nother = "hello"\n'
     (tmp_path / "test.py").write_text(content)
 
@@ -665,7 +679,7 @@ def test_regex_metacharacters_treated_as_literal(sample_base_args, tmp_path):
         old_string='pattern = r"^(foo|bar)\\.(baz)+$"',
         new_string='pattern = r"^(foo|bar|qux)\\.(baz)+$"',
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -673,8 +687,9 @@ def test_regex_metacharacters_treated_as_literal(sample_base_args, tmp_path):
     assert 'r"^(foo|bar|qux)\\.(baz)+$"' in (tmp_path / "test.py").read_text()
 
 
-def test_unicode_content(sample_base_args, tmp_path):
-    """Unicode characters in both old_string and file content."""
+def test_unicode_content(create_test_base_args, tmp_path):
+    # Unicode characters in both old_string and file content
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text(
         '# コメント\nmessage = "こんにちは世界"\nprint(message)\n'
     )
@@ -683,7 +698,7 @@ def test_unicode_content(sample_base_args, tmp_path):
         old_string='message = "こんにちは世界"',
         new_string='message = "Hello, 世界!"',
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -698,15 +713,16 @@ def test_unicode_content(sample_base_args, tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_old_string_is_substring_of_new_string(sample_base_args, tmp_path):
-    """When new_string contains old_string, replacement must happen exactly once."""
+def test_old_string_is_substring_of_new_string(create_test_base_args, tmp_path):
+    # When new_string contains old_string, replacement must happen exactly once
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("x = 1\n")
 
     result = search_and_replace(
         old_string="x = 1",
         new_string="x = 1  # was x = 1",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -715,16 +731,18 @@ def test_old_string_is_substring_of_new_string(sample_base_args, tmp_path):
     assert content == "x = 1  # was x = 1\n"
 
 
-def test_replacement_creates_duplicate_but_still_succeeds(sample_base_args, tmp_path):
-    """After replacement the new_string text appears twice in the file.
-    This is fine - we only check uniqueness of old_string BEFORE replacing."""
+def test_replacement_creates_duplicate_but_still_succeeds(
+    create_test_base_args, tmp_path
+):
+    # After replacement new_string appears twice — fine, we only check uniqueness BEFORE replacing
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("aaa\nbbb\n")
 
     result = search_and_replace(
         old_string="bbb",
         new_string="aaa",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -732,15 +750,16 @@ def test_replacement_creates_duplicate_but_still_succeeds(sample_base_args, tmp_
     assert (tmp_path / "test.py").read_text() == "aaa\naaa\n"
 
 
-def test_empty_new_string_deletes_match(sample_base_args, tmp_path):
-    """Empty new_string should delete the matched text."""
+def test_empty_new_string_deletes_match(create_test_base_args, tmp_path):
+    # Empty new_string should delete the matched text
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("keep_this\ndelete_this\nkeep_this_too\n")
 
     result = search_and_replace(
         old_string="delete_this\n",
         new_string="",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -748,15 +767,16 @@ def test_empty_new_string_deletes_match(sample_base_args, tmp_path):
     assert (tmp_path / "test.py").read_text() == "keep_this\nkeep_this_too\n"
 
 
-def test_entire_file_is_old_string(sample_base_args, tmp_path):
-    """Replacing the entire file content via search_and_replace."""
+def test_entire_file_is_old_string(create_test_base_args, tmp_path):
+    # Replacing the entire file content via search_and_replace
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("old content\n")
 
     result = search_and_replace(
         old_string="old content\n",
         new_string="completely new content\n",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -769,15 +789,16 @@ def test_entire_file_is_old_string(sample_base_args, tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_trailing_spaces_stripped_after_replacement(sample_base_args, tmp_path):
-    """Verify strip_trailing_spaces runs after replacement."""
+def test_trailing_spaces_stripped_after_replacement(create_test_base_args, tmp_path):
+    # Verify strip_trailing_spaces runs after replacement
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("clean_line\nother_line\n")
 
     result = search_and_replace(
         old_string="clean_line",
         new_string="has_trailing_spaces   ",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -788,15 +809,16 @@ def test_trailing_spaces_stripped_after_replacement(sample_base_args, tmp_path):
             assert not line.endswith(" "), f"Line has trailing space: {line!r}"
 
 
-def test_final_newline_ensured(sample_base_args, tmp_path):
-    """Verify ensure_final_newline adds one if replacement removes it."""
+def test_final_newline_ensured(create_test_base_args, tmp_path):
+    # Verify ensure_final_newline adds one if replacement removes it
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("line1\nline2\n")
 
     result = search_and_replace(
         old_string="line2\n",
         new_string="line2_no_newline",
         file_path="test.py",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)

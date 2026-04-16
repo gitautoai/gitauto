@@ -3,28 +3,26 @@
 from typing import cast
 from unittest.mock import Mock, patch
 import pytest
-from constants.claude import ClaudeModelId
+from constants.models import ClaudeModelId, GoogleModelId, ModelId
 from services.chat_with_agent import chat_with_agent
 from services.claude.chat_with_claude import ToolCall
+from services.claude.exceptions import ClaudeOverloadedError
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
-from services.types.base_args import BaseArgs
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 async def test_chat_with_agent_passes_usage_id_to_claude(
-    mock_chat_with_claude, mock_get_model
+    mock_chat_with_model, create_test_base_args
 ):
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {"role": "assistant", "content": "response"},
         [],
         15,
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMMA_4_31B)
 
     await chat_with_agent(
         messages=[{"role": "user", "content": "test"}],
@@ -32,29 +30,27 @@ async def test_chat_with_agent_passes_usage_id_to_claude(
         base_args=base_args,
         tools=[],
         usage_id=123,
-        model_id=None,
+        model_id=GoogleModelId.GEMMA_4_31B,
     )
 
-    mock_chat_with_claude.assert_called_once()
-    call_args = mock_chat_with_claude.call_args[1]
+    mock_chat_with_model.assert_called_once()
+    call_args = mock_chat_with_model.call_args[1]
     assert call_args["usage_id"] == 123
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 async def test_chat_with_agent_returns_token_counts(
-    mock_chat_with_claude, mock_get_model
+    mock_chat_with_model, create_test_base_args
 ):
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {"role": "assistant", "content": "response"},
         [],
         25,
         15,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
 
     result = await chat_with_agent(
         messages=[{"role": "user", "content": "test"}],
@@ -62,7 +58,7 @@ async def test_chat_with_agent_returns_token_counts(
         base_args=base_args,
         tools=[],
         usage_id=789,
-        model_id=None,
+        model_id=GoogleModelId.GEMMA_4_31B,
     )
 
     assert result.token_input == 25
@@ -70,15 +66,13 @@ async def test_chat_with_agent_returns_token_counts(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 async def test_get_local_file_content_start_line_end_line_logging(
-    mock_update_comment, mock_chat_with_claude, mock_get_model
+    mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that start_line and end_line parameters are properly logged in chat_with_agent."""
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -101,7 +95,7 @@ async def test_get_local_file_content_start_line_end_line_logging(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(return_value="file content")
@@ -112,7 +106,7 @@ async def test_get_local_file_content_start_line_end_line_logging(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=ClaudeModelId.SONNET_4_6,
         )
 
     call_args = mock_update_comment.call_args_list
@@ -131,15 +125,13 @@ async def test_get_local_file_content_start_line_end_line_logging(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 async def test_delete_file_logging(
-    mock_update_comment, mock_chat_with_claude, mock_get_model
+    mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that delete_file function calls are properly logged in chat_with_agent."""
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -160,7 +152,7 @@ async def test_delete_file_logging(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(
@@ -173,7 +165,7 @@ async def test_delete_file_logging(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=ClaudeModelId.OPUS_4_6,
         )
 
     call_args = mock_update_comment.call_args_list
@@ -192,15 +184,13 @@ async def test_delete_file_logging(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 async def test_move_file_logging(
-    mock_update_comment, mock_chat_with_claude, mock_get_model
+    mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that move_file function calls are properly logged in chat_with_agent."""
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -226,7 +216,7 @@ async def test_move_file_logging(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMMA_4_31B)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(
@@ -239,7 +229,7 @@ async def test_move_file_logging(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=GoogleModelId.GEMMA_4_31B,
         )
 
     call_args = mock_update_comment.call_args_list
@@ -258,13 +248,11 @@ async def test_move_file_logging(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 async def test_write_and_commit_file_handles_new_content_arg_name(
-    mock_chat_with_claude, mock_get_model
+    mock_chat_with_model, create_test_base_args
 ):
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -290,7 +278,7 @@ async def test_write_and_commit_file_handles_new_content_arg_name(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_function = Mock(return_value="Content replaced successfully")
@@ -303,7 +291,7 @@ async def test_write_and_commit_file_handles_new_content_arg_name(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=GoogleModelId.GEMINI_2_5_FLASH,
         )
 
         mock_function.assert_called_once()
@@ -314,14 +302,12 @@ async def test_write_and_commit_file_handles_new_content_arg_name(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.slack_notify")
 async def test_unavailable_tool_sends_slack_notification(
-    mock_slack_notify, mock_chat_with_claude, mock_get_model
+    mock_slack_notify, mock_chat_with_model, create_test_base_args
 ):
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -338,15 +324,7 @@ async def test_unavailable_tool_sends_slack_notification(
         10,
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "sender_id": 1,
-            "sender_name": "test-user",
-            "owner": "test-owner",
-            "repo": "test-repo",
-        },
-    )
+    base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = False
@@ -358,7 +336,7 @@ async def test_unavailable_tool_sends_slack_notification(
                 base_args=base_args,
                 tools=[],
                 usage_id=123,
-                model_id=None,
+                model_id=ClaudeModelId.SONNET_4_6,
             )
 
         assert mock_slack_notify.call_count == 1
@@ -369,16 +347,14 @@ async def test_unavailable_tool_sends_slack_notification(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 @patch("services.chat_with_agent.update_comment")
 async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true(
-    _mock_update_comment, mock_get_pr_files, mock_chat_with_claude, mock_get_model
+    _mock_update_comment, mock_get_pr_files, mock_chat_with_model, create_test_base_args
 ):
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -395,18 +371,12 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
         10,
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "sender_id": 1,
-            "sender_name": "test-user",
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    base_args = create_test_base_args(
+        model_id=ClaudeModelId.OPUS_4_6,
+        owner="test-owner",
+        repo="test-repo",
+        pr_number=123,
+        token="test-token",
     )
 
     result = await chat_with_agent(
@@ -415,7 +385,7 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
         base_args=base_args,
         tools=[],
         usage_id=123,
-        model_id=None,
+        model_id=ClaudeModelId.OPUS_4_6,
     )
 
     is_completed = result.is_completed
@@ -426,16 +396,14 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_false(
-    mock_get_pr_files, _mock_update_comment, mock_chat_with_claude, mock_get_model
+    mock_get_pr_files, _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
     mock_get_pr_files.return_value = []
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -452,18 +420,12 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
         10,
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "sender_id": 1,
-            "sender_name": "test-user",
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    base_args = create_test_base_args(
+        model_id=GoogleModelId.GEMMA_4_31B,
+        owner="test-owner",
+        repo="test-repo",
+        pr_number=123,
+        token="test-token",
     )
 
     result = await chat_with_agent(
@@ -472,7 +434,7 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
         base_args=base_args,
         tools=[],
         usage_id=123,
-        model_id=None,
+        model_id=GoogleModelId.GEMMA_4_31B,
     )
 
     assert result.is_completed is True
@@ -483,13 +445,11 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 async def test_regular_tool_returns_is_completed_false(
-    mock_chat_with_claude, mock_get_model
+    mock_chat_with_model, create_test_base_args
 ):
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -512,7 +472,7 @@ async def test_regular_tool_returns_is_completed_false(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(return_value="file content")
@@ -525,7 +485,7 @@ async def test_regular_tool_returns_is_completed_false(
                 base_args=base_args,
                 tools=[],
                 usage_id=123,
-                model_id=None,
+                model_id=GoogleModelId.GEMINI_2_5_FLASH,
             )
 
     is_completed = result.is_completed
@@ -533,20 +493,18 @@ async def test_regular_tool_returns_is_completed_false(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 async def test_no_tool_call_returns_is_completed_false(
-    mock_chat_with_claude, mock_get_model
+    mock_chat_with_model, create_test_base_args
 ):
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {"role": "assistant", "content": "I'm thinking about it..."},
         [],
         15,
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
 
     result = await chat_with_agent(
         messages=[{"role": "user", "content": "test"}],
@@ -554,7 +512,7 @@ async def test_no_tool_call_returns_is_completed_false(
         base_args=base_args,
         tools=[],
         usage_id=123,
-        model_id=None,
+        model_id=ClaudeModelId.SONNET_4_6,
     )
 
     is_completed = result.is_completed
@@ -562,15 +520,13 @@ async def test_no_tool_call_returns_is_completed_false(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 async def test_file_write_result_success_includes_formatted_content(
-    _mock_update_comment, mock_chat_with_claude, mock_get_model
+    _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that FileWriteResult with success=True includes formatted content with line numbers."""
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -593,7 +549,7 @@ async def test_file_write_result_success_includes_formatted_content(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
@@ -612,7 +568,7 @@ async def test_file_write_result_success_includes_formatted_content(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=ClaudeModelId.OPUS_4_6,
         )
 
     messages = result.messages
@@ -626,15 +582,13 @@ async def test_file_write_result_success_includes_formatted_content(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 async def test_apply_diff_no_changes_logs_tool_result_message(
-    mock_update_comment, mock_chat_with_claude, mock_get_model
+    mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that apply_diff_to_file with no changes uses tool_result.message instead of hardcoded 'Committed changes'."""
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -657,7 +611,7 @@ async def test_apply_diff_no_changes_logs_tool_result_message(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMMA_4_31B)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
@@ -676,7 +630,7 @@ async def test_apply_diff_no_changes_logs_tool_result_message(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=GoogleModelId.GEMMA_4_31B,
         )
 
     call_args = mock_update_comment.call_args_list
@@ -700,15 +654,13 @@ async def test_apply_diff_no_changes_logs_tool_result_message(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 async def test_file_write_result_failure_returns_message_only(
-    _mock_update_comment, mock_chat_with_claude, mock_get_model
+    _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that FileWriteResult with success=False returns only the message."""
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -731,7 +683,7 @@ async def test_file_write_result_failure_returns_message_only(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
@@ -750,7 +702,7 @@ async def test_file_write_result_failure_returns_message_only(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=GoogleModelId.GEMINI_2_5_FLASH,
         )
 
     messages = result.messages
@@ -761,15 +713,13 @@ async def test_file_write_result_failure_returns_message_only(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 async def test_file_move_result_returns_message(
-    _mock_update_comment, mock_chat_with_claude, mock_get_model
+    _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that FileMoveResult returns the message."""
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -795,7 +745,7 @@ async def test_file_move_result_returns_message(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
@@ -814,7 +764,7 @@ async def test_file_move_result_returns_message(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=ClaudeModelId.SONNET_4_6,
         )
 
     messages = result.messages
@@ -825,16 +775,14 @@ async def test_file_move_result_returns_message(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 @patch("services.chat_with_agent.replace_old_file_content")
 async def test_full_file_read_calls_replace_with_is_full_file_read_true(
-    mock_replace, _mock_update_comment, mock_chat_with_claude, mock_get_model
+    mock_replace, _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that reading a full file calls replace_old_file_content with is_full_file_read=True."""
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -857,7 +805,7 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(
@@ -871,7 +819,7 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=ClaudeModelId.OPUS_4_6,
         )
 
     mock_replace.assert_called_once()
@@ -881,16 +829,14 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 @patch("services.chat_with_agent.replace_old_file_content")
 async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
-    mock_replace, _mock_update_comment, mock_chat_with_claude, mock_get_model
+    mock_replace, _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that reading a partial file calls replace_old_file_content with is_full_file_read=False."""
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -917,7 +863,7 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMMA_4_31B)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(
@@ -931,7 +877,7 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=GoogleModelId.GEMMA_4_31B,
         )
 
     mock_replace.assert_called_once()
@@ -941,15 +887,13 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 async def test_multiple_parallel_tool_calls(
-    _mock_update_comment, mock_chat_with_claude, mock_get_model
+    _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that multiple tool_use blocks are all executed and results returned in one message."""
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -988,7 +932,7 @@ async def test_multiple_parallel_tool_calls(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         call_count = 0
@@ -1007,7 +951,7 @@ async def test_multiple_parallel_tool_calls(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=GoogleModelId.GEMINI_2_5_FLASH,
         )
 
     # All 3 tools were executed
@@ -1026,16 +970,14 @@ async def test_multiple_parallel_tool_calls(
 
 
 @pytest.mark.asyncio
-@patch("services.chat_with_agent.get_model")
-@patch("services.chat_with_agent.chat_with_claude")
+@patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
 async def test_gitauto_md_edit_always_allowed(
     _mock_update_comment,
-    mock_chat_with_claude,
-    mock_get_model,
+    mock_chat_with_model,
+    create_test_base_args,
 ):
-    mock_get_model.return_value = ClaudeModelId.SONNET_4_6
-    mock_chat_with_claude.return_value = (
+    mock_chat_with_model.return_value = (
         {
             "role": "assistant",
             "content": [
@@ -1064,7 +1006,7 @@ async def test_gitauto_md_edit_always_allowed(
         10,
     )
 
-    base_args = cast(BaseArgs, {"sender_id": 1, "sender_name": "test-user"})
+    base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
@@ -1083,10 +1025,162 @@ async def test_gitauto_md_edit_always_allowed(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=None,
+            model_id=ClaudeModelId.SONNET_4_6,
         )
 
     # GITAUTO.md should be editable
     messages = result.messages
     last_content = cast(list, messages[-1]["content"])
     assert "Updated GITAUTO.md." in last_content[0]["content"]
+
+
+# --- Fallback chain tests ---
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.chat_with_model")
+async def test_opus_falls_back_to_opus_45_on_error(
+    mock_chat_with_model, create_test_base_args
+):
+    """Opus 4.6 ($8) falls back to Opus 4.5 ($8), not Sonnet."""
+    call_count = 0
+
+    def side_effect(**kwargs):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            assert kwargs["model_id"] == ClaudeModelId.OPUS_4_6
+            raise RuntimeError("Opus 4.6 down")
+        assert kwargs["model_id"] == ClaudeModelId.OPUS_4_5
+        return ({"role": "assistant", "content": "ok"}, [], 10, 5)
+
+    mock_chat_with_model.side_effect = side_effect
+    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
+
+    await chat_with_agent(
+        messages=[{"role": "user", "content": "test"}],
+        system_message="test",
+        base_args=base_args,
+        tools=[],
+        usage_id=1,
+        model_id=ClaudeModelId.OPUS_4_6,
+    )
+
+    assert call_count == 2
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.chat_with_model")
+async def test_sonnet_never_falls_back_to_opus(
+    mock_chat_with_model, create_test_base_args
+):
+    """Sonnet 4.6 ($4) must never escalate to Opus ($8)."""
+    models_tried: list[ModelId] = []
+
+    def side_effect(**kwargs):
+        models_tried.append(kwargs["model_id"])
+        if len(models_tried) < 3:
+            raise RuntimeError("model down")
+        return ({"role": "assistant", "content": "ok"}, [], 10, 5)
+
+    mock_chat_with_model.side_effect = side_effect
+    base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
+
+    # Sonnet chain: [Sonnet 4.6, Sonnet 4.5] — only 2 models, so 3rd call raises
+    with pytest.raises(RuntimeError):
+        await chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            system_message="test",
+            base_args=base_args,
+            tools=[],
+            usage_id=1,
+            model_id=ClaudeModelId.SONNET_4_6,
+        )
+
+    for model in models_tried:
+        assert model not in (
+            ClaudeModelId.OPUS_4_6,
+            ClaudeModelId.OPUS_4_5,
+        ), f"Sonnet fallback tried Opus model {model}"
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.chat_with_model")
+async def test_gemma_never_falls_back_to_gemini(
+    mock_chat_with_model, create_test_base_args
+):
+    """Gemma ($2) must never escalate to Gemini ($4)."""
+    models_tried: list[ModelId] = []
+
+    def side_effect(**kwargs):
+        models_tried.append(kwargs["model_id"])
+        raise RuntimeError("model down")
+
+    mock_chat_with_model.side_effect = side_effect
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMMA_4_31B)
+
+    # Gemma chain: [Gemma] only — 1 model, so it raises immediately
+    with pytest.raises(RuntimeError):
+        await chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            system_message="test",
+            base_args=base_args,
+            tools=[],
+            usage_id=1,
+            model_id=GoogleModelId.GEMMA_4_31B,
+        )
+
+    assert models_tried == [GoogleModelId.GEMMA_4_31B]
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.asyncio.sleep", return_value=None)
+@patch("services.chat_with_agent.chat_with_model")
+async def test_overload_retries_then_falls_back(
+    mock_chat_with_model, _mock_sleep, create_test_base_args
+):
+    """Overload retries exhaust on Opus 4.6, then falls back to Opus 4.5."""
+    call_count = 0
+
+    def side_effect(**kwargs):
+        nonlocal call_count
+        call_count += 1
+        # First 3 calls: Opus 4.6 overloaded (1 initial + 2 retries)
+        if call_count <= 3:
+            assert kwargs["model_id"] == ClaudeModelId.OPUS_4_6
+            raise ClaudeOverloadedError("529")
+        # 4th call: Opus 4.5 succeeds
+        assert kwargs["model_id"] == ClaudeModelId.OPUS_4_5
+        return ({"role": "assistant", "content": "ok"}, [], 10, 5)
+
+    mock_chat_with_model.side_effect = side_effect
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
+
+    await chat_with_agent(
+        messages=[{"role": "user", "content": "test"}],
+        system_message="test",
+        base_args=base_args,
+        tools=[],
+        usage_id=1,
+        model_id=ClaudeModelId.OPUS_4_6,
+    )
+
+    assert call_count == 4
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.chat_with_model")
+async def test_all_models_exhausted_raises(mock_chat_with_model, create_test_base_args):
+    """When every model in the chain fails, the last exception propagates."""
+    mock_chat_with_model.side_effect = RuntimeError("all down")
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMMA_4_31B)
+
+    with pytest.raises(RuntimeError, match="all down"):
+        await chat_with_agent(
+            messages=[{"role": "user", "content": "test"}],
+            system_message="test",
+            base_args=base_args,
+            tools=[],
+            usage_id=1,
+            model_id=GoogleModelId.GEMMA_4_31B,
+        )

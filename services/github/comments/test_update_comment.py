@@ -33,7 +33,10 @@ def test_update_comment_none_url(
 ):
     # Arrange
     base_args = create_test_base_args(
-        owner=test_owner, repo=test_repo, token=test_token, comment_url=None
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        comment_url=None,
     )
 
     # Act
@@ -132,7 +135,9 @@ def test_update_comment_missing_comment_url_key(
 ):
     # Arrange
     base_args = create_test_base_args(
-        owner=test_owner, repo=test_repo, token=test_token
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
     )
 
     # Act

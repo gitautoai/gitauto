@@ -1,28 +1,25 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
-from typing import cast
 from unittest.mock import patch, MagicMock
 
 import pytest
 
 from services.jest.run_jest_test import run_jest_test
-from services.types.base_args import BaseArgs
 
 
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_success(mock_exists, mock_subprocess):
+async def test_run_jest_test_success(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -36,14 +33,11 @@ async def test_run_jest_test_success(mock_exists, mock_subprocess):
 
 
 @pytest.mark.asyncio
-async def test_run_jest_test_no_test_files():
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+async def test_run_jest_test_no_test_files(create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -56,14 +50,11 @@ async def test_run_jest_test_no_test_files():
 
 
 @pytest.mark.asyncio
-async def test_run_jest_test_no_clone_dir():
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "",
-        },
+async def test_run_jest_test_no_clone_dir(create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -77,16 +68,13 @@ async def test_run_jest_test_no_clone_dir():
 
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_no_runner(mock_exists):
+async def test_run_jest_test_no_runner(mock_exists, create_test_base_args):
     mock_exists.return_value = False
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -101,7 +89,9 @@ async def test_run_jest_test_no_runner(mock_exists):
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_with_failures(mock_exists, mock_subprocess):
+async def test_run_jest_test_with_failures(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
@@ -109,13 +99,10 @@ async def test_run_jest_test_with_failures(mock_exists, mock_subprocess):
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -131,7 +118,9 @@ async def test_run_jest_test_with_failures(mock_exists, mock_subprocess):
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_detects_updated_snapshots(mock_exists, mock_subprocess):
+async def test_run_jest_test_detects_updated_snapshots(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     jest_result = MagicMock(returncode=0, stdout="", stderr="")
     git_diff_result = MagicMock(
@@ -141,13 +130,10 @@ async def test_run_jest_test_detects_updated_snapshots(mock_exists, mock_subproc
     # Single jest run + git diff = 2 calls
     mock_subprocess.side_effect = [jest_result, git_diff_result]
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -165,20 +151,19 @@ async def test_run_jest_test_detects_updated_snapshots(mock_exists, mock_subproc
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_no_snapshots_updated(mock_exists, mock_subprocess):
+async def test_run_jest_test_no_snapshots_updated(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     jest_result = MagicMock(returncode=0, stdout="", stderr="")
     git_diff_result = MagicMock(returncode=0, stdout="src/index.ts\n")
     # Single jest run + git diff = 2 calls
     mock_subprocess.side_effect = [jest_result, git_diff_result]
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -193,7 +178,9 @@ async def test_run_jest_test_no_snapshots_updated(mock_exists, mock_subprocess):
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_uses_vitest_when_no_jest(mock_exists, mock_subprocess):
+async def test_run_jest_test_uses_vitest_when_no_jest(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     def exists_side_effect(path):
         # Jest doesn't exist, but vitest does
         if "jest" in path:
@@ -203,13 +190,10 @@ async def test_run_jest_test_uses_vitest_when_no_jest(mock_exists, mock_subproce
     mock_exists.side_effect = exists_side_effect
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -227,17 +211,16 @@ async def test_run_jest_test_uses_vitest_when_no_jest(mock_exists, mock_subproce
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_spec_files(mock_exists, mock_subprocess):
+async def test_run_jest_test_spec_files(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -254,7 +237,9 @@ async def test_run_jest_test_spec_files(mock_exists, mock_subprocess):
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_one_of_three_fails(mock_exists, mock_subprocess):
+async def test_run_jest_test_one_of_three_fails(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
@@ -262,13 +247,10 @@ async def test_run_jest_test_one_of_three_fails(mock_exists, mock_subprocess):
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -285,7 +267,9 @@ async def test_run_jest_test_one_of_three_fails(mock_exists, mock_subprocess):
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_two_of_three_fail(mock_exists, mock_subprocess):
+async def test_run_jest_test_two_of_three_fail(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
@@ -293,13 +277,10 @@ async def test_run_jest_test_two_of_three_fail(mock_exists, mock_subprocess):
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -316,7 +297,9 @@ async def test_run_jest_test_two_of_three_fail(mock_exists, mock_subprocess):
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_all_three_fail(mock_exists, mock_subprocess):
+async def test_run_jest_test_all_three_fail(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
@@ -324,13 +307,10 @@ async def test_run_jest_test_all_three_fail(mock_exists, mock_subprocess):
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -347,7 +327,9 @@ async def test_run_jest_test_all_three_fail(mock_exists, mock_subprocess):
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_type_error_in_output(mock_exists, mock_subprocess):
+async def test_run_jest_test_type_error_in_output(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
@@ -355,13 +337,10 @@ async def test_run_jest_test_type_error_in_output(mock_exists, mock_subprocess):
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -376,18 +355,15 @@ async def test_run_jest_test_type_error_in_output(mock_exists, mock_subprocess):
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_sets_mongoms_download_dir(mock_exists, mock_subprocess):
+async def test_run_jest_test_sets_mongoms_download_dir(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     """Verify MONGOMS_DOWNLOAD_DIR points to {clone_dir}/mongodb-binaries for S3 cache extraction."""
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        clone_dir="/tmp/clone",
     )
     await run_jest_test(
         base_args=base_args,
@@ -503,7 +479,7 @@ Ran all test suites matching /tests\\/js\\/unit\\/annotation\\/print_dialog.kyud
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_captures_full_esm_error(
-    mock_exists, mock_subprocess, _mock_get_test_script_name
+    mock_exists, mock_subprocess, _mock_get_test_script_name, create_test_base_args
 ):
     """Verify the full error output is kept, including the file path and stack trace."""
     mock_exists.return_value = True
@@ -513,13 +489,10 @@ async def test_run_jest_test_captures_full_esm_error(
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "spiderplus",
-            "repo": "SPIDERPLUS-web",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="spiderplus",
+        repo="SPIDERPLUS-web",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -547,21 +520,19 @@ async def test_run_jest_test_uses_test_unit_script(
     mock_subprocess,
     _mock_get_test_script_name,
     _mock_detect_pm,
+    create_test_base_args,
 ):
     """Verify that when get_test_script_name returns 'test:unit', the command uses
     'npm run test:unit --' instead of 'npm test --'."""
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-            "new_branch": "feature",
-            "token": "token",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
+        new_branch="feature",
+        token="token",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -581,7 +552,7 @@ async def test_run_jest_test_uses_test_unit_script(
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_exit_code_1_all_pass_in_stderr_treated_as_success(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, create_test_base_args
 ):
     """Real Jest output: PASS goes to stderr, not stdout (captured from
     foxden-rating-quoting-backend 2026-03-23). When --forceExit causes exit
@@ -593,13 +564,10 @@ async def test_run_jest_test_exit_code_1_all_pass_in_stderr_treated_as_success(
         stderr=REAL_JEST_PASS_STDERR,
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -616,7 +584,7 @@ async def test_run_jest_test_exit_code_1_all_pass_in_stderr_treated_as_success(
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_forcexit_pass_in_stderr_treated_as_success(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, create_test_base_args
 ):
     """Real Jest --forceExit output: tests pass but exit code 1 because of
     uncleaned resources (MongoDB connections). PASS and forceExit message both
@@ -628,13 +596,10 @@ async def test_run_jest_test_forcexit_pass_in_stderr_treated_as_success(
         stderr=REAL_JEST_FORCEXIT_STDERR,
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -651,7 +616,7 @@ async def test_run_jest_test_forcexit_pass_in_stderr_treated_as_success(
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_real_fail_in_stderr_treated_as_failure(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, create_test_base_args
 ):
     """Real Jest FAIL output (captured 2026-03-23): FAIL goes to stderr.
     Verifies the combined stdout+stderr check correctly detects failures."""
@@ -662,13 +627,10 @@ async def test_run_jest_test_real_fail_in_stderr_treated_as_failure(
         stderr=REAL_JEST_FAIL_STDERR,
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -686,19 +648,16 @@ async def test_run_jest_test_real_fail_in_stderr_treated_as_failure(
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_kills_mongod_before_tests(
-    mock_exists, mock_subprocess, mock_kill
+    mock_exists, mock_subprocess, mock_kill, create_test_base_args
 ):
     """Verify kill_processes_by_name('mongod') is called before running tests."""
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     await run_jest_test(
         base_args=base_args,
@@ -713,19 +672,18 @@ async def test_run_jest_test_kills_mongod_before_tests(
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_includes_force_exit(mock_exists, mock_subprocess):
+async def test_run_jest_test_includes_force_exit(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     """Verify --forceExit is in the jest command to prevent hangs from
     uncleaned resources like MongoDB connections."""
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     await run_jest_test(
         base_args=base_args,
@@ -743,20 +701,17 @@ async def test_run_jest_test_includes_force_exit(mock_exists, mock_subprocess):
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_find_related_tests_with_only_test_files(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, create_test_base_args
 ):
     """--findRelatedTests with only test files (no source files) should work.
     Jest recognizes test files and runs them directly."""
     mock_exists.side_effect = lambda p: "jest" in p and "vitest" not in p
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -774,20 +729,19 @@ async def test_run_jest_test_find_related_tests_with_only_test_files(
 @pytest.mark.asyncio
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
-async def test_run_jest_test_find_related_tests_with_both(mock_exists, mock_subprocess):
+async def test_run_jest_test_find_related_tests_with_both(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     """When both test files and source files are provided, --findRelatedTests
     receives all files so jest discovers dependent tests for source files
     AND runs explicit test files."""
     mock_exists.side_effect = lambda p: "jest" in p and "vitest" not in p
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,
@@ -807,19 +761,16 @@ async def test_run_jest_test_find_related_tests_with_both(mock_exists, mock_subp
 @patch("services.jest.run_jest_test.subprocess.run")
 @patch("services.jest.run_jest_test.os.path.exists")
 async def test_run_jest_test_always_uses_find_related_tests(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, create_test_base_args
 ):
     """--findRelatedTests is always used, even when no source files are provided."""
     mock_exists.side_effect = lambda p: "jest" in p and "vitest" not in p
     mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_jest_test(
         base_args=base_args,

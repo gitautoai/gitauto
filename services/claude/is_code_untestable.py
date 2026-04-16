@@ -2,7 +2,8 @@ import json
 from dataclasses import dataclass
 from typing import Literal
 
-from constants.claude import MAX_OUTPUT_TOKENS, ClaudeModelId
+from constants.claude import MAX_OUTPUT_TOKENS
+from constants.models import ClaudeModelId
 from services.claude.client import claude
 from services.claude.evaluate_condition import OutputFormat
 from utils.error.handle_exceptions import handle_exceptions

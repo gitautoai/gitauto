@@ -7,16 +7,12 @@ from services.git.check_branch_exists import check_branch_exists
 from services.git.delete_remote_branch import delete_remote_branch
 
 
-@pytest.fixture
-def base_args(create_test_base_args):
-    return create_test_base_args(
+def test_delete_remote_branch_success(create_test_base_args):
+    base_args = create_test_base_args(
         clone_url="https://x-access-token:token@github.com/test-owner/test-repo.git",
         new_branch="feature-branch",
         clone_dir="/tmp/test-owner/test-repo/pr-123",
     )
-
-
-def test_delete_remote_branch_success(base_args):
     with patch("services.git.delete_remote_branch.run_subprocess") as mock_subprocess:
         result = delete_remote_branch(base_args)
 
@@ -33,7 +29,12 @@ def test_delete_remote_branch_success(base_args):
         )
 
 
-def test_delete_remote_branch_failure(base_args):
+def test_delete_remote_branch_failure(create_test_base_args):
+    base_args = create_test_base_args(
+        clone_url="https://x-access-token:token@github.com/test-owner/test-repo.git",
+        new_branch="feature-branch",
+        clone_dir="/tmp/test-owner/test-repo/pr-123",
+    )
     with patch("services.git.delete_remote_branch.run_subprocess") as mock_subprocess:
         mock_subprocess.side_effect = ValueError("Command failed: branch not found")
 

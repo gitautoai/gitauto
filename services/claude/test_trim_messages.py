@@ -8,7 +8,7 @@ import pytest
 from anthropic.types import MessageParam
 
 # Local imports
-from constants.claude import ClaudeModelId
+from constants.models import ClaudeModelId
 from services.claude.trim_messages import trim_messages_to_token_limit
 
 

@@ -1,13 +1,25 @@
-# Standard imports
 import json
 
-# Local imports
+from google.genai import types
+
 from constants.claude import MAX_OUTPUT_TOKENS
+from constants.models import (
+    ClaudeModelId,
+    GoogleModelId,
+    MODEL_REGISTRY,
+    ModelId,
+    ModelProvider,
+)
 from services.claude.client import claude
-from services.model_selection import get_model
+from services.google_ai.client import get_google_ai_client
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 from utils.prompts.quality_check import QUALITY_CHECK_SYSTEM_PROMPT
+
+SYSTEM = (
+    QUALITY_CHECK_SYSTEM_PROMPT
+    + "\n\nRespond with ONLY the JSON object, no other text."
+)
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -15,6 +27,7 @@ def evaluate_quality_checks(
     source_content: str,
     source_path: str,
     test_files: list[tuple[str, str]],
+    model: ModelId,
 ):
     """test_files: list of (path, content) tuples for all test files covering this source."""
     if not source_content:
@@ -28,26 +41,44 @@ def evaluate_quality_checks(
     else:
         user_message += "\n\n## Test file: No test file exists for this source file."
 
-    # Attempted structured output (output_format JSON schema) but got 400:
-    # "The compiled grammar is too large" (8 categories x 41 checks x {status, reason}).
-    # Fallback: prompt-guided JSON with regular messages.create.
-    model = get_model()
-    response = claude.messages.create(
-        model=model,
-        max_tokens=MAX_OUTPUT_TOKENS[model],
-        temperature=0,
-        system=QUALITY_CHECK_SYSTEM_PROMPT
-        + "\n\nRespond with ONLY the JSON object, no other text.",
-        messages=[{"role": "user", "content": user_message}],
-    )
+    provider = MODEL_REGISTRY[model]["provider"]
+    if provider == ModelProvider.CLAUDE:
+        assert isinstance(model, ClaudeModelId)
+        response = claude.messages.create(
+            model=model,
+            max_tokens=MAX_OUTPUT_TOKENS[model],
+            temperature=0,
+            system=SYSTEM,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        text_attr = getattr(response.content[0], "text", "")
+        if not isinstance(text_attr, str):
+            logger.error("Expected str but got %s: %s", type(text_attr), text_attr)
+            return None
+        text = text_attr
+    elif provider == ModelProvider.GOOGLE:
+        assert isinstance(model, GoogleModelId)
+        client = get_google_ai_client()
+        config = types.GenerateContentConfig(
+            system_instruction=SYSTEM,
+            temperature=0.0,
+        )
+        response = client.models.generate_content(
+            model=model,
+            contents=user_message,
+            config=config,
+        )
+        text = response.text or ""
+    else:
+        logger.error("Unknown provider %s for model %s", provider, model)
+        return None
 
-    text_attr = getattr(response.content[0], "text", "")
-    if not isinstance(text_attr, str):
-        logger.error("Expected str but got %s: %s", type(text_attr), text_attr)
+    if not text:
+        logger.info("Empty response from model for quality checks on %s", source_path)
         return None
 
     # Strip markdown code fences if present
-    text = text_attr.strip()
+    text = text.strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1] if "\n" in text else text[3:]
         if text.endswith("```"):

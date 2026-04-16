@@ -1,6 +1,7 @@
 from typing import TypedDict
 from typing_extensions import NotRequired
 
+from constants.models import ModelId
 from constants.triggers import Trigger
 from schemas.supabase.types import OwnerType
 from services.github.types.webhook.review_run_payload import ReviewSubjectType
@@ -32,6 +33,7 @@ class BaseArgs(TypedDict):
     pr_body: str
     pr_comments: list[str]
     pr_creator: str
+    model_id: ModelId
     verify_consecutive_failures: int
     quality_gate_fail_count: int
 

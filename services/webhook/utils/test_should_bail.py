@@ -1,28 +1,7 @@
 # pyright: reportUnusedVariable=false
-from typing import cast
 from unittest.mock import patch
 
-from services.types.base_args import BaseArgs
 from services.webhook.utils.should_bail import should_bail
-
-BASE_ARGS = cast(
-    BaseArgs,
-    {
-        "owner": "test-owner",
-        "repo": "test-repo",
-        "clone_url": "https://x-access-token:test-token@github.com/test-owner/test-repo.git",
-        "pr_number": 42,
-        "new_branch": "feature-branch",
-        "token": "test-token",
-    },
-)
-
-BAIL_KWARGS = {
-    "current_time": 1000.0,
-    "phase": "execution",
-    "base_args": BASE_ARGS,
-    "slack_thread_ts": None,
-}
 
 MOCK_OOM_OK = "services.webhook.utils.should_bail.is_lambda_oom_approaching"
 MOCK_TIMEOUT = "services.webhook.utils.should_bail.is_lambda_timeout_approaching"
@@ -34,16 +13,37 @@ MOCK_TIMEOUT = "services.webhook.utils.should_bail.is_lambda_timeout_approaching
 @patch(MOCK_OOM_OK, return_value=(False, 500.0))
 @patch(MOCK_TIMEOUT, return_value=(False, 60.0))
 def test_returns_false_when_all_checks_pass(
-    _mock_timeout, _mock_oom, _mock_pr_open, _mock_branch, _mock_update
+    _mock_timeout,
+    _mock_oom,
+    _mock_pr_open,
+    _mock_branch,
+    _mock_update,
+    create_test_base_args,
 ):
-    assert should_bail(**BAIL_KWARGS) is False
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
+    bail_kwargs = {
+        "current_time": 1000.0,
+        "phase": "execution",
+        "base_args": base_args,
+        "slack_thread_ts": None,
+    }
+    assert should_bail(**bail_kwargs) is False
 
 
 @patch("services.webhook.utils.should_bail.update_comment")
 @patch(MOCK_OOM_OK, return_value=(False, 500.0))
 @patch(MOCK_TIMEOUT, return_value=(True, 540.0))
-def test_returns_true_on_timeout(_mock_timeout, _mock_oom, _mock_update):
-    assert should_bail(**BAIL_KWARGS) is True
+def test_returns_true_on_timeout(
+    _mock_timeout, _mock_oom, _mock_update, create_test_base_args
+):
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
+    bail_kwargs = {
+        "current_time": 1000.0,
+        "phase": "execution",
+        "base_args": base_args,
+        "slack_thread_ts": None,
+    }
+    assert should_bail(**bail_kwargs) is True
 
 
 @patch("services.webhook.utils.should_bail.update_comment")
@@ -52,9 +52,21 @@ def test_returns_true_on_timeout(_mock_timeout, _mock_oom, _mock_update):
 @patch(MOCK_OOM_OK, return_value=(False, 500.0))
 @patch(MOCK_TIMEOUT, return_value=(False, 60.0))
 def test_returns_true_when_pr_closed(
-    _mock_timeout, _mock_oom, _mock_pr_open, _mock_branch, _mock_update
+    _mock_timeout,
+    _mock_oom,
+    _mock_pr_open,
+    _mock_branch,
+    _mock_update,
+    create_test_base_args,
 ):
-    assert should_bail(**BAIL_KWARGS) is True
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
+    bail_kwargs = {
+        "current_time": 1000.0,
+        "phase": "execution",
+        "base_args": base_args,
+        "slack_thread_ts": None,
+    }
+    assert should_bail(**bail_kwargs) is True
 
 
 @patch("services.webhook.utils.should_bail.update_comment")
@@ -63,9 +75,21 @@ def test_returns_true_when_pr_closed(
 @patch(MOCK_OOM_OK, return_value=(False, 500.0))
 @patch(MOCK_TIMEOUT, return_value=(False, 60.0))
 def test_returns_true_when_branch_deleted(
-    _mock_timeout, _mock_oom, _mock_pr_open, _mock_branch, _mock_update
+    _mock_timeout,
+    _mock_oom,
+    _mock_pr_open,
+    _mock_branch,
+    _mock_update,
+    create_test_base_args,
 ):
-    assert should_bail(**BAIL_KWARGS) is True
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
+    bail_kwargs = {
+        "current_time": 1000.0,
+        "phase": "execution",
+        "base_args": base_args,
+        "slack_thread_ts": None,
+    }
+    assert should_bail(**bail_kwargs) is True
 
 
 @patch("services.webhook.utils.should_bail.update_comment")
@@ -74,9 +98,21 @@ def test_returns_true_when_branch_deleted(
 @patch(MOCK_OOM_OK, return_value=(False, 500.0))
 @patch(MOCK_TIMEOUT, return_value=(True, 540.0))
 def test_timeout_checked_first(
-    _mock_timeout, _mock_oom, mock_pr_open, mock_branch, _mock_update
+    _mock_timeout,
+    _mock_oom,
+    mock_pr_open,
+    mock_branch,
+    _mock_update,
+    create_test_base_args,
 ):
-    assert should_bail(**BAIL_KWARGS) is True
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
+    bail_kwargs = {
+        "current_time": 1000.0,
+        "phase": "execution",
+        "base_args": base_args,
+        "slack_thread_ts": None,
+    }
+    assert should_bail(**bail_kwargs) is True
     mock_pr_open.assert_not_called()
     mock_branch.assert_not_called()
 
@@ -86,9 +122,16 @@ def test_timeout_checked_first(
 @patch(MOCK_OOM_OK, return_value=(False, 500.0))
 @patch(MOCK_TIMEOUT, return_value=(True, 540.0))
 def test_calls_update_comment_on_bail(
-    _mock_timeout, _mock_oom, mock_update, _mock_slack
+    _mock_timeout, _mock_oom, mock_update, _mock_slack, create_test_base_args
 ):
-    should_bail(**BAIL_KWARGS)
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
+    bail_kwargs = {
+        "current_time": 1000.0,
+        "phase": "execution",
+        "base_args": base_args,
+        "slack_thread_ts": None,
+    }
+    should_bail(**bail_kwargs)
     mock_update.assert_called_once()
 
 
@@ -97,12 +140,13 @@ def test_calls_update_comment_on_bail(
 @patch(MOCK_OOM_OK, return_value=(False, 500.0))
 @patch(MOCK_TIMEOUT, return_value=(True, 540.0))
 def test_calls_slack_when_thread_ts_provided(
-    _mock_timeout, _mock_oom, _mock_update, mock_slack
+    _mock_timeout, _mock_oom, _mock_update, mock_slack, create_test_base_args
 ):
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
     should_bail(
         current_time=1000.0,
         phase="execution",
-        base_args=BASE_ARGS,
+        base_args=base_args,
         slack_thread_ts="ts123",
     )
     mock_slack.assert_called_once()
@@ -113,9 +157,16 @@ def test_calls_slack_when_thread_ts_provided(
 @patch(MOCK_OOM_OK, return_value=(False, 500.0))
 @patch(MOCK_TIMEOUT, return_value=(True, 540.0))
 def test_skips_slack_when_thread_ts_is_none(
-    _mock_timeout, _mock_oom, _mock_update, mock_slack
+    _mock_timeout, _mock_oom, _mock_update, mock_slack, create_test_base_args
 ):
-    should_bail(**BAIL_KWARGS)
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
+    bail_kwargs = {
+        "current_time": 1000.0,
+        "phase": "execution",
+        "base_args": base_args,
+        "slack_thread_ts": None,
+    }
+    should_bail(**bail_kwargs)
     mock_slack.assert_not_called()
 
 
@@ -124,18 +175,11 @@ def test_skips_slack_when_thread_ts_is_none(
 @patch(MOCK_OOM_OK, return_value=(False, 500.0))
 @patch(MOCK_TIMEOUT, return_value=(False, 60.0))
 def test_skips_pr_check_when_pr_number_not_set(
-    _mock_timeout, _mock_oom, mock_pr_open, _mock_branch
+    _mock_timeout, _mock_oom, mock_pr_open, _mock_branch, create_test_base_args
 ):
-    args_without_pr_number = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "clone_url": "https://x-access-token:test-token@github.com/test-owner/test-repo.git",
-            "new_branch": "feature-branch",
-            "token": "test-token",
-        },
-    )
+    args_without_pr_number = create_test_base_args(new_branch="feature-branch")
+    # Remove pr_number to simulate it not being set
+    del args_without_pr_number["pr_number"]
     result = should_bail(
         current_time=1000.0,
         phase="execution",
@@ -152,8 +196,17 @@ def test_skips_pr_check_when_pr_number_not_set(
 @patch("services.webhook.utils.should_bail.update_comment")
 @patch(MOCK_OOM_OK, return_value=(True, 1800.0))
 @patch(MOCK_TIMEOUT, return_value=(False, 60.0))
-def test_returns_true_on_oom(_mock_timeout, _mock_oom, _mock_update):
-    assert should_bail(**BAIL_KWARGS) is True
+def test_returns_true_on_oom(
+    _mock_timeout, _mock_oom, _mock_update, create_test_base_args
+):
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
+    bail_kwargs = {
+        "current_time": 1000.0,
+        "phase": "execution",
+        "base_args": base_args,
+        "slack_thread_ts": None,
+    }
+    assert should_bail(**bail_kwargs) is True
 
 
 @patch("services.webhook.utils.should_bail.update_comment")
@@ -162,9 +215,21 @@ def test_returns_true_on_oom(_mock_timeout, _mock_oom, _mock_update):
 @patch(MOCK_OOM_OK, return_value=(True, 1800.0))
 @patch(MOCK_TIMEOUT, return_value=(False, 60.0))
 def test_oom_skips_pr_and_branch_checks(
-    _mock_timeout, _mock_oom, mock_pr_open, mock_branch, _mock_update
+    _mock_timeout,
+    _mock_oom,
+    mock_pr_open,
+    mock_branch,
+    _mock_update,
+    create_test_base_args,
 ):
-    assert should_bail(**BAIL_KWARGS) is True
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
+    bail_kwargs = {
+        "current_time": 1000.0,
+        "phase": "execution",
+        "base_args": base_args,
+        "slack_thread_ts": None,
+    }
+    assert should_bail(**bail_kwargs) is True
     mock_pr_open.assert_not_called()
     mock_branch.assert_not_called()
 
@@ -172,8 +237,17 @@ def test_oom_skips_pr_and_branch_checks(
 @patch("services.webhook.utils.should_bail.update_comment")
 @patch(MOCK_OOM_OK, return_value=(True, 1800.0))
 @patch(MOCK_TIMEOUT, return_value=(True, 540.0))
-def test_timeout_takes_priority_over_oom(_mock_timeout, mock_oom, _mock_update):
-    result = should_bail(**BAIL_KWARGS)
+def test_timeout_takes_priority_over_oom(
+    _mock_timeout, mock_oom, _mock_update, create_test_base_args
+):
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
+    bail_kwargs = {
+        "current_time": 1000.0,
+        "phase": "execution",
+        "base_args": base_args,
+        "slack_thread_ts": None,
+    }
+    result = should_bail(**bail_kwargs)
     assert result is True
     # OOM check should not be called when timeout is already approaching
     mock_oom.assert_not_called()

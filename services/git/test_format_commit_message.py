@@ -1,39 +1,26 @@
-# Standard imports
-from typing import cast
 from unittest.mock import patch
 
-# Local imports
 from services.git.format_commit_message import format_commit_message
-from services.types.base_args import BaseArgs
 
 
-def _make_base_args(
-    sender_email: str | None = "user@example.com",
-    sender_display_name: str = "Test User",
-    sender_id: int = 12345,
-    sender_name: str = "testuser",
-    reviewers: list[str] | None = None,
-):
-    return cast(
-        BaseArgs,
-        {
-            "sender_email": sender_email,
-            "sender_display_name": sender_display_name,
-            "sender_id": sender_id,
-            "sender_name": sender_name,
-            "reviewers": reviewers or [],
-        },
+def test_with_email(create_test_base_args):
+    base_args = create_test_base_args(
+        sender_email="user@example.com",
+        sender_display_name="Test User",
+        sender_id=12345,
+        sender_name="testuser",
     )
-
-
-def test_with_email():
-    base_args = _make_base_args(sender_email="user@example.com")
     result = format_commit_message(message="Update README.md", base_args=base_args)
     assert result == "Update README.md\n\nCo-Authored-By: Test User <user@example.com>"
 
 
-def test_with_email_none_uses_noreply_fallback():
-    base_args = _make_base_args(sender_email=None)
+def test_with_email_none_uses_noreply_fallback(create_test_base_args):
+    base_args = create_test_base_args(
+        sender_email=None,
+        sender_display_name="Test User",
+        sender_id=12345,
+        sender_name="testuser",
+    )
     result = format_commit_message(message="Create file.py", base_args=base_args)
     assert (
         result
@@ -41,8 +28,13 @@ def test_with_email_none_uses_noreply_fallback():
     )
 
 
-def test_preserves_original_message():
-    base_args = _make_base_args()
+def test_preserves_original_message(create_test_base_args):
+    base_args = create_test_base_args(
+        sender_email="user@example.com",
+        sender_display_name="Test User",
+        sender_id=12345,
+        sender_name="testuser",
+    )
     result = format_commit_message(
         message="Fix bug in parser [skip ci]", base_args=base_args
     )
@@ -51,8 +43,13 @@ def test_preserves_original_message():
 
 
 @patch("services.git.format_commit_message.GITHUB_APP_USER_ID", new=99999)
-def test_bot_sender_credits_all_reviewers():
-    base_args = _make_base_args(sender_id=99999, reviewers=["alice", "bob"])
+def test_bot_sender_credits_all_reviewers(create_test_base_args):
+    base_args = create_test_base_args(
+        sender_id=99999,
+        sender_display_name="Test User",
+        sender_name="testuser",
+        reviewers=["alice", "bob"],
+    )
     result = format_commit_message(message="Update file.py", base_args=base_args)
     assert result == (
         "Update file.py\n\n"
@@ -62,8 +59,13 @@ def test_bot_sender_credits_all_reviewers():
 
 
 @patch("services.git.format_commit_message.GITHUB_APP_USER_ID", new=99999)
-def test_bot_sender_no_reviewers_skips_co_author():
-    base_args = _make_base_args(sender_id=99999, reviewers=[])
+def test_bot_sender_no_reviewers_skips_co_author(create_test_base_args):
+    base_args = create_test_base_args(
+        sender_id=99999,
+        sender_display_name="Test User",
+        sender_name="testuser",
+        reviewers=[],
+    )
     result = format_commit_message(message="Initial commit", base_args=base_args)
     assert result == "Initial commit"
     assert "Co-Authored-By" not in result

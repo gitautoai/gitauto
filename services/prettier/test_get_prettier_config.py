@@ -1,30 +1,13 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
 import json
-from typing import cast
 from unittest.mock import patch
 
-import pytest
-
 from services.prettier.get_prettier_config import get_prettier_config
-from services.types.base_args import BaseArgs
 
 
-@pytest.fixture
-def base_args():
-    return cast(
-        BaseArgs,
-        {
-            "owner": "test_owner",
-            "repo": "test_repo",
-            "token": "test_token",
-            "base_branch": "main",
-            "clone_dir": "/tmp/test_owner/test_repo/pr-123",
-        },
-    )
-
-
-def test_get_prettier_config_finds_prettierrc(base_args):
+def test_get_prettier_config_finds_prettierrc(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
@@ -41,7 +24,8 @@ def test_get_prettier_config_finds_prettierrc(base_args):
         assert result["content"] == '{"semi": false}'
 
 
-def test_get_prettier_config_finds_prettierrc_json(base_args):
+def test_get_prettier_config_finds_prettierrc_json(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
@@ -57,7 +41,8 @@ def test_get_prettier_config_finds_prettierrc_json(base_args):
         assert result["filename"] == ".prettierrc.json"
 
 
-def test_get_prettier_config_finds_prettierrc_js(base_args):
+def test_get_prettier_config_finds_prettierrc_js(create_test_base_args):
+    base_args = create_test_base_args()
     prettierrc_js = "module.exports = { semi: false };"
 
     with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
@@ -76,7 +61,8 @@ def test_get_prettier_config_finds_prettierrc_js(base_args):
         assert result["content"] == prettierrc_js
 
 
-def test_get_prettier_config_finds_prettier_config_js(base_args):
+def test_get_prettier_config_finds_prettier_config_js(create_test_base_args):
+    base_args = create_test_base_args()
     config_js = "export default { semi: true };"
 
     with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
@@ -94,7 +80,8 @@ def test_get_prettier_config_finds_prettier_config_js(base_args):
         assert result["filename"] == "prettier.config.js"
 
 
-def test_get_prettier_config_finds_in_package_json(base_args):
+def test_get_prettier_config_finds_in_package_json(create_test_base_args):
+    base_args = create_test_base_args()
     package_json_content = """{
   "name": "test-package",
   "version": "1.0.0",
@@ -123,7 +110,8 @@ def test_get_prettier_config_finds_in_package_json(base_args):
         assert config["tabWidth"] == 2
 
 
-def test_get_prettier_config_package_json_without_prettier(base_args):
+def test_get_prettier_config_package_json_without_prettier(create_test_base_args):
+    base_args = create_test_base_args()
     package_json_content = """{
   "name": "test-package",
   "version": "1.0.0",
@@ -146,7 +134,8 @@ def test_get_prettier_config_package_json_without_prettier(base_args):
         assert result is None
 
 
-def test_get_prettier_config_not_found(base_args):
+def test_get_prettier_config_not_found(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
         mock_read.return_value = None
 
@@ -155,7 +144,8 @@ def test_get_prettier_config_not_found(base_args):
         assert result is None
 
 
-def test_get_prettier_config_priority_order(base_args):
+def test_get_prettier_config_priority_order(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
 
         def side_effect(file_name, **kwargs):
@@ -173,7 +163,8 @@ def test_get_prettier_config_priority_order(base_args):
         assert result["filename"] == ".prettierrc"
 
 
-def test_get_prettier_config_handles_exception_gracefully(base_args):
+def test_get_prettier_config_handles_exception_gracefully(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:
         mock_read.side_effect = Exception("Network error")
 
@@ -182,7 +173,8 @@ def test_get_prettier_config_handles_exception_gracefully(base_args):
         assert result is None
 
 
-def test_get_prettier_config_handles_json_decode_error(base_args):
+def test_get_prettier_config_handles_json_decode_error(create_test_base_args):
+    base_args = create_test_base_args()
     invalid_json = "{ invalid json content"
 
     with patch("services.prettier.get_prettier_config.read_local_file") as mock_read:

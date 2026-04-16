@@ -1,34 +1,24 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
 import subprocess
-from typing import cast
 from unittest.mock import patch
 
 import pytest
 
 from services.git.create_remote_branch import create_remote_branch
-from services.types.base_args import BaseArgs
-
-
-@pytest.fixture
-def base_args(tmp_path):
-    return cast(
-        BaseArgs,
-        {
-            "owner": "test_owner",
-            "repo": "test_repo",
-            "clone_url": "https://x-access-token:tok@github.com/test_owner/test_repo.git",
-            "new_branch": "gitauto/test-branch",
-            "base_branch": "main",
-            "clone_dir": str(tmp_path),
-            "token": "tok",
-        },
-    )
 
 
 class TestCreateRemoteBranch:
     @patch("services.git.create_remote_branch.run_subprocess")
-    def test_fetches_then_pushes(self, mock_run, base_args):
+    def test_fetches_then_pushes(self, mock_run, create_test_base_args, tmp_path):
+        base_args = create_test_base_args(
+            owner="test_owner",
+            repo="test_repo",
+            clone_url="https://x-access-token:tok@github.com/test_owner/test_repo.git",
+            new_branch="gitauto/test-branch",
+            clone_dir=str(tmp_path),
+            token="tok",
+        )
         create_remote_branch(sha="abc123", base_args=base_args)
 
         assert mock_run.call_count == 2
@@ -77,20 +67,16 @@ def _branch_exists_in_bare(bare_url: str, branch: str):
 
 
 @pytest.mark.integration
-def test_integration_create_remote_branch(local_repo):
+def test_integration_create_remote_branch(local_repo, create_test_base_args):
     bare_url, work_dir = local_repo
     sha = _get_sha(work_dir, "main")
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_url": bare_url,
-            "new_branch": "gitauto/integration-test",
-            "base_branch": "main",
-            "clone_dir": work_dir,
-            "token": "unused",
-        },
+    args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_url=bare_url,
+        new_branch="gitauto/integration-test",
+        clone_dir=work_dir,
+        token="unused",
     )
 
     create_remote_branch(sha=sha, base_args=args)
@@ -99,7 +85,9 @@ def test_integration_create_remote_branch(local_repo):
 
 
 @pytest.mark.integration
-def test_integration_shallow_clone_missing_sha(local_repo, tmp_path):
+def test_integration_shallow_clone_missing_sha(
+    local_repo, tmp_path, create_test_base_args
+):
     """Reproduces production failure: shallow repo (--depth 1) doesn't
     have the latest SHA that was pushed to the remote after the shallow clone."""
     bare_url, work_dir = local_repo
@@ -135,17 +123,13 @@ def test_integration_shallow_clone_missing_sha(local_repo, tmp_path):
     ).stdout.split("\t")[0]
 
     # 4. Try to create a branch from the shallow clone using the new SHA
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "clone_url": bare_url,
-            "new_branch": "gitauto/shallow-test",
-            "base_branch": "main",
-            "clone_dir": shallow_dir,
-            "token": "unused",
-        },
+    args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_url=bare_url,
+        new_branch="gitauto/shallow-test",
+        clone_dir=shallow_dir,
+        token="unused",
     )
 
     create_remote_branch(sha=latest_sha, base_args=args)

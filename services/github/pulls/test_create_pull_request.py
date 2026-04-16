@@ -1,20 +1,11 @@
 # pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 from unittest.mock import Mock, patch
+
 import pytest
 import requests
+
 from services.github.pulls.create_pull_request import create_pull_request
-
-
-@pytest.fixture
-def base_args(test_owner, test_repo):
-    return {
-        "owner": test_owner,
-        "repo": test_repo,
-        "base_branch": "main",
-        "new_branch": "feature-branch",
-        "token": "test-token-mock",
-        "reviewers": ["reviewer1", "reviewer2"],
-    }
 
 
 @pytest.fixture
@@ -57,9 +48,19 @@ def test_create_pull_request_success(
     mock_post,
     mock_create_headers,
     mock_add_reviewers,
-    base_args,
+    test_owner,
+    test_repo,
     mock_response,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        base_branch="main",
+        new_branch="feature-branch",
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2"],
+    )
     mock_post.return_value = mock_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
 
@@ -93,9 +94,19 @@ def test_create_pull_request_422_error(
     mock_post,
     mock_create_headers,
     mock_add_reviewers,
-    base_args,
+    test_owner,
+    test_repo,
     mock_422_response,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        base_branch="main",
+        new_branch="feature-branch",
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2"],
+    )
     mock_post.return_value = mock_422_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
 
@@ -131,9 +142,19 @@ def test_create_pull_request_http_error(
     mock_post,
     mock_create_headers,
     mock_add_reviewers,
-    base_args,
+    test_owner,
+    test_repo,
     mock_error_response,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        base_branch="main",
+        new_branch="feature-branch",
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2"],
+    )
     mock_post.return_value = mock_error_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
 
@@ -164,9 +185,19 @@ def test_create_pull_request_json_error(
     mock_post,
     mock_create_headers,
     mock_add_reviewers,
-    base_args,
+    test_owner,
+    test_repo,
     mock_response,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        base_branch="main",
+        new_branch="feature-branch",
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2"],
+    )
     mock_post.return_value = mock_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
     mock_response.json.side_effect = ValueError("Invalid JSON")
@@ -188,9 +219,19 @@ def test_create_pull_request_add_reviewers_error(
     mock_post,
     mock_create_headers,
     mock_add_reviewers,
-    base_args,
+    test_owner,
+    test_repo,
     mock_response,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        base_branch="main",
+        new_branch="feature-branch",
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2"],
+    )
     mock_post.return_value = mock_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
     mock_add_reviewers.side_effect = Exception("Reviewer error")
@@ -214,8 +255,22 @@ def test_create_pull_request_add_reviewers_error(
 @patch("services.github.pulls.create_pull_request.create_headers")
 @patch("services.github.pulls.create_pull_request.requests.post")
 def test_create_pull_request_empty_strings(
-    mock_post, mock_create_headers, mock_add_reviewers, base_args, mock_response
+    mock_post,
+    mock_create_headers,
+    mock_add_reviewers,
+    test_owner,
+    test_repo,
+    mock_response,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        base_branch="main",
+        new_branch="feature-branch",
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2"],
+    )
     mock_post.return_value = mock_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
 
@@ -238,12 +293,24 @@ def test_create_pull_request_empty_strings(
 @patch("services.github.pulls.create_pull_request.create_headers")
 @patch("services.github.pulls.create_pull_request.requests.post")
 def test_create_pull_request_different_branches(
-    mock_post, mock_create_headers, mock_add_reviewers, base_args, mock_response
+    mock_post,
+    mock_create_headers,
+    mock_add_reviewers,
+    test_owner,
+    test_repo,
+    mock_response,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        base_branch="develop",
+        new_branch="feature/new-feature",
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2"],
+    )
     mock_post.return_value = mock_response
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
-    base_args["base_branch"] = "develop"
-    base_args["new_branch"] = "feature/new-feature"
 
     result = create_pull_request("Feature body", "Feature title", base_args)
 
@@ -265,8 +332,21 @@ def test_create_pull_request_different_branches(
 @patch("services.github.pulls.create_pull_request.create_headers")
 @patch("services.github.pulls.create_pull_request.requests.post")
 def test_create_pull_request_requests_exception(
-    mock_post, mock_create_headers, mock_add_reviewers, base_args
+    mock_post,
+    mock_create_headers,
+    mock_add_reviewers,
+    test_owner,
+    test_repo,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        base_branch="main",
+        new_branch="feature-branch",
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2"],
+    )
     mock_post.side_effect = requests.RequestException("Network error")
     mock_create_headers.return_value = {"Authorization": "Bearer token"}
 
@@ -282,8 +362,21 @@ def test_create_pull_request_requests_exception(
 @patch("services.github.pulls.create_pull_request.create_headers")
 @patch("services.github.pulls.create_pull_request.requests.post")
 def test_create_pull_request_create_headers_exception(
-    mock_post, mock_create_headers, mock_add_reviewers, base_args
+    mock_post,
+    mock_create_headers,
+    mock_add_reviewers,
+    test_owner,
+    test_repo,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        base_branch="main",
+        new_branch="feature-branch",
+        token="test-token-mock",
+        reviewers=["reviewer1", "reviewer2"],
+    )
     mock_create_headers.side_effect = Exception("Header creation error")
 
     with pytest.raises(Exception) as exc_info:

@@ -2,6 +2,7 @@
 import os
 
 # Local imports
+from constants.models import DEFAULT_FREE_MODEL
 from schemas.supabase.types import OwnerType
 from services.git.create_remote_branch import create_remote_branch
 from services.git.delete_remote_branch import delete_remote_branch
@@ -169,6 +170,7 @@ def setup_installed_repository(
         "pr_body": "",
         "pr_comments": [],
         "pr_creator": user_name,
+        "model_id": DEFAULT_FREE_MODEL,
         "verify_consecutive_failures": 0,
         "quality_gate_fail_count": 0,
     }

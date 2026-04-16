@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 from anthropic.types import MessageParam, ToolUnionParam
 
-from constants.claude import ClaudeModelId
+from constants.models import ClaudeModelId
 from services.claude.chat_with_claude import chat_with_claude
 
 

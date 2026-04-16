@@ -1,26 +1,16 @@
 # pylint: disable=unused-argument
+# pyright: reportUnusedVariable=false
 from unittest.mock import patch, MagicMock
+
 import pytest
 import requests
+
 from config import TIMEOUT
 from services.github.comments.reply_to_comment import reply_to_comment
 
 
 @pytest.fixture
-def mock_base_args():
-    """Fixture providing a complete BaseArgs dictionary for testing."""
-    return {
-        "owner": "test-owner",
-        "repo": "test-repo",
-        "token": "test-token",
-        "pr_number": 123,
-        "review_id": 456,
-    }
-
-
-@pytest.fixture
 def mock_post_response():
-    """Fixture providing a mocked successful POST response."""
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "url": "https://api.github.com/repos/test-owner/test-repo/pulls/comments/789"
@@ -31,7 +21,6 @@ def mock_post_response():
 
 @pytest.fixture
 def mock_create_headers():
-    """Fixture providing mocked headers."""
     with patch("services.github.comments.reply_to_comment.create_headers") as mock:
         mock.return_value = {
             "Accept": "application/vnd.github.v3+json",
@@ -43,13 +32,19 @@ def mock_create_headers():
 
 
 def test_reply_to_comment_success(
-    mock_base_args, mock_post_response, mock_create_headers
+    mock_post_response, mock_create_headers, create_test_base_args
 ):
-    """Test successful reply to comment creation."""
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=123,
+        review_id=456,
+    )
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
-        result = reply_to_comment(mock_base_args, "Test reply body")
+        result = reply_to_comment(base_args, "Test reply body")
 
         assert (
             result
@@ -72,13 +67,19 @@ def test_reply_to_comment_success(
 
 
 def test_reply_to_comment_with_empty_body(
-    mock_base_args, mock_post_response, mock_create_headers
+    mock_post_response, mock_create_headers, create_test_base_args
 ):
-    """Test reply to comment with empty body."""
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=123,
+        review_id=456,
+    )
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
-        result = reply_to_comment(mock_base_args, "")
+        result = reply_to_comment(base_args, "")
 
         assert (
             result
@@ -98,9 +99,15 @@ def test_reply_to_comment_with_empty_body(
 
 
 def test_reply_to_comment_with_multiline_body(
-    mock_base_args, mock_post_response, mock_create_headers
+    mock_post_response, mock_create_headers, create_test_base_args
 ):
-    """Test reply to comment with multiline body."""
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=123,
+        review_id=456,
+    )
     multiline_body = """This is a multiline comment.
 
 It contains multiple paragraphs.
@@ -111,7 +118,7 @@ It contains multiple paragraphs.
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
-        result = reply_to_comment(mock_base_args, multiline_body)
+        result = reply_to_comment(base_args, multiline_body)
 
         assert (
             result
@@ -131,15 +138,21 @@ It contains multiple paragraphs.
 
 
 def test_reply_to_comment_with_special_characters(
-    mock_base_args, mock_post_response, mock_create_headers
+    mock_post_response, mock_create_headers, create_test_base_args
 ):
-    """Test reply to comment with special characters in body."""
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=123,
+        review_id=456,
+    )
     special_body = "Reply with special chars: @user #123 $var & <tag> \"quotes\" 'apostrophes' 中文 🚀"
 
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
-        result = reply_to_comment(mock_base_args, special_body)
+        result = reply_to_comment(base_args, special_body)
 
         assert (
             result
@@ -158,8 +171,16 @@ def test_reply_to_comment_with_special_characters(
         )
 
 
-def test_reply_to_comment_http_error_handled(mock_base_args, mock_create_headers):
-    """Test that HTTP errors are handled by the decorator and return None."""
+def test_reply_to_comment_http_error_handled(
+    mock_create_headers, create_test_base_args
+):
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=123,
+        review_id=456,
+    )
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_response = MagicMock()
         # Create a proper HTTPError with a response object
@@ -171,7 +192,7 @@ def test_reply_to_comment_http_error_handled(mock_base_args, mock_create_headers
         mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
 
-        result = reply_to_comment(mock_base_args, "Test body")
+        result = reply_to_comment(base_args, "Test body")
 
         assert result is None
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -180,13 +201,19 @@ def test_reply_to_comment_http_error_handled(mock_base_args, mock_create_headers
 
 
 def test_reply_to_comment_request_exception_handled(
-    mock_base_args, mock_create_headers
+    mock_create_headers, create_test_base_args
 ):
-    """Test that request exceptions are handled by the decorator and return None."""
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=123,
+        review_id=456,
+    )
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.side_effect = requests.exceptions.RequestException("Connection error")
 
-        result = reply_to_comment(mock_base_args, "Test body")
+        result = reply_to_comment(base_args, "Test body")
 
         assert result is None
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -194,16 +221,22 @@ def test_reply_to_comment_request_exception_handled(
 
 
 def test_reply_to_comment_json_decode_error_handled(
-    mock_base_args, mock_create_headers
+    mock_create_headers, create_test_base_args
 ):
-    """Test that JSON decode errors are handled by the decorator and return None."""
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=123,
+        review_id=456,
+    )
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
         mock_response.json.side_effect = ValueError("Invalid JSON")
         mock_post.return_value = mock_response
 
-        result = reply_to_comment(mock_base_args, "Test body")
+        result = reply_to_comment(base_args, "Test body")
 
         assert result is None
         mock_create_headers.assert_called_once_with(token="test-token")
@@ -213,9 +246,8 @@ def test_reply_to_comment_json_decode_error_handled(
 
 
 def test_reply_to_comment_url_construction(
-    mock_base_args, mock_post_response, mock_create_headers
+    mock_post_response, mock_create_headers, create_test_base_args
 ):
-    """Test that the URL is constructed correctly with different parameters."""
     test_cases = [
         {"owner": "owner1", "repo": "repo1", "pr_number": 1, "review_id": 100},
         {
@@ -228,7 +260,10 @@ def test_reply_to_comment_url_construction(
     ]
 
     for case in test_cases:
-        base_args = {**mock_base_args, **case}
+        base_args = create_test_base_args(
+            token="test-token",
+            **case,
+        )
         expected_url = f"https://api.github.com/repos/{case['owner']}/{case['repo']}/pulls/{case['pr_number']}/comments/{case['review_id']}/replies"
 
         with patch(
@@ -236,10 +271,7 @@ def test_reply_to_comment_url_construction(
         ) as mock_post:
             mock_post.return_value = mock_post_response
 
-            # Intentionally passing merged dict to test runtime behavior
-            reply_to_comment(
-                base_args, "Test body"  # pyright: ignore[reportArgumentType]
-            )
+            reply_to_comment(base_args, "Test body")
 
             mock_post.assert_called_once()
             call_args = mock_post.call_args
@@ -247,29 +279,39 @@ def test_reply_to_comment_url_construction(
 
 
 def test_reply_to_comment_different_tokens(
-    mock_base_args, mock_post_response, mock_create_headers
+    mock_post_response, mock_create_headers, create_test_base_args
 ):
-    """Test that different tokens are passed correctly to create_headers."""
     test_tokens = ["token1", "ghp_abcdef123456", "ghs_xyz789", ""]
 
     for token in test_tokens:
-        base_args = {**mock_base_args, "token": token}
+        base_args = create_test_base_args(
+            owner="test-owner",
+            repo="test-repo",
+            token=token,
+            pr_number=123,
+            review_id=456,
+        )
 
         with patch(
             "services.github.comments.reply_to_comment.requests.post"
         ) as mock_post:
             mock_post.return_value = mock_post_response
 
-            # Intentionally passing merged dict to test runtime behavior
-            reply_to_comment(
-                base_args, "Test body"  # pyright: ignore[reportArgumentType]
-            )
+            reply_to_comment(base_args, "Test body")
 
             mock_create_headers.assert_called_with(token=token)
 
 
-def test_reply_to_comment_response_url_extraction(mock_base_args, mock_create_headers):
-    """Test that the URL is correctly extracted from different response formats."""
+def test_reply_to_comment_response_url_extraction(
+    mock_create_headers, create_test_base_args
+):
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=123,
+        review_id=456,
+    )
     test_responses = [
         {"url": "https://api.github.com/repos/owner/repo/pulls/comments/123"},
         {"url": "https://github.com/owner/repo/pull/1#issuecomment-456"},
@@ -285,7 +327,7 @@ def test_reply_to_comment_response_url_extraction(mock_base_args, mock_create_he
             mock_response.raise_for_status.return_value = None
             mock_post.return_value = mock_response
 
-            result = reply_to_comment(mock_base_args, "Test body")
+            result = reply_to_comment(base_args, "Test body")
 
             assert result == response_data["url"]
 
@@ -298,19 +340,21 @@ def test_reply_to_comment_response_url_extraction(mock_base_args, mock_create_he
     ],
 )
 def test_reply_to_comment_various_ids(
-    mock_base_args, mock_post_response, mock_create_headers, pr_number, review_id
+    mock_post_response, mock_create_headers, pr_number, review_id, create_test_base_args
 ):
-    """Test reply to comment with various PR number and review ID combinations."""
-    base_args = {**mock_base_args, "pr_number": pr_number, "review_id": review_id}
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=pr_number,
+        review_id=review_id,
+    )
     expected_url = f"https://api.github.com/repos/test-owner/test-repo/pulls/{pr_number}/comments/{review_id}/replies"
 
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
-        # Intentionally passing merged dict to test runtime behavior
-        result = reply_to_comment(
-            base_args, "Test body"  # pyright: ignore[reportArgumentType]
-        )
+        result = reply_to_comment(base_args, "Test body")
 
         assert (
             result
@@ -321,16 +365,17 @@ def test_reply_to_comment_various_ids(
 
 
 def test_reply_to_comment_with_zero_values_returns_none(
-    mock_base_args, mock_create_headers
+    mock_create_headers, create_test_base_args
 ):
-    """Test that zero values are treated as invalid and function returns None."""
-    base_args = {**mock_base_args, "pr_number": 0, "review_id": 0}
-
-    # Should return None due to handle_exceptions decorator when validation fails
-    # Intentionally passing merged dict to test runtime behavior
-    result = reply_to_comment(
-        base_args, "Test body"  # pyright: ignore[reportArgumentType]
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=0,
+        review_id=0,
     )
+
+    result = reply_to_comment(base_args, "Test body")
     assert result is None
 
 
@@ -346,13 +391,19 @@ def test_reply_to_comment_with_zero_values_returns_none(
     ],
 )
 def test_reply_to_comment_various_body_content(
-    mock_base_args, mock_post_response, mock_create_headers, body_content
+    mock_post_response, mock_create_headers, body_content, create_test_base_args
 ):
-    """Test reply to comment with various body content formats."""
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=123,
+        review_id=456,
+    )
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_post.return_value = mock_post_response
 
-        result = reply_to_comment(mock_base_args, body_content)
+        result = reply_to_comment(base_args, body_content)
 
         assert (
             result
@@ -363,7 +414,6 @@ def test_reply_to_comment_various_body_content(
 
 
 def test_reply_to_comment_missing_required_fields():
-    """Test that function handles missing required fields gracefully."""
     incomplete_base_args = {
         "owner": "test-owner",
         "repo": "test-repo",
@@ -378,7 +428,6 @@ def test_reply_to_comment_missing_required_fields():
 
 
 def test_reply_to_comment_with_none_values():
-    """Test that function handles None values in base_args gracefully."""
     base_args_with_none = {
         "owner": None,
         "repo": None,
@@ -394,17 +443,20 @@ def test_reply_to_comment_with_none_values():
     assert result is None
 
 
-def test_reply_to_comment_with_none_body(mock_base_args, mock_create_headers):
-    """Test that function handles None body gracefully."""
-    # Intentionally passing None body to test runtime error handling
-    result = reply_to_comment(
-        mock_base_args, None  # pyright: ignore[reportArgumentType]
+def test_reply_to_comment_with_none_body(mock_create_headers, create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token",
+        pr_number=123,
+        review_id=456,
     )
+    # Intentionally passing None body to test runtime error handling
+    result = reply_to_comment(base_args, None)  # pyright: ignore[reportArgumentType]
     assert result is None
 
 
 def test_pr_review_uses_issue_comments_api(mock_post_response, mock_create_headers):
-    """Test that review_subject_type='pr_review' uses the issue comments API."""
     base_args = {
         "owner": "test-owner",
         "repo": "test-repo",
@@ -430,7 +482,6 @@ def test_pr_review_uses_issue_comments_api(mock_post_response, mock_create_heade
 
 
 def test_pr_comment_uses_issue_comments_api(mock_post_response, mock_create_headers):
-    """Test that review_subject_type='pr_comment' (adapted from issue_comment) uses the issue comments API."""
     base_args = {
         "owner": "test-owner",
         "repo": "test-repo",
@@ -457,7 +508,6 @@ def test_pr_comment_uses_issue_comments_api(mock_post_response, mock_create_head
 
 
 def test_inline_review_without_review_id_returns_none(mock_create_headers):
-    """Test that inline review (not pr_review) without review_id returns None via error handler."""
     base_args = {
         "owner": "test-owner",
         "repo": "test-repo",
@@ -477,7 +527,6 @@ def test_inline_review_without_review_id_returns_none(mock_create_headers):
 def test_inline_review_with_review_id_uses_replies_api(
     mock_post_response, mock_create_headers
 ):
-    """Test that inline review with review_id uses the pull comment replies API."""
     base_args = {
         "owner": "test-owner",
         "repo": "test-repo",

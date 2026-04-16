@@ -7,14 +7,15 @@ import pytest
 from services.git.get_latest_remote_commit_sha import get_latest_remote_commit_sha
 
 
-@pytest.fixture
-def base_args(test_owner, test_repo, test_token, create_test_base_args):
-    return create_test_base_args(
-        owner=test_owner, repo=test_repo, token=test_token, base_branch="main"
+def test_get_latest_remote_commit_sha_success(
+    test_owner, test_repo, test_token, create_test_base_args
+):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        base_branch="main",
     )
-
-
-def test_get_latest_remote_commit_sha_success(base_args):
     mock_result = MagicMock()
     mock_result.stdout = "abc123def456789\trefs/heads/main\n"
 
@@ -39,7 +40,15 @@ def test_get_latest_remote_commit_sha_success(base_args):
         )
 
 
-def test_get_latest_remote_commit_sha_empty_repository(base_args):
+def test_get_latest_remote_commit_sha_empty_repository(
+    test_owner, test_repo, test_token, create_test_base_args
+):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        base_branch="main",
+    )
     mock_result_empty = MagicMock()
     mock_result_empty.stdout = ""
 
@@ -68,7 +77,15 @@ def test_get_latest_remote_commit_sha_empty_repository(base_args):
         assert result == "new_commit_sha_123"
 
 
-def test_get_latest_remote_commit_sha_network_error(base_args):
+def test_get_latest_remote_commit_sha_network_error(
+    test_owner, test_repo, test_token, create_test_base_args
+):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        base_branch="main",
+    )
     with patch(
         "services.git.get_latest_remote_commit_sha.run_subprocess"
     ) as mock_subprocess, patch(
@@ -98,7 +115,7 @@ def test_get_latest_remote_commit_sha_network_error(base_args):
     ],
 )
 def test_get_latest_remote_commit_sha_various_branch_names(
-    base_args, branch_name, create_test_base_args
+    test_owner, test_repo, test_token, branch_name, create_test_base_args
 ):
     mock_result = MagicMock()
     mock_result.stdout = f"abc123def456\trefs/heads/{branch_name}\n"
@@ -109,9 +126,9 @@ def test_get_latest_remote_commit_sha_various_branch_names(
         mock_subprocess.return_value = mock_result
 
         custom_base_args = create_test_base_args(
-            owner=base_args["owner"],
-            repo=base_args["repo"],
-            token=base_args["token"],
+            owner=test_owner,
+            repo=test_repo,
+            token=test_token,
             base_branch=branch_name,
         )
 
@@ -132,7 +149,15 @@ def test_get_latest_remote_commit_sha_various_branch_names(
         )
 
 
-def test_get_latest_remote_commit_sha_recursive_call_failure(base_args):
+def test_get_latest_remote_commit_sha_recursive_call_failure(
+    test_owner, test_repo, test_token, create_test_base_args
+):
+    base_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        base_branch="main",
+    )
     mock_result_empty = MagicMock()
     mock_result_empty.stdout = ""
 
