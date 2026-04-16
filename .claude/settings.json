@@ -1,4 +1,18 @@
 {
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/rwest/Repositories/gitauto/.claude/hooks/no-deflection.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(/Users/rwest/Repositories/gitauto/scripts/lint/check_builtin_logging.sh)",
