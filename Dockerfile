@@ -4,9 +4,15 @@ FROM public.ecr.aws/lambda/python:3.13
 # Copy to Lambda root(which is specified in Lambda function, usually /var/task/ directory)
 COPY . ${LAMBDA_TASK_ROOT}
 
-# Install Python dependencies
+# Install uv (fast Python package manager) and prod-only dependencies
 # For Amazon Linux 2023-based images (Python 3.13): https://aws.amazon.com/blogs/compute/python-3-13-runtime-now-available-in-aws-lambda/
-RUN pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
+# --frozen: use uv.lock exactly, no re-resolution
+# --no-dev: skip [dependency-groups].dev packages (linters, test tools, type stubs)
+# --no-hashes: skip hash verification (pip freeze didn't have hashes either)
+# --target: install into Lambda root, not system Python
+RUN pip install uv && \
+    uv export --frozen --no-dev --no-hashes | \
+    uv pip install --target "${LAMBDA_TASK_ROOT}" -r -
 RUN dnf install -y git tar
 
 # Install Node.js (including npm), n (version manager), and yarn

@@ -108,7 +108,8 @@ payloads/lcov/lcov-ts-foxden-tools.info
 payloads/stripe/subscription_list_per_unit_pricing.json
 payloads/stripe/subscription_list_tiered_pricing.json
 pytest.ini
-requirements.txt
+pyproject.toml
+uv.lock
 schemas/supabase/generate_types.py
 schemas/supabase/types.py
 scripts/git/list_changed_files.sh

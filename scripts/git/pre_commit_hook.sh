@@ -5,8 +5,8 @@ set -uo pipefail
 
 echo "=== Pre-commit hook ==="
 
-# pip freeze
-pip freeze > requirements.txt && git add requirements.txt
+# Lock dependencies (pyproject.toml → uv.lock)
+uv lock --quiet && git add pyproject.toml uv.lock
 
 # Generate TypedDict schemas
 python3 schemas/supabase/generate_types.py && git add schemas/supabase/

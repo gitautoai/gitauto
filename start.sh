@@ -19,7 +19,7 @@ if [ ! -d "venv" ]; then
     python3 -m venv --upgrade-deps venv
     echo -e "Installing dependencies..."
     source venv/bin/activate
-    pip install -r requirements.txt
+    pip install uv && uv sync
 else
     # Activate existing virtual environment
     source venv/bin/activate
