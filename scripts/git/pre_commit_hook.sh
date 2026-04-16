@@ -5,12 +5,17 @@ set -uo pipefail
 
 echo "=== Pre-commit hook ==="
 
-# Auto-increment patch version (major version updated manually)
+# Auto-increment version (major updated manually)
+# New files → minor bump (1.X.0), modifications only → patch bump (1.0.X)
 CURRENT=$(grep '^version' pyproject.toml | sed 's/.*"\(.*\)"/\1/')
 MAJOR=$(echo "$CURRENT" | cut -d. -f1)
 MINOR=$(echo "$CURRENT" | cut -d. -f2)
 PATCH=$(echo "$CURRENT" | cut -d. -f3)
-NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+if git diff --cached --diff-filter=A --name-only | grep -q .; then
+    NEW_VERSION="$MAJOR.$((MINOR + 1)).0"
+else
+    NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+fi
 sed -i '' "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
 
 # Lock dependencies (pyproject.toml → uv.lock)
