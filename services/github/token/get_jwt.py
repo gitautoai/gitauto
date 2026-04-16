@@ -16,7 +16,7 @@ def get_jwt():
     payload: dict[str, int | str] = {
         "iat": now,  # Issued at time
         "exp": now + 600,  # JWT expires in 10 minutes
-        "iss": GITHUB_APP_ID,  # Issuer
+        "iss": str(GITHUB_APP_ID),  # Issuer (pyjwt 2.10+ requires str)
     }
     # The reason we use RS256 is that GitHub requires it for JWTs
     return jwt.encode(payload=payload, key=GITHUB_PRIVATE_KEY, algorithm="RS256")
