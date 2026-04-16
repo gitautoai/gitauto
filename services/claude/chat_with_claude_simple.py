@@ -1,6 +1,6 @@
 import time
 
-from constants.claude import ClaudeModelId
+from constants.models import ClaudeModelId
 from services.claude.client import claude
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 from utils.error.handle_exceptions import handle_exceptions

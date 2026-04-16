@@ -137,9 +137,11 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
         Variables:
+          # When adding/removing env vars: register in SSM (`aws ssm put-parameter --name /gitauto/KEY --value VAL --type SecureString --overwrite`), update infrastructure/lambda-env-backup.json, and update .env.template
           # Lambda's default HOME (/home/sbx_user1051) doesn't exist, causing npm/git/etc to fail when they try to write to HOME
           HOME: '/tmp'
           ANTHROPIC_API_KEY: '{{resolve:ssm:/gitauto/ANTHROPIC_API_KEY}}'
+          GOOGLE_AI_API_KEY: '{{resolve:ssm:/gitauto/GOOGLE_AI_API_KEY}}'
           ENV: '{{resolve:ssm:/gitauto/ENV}}'
           GH_APP_ID: '{{resolve:ssm:/gitauto/GH_APP_ID}}'
           GH_APP_NAME: '{{resolve:ssm:/gitauto/GH_APP_NAME}}'

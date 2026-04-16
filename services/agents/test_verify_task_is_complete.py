@@ -1,14 +1,12 @@
 # pylint: disable=too-many-lines,unused-argument
 # pyright: reportArgumentType=false
 # pyright: reportUnusedVariable=false
-from typing import cast
 from unittest.mock import patch, AsyncMock
 
 import pytest
 
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.eslint.run_eslint_fix import ESLintResult
-from services.types.base_args import BaseArgs
 from services.jest.run_jest_test import JestResult
 from services.phpunit.run_phpunit_test import PhpunitResult
 from services.prettier.run_prettier_fix import PrettierResult
@@ -95,26 +93,12 @@ def mock_ensure_eslint_relaxed():
         yield
 
 
-@pytest.fixture
-def base_args(tmp_path):
-    return cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "clone_dir": str(tmp_path),
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
-    )
-
-
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_verify_task_is_complete_success_with_changes(mock_get_files, base_args):
+async def test_verify_task_is_complete_success_with_changes(
+    mock_get_files, create_test_base_args, tmp_path
+):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "file1.py", "status": "modified"},
     ]
@@ -125,7 +109,10 @@ async def test_verify_task_is_complete_success_with_changes(mock_get_files, base
     assert result.message == "Task completed."
     assert result.fixes_applied == []
     mock_get_files.assert_called_once_with(
-        owner="test-owner", repo="test-repo", pr_number=123, token="test-token"
+        owner=base_args["owner"],
+        repo=base_args["repo"],
+        pr_number=base_args["pr_number"],
+        token=base_args["token"],
     )
 
 
@@ -135,8 +122,14 @@ async def test_verify_task_is_complete_success_with_changes(mock_get_files, base
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_partial_fix_with_remaining_errors(
-    mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
+    mock_get_files,
+    mock_get_raw,
+    mock_prettier,
+    mock_eslint,
+    create_test_base_args,
+    tmp_path,
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/index.ts", "status": "modified"},
     ]
@@ -161,7 +154,10 @@ async def test_verify_partial_fix_with_remaining_errors(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_verify_task_is_complete_failure_no_changes(mock_get_files, base_args):
+async def test_verify_task_is_complete_failure_no_changes(
+    mock_get_files, create_test_base_args, tmp_path
+):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     # Non-schedule PR with no changes should succeed (e.g. setup handler decided no work needed)
     mock_get_files.return_value = []
 
@@ -173,8 +169,11 @@ async def test_verify_task_is_complete_failure_no_changes(mock_get_files, base_a
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_schedule_pr_no_changes_always_fails(mock_get_files, base_args):
-    # Schedule/dashboard PR with 0 changes always fails without LLM call —
+async def test_schedule_pr_no_changes_always_fails(
+    mock_get_files, create_test_base_args, tmp_path
+):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
+    # Schedule/dashboard PR with 0 changes always fails without LLM call --
     # the schedule_handler already determined quality is bad when it created the PR
     mock_get_files.return_value = []
     base_args["trigger"] = "schedule"
@@ -188,18 +187,10 @@ async def test_schedule_pr_no_changes_always_fails(mock_get_files, base_args):
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_verify_task_is_complete_no_pr_number_returns_default(mock_get_files):
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": None,
-            "token": "test-token",
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
-    )
+async def test_verify_task_is_complete_no_pr_number_returns_default(
+    mock_get_files, create_test_base_args
+):
+    args = create_test_base_args(pr_number=None)
 
     result = await verify_task_is_complete(args)
 
@@ -211,8 +202,9 @@ async def test_verify_task_is_complete_no_pr_number_returns_default(mock_get_fil
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_task_is_complete_api_error_returns_default(
-    mock_get_files, base_args
+    mock_get_files, create_test_base_args, tmp_path
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.side_effect = RuntimeError("API error")
 
     result = await verify_task_is_complete(base_args)
@@ -237,8 +229,10 @@ async def test_verify_autofixes_missing_braces_in_test_file(
     _mock_ensure_jest,
     mock_prettier,
     mock_eslint,
-    base_args,
+    create_test_base_args,
+    tmp_path,
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/components/Button.test.tsx", "status": "modified"},
     ]
@@ -267,8 +261,9 @@ async def test_verify_autofixes_missing_braces_in_test_file(
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_passes_with_correct_test_syntax(
-    mock_get_files, mock_get_raw, base_args
+    mock_get_files, mock_get_raw, create_test_base_args, tmp_path
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/components/Button.test.tsx", "status": "modified"},
     ]
@@ -290,8 +285,14 @@ async def test_verify_passes_with_correct_test_syntax(
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_ignores_non_test_files(
-    mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
+    mock_get_files,
+    mock_get_raw,
+    mock_prettier,
+    mock_eslint,
+    create_test_base_args,
+    tmp_path,
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/components/Button.tsx", "status": "modified"},
     ]
@@ -310,8 +311,9 @@ async def test_verify_ignores_non_test_files(
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_ignores_removed_test_files(
-    mock_get_files, mock_get_raw, base_args
+    mock_get_files, mock_get_raw, create_test_base_args, tmp_path
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/components/Button.test.tsx", "status": "removed"},
     ]
@@ -336,8 +338,10 @@ async def test_verify_checks_both_ts_test_files(
     _mock_ensure_jest,
     mock_prettier,
     mock_eslint,
-    base_args,
+    create_test_base_args,
+    tmp_path,
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/Button.test.tsx", "status": "modified"},
         {"filename": "src/Input.test.tsx", "status": "modified"},
@@ -373,8 +377,10 @@ async def test_verify_checks_only_ts_when_mixed_with_py(
     _mock_ensure_jest,
     mock_prettier,
     mock_eslint,
-    base_args,
+    create_test_base_args,
+    tmp_path,
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/Button.test.tsx", "status": "modified"},
         {"filename": "tests/test_utils.py", "status": "modified"},
@@ -400,8 +406,9 @@ async def test_verify_checks_only_ts_when_mixed_with_py(
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_ignores_all_non_js_test_files(
-    mock_get_files, mock_get_raw, base_args
+    mock_get_files, mock_get_raw, create_test_base_args, tmp_path
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "tests/test_utils.py", "status": "modified"},
         {"filename": "tests/UtilsTest.php", "status": "modified"},
@@ -429,8 +436,10 @@ async def test_verify_autofixes_when_one_of_two_ts_files_has_missing_braces(
     _mock_ensure_jest,
     mock_prettier,
     mock_eslint,
-    base_args,
+    create_test_base_args,
+    tmp_path,
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/Button.test.tsx", "status": "modified"},
         {"filename": "src/Input.test.tsx", "status": "modified"},
@@ -478,8 +487,10 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
     _mock_ensure_jest,
     mock_prettier,
     mock_eslint,
-    base_args,
+    create_test_base_args,
+    tmp_path,
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/Button.test.tsx", "status": "modified"},
         {"filename": "tests/test_utils.py", "status": "modified"},
@@ -512,8 +523,9 @@ async def test_verify_autofixes_ts_with_missing_braces_ignores_py(
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_verify_fails_when_jest_tests_fail(
-    mock_get_files, mock_get_raw, mock_tsc, mock_jest, base_args
+    mock_get_files, mock_get_raw, mock_tsc, mock_jest, create_test_base_args, tmp_path
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     # Use JS file (not TS) to avoid triggering tsconfig setup for TS test files
     mock_get_files.return_value = [
         {"filename": "src/index.test.js", "status": "modified"},
@@ -550,9 +562,11 @@ async def test_verify_error_files_collected_from_eslint_and_jest(
     mock_eslint,
     mock_tsc,
     mock_jest,
-    base_args,
+    create_test_base_args,
+    tmp_path,
 ):
     """Verify error_files collects files from both ESLint and jest failures."""
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/index.ts", "status": "modified"},
         {"filename": "src/index.test.js", "status": "modified"},
@@ -587,7 +601,7 @@ async def test_verify_error_files_collected_from_eslint_and_jest(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_baseline_tsc_errors_filtered(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, create_test_base_args
 ):
     pre_existing_error = (
         "src/passport-oidc.ts(217,32): error TS2339: "
@@ -614,18 +628,8 @@ async def test_baseline_tsc_errors_filtered(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "baseline_tsc_errors": {pre_existing_error},
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        baseline_tsc_errors={pre_existing_error},
     )
     result = await verify_task_is_complete(args)
 
@@ -646,7 +650,7 @@ async def test_baseline_tsc_errors_filtered(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_all_tsc_errors_pre_existing_passes(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, create_test_base_args
 ):
     pre_existing = "src/old.ts(1,1): error TS2339: Property 'x' does not exist."
 
@@ -666,18 +670,8 @@ async def test_all_tsc_errors_pre_existing_passes(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "baseline_tsc_errors": {pre_existing},
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        baseline_tsc_errors={pre_existing},
     )
     result = await verify_task_is_complete(args)
 
@@ -693,7 +687,12 @@ async def test_all_tsc_errors_pre_existing_passes(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_baseline_tsc_errors_in_pr_files_still_reported(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, tmp_path
+    mock_get_files,
+    mock_tsc,
+    mock_jest,
+    mock_create_tsc_issue,
+    create_test_base_args,
+    tmp_path,
 ):
     """Errors in PR-changed files should be reported even if in baseline.
 
@@ -722,23 +721,13 @@ async def test_baseline_tsc_errors_in_pr_files_still_reported(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "baseline_tsc_errors": {pr_file_error},
-            "clone_dir": str(tmp_path),
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        baseline_tsc_errors={pr_file_error},
+        clone_dir=str(tmp_path),
     )
     result = await verify_task_is_complete(args)
 
-    # Error is in baseline BUT also in PR files → must be reported
+    # Error is in baseline BUT also in PR files -> must be reported
     assert result.success is False
     assert "TS2339" in result.message
     mock_create_tsc_issue.assert_not_called()
@@ -763,6 +752,7 @@ async def test_verify_commits_updated_snapshots(
     mock_jest,
     mock_upload,
     _mock_read_local,
+    create_test_base_args,
 ):
     mock_get_files.return_value = [
         {"filename": "src/index.test.js", "status": "modified"},
@@ -777,19 +767,7 @@ async def test_verify_commits_updated_snapshots(
         updated_snapshots={"src/__snapshots__/index.test.js.snap"},
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "clone_dir": "/tmp/clone",
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
-    )
+    args = create_test_base_args()
     result = await verify_task_is_complete(args)
 
     assert result.success is True
@@ -805,13 +783,13 @@ async def test_verify_commits_updated_snapshots(
 
 
 # ============================================================
-# 9 handler × error-case matrix tests
+# 9 handler x error-case matrix tests
 # ============================================================
 # 3 handlers: new_pr_handler, check_suite_handler, review_run_handler
 # 3 cases per handler:
-#   1. Error in PR file → always report
-#   2. Error in non-PR file AND in baseline → skip (pre-existing)
-#   3. Error in non-PR file AND NOT in baseline → report
+#   1. Error in PR file -> always report
+#   2. Error in non-PR file AND in baseline -> skip (pre-existing)
+#   3. Error in non-PR file AND NOT in baseline -> report
 
 
 # --- new_pr_handler: baseline comes from master (base) branch ---
@@ -823,7 +801,7 @@ async def test_verify_commits_updated_snapshots(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_new_pr_handler_error_in_pr_file_reported(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, create_test_base_args
 ):
     """new_pr_handler: Agent wrote new code with a type error in a PR file.
 
@@ -848,18 +826,8 @@ async def test_new_pr_handler_error_in_pr_file_reported(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "baseline_tsc_errors": set(),  # Master was clean
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        baseline_tsc_errors=set(),
     )
     result = await verify_task_is_complete(args)
 
@@ -874,11 +842,11 @@ async def test_new_pr_handler_error_in_pr_file_reported(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_new_pr_handler_preexisting_non_pr_file_error_skipped(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, create_test_base_args
 ):
     """new_pr_handler: Master has a pre-existing tsc error in an unrelated file.
 
-    Error is in a non-PR file AND in baseline → skip.
+    Error is in a non-PR file AND in baseline -> skip.
     Task should pass since the error is not caused by the PR.
     """
     preexisting = "src/legacy.ts(50,10): error TS2339: Property 'x' does not exist."
@@ -899,18 +867,8 @@ async def test_new_pr_handler_preexisting_non_pr_file_error_skipped(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "baseline_tsc_errors": {preexisting},
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        baseline_tsc_errors={preexisting},
     )
     result = await verify_task_is_complete(args)
 
@@ -926,11 +884,11 @@ async def test_new_pr_handler_preexisting_non_pr_file_error_skipped(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_new_pr_handler_new_non_pr_file_error_reported(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, create_test_base_args
 ):
     """new_pr_handler: PR changes caused a type error in a file the agent didn't modify.
 
-    Error is in a non-PR file AND NOT in baseline → report.
+    Error is in a non-PR file AND NOT in baseline -> report.
     The PR changes broke an importing file.
     """
     new_error = "src/consumer.ts(20,3): error TS2345: Argument type mismatch."
@@ -951,18 +909,8 @@ async def test_new_pr_handler_new_non_pr_file_error_reported(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "baseline_tsc_errors": set(),  # Master was clean
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        baseline_tsc_errors=set(),
     )
     result = await verify_task_is_complete(args)
 
@@ -980,7 +928,12 @@ async def test_new_pr_handler_new_non_pr_file_error_reported(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_check_suite_error_in_pr_file_in_baseline_reported(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, tmp_path
+    mock_get_files,
+    mock_tsc,
+    mock_jest,
+    mock_create_tsc_issue,
+    create_test_base_args,
+    tmp_path,
 ):
     """check_suite: PR file has error that was also in baseline (PR branch state).
 
@@ -1009,20 +962,10 @@ async def test_check_suite_error_in_pr_file_in_baseline_reported(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            # Baseline from PR branch contains this error
-            "baseline_tsc_errors": {pr_file_error},
-            "clone_dir": str(tmp_path),
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        # Baseline from PR branch contains this error
+        baseline_tsc_errors={pr_file_error},
+        clone_dir=str(tmp_path),
     )
     result = await verify_task_is_complete(args)
 
@@ -1037,11 +980,16 @@ async def test_check_suite_error_in_pr_file_in_baseline_reported(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_check_suite_preexisting_non_pr_file_error_skipped(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, tmp_path
+    mock_get_files,
+    mock_tsc,
+    mock_jest,
+    mock_create_tsc_issue,
+    create_test_base_args,
+    tmp_path,
 ):
     """check_suite: Pre-existing error in unrelated file on PR branch.
 
-    Error is in a non-PR file AND in baseline → skip.
+    Error is in a non-PR file AND in baseline -> skip.
     The PR didn't cause this, it was already broken.
     """
     preexisting = "src/passport-oidc.ts(217,32): error TS2339: Property 'id' missing."
@@ -1062,19 +1010,9 @@ async def test_check_suite_preexisting_non_pr_file_error_skipped(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "baseline_tsc_errors": {preexisting},
-            "clone_dir": str(tmp_path),
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        baseline_tsc_errors={preexisting},
+        clone_dir=str(tmp_path),
     )
     result = await verify_task_is_complete(args)
 
@@ -1090,11 +1028,16 @@ async def test_check_suite_preexisting_non_pr_file_error_skipped(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_check_suite_new_non_pr_file_error_reported(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, tmp_path
+    mock_get_files,
+    mock_tsc,
+    mock_jest,
+    mock_create_tsc_issue,
+    create_test_base_args,
+    tmp_path,
 ):
     """check_suite: Agent's fix attempt introduced error in a non-PR file.
 
-    Error is in a non-PR file AND NOT in baseline → report.
+    Error is in a non-PR file AND NOT in baseline -> report.
     The agent's changes broke a dependent file.
     """
     new_error = "src/auth.ts(30,8): error TS2345: Argument type mismatch."
@@ -1115,19 +1058,9 @@ async def test_check_suite_new_non_pr_file_error_reported(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "baseline_tsc_errors": set(),
-            "clone_dir": str(tmp_path),
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        baseline_tsc_errors=set(),
+        clone_dir=str(tmp_path),
     )
     result = await verify_task_is_complete(args)
 
@@ -1145,7 +1078,7 @@ async def test_check_suite_new_non_pr_file_error_reported(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_review_run_error_in_pr_file_in_baseline_reported(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, create_test_base_args
 ):
     """review_run: Reviewer pointed out issue, PR file has error in baseline.
 
@@ -1173,18 +1106,8 @@ async def test_review_run_error_in_pr_file_in_baseline_reported(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "baseline_tsc_errors": {pr_file_error},
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        baseline_tsc_errors={pr_file_error},
     )
     result = await verify_task_is_complete(args)
 
@@ -1199,11 +1122,11 @@ async def test_review_run_error_in_pr_file_in_baseline_reported(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_review_run_preexisting_non_pr_file_error_skipped(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, create_test_base_args
 ):
     """review_run: Pre-existing error in unrelated file on PR branch.
 
-    Error is in a non-PR file AND in baseline → skip.
+    Error is in a non-PR file AND in baseline -> skip.
     """
     preexisting = "src/legacy-auth.ts(100,5): error TS2339: Property 'role' missing."
 
@@ -1223,18 +1146,8 @@ async def test_review_run_preexisting_non_pr_file_error_skipped(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "baseline_tsc_errors": {preexisting},
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        baseline_tsc_errors={preexisting},
     )
     result = await verify_task_is_complete(args)
 
@@ -1250,11 +1163,11 @@ async def test_review_run_preexisting_non_pr_file_error_skipped(
 @patch("services.agents.verify_task_is_complete.run_tsc_check", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_review_run_new_non_pr_file_error_reported(
-    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue
+    mock_get_files, mock_tsc, mock_jest, mock_create_tsc_issue, create_test_base_args
 ):
     """review_run: Agent's fix introduced error in a non-PR file.
 
-    Error is in a non-PR file AND NOT in baseline → report.
+    Error is in a non-PR file AND NOT in baseline -> report.
     """
     new_error = "src/validators.ts(15,3): error TS2345: Argument type mismatch."
 
@@ -1274,18 +1187,8 @@ async def test_review_run_new_non_pr_file_error_reported(
         updated_snapshots=set(),
     )
 
-    args = cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "pr_number": 123,
-            "token": "test-token",
-            "new_branch": "test-branch",
-            "baseline_tsc_errors": set(),
-            "verify_consecutive_failures": 0,
-            "quality_gate_fail_count": 0,
-        },
+    args = create_test_base_args(
+        baseline_tsc_errors=set(),
     )
     result = await verify_task_is_complete(args)
 
@@ -1305,8 +1208,14 @@ async def test_review_run_new_non_pr_file_error_reported(
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_ensure_eslint_relaxed_called_for_js_test_files(
-    mock_get_files, mock_get_raw, mock_get_eslint, mock_ensure_eslint, base_args
+    mock_get_files,
+    mock_get_raw,
+    mock_get_eslint,
+    mock_ensure_eslint,
+    create_test_base_args,
+    tmp_path,
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/index.test.js", "status": "modified"},
     ]
@@ -1327,8 +1236,9 @@ async def test_ensure_eslint_relaxed_called_for_js_test_files(
 @patch("services.agents.verify_task_is_complete.get_eslint_config")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_ensure_eslint_relaxed_not_called_for_non_test_files(
-    mock_get_files, mock_get_eslint, mock_ensure_eslint, base_args
+    mock_get_files, mock_get_eslint, mock_ensure_eslint, create_test_base_args, tmp_path
 ):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/index.ts", "status": "modified"},
     ]
@@ -1350,7 +1260,12 @@ async def test_ensure_eslint_relaxed_not_called_for_non_test_files(
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_coverage_error_no_unnecessary_condition_blocks_completion(
-    mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
+    mock_get_files,
+    mock_get_raw,
+    mock_prettier,
+    mock_eslint,
+    create_test_base_args,
+    tmp_path,
 ):
     """Verify that no-unnecessary-condition coverage errors block task completion.
 
@@ -1358,6 +1273,7 @@ async def test_coverage_error_no_unnecessary_condition_blocks_completion(
     reported as a blocking error so the agent removes it rather than adding
     istanbul ignore comments.
     """
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/PaymentForm.tsx", "status": "modified"},
     ]
@@ -1386,12 +1302,18 @@ async def test_coverage_error_no_unnecessary_condition_blocks_completion(
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_lint_only_errors_still_block_completion(
-    mock_get_files, mock_get_raw, mock_prettier, mock_eslint, base_args
+    mock_get_files,
+    mock_get_raw,
+    mock_prettier,
+    mock_eslint,
+    create_test_base_args,
+    tmp_path,
 ):
     """Verify that lint-only errors (e.g., no-explicit-any) also block completion.
 
     verify_task_is_complete reports both lint_errors and coverage_errors.
     """
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/utils.ts", "status": "modified"},
     ]
@@ -1416,8 +1338,11 @@ async def test_lint_only_errors_still_block_completion(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_quality_gate_0_changes_first_attempt_rejects(mock_get_files, base_args):
+async def test_quality_gate_0_changes_first_attempt_rejects(
+    mock_get_files, create_test_base_args, tmp_path
+):
     """First 0-change attempt on schedule PR rejects and increments counter."""
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = []
     base_args["trigger"] = "schedule"
     base_args["impl_file_to_collect_coverage_from"] = "src/foo.ts"
@@ -1431,8 +1356,11 @@ async def test_quality_gate_0_changes_first_attempt_rejects(mock_get_files, base
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
-async def test_quality_gate_0_changes_second_attempt_accepts(mock_get_files, base_args):
+async def test_quality_gate_0_changes_second_attempt_accepts(
+    mock_get_files, create_test_base_args, tmp_path
+):
     """Second 0-change attempt accepts (escape hatch)."""
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = []
     base_args["trigger"] = "schedule"
     base_args["impl_file_to_collect_coverage_from"] = "src/foo.ts"
@@ -1449,9 +1377,15 @@ async def test_quality_gate_0_changes_second_attempt_accepts(mock_get_files, bas
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_quality_gate_skipped_after_3_failures(
-    mock_get_files, mock_read, mock_quality_gate, mock_slack, base_args, tmp_path
+    mock_get_files,
+    mock_read,
+    mock_quality_gate,
+    mock_slack,
+    create_test_base_args,
+    tmp_path,
 ):
     """Quality gate is skipped after 3 consecutive failures and notifies Slack."""
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "test/foo.spec.ts", "status": "added"},
     ]
@@ -1467,7 +1401,10 @@ async def test_quality_gate_skipped_after_3_failures(
 
     mock_quality_gate.assert_not_called()
     mock_slack.assert_called_once()
-    assert "test-owner/test-repo#123" in mock_slack.call_args[0][0]
+    assert (
+        f"{base_args['owner']}/{base_args['repo']}#{base_args['pr_number']}"
+        in mock_slack.call_args[0][0]
+    )
     assert "src/foo.ts" in mock_slack.call_args[0][0]
     assert mock_slack.call_args[0][1] == "ts_abc123"
     assert result.success is True
@@ -1478,9 +1415,10 @@ async def test_quality_gate_skipped_after_3_failures(
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_quality_gate_runs_when_fail_count_below_3(
-    mock_get_files, mock_read, mock_quality_gate, base_args, tmp_path
+    mock_get_files, mock_read, mock_quality_gate, create_test_base_args, tmp_path
 ):
     """Quality gate runs and increments counter on failure when count < 3."""
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "test/foo.spec.ts", "status": "added"},
     ]
@@ -1517,9 +1455,10 @@ async def test_quality_gate_runs_when_fail_count_below_3(
 @patch("services.agents.verify_task_is_complete.read_local_file")
 @patch("services.agents.verify_task_is_complete.get_pull_request_files")
 async def test_jest_infra_failure_skipped(
-    mock_get_files, mock_read, _mock_jest, base_args, tmp_path
+    mock_get_files, mock_read, _mock_jest, create_test_base_args, tmp_path
 ):
     """Jest infra failures (segfault, OOM, etc.) are detected and skipped."""
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     mock_get_files.return_value = [
         {"filename": "src/test.test.ts", "status": "added"},
     ]

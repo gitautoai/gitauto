@@ -7,7 +7,7 @@ from constants.ci import (
     GHA_WORKFLOW_DIR,
     GITAUTO_COVERAGE_WORKFLOW_TEMPLATES_DIR,
 )
-from constants.claude import ClaudeModelId
+from constants.models import ClaudeModelId
 from constants.system_messages.setup_handler import (
     SETUP_HANDLER_SYSTEM_MESSAGE,
     SETUP_PR_BODY,
@@ -59,6 +59,9 @@ async def setup_handler(
 ):
     set_owner_repo(owner_name, repo_name)
     set_trigger("setup")
+    model_id = (
+        ClaudeModelId.OPUS_4_6
+    )  # Setup runs once per repo, needs reliable tool-use
     logger.info(
         "Setup triggered by sender_name=%s sender_id=%d source=%s for %s/%s",
         sender_name,
@@ -147,6 +150,7 @@ async def setup_handler(
         "pr_comments": [],
         "pr_creator": sender_name,
         "verify_consecutive_failures": 0,
+        "model_id": model_id,
         "quality_gate_fail_count": 0,
     }
 
@@ -250,7 +254,7 @@ async def setup_handler(
             base_args=base_args,
             tools=TOOLS_FOR_SETUP,
             usage_id=usage_id,
-            model_id=ClaudeModelId.OPUS_4_6,  # Needs accurate analysis of existing workflows
+            model_id=model_id,
         )
         messages = result.messages
         total_token_input += result.token_input

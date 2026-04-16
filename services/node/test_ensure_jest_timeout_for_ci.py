@@ -1,24 +1,11 @@
 # pylint: disable=redefined-outer-name,unused-argument
 # pyright: reportUnusedVariable=false
-from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from services.claude.tools.file_modify_result import FileWriteResult
 from services.node.ensure_jest_timeout_for_ci import ensure_jest_timeout_for_ci
-from services.types.base_args import BaseArgs
-
-BASE_ARGS = cast(
-    BaseArgs,
-    {
-        "owner": "test-owner",
-        "repo": "test-repo",
-        "token": "test-token",
-        "new_branch": "test-branch",
-        "clone_dir": "/tmp/test",
-    },
-)
 
 
 @pytest.fixture()
@@ -36,35 +23,42 @@ def mock_write_and_commit():
         yield mock
 
 
-def test_no_jest_config_file(mock_read_local_file: MagicMock):
+def test_no_jest_config_file(mock_read_local_file: MagicMock, create_test_base_args):
+    base_args = create_test_base_args()
     result = ensure_jest_timeout_for_ci(
-        root_files=["package.json", "README.md"], base_args=BASE_ARGS
+        root_files=["package.json", "README.md"], base_args=base_args
     )
     assert result is None
     mock_read_local_file.assert_not_called()
 
 
 def test_already_has_correct_timeout(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = (
         "module.exports = {\n  testTimeout: process.env.CI ? 180000 : 5000,\n};\n"
     )
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.js"], base_args=BASE_ARGS
+        root_files=["jest.config.js"], base_args=base_args
     )
     assert result is None
     mock_write_and_commit.assert_not_called()
 
 
 def test_updates_wrong_timeout_value(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = (
         "module.exports = {\n  testTimeout: 10000,\n};\n"
     )
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.js"], base_args=BASE_ARGS
+        root_files=["jest.config.js"], base_args=base_args
     )
     assert result == "jest.config.js"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -73,24 +67,30 @@ def test_updates_wrong_timeout_value(
 
 
 def test_empty_content(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = ""
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.js"], base_args=BASE_ARGS
+        root_files=["jest.config.js"], base_args=base_args
     )
     assert result is None
     mock_write_and_commit.assert_not_called()
 
 
 def test_injects_into_module_exports(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = (
         "module.exports = {\n  preset: 'ts-jest',\n  testEnvironment: 'jsdom',\n};\n"
     )
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.js"], base_args=BASE_ARGS
+        root_files=["jest.config.js"], base_args=base_args
     )
     assert result == "jest.config.js"
     written_content = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -99,11 +99,14 @@ def test_injects_into_module_exports(
 
 
 def test_injects_into_export_default(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = "export default {\n  preset: 'ts-jest',\n};\n"
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.ts"], base_args=BASE_ARGS
+        root_files=["jest.config.ts"], base_args=base_args
     )
     assert result == "jest.config.ts"
     written_content = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -111,12 +114,15 @@ def test_injects_into_export_default(
 
 
 def test_injects_into_typed_config(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     config = "import type { Config } from 'jest';\nconst config: Config = {\n  preset: 'ts-jest',\n};\nexport default config;\n"
     mock_read_local_file.return_value = config
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.ts"], base_args=BASE_ARGS
+        root_files=["jest.config.ts"], base_args=base_args
     )
     assert result == "jest.config.ts"
     written_content = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -124,45 +130,57 @@ def test_injects_into_typed_config(
 
 
 def test_preserves_indentation(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = (
         "module.exports = {\n    preset: 'ts-jest',\n};\n"
     )
-    ensure_jest_timeout_for_ci(root_files=["jest.config.js"], base_args=BASE_ARGS)
+    ensure_jest_timeout_for_ci(root_files=["jest.config.js"], base_args=base_args)
     written_content = mock_write_and_commit.call_args.kwargs["file_content"]
     assert "\n    testTimeout: process.env.CI ? 180000 : 5000," in written_content
 
 
 def test_no_matching_pattern(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = "const x = 42;\n"
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.js"], base_args=BASE_ARGS
+        root_files=["jest.config.js"], base_args=base_args
     )
     assert result is None
     mock_write_and_commit.assert_not_called()
 
 
 def test_write_failure(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = "module.exports = {\n  preset: 'ts-jest',\n};\n"
     mock_write_and_commit.return_value = MagicMock(spec=FileWriteResult, success=False)
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.js"], base_args=BASE_ARGS
+        root_files=["jest.config.js"], base_args=base_args
     )
     assert result is None
 
 
 def test_prefers_first_config_file(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = "module.exports = {\n  preset: 'ts-jest',\n};\n"
     result = ensure_jest_timeout_for_ci(
         root_files=["jest.config.js", "jest.config.ts"],
-        base_args=BASE_ARGS,
+        base_args=base_args,
     )
     assert result == "jest.config.js"
 
@@ -257,11 +275,14 @@ export default {
 
 
 def test_foxcom_forms(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = FOXCOM_FORMS_CONFIG
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.js"], base_args=BASE_ARGS
+        root_files=["jest.config.js"], base_args=base_args
     )
     assert result == "jest.config.js"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -270,11 +291,14 @@ def test_foxcom_forms(
 
 
 def test_foxden_admin_portal(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = FOXDEN_ADMIN_PORTAL_CONFIG
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.ts"], base_args=BASE_ARGS
+        root_files=["jest.config.ts"], base_args=base_args
     )
     assert result == "jest.config.ts"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -283,11 +307,14 @@ def test_foxden_admin_portal(
 
 
 def test_foxden_version_controller_merge_recursive(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = FOXDEN_VERSION_CONTROLLER_CONFIG
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.ts"], base_args=BASE_ARGS
+        root_files=["jest.config.ts"], base_args=base_args
     )
     assert result == "jest.config.ts"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -296,11 +323,14 @@ def test_foxden_version_controller_merge_recursive(
 
 
 def test_foxden_rating_quoting_updates_wrong_timeout(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = FOXDEN_RATING_QUOTING_CONFIG
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.js"], base_args=BASE_ARGS
+        root_files=["jest.config.js"], base_args=base_args
     )
     assert result == "jest.config.js"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -309,11 +339,14 @@ def test_foxden_rating_quoting_updates_wrong_timeout(
 
 
 def test_foxcom_forms_backend(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = FOXCOM_FORMS_BACKEND_CONFIG
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.js"], base_args=BASE_ARGS
+        root_files=["jest.config.js"], base_args=base_args
     )
     assert result == "jest.config.js"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -322,11 +355,14 @@ def test_foxcom_forms_backend(
 
 
 def test_foxden_auth_service(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = FOXDEN_AUTH_SERVICE_CONFIG
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.ts"], base_args=BASE_ARGS
+        root_files=["jest.config.ts"], base_args=base_args
     )
     assert result == "jest.config.ts"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -351,11 +387,14 @@ FOXDEN_ADMIN_PORTAL_DUPLICATE_TIMEOUT = """export default {
 
 
 def test_removes_duplicate_test_timeout_keeps_first(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = FOXDEN_ADMIN_PORTAL_DUPLICATE_TIMEOUT
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.ts"], base_args=BASE_ARGS
+        root_files=["jest.config.ts"], base_args=base_args
     )
     assert result == "jest.config.ts"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -389,11 +428,14 @@ export default createJestConfig(customJestConfig);
 
 
 def test_website_next_jest(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = WEBSITE_JEST_CONFIG
     result = ensure_jest_timeout_for_ci(
-        root_files=["jest.config.ts"], base_args=BASE_ARGS
+        root_files=["jest.config.ts"], base_args=base_args
     )
     assert result == "jest.config.ts"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -475,11 +517,14 @@ CRACO_NO_JEST_SECTION = """module.exports = {
 
 
 def test_craco_injects_timeout_into_configure_block(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = FOXDEN_ADMIN_PORTAL_CRACO_NO_TIMEOUT
     result = ensure_jest_timeout_for_ci(
-        root_files=["craco.config.js", "package.json"], base_args=BASE_ARGS
+        root_files=["craco.config.js", "package.json"], base_args=base_args
     )
     assert result == "craco.config.js"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -490,22 +535,28 @@ def test_craco_injects_timeout_into_configure_block(
 
 
 def test_craco_already_has_correct_timeout(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = FOXDEN_ADMIN_PORTAL_CRACO_WITH_TIMEOUT
     result = ensure_jest_timeout_for_ci(
-        root_files=["craco.config.js"], base_args=BASE_ARGS
+        root_files=["craco.config.js"], base_args=base_args
     )
     assert result is None
     mock_write_and_commit.assert_not_called()
 
 
 def test_craco_updates_low_timeout(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = FOXDEN_ADMIN_PORTAL_CRACO_LOW_TIMEOUT
     result = ensure_jest_timeout_for_ci(
-        root_files=["craco.config.js"], base_args=BASE_ARGS
+        root_files=["craco.config.js"], base_args=base_args
     )
     assert result == "craco.config.js"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -514,11 +565,14 @@ def test_craco_updates_low_timeout(
 
 
 def test_craco_takes_priority_over_jest_config(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     mock_read_local_file.return_value = FOXDEN_ADMIN_PORTAL_CRACO_NO_TIMEOUT
     result = ensure_jest_timeout_for_ci(
-        root_files=["craco.config.js", "jest.config.js"], base_args=BASE_ARGS
+        root_files=["craco.config.js", "jest.config.js"], base_args=base_args
     )
     assert result == "craco.config.js"
     written = mock_write_and_commit.call_args.kwargs["file_content"]
@@ -526,8 +580,11 @@ def test_craco_takes_priority_over_jest_config(
 
 
 def test_craco_without_jest_section_falls_through_to_jest_config(
-    mock_read_local_file: MagicMock, mock_write_and_commit: MagicMock
+    mock_read_local_file: MagicMock,
+    mock_write_and_commit: MagicMock,
+    create_test_base_args,
 ):
+    base_args = create_test_base_args()
     jest_config = "module.exports = {\n  preset: 'ts-jest',\n};\n"
 
     def side_effect(file_path, base_dir):
@@ -539,7 +596,7 @@ def test_craco_without_jest_section_falls_through_to_jest_config(
 
     mock_read_local_file.side_effect = side_effect
     result = ensure_jest_timeout_for_ci(
-        root_files=["craco.config.js", "jest.config.js"], base_args=BASE_ARGS
+        root_files=["craco.config.js", "jest.config.js"], base_args=base_args
     )
     assert result == "jest.config.js"
     written = mock_write_and_commit.call_args.kwargs["file_content"]

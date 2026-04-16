@@ -76,12 +76,6 @@ STRIPE_API_KEY = os.getenv("STRIPE_API_KEY", "")
 EMAIL_LINK = "[info@gitauto.ai](mailto:info@gitauto.ai)"
 ENV = os.getenv("ENV", "")
 EXCEPTION_OWNERS = ["gitautoai", "Suchica", "hiroshinishio"]
-# Update here too: https://dashboard.stripe.com/test/products/prod_PokLGIxiVUwCi6
-CREDIT_USAGE_USD = 8
-CREDIT_AMOUNTS_USD = {
-    "usage": -CREDIT_USAGE_USD,
-    "grant": CREDIT_USAGE_USD * 3,
-}
 MAX_RETRIES = 3
 PER_PAGE = 100
 PRODUCT_ID = os.getenv("PRODUCT_ID", "")

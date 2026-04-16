@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from config import CREDIT_USAGE_USD
+from constants.models import MAX_CREDIT_COST_USD
 from services.stripe.check_availability import check_availability
 
 
@@ -45,7 +45,7 @@ class TestCheckAvailability:
 
     def test_credit_billing_type_with_sufficient_credits(self, mock_dependencies):
         mock_dependencies["get_billing_type"].return_value = "credit"
-        balance = CREDIT_USAGE_USD * 10
+        balance = MAX_CREDIT_COST_USD * 10
         mock_dependencies["get_owner"].return_value = {
             "credit_balance_usd": balance,
             "auto_reload_enabled": False,
@@ -111,7 +111,7 @@ class TestCheckAvailability:
     def test_auto_reload_triggered_when_below_threshold(self, mock_dependencies):
         mock_dependencies["get_billing_type"].return_value = "credit"
         mock_dependencies["get_owner"].return_value = {
-            "credit_balance_usd": CREDIT_USAGE_USD,
+            "credit_balance_usd": MAX_CREDIT_COST_USD,
             "auto_reload_enabled": True,
             "auto_reload_threshold_usd": 10,
         }
@@ -124,13 +124,13 @@ class TestCheckAvailability:
         )
 
         assert result["can_proceed"] is True
-        assert result["credit_balance_usd"] == CREDIT_USAGE_USD
+        assert result["credit_balance_usd"] == MAX_CREDIT_COST_USD
         mock_dependencies["trigger_auto_reload"].assert_called_once()
 
     def test_auto_reload_not_triggered_when_above_threshold(self, mock_dependencies):
         mock_dependencies["get_billing_type"].return_value = "credit"
         mock_dependencies["get_owner"].return_value = {
-            "credit_balance_usd": CREDIT_USAGE_USD * 3,
+            "credit_balance_usd": MAX_CREDIT_COST_USD * 3,
             "auto_reload_enabled": True,
             "auto_reload_threshold_usd": 10,
         }
@@ -143,13 +143,13 @@ class TestCheckAvailability:
         )
 
         assert result["can_proceed"] is True
-        assert result["credit_balance_usd"] == CREDIT_USAGE_USD * 3
+        assert result["credit_balance_usd"] == MAX_CREDIT_COST_USD * 3
         mock_dependencies["trigger_auto_reload"].assert_not_called()
 
     def test_auto_reload_not_triggered_when_disabled(self, mock_dependencies):
         mock_dependencies["get_billing_type"].return_value = "credit"
         mock_dependencies["get_owner"].return_value = {
-            "credit_balance_usd": CREDIT_USAGE_USD,
+            "credit_balance_usd": MAX_CREDIT_COST_USD,
             "auto_reload_enabled": False,
             "auto_reload_threshold_usd": 10,
         }
@@ -162,7 +162,7 @@ class TestCheckAvailability:
         )
 
         assert result["can_proceed"] is True
-        assert result["credit_balance_usd"] == CREDIT_USAGE_USD
+        assert result["credit_balance_usd"] == MAX_CREDIT_COST_USD
         mock_dependencies["trigger_auto_reload"].assert_not_called()
 
     def test_auto_reload_triggered_when_balance_is_zero(self, mock_dependencies):
@@ -190,7 +190,7 @@ class TestCheckAvailability:
     def test_auto_reload_triggered_when_balance_is_negative(self, mock_dependencies):
         mock_dependencies["get_billing_type"].return_value = "credit"
         mock_dependencies["get_owner"].return_value = {
-            "credit_balance_usd": -CREDIT_USAGE_USD,
+            "credit_balance_usd": -MAX_CREDIT_COST_USD,
             "auto_reload_enabled": True,
             "auto_reload_threshold_usd": 10,
         }
@@ -206,7 +206,7 @@ class TestCheckAvailability:
         )
 
         assert result["can_proceed"] is False
-        assert result["credit_balance_usd"] == -CREDIT_USAGE_USD
+        assert result["credit_balance_usd"] == -MAX_CREDIT_COST_USD
         mock_dependencies["trigger_auto_reload"].assert_called_once()
 
     def test_auto_reload_triggered_at_exact_threshold(self, mock_dependencies):

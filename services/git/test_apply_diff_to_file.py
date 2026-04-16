@@ -3,7 +3,6 @@
 import os
 import subprocess
 import tempfile
-from typing import cast
 from unittest.mock import patch
 
 import pytest
@@ -11,26 +10,11 @@ import pytest
 from services.claude.tools.file_modify_result import FileWriteResult
 from services.git.apply_diff_to_file import apply_diff_to_file
 from services.git.git_clone_to_tmp import git_clone_to_tmp
-from services.types.base_args import BaseArgs
 from utils.files.apply_patch import PatchResult
 
 
-@pytest.fixture
-def sample_base_args(tmp_path):
-    return cast(
-        BaseArgs,
-        {
-            "owner": "test_owner",
-            "repo": "test_repo",
-            "token": "test_token",
-            "new_branch": "test_branch",
-            "skip_ci": False,
-            "clone_dir": str(tmp_path),
-        },
-    )
-
-
-def test_successful_file_update(sample_base_args, tmp_path):
+def test_successful_file_update(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("print('hello world')\n")
 
     with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
@@ -41,7 +25,7 @@ def test_successful_file_update(sample_base_args, tmp_path):
         result = apply_diff_to_file(
             diff="--- test.py\n+++ test.py\n@@ -1 +1 @@\n-print('hello world')\n+print('hello modified world')",
             file_path="test.py",
-            base_args=sample_base_args,
+            base_args=base_args,
         )
 
         assert isinstance(result, FileWriteResult)
@@ -50,14 +34,15 @@ def test_successful_file_update(sample_base_args, tmp_path):
         assert (tmp_path / "test.py").read_text() == "print('hello modified world')\n"
 
 
-def test_new_file_creation(sample_base_args, tmp_path):
+def test_new_file_creation(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
         mock_patch.return_value = PatchResult(content="print('new file')\n", error="")
 
         result = apply_diff_to_file(
             diff="--- /dev/null\n+++ new_file.py\n@@ -0,0 +1 @@\n+print('new file')",
             file_path="new_file.py",
-            base_args=sample_base_args,
+            base_args=base_args,
         )
 
         assert isinstance(result, FileWriteResult)
@@ -65,7 +50,8 @@ def test_new_file_creation(sample_base_args, tmp_path):
         assert (tmp_path / "new_file.py").read_text() == "print('new file')\n"
 
 
-def test_deletion_diff(sample_base_args, tmp_path):
+def test_deletion_diff(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "to_delete.py").write_text("# delete me\n")
 
     with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
@@ -74,7 +60,7 @@ def test_deletion_diff(sample_base_args, tmp_path):
         result = apply_diff_to_file(
             diff="--- to_delete.py\n+++ /dev/null\n@@ -1 +0,0 @@\n-# delete me",
             file_path="to_delete.py",
-            base_args=sample_base_args,
+            base_args=base_args,
         )
 
         assert isinstance(result, FileWriteResult)
@@ -83,13 +69,14 @@ def test_deletion_diff(sample_base_args, tmp_path):
         assert not (tmp_path / "to_delete.py").exists()
 
 
-def test_directory_path_error(sample_base_args, tmp_path):
+def test_directory_path_error(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "my_dir").mkdir()
 
     result = apply_diff_to_file(
         diff="--- my_dir\n+++ my_dir\n@@ -1 +1 @@\n-old\n+new",
         file_path="my_dir",
-        base_args=sample_base_args,
+        base_args=base_args,
     )
 
     assert isinstance(result, FileWriteResult)
@@ -97,7 +84,8 @@ def test_directory_path_error(sample_base_args, tmp_path):
     assert "directory" in result.message
 
 
-def test_patch_error(sample_base_args, tmp_path):
+def test_patch_error(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     (tmp_path / "test.py").write_text("original\n")
 
     with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
@@ -106,7 +94,7 @@ def test_patch_error(sample_base_args, tmp_path):
         result = apply_diff_to_file(
             diff="invalid diff",
             file_path="test.py",
-            base_args=sample_base_args,
+            base_args=base_args,
         )
 
         assert isinstance(result, FileWriteResult)
@@ -114,7 +102,8 @@ def test_patch_error(sample_base_args, tmp_path):
         assert "Failed to apply diff" in result.message
 
 
-def test_no_changes_returns_success_false(sample_base_args, tmp_path):
+def test_no_changes_returns_success_false(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     original_content = "print('hello world')\n"
     (tmp_path / "test.py").write_text(original_content)
 
@@ -124,7 +113,7 @@ def test_no_changes_returns_success_false(sample_base_args, tmp_path):
         result = apply_diff_to_file(
             diff="--- test.py\n+++ test.py\n@@ -1 +1 @@\n-old\n+new",
             file_path="test.py",
-            base_args=sample_base_args,
+            base_args=base_args,
         )
 
         assert isinstance(result, FileWriteResult)
@@ -132,9 +121,10 @@ def test_no_changes_returns_success_false(sample_base_args, tmp_path):
         assert "No changes" in result.message
 
 
-def test_reads_disk_version_not_committed_version(sample_base_args, tmp_path):
+def test_reads_disk_version_not_committed_version(create_test_base_args, tmp_path):
     """Verify we read from disk (which formatters may have modified), not git HEAD.
     Claude reads the disk version, so diffs must be applied against it."""
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     # Disk has Prettier-formatted content (what Claude sees)
     (tmp_path / "test.py").write_text("formatted content\n")
 
@@ -146,7 +136,7 @@ def test_reads_disk_version_not_committed_version(sample_base_args, tmp_path):
         result = apply_diff_to_file(
             diff="--- test.py\n+++ test.py\n@@ -1 +1 @@\n-formatted content\n+formatted and modified content",
             file_path="test.py",
-            base_args=sample_base_args,
+            base_args=base_args,
         )
 
         # apply_patch should receive the disk content as original_text
@@ -159,14 +149,15 @@ def test_reads_disk_version_not_committed_version(sample_base_args, tmp_path):
         assert "Updated" in result.message
 
 
-def test_extra_kwargs_ignored(sample_base_args, tmp_path):
+def test_extra_kwargs_ignored(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     with patch("services.git.apply_diff_to_file.apply_patch") as mock_patch:
         mock_patch.return_value = PatchResult(content="new\n", error="")
 
         result = apply_diff_to_file(
             diff="--- test.py\n+++ test.py\n@@ -1 +1 @@\n-old\n+new",
             file_path="test.py",
-            base_args=sample_base_args,
+            base_args=base_args,
             extra_param="ignored",
         )
 
@@ -174,7 +165,8 @@ def test_extra_kwargs_ignored(sample_base_args, tmp_path):
         assert result.success is True
 
 
-def test_nested_file_path(sample_base_args, tmp_path):
+def test_nested_file_path(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(skip_ci=False, clone_dir=str(tmp_path))
     nested_dir = tmp_path / "src" / "utils"
     nested_dir.mkdir(parents=True)
     (nested_dir / "helper.py").write_text("old\n")
@@ -185,7 +177,7 @@ def test_nested_file_path(sample_base_args, tmp_path):
         result = apply_diff_to_file(
             diff="--- src/utils/helper.py\n+++ src/utils/helper.py\n@@ -1 +1 @@\n-old\n+new",
             file_path="src/utils/helper.py",
-            base_args=sample_base_args,
+            base_args=base_args,
         )
 
         assert isinstance(result, FileWriteResult)

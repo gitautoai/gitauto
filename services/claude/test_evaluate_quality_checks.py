@@ -1,13 +1,12 @@
 # pyright: reportArgumentType=false
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+from constants.models import ClaudeModelId
 from services.claude.evaluate_quality_checks import evaluate_quality_checks
 
 
 @patch("services.claude.evaluate_quality_checks.claude")
-@patch("services.claude.evaluate_quality_checks.get_model")
-def test_uses_model_from_get_model(mock_get_model, mock_claude):
-    mock_get_model.return_value = "claude-opus-4-6"
+def test_uses_opus_model(mock_claude):
     mock_content = MagicMock()
     mock_content.text = '{"business_logic": {}}'
     mock_claude.messages.create.return_value = MagicMock(content=[mock_content])
@@ -16,6 +15,7 @@ def test_uses_model_from_get_model(mock_get_model, mock_claude):
         source_content="const x = 1;",
         source_path="src/foo.ts",
         test_files=[("test/foo.spec.ts", "it('works', () => {})")],
+        model=ClaudeModelId.OPUS_4_6,
     )
 
     call_kwargs = mock_claude.messages.create.call_args.kwargs
@@ -23,9 +23,7 @@ def test_uses_model_from_get_model(mock_get_model, mock_claude):
 
 
 @patch("services.claude.evaluate_quality_checks.claude")
-@patch("services.claude.evaluate_quality_checks.get_model")
-def test_uses_max_tokens_matching_model(mock_get_model, mock_claude):
-    mock_get_model.return_value = "claude-opus-4-6"
+def test_uses_max_tokens_matching_model(mock_claude):
     mock_content = MagicMock()
     mock_content.text = '{"business_logic": {}}'
     mock_claude.messages.create.return_value = MagicMock(content=[mock_content])
@@ -34,6 +32,7 @@ def test_uses_max_tokens_matching_model(mock_get_model, mock_claude):
         source_content="const x = 1;",
         source_path="src/foo.ts",
         test_files=[("test/foo.spec.ts", "it('works', () => {})")],
+        model=ClaudeModelId.OPUS_4_6,
     )
 
     call_kwargs = mock_claude.messages.create.call_args.kwargs

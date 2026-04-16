@@ -1,4 +1,5 @@
 from config import GITHUB_APP_GIT_EMAIL, GITHUB_APP_USER_ID, GITHUB_APP_USER_NAME
+from constants.models import DEFAULT_FREE_MODEL
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
 from services.git.git_clone_to_tmp import git_clone_to_tmp
@@ -62,6 +63,7 @@ def retarget_pr(
         pr_creator=pr["user"]["login"],
         verify_consecutive_failures=0,
         quality_gate_fail_count=0,
+        model_id=DEFAULT_FREE_MODEL,
     )
     logger.info("Retargeting PR #%d to %s", pr_number, new_base_branch)
     reset_pr_branch_to_new_base(base_args=base_args, new_base_branch=new_base_branch)

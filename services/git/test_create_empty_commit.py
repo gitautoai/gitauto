@@ -11,16 +11,12 @@ from services.git.git_checkout import git_checkout
 from services.git.git_fetch import git_fetch
 
 
-@pytest.fixture
-def base_args_with_clone(create_test_base_args):
-    return create_test_base_args(
+def test_create_empty_commit_with_clone_dir(create_test_base_args):
+    base_args_with_clone = create_test_base_args(
         clone_url="https://x-access-token:token@github.com/test-owner/test-repo.git",
         new_branch="feature-branch",
         clone_dir="/tmp/test-owner/test-repo/pr-123",
     )
-
-
-def test_create_empty_commit_with_clone_dir(base_args_with_clone):
     with patch("services.git.create_empty_commit.run_subprocess") as mock_subprocess:
         result = create_empty_commit(base_args_with_clone)
 
@@ -46,10 +42,15 @@ def test_create_empty_commit_with_clone_dir(base_args_with_clone):
         )
 
 
-def test_create_empty_commit_skips_pre_commit_hooks(base_args_with_clone):
+def test_create_empty_commit_skips_pre_commit_hooks(create_test_base_args):
     """Reproduces production failure: repos with pre-commit hooks (e.g. lint-staged)
     fail in Lambda because npm can't mkdir in /home/sbx_user1051. --no-verify skips hooks.
     """
+    base_args_with_clone = create_test_base_args(
+        clone_url="https://x-access-token:token@github.com/test-owner/test-repo.git",
+        new_branch="feature-branch",
+        clone_dir="/tmp/test-owner/test-repo/pr-123",
+    )
     with patch("services.git.create_empty_commit.run_subprocess") as mock_subprocess:
         create_empty_commit(base_args_with_clone)
 
@@ -58,7 +59,12 @@ def test_create_empty_commit_skips_pre_commit_hooks(base_args_with_clone):
         assert "--allow-empty" in commit_call[1]["args"]
 
 
-def test_create_empty_commit_failure(base_args_with_clone):
+def test_create_empty_commit_failure(create_test_base_args):
+    base_args_with_clone = create_test_base_args(
+        clone_url="https://x-access-token:token@github.com/test-owner/test-repo.git",
+        new_branch="feature-branch",
+        clone_dir="/tmp/test-owner/test-repo/pr-123",
+    )
     with patch("services.git.create_empty_commit.run_subprocess") as mock_subprocess:
         # Commit fails
         mock_subprocess.side_effect = [
@@ -70,7 +76,12 @@ def test_create_empty_commit_failure(base_args_with_clone):
         assert result is False
 
 
-def test_create_empty_commit_custom_message(base_args_with_clone):
+def test_create_empty_commit_custom_message(create_test_base_args):
+    base_args_with_clone = create_test_base_args(
+        clone_url="https://x-access-token:token@github.com/test-owner/test-repo.git",
+        new_branch="feature-branch",
+        clone_dir="/tmp/test-owner/test-repo/pr-123",
+    )
     with patch("services.git.create_empty_commit.run_subprocess") as mock_subprocess:
         create_empty_commit(base_args_with_clone, message="Custom message")
 
@@ -108,7 +119,9 @@ def test_integration_create_empty_commit_with_clone(local_repo, create_test_base
     sha_before = _get_sha(work_dir, "main")
 
     base_args = create_test_base_args(
-        clone_url=bare_url, new_branch="main", clone_dir=work_dir
+        clone_url=bare_url,
+        new_branch="main",
+        clone_dir=work_dir,
     )
     result = create_empty_commit(base_args, message="Integration test empty commit")
     assert result is True

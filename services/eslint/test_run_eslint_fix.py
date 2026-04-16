@@ -1,32 +1,17 @@
 # pylint: disable=unused-argument
 import json
 import subprocess
-from typing import cast
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
 from constants.aws import SUBPROCESS_TIMEOUT_SECONDS
 from services.eslint.run_eslint_fix import run_eslint_fix
-from services.types.base_args import BaseArgs
-
-
-@pytest.fixture
-def base_args():
-    return cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "token": "test-token",
-            "base_branch": "main",
-            "clone_dir": "/tmp/test-clone",
-        },
-    )
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_skips_non_js_files(base_args):
+async def test_run_eslint_fix_skips_non_js_files(create_test_base_args):
+    base_args = create_test_base_args()
     coro = run_eslint_fix(
         base_args=base_args,
         file_path="test.py",
@@ -38,7 +23,8 @@ async def test_run_eslint_fix_skips_non_js_files(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_skips_empty_content(base_args):
+async def test_run_eslint_fix_skips_empty_content(create_test_base_args):
+    base_args = create_test_base_args()
     coro = run_eslint_fix(
         base_args=base_args,
         file_path="test.ts",
@@ -50,7 +36,8 @@ async def test_run_eslint_fix_skips_empty_content(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_skips_whitespace_only(base_args):
+async def test_run_eslint_fix_skips_whitespace_only(create_test_base_args):
+    base_args = create_test_base_args()
     coro = run_eslint_fix(
         base_args=base_args,
         file_path="test.ts",
@@ -62,7 +49,8 @@ async def test_run_eslint_fix_skips_whitespace_only(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_skips_when_no_config(base_args):
+async def test_run_eslint_fix_skips_when_no_config(create_test_base_args):
+    base_args = create_test_base_args()
     with patch("services.eslint.run_eslint_fix.get_eslint_config", return_value=None):
         coro = run_eslint_fix(
             base_args=base_args,
@@ -75,7 +63,8 @@ async def test_run_eslint_fix_skips_when_no_config(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_sets_npm_cache_env_on_lambda(base_args):
+async def test_run_eslint_fix_sets_npm_cache_env_on_lambda(create_test_base_args):
+    base_args = create_test_base_args()
     eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
 
     def mock_set_npm_cache_env(env):
@@ -113,7 +102,8 @@ async def test_run_eslint_fix_sets_npm_cache_env_on_lambda(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_returns_fixed_content(base_args):
+async def test_run_eslint_fix_returns_fixed_content(create_test_base_args):
+    base_args = create_test_base_args()
     fixed_content = "export const foo = 'fixed';\n"
     eslint_output = json.dumps([{"filePath": "test.js", "messages": []}])
 
@@ -140,7 +130,8 @@ async def test_run_eslint_fix_returns_fixed_content(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_with_unfixable_errors(base_args):
+async def test_run_eslint_fix_with_unfixable_errors(create_test_base_args):
+    base_args = create_test_base_args()
     file_content = "export const foo = 'bar';\n"
     eslint_output = json.dumps(
         [
@@ -188,7 +179,8 @@ async def test_run_eslint_fix_with_unfixable_errors(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_with_json_decode_error(base_args):
+async def test_run_eslint_fix_with_json_decode_error(create_test_base_args):
+    base_args = create_test_base_args()
     file_content = "export const foo = 'bar';\n"
 
     with patch(
@@ -217,9 +209,10 @@ async def test_run_eslint_fix_with_json_decode_error(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_fatal_error_is_non_blocking(base_args):
-    """Fatal ESLint errors (exit code >= 2) are infrastructure issues, not code issues.
-    They should not block task completion by returning lint_errors."""
+async def test_run_eslint_fix_fatal_error_is_non_blocking(create_test_base_args):
+    # Fatal ESLint errors (exit code >= 2) are infrastructure issues, not code issues.
+    # They should not block task completion by returning lint_errors.
+    base_args = create_test_base_args()
     with patch(
         "services.eslint.run_eslint_fix.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
@@ -245,7 +238,8 @@ async def test_run_eslint_fix_fatal_error_is_non_blocking(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_timeout_returns_none(base_args):
+async def test_run_eslint_fix_timeout_returns_none(create_test_base_args):
+    base_args = create_test_base_args()
     with patch(
         "services.eslint.run_eslint_fix.get_eslint_config",
         return_value={"filename": ".eslintrc.json", "content": "{}"},
@@ -278,7 +272,8 @@ async def test_run_eslint_fix_timeout_returns_none(base_args):
     ],
 )
 @pytest.mark.asyncio
-async def test_run_eslint_fix_supported_extensions(base_args, file_path):
+async def test_run_eslint_fix_supported_extensions(create_test_base_args, file_path):
+    base_args = create_test_base_args()
     eslint_output = json.dumps([{"filePath": file_path, "messages": []}])
 
     with patch(
@@ -307,7 +302,8 @@ async def test_run_eslint_fix_supported_extensions(base_args, file_path):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_creates_directories(base_args):
+async def test_run_eslint_fix_creates_directories(create_test_base_args):
+    base_args = create_test_base_args()
     file_content = "const x = 1;"
     eslint_output = json.dumps(
         [{"filePath": "src/deep/nested/test.js", "messages": []}]
@@ -336,7 +332,10 @@ async def test_run_eslint_fix_creates_directories(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_sets_flat_config_false_for_legacy_config(base_args):
+async def test_run_eslint_fix_sets_flat_config_false_for_legacy_config(
+    create_test_base_args,
+):
+    base_args = create_test_base_args()
     eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
 
     with patch(
@@ -365,7 +364,10 @@ async def test_run_eslint_fix_sets_flat_config_false_for_legacy_config(base_args
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_does_not_set_flat_config_for_new_config(base_args):
+async def test_run_eslint_fix_does_not_set_flat_config_for_new_config(
+    create_test_base_args,
+):
+    base_args = create_test_base_args()
     eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
 
     with patch(
@@ -404,7 +406,10 @@ async def test_run_eslint_fix_does_not_set_flat_config_for_new_config(base_args)
     ],
 )
 @pytest.mark.asyncio
-async def test_run_eslint_fix_legacy_config_variants(base_args, config_filename):
+async def test_run_eslint_fix_legacy_config_variants(
+    create_test_base_args, config_filename
+):
+    base_args = create_test_base_args()
     eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
 
     with patch(
@@ -432,9 +437,12 @@ async def test_run_eslint_fix_legacy_config_variants(base_args, config_filename)
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_skips_parser_options_when_config_has_project(base_args):
-    """When the repo's ESLint config already has parserOptions.project,
-    don't override it with --parser-options project:tsconfig.json."""
+async def test_run_eslint_fix_skips_parser_options_when_config_has_project(
+    create_test_base_args,
+):
+    # When the repo's ESLint config already has parserOptions.project,
+    # don't override it with --parser-options project:tsconfig.json.
+    base_args = create_test_base_args()
     eslint_config_content = json.dumps(
         {"parserOptions": {"project": "./tsconfig.eslint.json"}}
     )
@@ -468,9 +476,12 @@ async def test_run_eslint_fix_skips_parser_options_when_config_has_project(base_
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_adds_parser_options_when_config_lacks_project(base_args):
-    """When the repo's ESLint config doesn't have parserOptions.project,
-    add --parser-options project:tsconfig.json."""
+async def test_run_eslint_fix_adds_parser_options_when_config_lacks_project(
+    create_test_base_args,
+):
+    # When the repo's ESLint config doesn't have parserOptions.project,
+    # add --parser-options project:tsconfig.json.
+    base_args = create_test_base_args()
     eslint_output = json.dumps([{"filePath": "src/index.ts", "messages": []}])
 
     with patch(
@@ -501,8 +512,9 @@ async def test_run_eslint_fix_adds_parser_options_when_config_lacks_project(base
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_includes_no_warn_ignored_for_v9(base_args):
-    """--no-warn-ignored is added when package.json has eslint v9+."""
+async def test_run_eslint_fix_includes_no_warn_ignored_for_v9(create_test_base_args):
+    # --no-warn-ignored is added when package.json has eslint v9+.
+    base_args = create_test_base_args()
     eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
 
     with patch(
@@ -535,10 +547,11 @@ async def test_run_eslint_fix_includes_no_warn_ignored_for_v9(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_ignores_file_ignored_message_on_v8(base_args):
-    """ESLint v8 reports 'File ignored because of a matching ignore pattern' with no
-    ruleId when an ignored file is passed explicitly. This must not be treated as a
-    lint error, otherwise the agent loops endlessly trying to fix it."""
+async def test_run_eslint_fix_ignores_file_ignored_message_on_v8(create_test_base_args):
+    # ESLint v8 reports 'File ignored because of a matching ignore pattern' with no
+    # ruleId when an ignored file is passed explicitly. This must not be treated as a
+    # lint error, otherwise the agent loops endlessly trying to fix it.
+    base_args = create_test_base_args()
     # Real ESLint v7 JSON output from foxcom-forms (eslint --format json on an ignored .test.tsx file)
     eslint_output = json.dumps(
         [
@@ -592,9 +605,10 @@ async def test_run_eslint_fix_ignores_file_ignored_message_on_v8(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_excludes_no_warn_ignored_for_v8(base_args):
-    """--no-warn-ignored is NOT added when package.json has eslint v8.
-    This flag causes fatal error (exit code 2) on v8."""
+async def test_run_eslint_fix_excludes_no_warn_ignored_for_v8(create_test_base_args):
+    # --no-warn-ignored is NOT added when package.json has eslint v8.
+    # This flag causes fatal error (exit code 2) on v8.
+    base_args = create_test_base_args()
     eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
 
     with patch(
@@ -627,9 +641,10 @@ async def test_run_eslint_fix_excludes_no_warn_ignored_for_v8(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_includes_max_warnings_zero(base_args):
-    """--max-warnings 0 makes ESLint treat warnings as errors (exit code 1)
-    to match CI behavior where CI=true promotes warnings to errors."""
+async def test_run_eslint_fix_includes_max_warnings_zero(create_test_base_args):
+    # --max-warnings 0 makes ESLint treat warnings as errors (exit code 1)
+    # to match CI behavior where CI=true promotes warnings to errors.
+    base_args = create_test_base_args()
     eslint_output = json.dumps([{"filePath": "test.ts", "messages": []}])
 
     with patch(
@@ -658,10 +673,11 @@ async def test_run_eslint_fix_includes_max_warnings_zero(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_catches_unfixable_warnings(base_args):
-    """Unfixable warnings like no-explicit-any should be reported as lint_errors
-    for SOURCE files. With --max-warnings 0, ESLint returns exit code 1 for
-    warnings, triggering JSON parsing that catches these unfixable warnings."""
+async def test_run_eslint_fix_catches_unfixable_warnings(create_test_base_args):
+    # Unfixable warnings like no-explicit-any should be reported as lint_errors
+    # for SOURCE files. With --max-warnings 0, ESLint returns exit code 1 for
+    # warnings, triggering JSON parsing that catches these unfixable warnings.
+    base_args = create_test_base_args()
     file_content = "export const foo = (x: any) => x;\n"
     eslint_output = json.dumps(
         [
@@ -705,10 +721,11 @@ async def test_run_eslint_fix_catches_unfixable_warnings(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_eslint_fix_skips_messages_without_rule_id(base_args):
-    """Messages without ruleId (e.g., 'File ignored') are infrastructure messages,
-    not code violations. They should be skipped even when --max-warnings 0 causes
-    exit code 1."""
+async def test_run_eslint_fix_skips_messages_without_rule_id(create_test_base_args):
+    # Messages without ruleId (e.g., 'File ignored') are infrastructure messages,
+    # not code violations. They should be skipped even when --max-warnings 0 causes
+    # exit code 1.
+    base_args = create_test_base_args()
     file_content = "const x = 1;\n"
     eslint_output = json.dumps(
         [

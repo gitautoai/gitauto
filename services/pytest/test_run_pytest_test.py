@@ -1,25 +1,27 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
-from typing import cast
 from unittest.mock import patch, MagicMock
 
 import pytest
 
 from services.pytest.run_pytest_test import run_pytest_test
-from services.types.base_args import BaseArgs
 
 
 @pytest.mark.asyncio
 @patch("services.pytest.run_pytest_test.subprocess.run")
 @patch("services.pytest.run_pytest_test.os.path.exists")
-async def test_run_pytest_test_success(mock_exists, mock_subprocess):
+async def test_run_pytest_test_success(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True  # venv/bin/pytest exists
     mock_subprocess.return_value = MagicMock(
         returncode=0, stdout="2 passed in 0.5s", stderr=""
     )
 
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_pytest_test(
         base_args=base_args,
@@ -31,9 +33,11 @@ async def test_run_pytest_test_success(mock_exists, mock_subprocess):
 
 
 @pytest.mark.asyncio
-async def test_run_pytest_test_no_test_files():
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+async def test_run_pytest_test_no_test_files(create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_pytest_test(
         base_args=base_args,
@@ -44,8 +48,12 @@ async def test_run_pytest_test_no_test_files():
 
 
 @pytest.mark.asyncio
-async def test_run_pytest_test_no_clone_dir():
-    base_args = cast(BaseArgs, {"owner": "test", "repo": "test", "clone_dir": ""})
+async def test_run_pytest_test_no_clone_dir(create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="",
+    )
     result = await run_pytest_test(
         base_args=base_args,
         test_file_paths=["tests/test_utils.py"],
@@ -57,9 +65,13 @@ async def test_run_pytest_test_no_clone_dir():
 @pytest.mark.asyncio
 @patch("services.pytest.run_pytest_test.shutil.which", return_value=None)
 @patch("services.pytest.run_pytest_test.os.path.exists", return_value=False)
-async def test_run_pytest_test_no_binary(mock_exists, mock_which):
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+async def test_run_pytest_test_no_binary(
+    mock_exists, mock_which, create_test_base_args
+):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_pytest_test(
         base_args=base_args,
@@ -72,7 +84,9 @@ async def test_run_pytest_test_no_binary(mock_exists, mock_which):
 @pytest.mark.asyncio
 @patch("services.pytest.run_pytest_test.subprocess.run")
 @patch("services.pytest.run_pytest_test.os.path.exists")
-async def test_run_pytest_test_with_failures(mock_exists, mock_subprocess):
+async def test_run_pytest_test_with_failures(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=1,
@@ -80,8 +94,10 @@ async def test_run_pytest_test_with_failures(mock_exists, mock_subprocess):
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_pytest_test(
         base_args=base_args,
@@ -95,7 +111,9 @@ async def test_run_pytest_test_with_failures(mock_exists, mock_subprocess):
 @pytest.mark.asyncio
 @patch("services.pytest.run_pytest_test.subprocess.run")
 @patch("services.pytest.run_pytest_test.os.path.exists")
-async def test_run_pytest_test_exit_code_5_no_tests(mock_exists, mock_subprocess):
+async def test_run_pytest_test_exit_code_5_no_tests(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     mock_exists.return_value = True
     mock_subprocess.return_value = MagicMock(
         returncode=5,
@@ -103,8 +121,10 @@ async def test_run_pytest_test_exit_code_5_no_tests(mock_exists, mock_subprocess
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_pytest_test(
         base_args=base_args,
@@ -116,9 +136,11 @@ async def test_run_pytest_test_exit_code_5_no_tests(mock_exists, mock_subprocess
 
 
 @pytest.mark.asyncio
-async def test_run_pytest_test_filters_non_python_files():
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+async def test_run_pytest_test_filters_non_python_files(create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_pytest_test(
         base_args=base_args,

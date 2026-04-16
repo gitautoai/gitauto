@@ -1,13 +1,11 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
-from typing import cast
 from unittest.mock import patch, AsyncMock
 
 import pytest
 
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.eslint.run_eslint_fix import ESLintResult
-from services.types.base_args import BaseArgs
 from services.jest.run_jest_test import JestResult
 from services.prettier.run_prettier_fix import PrettierResult
 from services.tsc.run_tsc_check import TscResult
@@ -19,23 +17,14 @@ from services.tsc.run_tsc_check import TscResult
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_valid_file_returns_success(
-    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, create_test_base_args
 ):
     mock_read_local_file.return_value = "function foo() { return 1; }"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
     mock_eslint.return_value = ESLintResult(
         success=True, content=None, lint_errors=None, coverage_errors=None
     )
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
-    )
+    base_args = create_test_base_args()
     result = await verify_task_is_ready(
         base_args=base_args,
         run_phpunit=False,
@@ -54,7 +43,7 @@ async def test_valid_file_returns_success(
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_prettier_fails_returns_errors(
-    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, create_test_base_args
 ):
     mock_read_local_file.return_value = "function foo() { return 1;"
     mock_prettier.return_value = PrettierResult(
@@ -63,16 +52,7 @@ async def test_prettier_fails_returns_errors(
     mock_eslint.return_value = ESLintResult(
         success=True, content=None, lint_errors=None, coverage_errors=None
     )
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
-    )
+    base_args = create_test_base_args()
     result = await verify_task_is_ready(
         base_args=base_args,
         run_phpunit=False,
@@ -91,7 +71,7 @@ async def test_prettier_fails_returns_errors(
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_eslint_fails_returns_errors(
-    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, create_test_base_args
 ):
     mock_read_local_file.return_value = "function foo() { return 1; }"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
@@ -101,16 +81,7 @@ async def test_eslint_fails_returns_errors(
         lint_errors=None,
         coverage_errors="Parsing error: Unexpected token",
     )
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
-    )
+    base_args = create_test_base_args()
     result = await verify_task_is_ready(
         base_args=base_args,
         run_phpunit=False,
@@ -125,17 +96,8 @@ async def test_eslint_fails_returns_errors(
 
 @pytest.mark.asyncio
 @patch("services.agents.verify_task_is_ready.read_local_file")
-async def test_non_js_files_skipped(mock_read_local_file):
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
-    )
+async def test_non_js_files_skipped(mock_read_local_file, create_test_base_args):
+    base_args = create_test_base_args()
     result = await verify_task_is_ready(
         base_args=base_args,
         run_phpunit=False,
@@ -149,17 +111,8 @@ async def test_non_js_files_skipped(mock_read_local_file):
 
 
 @pytest.mark.asyncio
-async def test_empty_file_list():
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
-    )
+async def test_empty_file_list(create_test_base_args):
+    base_args = create_test_base_args()
     result = await verify_task_is_ready(
         base_args=base_args,
         run_phpunit=False,
@@ -177,19 +130,10 @@ async def test_empty_file_list():
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_file_not_found_skipped(
-    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, create_test_base_args
 ):
     mock_read_local_file.return_value = None
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
-    )
+    base_args = create_test_base_args()
     result = await verify_task_is_ready(
         base_args=base_args,
         run_phpunit=False,
@@ -207,7 +151,7 @@ async def test_file_not_found_skipped(
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_fixes_applied_and_pushed(
-    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, create_test_base_args
 ):
     original = "function foo() { return 1; }"
     formatted = "function foo() {\n  return 1;\n}"
@@ -218,16 +162,7 @@ async def test_fixes_applied_and_pushed(
     mock_eslint.return_value = ESLintResult(
         success=True, content=None, lint_errors=None, coverage_errors=None
     )
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
-    )
+    base_args = create_test_base_args()
     result = await verify_task_is_ready(
         base_args=base_args,
         run_phpunit=False,
@@ -246,7 +181,7 @@ async def test_fixes_applied_and_pushed(
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_eslint_partial_fix_pushes_and_reports_errors(
-    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, create_test_base_args
 ):
     original = "const x = 1\nconst unused = 2;"
     fixed = "const x = 1;\nconst unused = 2;"
@@ -258,16 +193,7 @@ async def test_eslint_partial_fix_pushes_and_reports_errors(
         lint_errors="Line 2: 'unused' is defined but never used (no-unused-vars)",
         coverage_errors=None,
     )
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
-    )
+    base_args = create_test_base_args()
     result = await verify_task_is_ready(
         base_args=base_args,
         run_phpunit=False,
@@ -288,7 +214,7 @@ async def test_eslint_partial_fix_pushes_and_reports_errors(
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_no_explicit_any_ignored(
-    mock_read_local_file, mock_prettier, mock_eslint, mock_commit
+    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, create_test_base_args
 ):
     mock_read_local_file.return_value = (
         "export async function getUsers(): Promise<any[]> { return []; }"
@@ -300,15 +226,9 @@ async def test_no_explicit_any_ignored(
         lint_errors="Line 79: Unexpected any. Specify a different type (@typescript-eslint/no-explicit-any); Line 111: Unexpected any. Specify a different type (@typescript-eslint/no-explicit-any)",
         coverage_errors=None,
     )
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "Foxquilt",
-            "repo": "foxden-auth-service",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
+    base_args = create_test_base_args(
+        owner="Foxquilt",
+        repo="foxden-auth-service",
     )
     result = await verify_task_is_ready(
         base_args=base_args,
@@ -330,7 +250,12 @@ async def test_no_explicit_any_ignored(
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_run_tsc_reports_type_errors(
-    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, mock_tsc
+    mock_read_local_file,
+    mock_prettier,
+    mock_eslint,
+    mock_commit,
+    mock_tsc,
+    create_test_base_args,
 ):
     mock_read_local_file.return_value = "const x: number = 'hello';"
     mock_prettier.return_value = PrettierResult(success=True, content=None, error=None)
@@ -345,16 +270,7 @@ async def test_run_tsc_reports_type_errors(
         error_files={"src/index.ts"},
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
-    )
+    base_args = create_test_base_args()
     result = await verify_task_is_ready(
         base_args=base_args,
         run_phpunit=False,
@@ -376,7 +292,12 @@ async def test_run_tsc_reports_type_errors(
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_run_jest_reports_test_failures(
-    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, mock_jest
+    mock_read_local_file,
+    mock_prettier,
+    mock_eslint,
+    mock_commit,
+    mock_jest,
+    create_test_base_args,
 ):
     mock_read_local_file.return_value = (
         "describe('test', () => { it('fails', () => { expect(true).toBe(false); }); });"
@@ -392,16 +313,7 @@ async def test_run_jest_reports_test_failures(
         runner_name="jest",
     )
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
-    )
+    base_args = create_test_base_args()
     result = await verify_task_is_ready(
         base_args=base_args,
         run_phpunit=False,
@@ -420,7 +332,12 @@ async def test_run_jest_reports_test_failures(
 @patch("services.agents.verify_task_is_ready.run_prettier_fix", new_callable=AsyncMock)
 @patch("services.agents.verify_task_is_ready.read_local_file")
 async def test_impl_files_excluded_from_jest(
-    mock_read_local_file, mock_prettier, mock_eslint, mock_commit, mock_jest
+    mock_read_local_file,
+    mock_prettier,
+    mock_eslint,
+    mock_commit,
+    mock_jest,
+    create_test_base_args,
 ):
     """Impl files must NOT be passed to run_jest_test at all.
 
@@ -436,16 +353,7 @@ async def test_impl_files_excluded_from_jest(
     )
     mock_jest.return_value = JestResult()
 
-    base_args = cast(
-        BaseArgs,
-        {
-            "owner": "test",
-            "repo": "test",
-            "token": "test",
-            "base_branch": "main",
-            "clone_dir": "/tmp/clone",
-        },
-    )
+    base_args = create_test_base_args()
     await verify_task_is_ready(
         base_args=base_args,
         run_phpunit=False,

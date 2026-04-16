@@ -1,50 +1,19 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import cast
 
-from services.types.base_args import BaseArgs
 from utils.files.get_local_file_tree import get_local_file_tree
 
 
-def _make_base_args(clone_dir: str):
-    return cast(
-        BaseArgs,
-        {
-            "owner_type": "Organization",
-            "owner_id": 1,
-            "owner": "test-owner",
-            "repo_id": 1,
-            "repo": "test-repo",
-            "clone_url": "https://x-access-token:test-token@github.com/test-owner/test-repo.git",
-            "is_fork": False,
-            "pr_number": 1,
-            "pr_title": "Test",
-            "pr_body": "Test body",
-            "pr_creator": "tester",
-            "base_branch": "main",
-            "new_branch": "feature",
-            "installation_id": 1,
-            "token": "test-token",
-            "sender_id": 1,
-            "sender_name": "tester",
-            "sender_email": None,
-            "reviewers": [],
-            "github_urls": [],
-            "other_urls": [],
-            "clone_dir": clone_dir,
-        },
-    )
-
-
-def test_lists_root_directory():
+def test_lists_root_directory(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
         os.makedirs(os.path.join(tmp, "src"))
         os.makedirs(os.path.join(tmp, "node_modules"))
         Path(tmp, "README.md").touch()
         Path(tmp, "package.json").touch()
 
-        result = get_local_file_tree(base_args=_make_base_args(tmp))
+        base_args = create_test_base_args(clone_dir=tmp)
+        result = get_local_file_tree(base_args=base_args)
 
         assert "src/" in result
         assert "node_modules/" in result
@@ -52,65 +21,69 @@ def test_lists_root_directory():
         assert "package.json" in result
 
 
-def test_lists_subdirectory():
+def test_lists_subdirectory(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
         os.makedirs(os.path.join(tmp, "node_modules", "@aws-sdk", "client-scheduler"))
         Path(
             tmp, "node_modules", "@aws-sdk", "client-scheduler", "package.json"
         ).touch()
 
+        base_args = create_test_base_args(clone_dir=tmp)
         result = get_local_file_tree(
-            base_args=_make_base_args(tmp),
+            base_args=base_args,
             dir_path="node_modules/@aws-sdk/client-scheduler",
         )
 
         assert "package.json" in result
 
 
-def test_nonexistent_directory_returns_empty():
+def test_nonexistent_directory_returns_empty(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
-        result = get_local_file_tree(
-            base_args=_make_base_args(tmp), dir_path="nonexistent"
-        )
+        base_args = create_test_base_args(clone_dir=tmp)
+        result = get_local_file_tree(base_args=base_args, dir_path="nonexistent")
 
         assert result == []
 
 
-def test_empty_directory_returns_empty():
+def test_empty_directory_returns_empty(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
         os.makedirs(os.path.join(tmp, "empty"))
 
-        result = get_local_file_tree(base_args=_make_base_args(tmp), dir_path="empty")
+        base_args = create_test_base_args(clone_dir=tmp)
+        result = get_local_file_tree(base_args=base_args, dir_path="empty")
 
         assert result == []
 
 
-def test_dirs_sorted_before_files():
+def test_dirs_sorted_before_files(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
         os.makedirs(os.path.join(tmp, "b_dir"))
         os.makedirs(os.path.join(tmp, "a_dir"))
         Path(tmp, "z_file.py").touch()
         Path(tmp, "a_file.py").touch()
 
-        result = get_local_file_tree(base_args=_make_base_args(tmp))
+        base_args = create_test_base_args(clone_dir=tmp)
+        result = get_local_file_tree(base_args=base_args)
 
         assert result == ["a_dir/", "b_dir/", "a_file.py", "z_file.py"]
 
 
-def test_strips_slashes_from_dir_path():
+def test_strips_slashes_from_dir_path(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
         os.makedirs(os.path.join(tmp, "src"))
         Path(tmp, "src", "main.py").touch()
 
-        result = get_local_file_tree(base_args=_make_base_args(tmp), dir_path="/src/")
+        base_args = create_test_base_args(clone_dir=tmp)
+        result = get_local_file_tree(base_args=base_args, dir_path="/src/")
 
         assert "main.py" in result
 
 
-def test_dot_dir_path_shows_root():
+def test_dot_dir_path_shows_root(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
         Path(tmp, "file.txt").touch()
 
-        result = get_local_file_tree(base_args=_make_base_args(tmp), dir_path=".")
+        base_args = create_test_base_args(clone_dir=tmp)
+        result = get_local_file_tree(base_args=base_args, dir_path=".")
 
         assert "file.txt" in result

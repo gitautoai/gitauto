@@ -5,6 +5,7 @@ import random
 os.environ.setdefault("GITAUTO_API_KEY", "test-api-key")
 
 import pytest
+from constants.models import ModelId, USER_SELECTABLE_MODELS
 from services.github.token.get_installation_token import get_installation_access_token
 from services.types.base_args import BaseArgs
 
@@ -39,7 +40,12 @@ def test_token():
 # Helper function as fixture - returns a function that can be called with overrides
 @pytest.fixture
 def create_test_base_args():
-    def _create(**overrides) -> BaseArgs:
+    def _create(*, model_id: ModelId | None = None, **overrides) -> BaseArgs:
+        selected: ModelId = (
+            model_id
+            if model_id is not None
+            else random.choice(list(USER_SELECTABLE_MODELS))
+        )
         defaults: BaseArgs = {
             "owner_type": "User",
             "owner_id": random.randint(1, 999999),
@@ -66,6 +72,7 @@ def create_test_base_args():
             "github_urls": [],
             "other_urls": [],
             "clone_dir": "/tmp/test-owner/test-repo/pr-123",
+            "model_id": selected,
             "verify_consecutive_failures": 0,
             "quality_gate_fail_count": 0,
         }

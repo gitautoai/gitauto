@@ -1,0 +1,368 @@
+[
+  {
+    "name": "apply_diff_to_file",
+    "description": "Applies a diff to an EXISTING file in the local clone and commits the change to the PR branch. Do NOT use this to create new files - use replace_remote_file_content instead. For targeted edits, prefer search_and_replace which uses content matching instead of line numbers.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The full path to the file within the repository. For example, 'src/openai/__init__.py'. NEVER EVER be the same as the file_path in previous function calls."
+        },
+        "diff": {
+          "type": "string",
+          "description": "\nA UNIFIED DIFF FORMAT with ZERO CONTEXT LINES like command `diff -U0` or `diff --unified=0`. This diff must specifically be in one of the following three formats: addition, modification, or deletion:\n\n1. For existing files: First, try to modify existing files that match the intended functionality.\n\n1-1. For modified files (Replace lines of code)\n\n```diff(unified=0)\n--- a/path/to/file1\n+++ b/path/to/file1\n@@ -5,1 +5,1 @@\n- original line 5\n+ modified line 5\n```\n\n1-2. For modified files (Remove lines of code)\n\n```diff(unified=0)\n--- a/path/to/file2\n+++ b/path/to/file2\n@@ -10,1 +10,0 @@\n- original line 10\n```\n\n1-3. For modified files (Add lines of code)\n\n```diff(unified=0)\n--- a/path/to/file3\n+++ b/path/to/file3\n@@ -15,0 +15,1 @@\n+ added line 15\n```\n\n1-4. For modified files (Remove markdown bullet points)\n\n```diff(unified=0)\n--- a/path/to/file4.md\n+++ b/path/to/file4.md\n@@ -20,3 +20,0 @@\n- - First bullet point\n- - Second bullet point\n- - Third bullet point\n```\n\n2. For new files (IMPORTANT: Only create new files if no existing file can be modified to achieve the desired functionality. Never create files with temporary names or suffixes like 'style.css_mod1' or 'index.html_mod1')\n\n```diff(unified=0)\n--- /dev/null\n+++ b/path/to/new/file\n@@ -0,0 +1,3 @@\n+ added line 1\n+ added line 2\n+ added line 3\n```\n\n## Hunk header format rules\n\n- A hunk represents where changes occur in a file.\n- A hunk header should be in the following format: `@@ -start1,length1 +start2,length2 @@`.\n- start1 and start2 denote the starting line number for the original and modified files, respectively.\n- length1 and length2 denote the number of lines the change hunk applies to for each file.\n- Hunk headers MUST order by start1 and start2 in ascending order.\n\n## Line ending rules\n\n- Line ending MUST be LF.\n\n## Other rules about diff format\n\n- NEVER EVER include any comments or explanations.\n- NEVER EVER include any context lines around changed lines. ONLY include the changed lines.\n- Each function call MUST generate exactly ONE hunk (one @@ header) for ONE change block.\n"
+        }
+      },
+      "required": [
+        "file_path",
+        "diff"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "create_comment",
+    "description": "Creates a note/notification on the GitHub pull request. The user is not there - they will see it later. After commenting, continue working on what you CAN do. WHEN TO USE: To inform the user about something they need to know (e.g., you are restricted to test files but the fix requires source file changes, or secrets need to be added via GitHub UI). WHEN NOT TO USE: Status updates, progress reports, or asking questions. WHAT TO SAY: State the fact briefly - what you found and what the user needs to do later. Do not ask questions.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "string",
+          "description": "The comment text to post."
+        }
+      },
+      "required": [
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "create_directory",
+    "description": "Creates a new directory in the repository. Use this BEFORE writing files to a new directory path that doesn't exist yet. This helps organize test files and source files in the correct location.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "dir_path": {
+          "type": "string",
+          "description": "Directory path to create. For example, if 'src/components/auth' doesn't exist and you need to write a file there, pass 'src/components/auth'."
+        }
+      },
+      "required": [
+        "dir_path"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "curl",
+    "description": "Fetch raw content from a URL. Best for JSON APIs and raw text. For HTML pages, use web_fetch instead \u2014 curl truncates HTML responses to avoid excessive token usage.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "The full URL to fetch content from (must start with https://)."
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "delete_file",
+    "description": "Deletes a file from the GitHub repository. Use this to remove unused or duplicate files that cause conflicts.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The full path to the file within the repository. For example, 'src/openai/__init__.py'. NEVER EVER be the same as the file_path in previous function calls."
+        }
+      },
+      "required": [
+        "file_path"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "forget_messages",
+    "description": "Remove file contents from conversation history to save tokens. Use after reading reference files for pattern learning: once you've extracted the patterns you need, forget the file contents. Does NOT delete files from disk - only removes their content from the conversation context.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "file_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of file paths whose content should be removed from context."
+        }
+      },
+      "required": [
+        "file_paths"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "git_revert_file",
+    "description": "Reverts a single file to its state before the agent started making changes. Use this when you've gotten lost or your changes to a file are too broken to fix - this lets you start over for that file. Only affects the specified file - other files are untouched.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The full path to the file within the repository. For example, 'src/openai/__init__.py'. NEVER EVER be the same as the file_path in previous function calls."
+        }
+      },
+      "required": [
+        "file_path"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "get_local_file_tree",
+    "description": "Lists files and directories at a specific directory path in the local clone. Works like 'ls' command - shows contents of the specified directory, or root if no dir_path specified. Can see node_modules if dependencies have been installed.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "dir_path": {
+          "type": "string",
+          "description": "Directory path to list contents of. Use empty string or omit for root directory. Examples: 'src', 'node_modules/@aws-sdk', 'dist'."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "move_file",
+    "description": "Moves a file to a new location in the GitHub repository. This is useful for resolving naming conflicts, improving code organization, or fixing pytest import collisions caused by duplicate filenames.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "old_file_path": {
+          "type": "string",
+          "description": "The current path of the file to be moved. For example, 'src/old_name.py'."
+        },
+        "new_file_path": {
+          "type": "string",
+          "description": "The new path for the file. For example, 'src/new_name.py'. Must be different from old_file_path."
+        }
+      },
+      "required": [
+        "old_file_path",
+        "new_file_path"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "query_file",
+    "description": "Ask a question about a file without loading its full content into context. The file is read by a faster model that returns only the answer. Use when you need to know something ABOUT a file (patterns, conventions, framework, structure) but don't need the exact code for editing. Use get_local_file_content instead when you need exact code to edit.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "File path relative to the repository root."
+        },
+        "prompt": {
+          "type": "string",
+          "description": "What to find out about the file. Be specific."
+        }
+      },
+      "required": [
+        "file_path",
+        "prompt"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "run_command",
+    "description": "Run a read-only shell command to look up package versions or dependencies. Allowed: npm (view/list/outdated/search), yarn (info/list/why), composer (show/outdated), pip (show/list/index), node -v, php -v/-m. Use this instead of fetching HTML pages for package version lookups.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "The shell command to run (e.g. 'npm view @circleci/node version')."
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "search_and_replace",
+    "description": "Edits an EXISTING file by finding an exact string match and replacing it. More reliable than apply_diff_to_file because it uses content matching instead of line numbers. Use this for targeted edits to existing files.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The full path to the file within the repository. For example, 'src/openai/__init__.py'. NEVER EVER be the same as the file_path in previous function calls."
+        },
+        "old_string": {
+          "type": "string",
+          "description": "The exact string to find in the file. Must match exactly ONE location. If it matches multiple locations, add more surrounding context lines to make it unique."
+        },
+        "new_string": {
+          "type": "string",
+          "description": "The replacement string. Can be empty to delete the matched text."
+        }
+      },
+      "required": [
+        "file_path",
+        "old_string",
+        "new_string"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "search_local_file_contents",
+    "description": "Search for keywords in the local clone of the repository (PR branch). Returns matching file paths AND the matching lines with line numbers. Use this to find files containing specific variable names, function names, class names, or other identifiers. Especially if you change variable definitions, as they are likely used elsewhere. To reduce bugs, search multiple times from as many angles as possible.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "The keyword to search for. Use a single specific identifier (variable name, function name, class name). Regex is not supported."
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "switch_node_version",
+    "description": "Switches the active Node.js version using `n`. Use this when you see NODE_MODULE_VERSION mismatch errors or need a specific Node version for the repo. The version is a major number like '20' or '18'.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "The Node.js major version to switch to. For example, '20', '18', '22'."
+        }
+      },
+      "required": [
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "verify_task_is_complete",
+    "description": "Call this when you have finished making all required changes for the ENTIRE original issue - not after just one step. You MUST call this to complete the task - do not just stop calling tools.",
+    "input_schema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "web_fetch",
+    "description": "Fetch a webpage, extract relevant information using a prompt, and return a summary. Use this to read documentation, API references, or any URL relevant to the task. Only fetch URLs that are relevant to the task.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "The full URL to fetch content from (must start with https://)."
+        },
+        "prompt": {
+          "type": "string",
+          "description": "What information to extract from the page. Be specific about what you need."
+        }
+      },
+      "required": [
+        "url",
+        "prompt"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "write_and_commit_file",
+    "description": "Replaces the entire content of a file and commits the change to the PR branch. Use this to create NEW files or when the entire file needs to be rewritten. For targeted edits to existing files, prefer search_and_replace instead.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The full path to the file within the repository. For example, 'src/openai/__init__.py'. NEVER EVER be the same as the file_path in previous function calls."
+        },
+        "file_content": {
+          "type": "string",
+          "description": "The new content to replace the existing file content with."
+        }
+      },
+      "required": [
+        "file_path",
+        "file_content"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "get_local_file_content",
+    "description": "Reads the content of a file from the local clone. Can read any file on disk including those not tracked by git (e.g., node_modules). IMPORTANT: Always read the FULL file by default - do NOT use start_line/end_line/line_number/keyword to truncate the read. Only use start_line/end_line for files over 2000 lines. Truncating reads causes you to miss critical context like required fields, data structures, and execution order. NOTE: For large generated files (lockfiles, bundled output, etc.) over 2000 lines, you MUST use keyword or start_line/end_line to read specific sections. Full reads of such files will be rejected.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "The full path to the file within the repository. For example, 'src/openai/__init__.py'. NEVER EVER be the same as the file_path in previous function calls."
+        },
+        "line_number": {
+          "type": "integer",
+          "description": "If you already know the line number of interest when opening a file, use this. The 5 lines before and after this line number will be retrieved. For example, use it when checking the surrounding lines of a specific line number if the diff is incorrect. Cannot be used with start_line/end_line."
+        },
+        "keyword": {
+          "type": "string",
+          "description": "The keyword to search for in a file. For example, 'variable_name'. Exact matches only."
+        },
+        "start_line": {
+          "type": "integer",
+          "description": "Starting line number for a specific range of lines to retrieve from the file. If end_line is not provided, will retrieve from start_line to end of file."
+        },
+        "end_line": {
+          "type": "integer",
+          "description": "Ending line number for a specific range of lines to retrieve from the file. If start_line is not provided, will retrieve from beginning of file to end_line."
+        }
+      },
+      "required": [
+        "file_path"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

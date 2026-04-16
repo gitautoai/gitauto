@@ -2,7 +2,7 @@
 from anthropic.types import ToolUnionParam
 
 # Local imports
-from constants.claude import ClaudeModelId
+from constants.models import ClaudeModelId
 from services.claude.chat_with_claude_simple import chat_with_claude_simple
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.read_local_file import read_local_file

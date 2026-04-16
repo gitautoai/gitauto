@@ -1,31 +1,16 @@
 # pylint: disable=unused-argument
 import subprocess
-from typing import cast
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
 from constants.aws import SUBPROCESS_TIMEOUT_SECONDS
 from services.prettier.run_prettier_fix import run_prettier_fix
-from services.types.base_args import BaseArgs
-
-
-@pytest.fixture
-def base_args():
-    return cast(
-        BaseArgs,
-        {
-            "owner": "test-owner",
-            "repo": "test-repo",
-            "token": "test-token",
-            "base_branch": "main",
-            "clone_dir": "/tmp/test-clone",
-        },
-    )
 
 
 @pytest.mark.asyncio
-async def test_run_prettier_fix_success(base_args):
+async def test_run_prettier_fix_success(create_test_base_args):
+    base_args = create_test_base_args()
     with patch(
         "services.prettier.run_prettier_fix.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},
@@ -54,7 +39,9 @@ async def test_run_prettier_fix_success(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_prettier_fix_sets_npm_cache_env_on_lambda(base_args):
+async def test_run_prettier_fix_sets_npm_cache_env_on_lambda(create_test_base_args):
+    base_args = create_test_base_args()
+
     def mock_set_npm_cache_env(env):
         env["npm_config_cache"] = "/tmp/.npm"
 
@@ -88,7 +75,8 @@ async def test_run_prettier_fix_sets_npm_cache_env_on_lambda(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_prettier_fix_empty_content(base_args):
+async def test_run_prettier_fix_empty_content(create_test_base_args):
+    base_args = create_test_base_args()
     coro = run_prettier_fix(
         base_args=base_args,
         file_path="src/index.ts",
@@ -101,7 +89,8 @@ async def test_run_prettier_fix_empty_content(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_prettier_fix_whitespace_only(base_args):
+async def test_run_prettier_fix_whitespace_only(create_test_base_args):
+    base_args = create_test_base_args()
     coro = run_prettier_fix(
         base_args=base_args,
         file_path="src/index.ts",
@@ -114,7 +103,8 @@ async def test_run_prettier_fix_whitespace_only(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_prettier_fix_unsupported_file(base_args):
+async def test_run_prettier_fix_unsupported_file(create_test_base_args):
+    base_args = create_test_base_args()
     coro = run_prettier_fix(
         base_args=base_args,
         file_path="src/main.py",
@@ -127,7 +117,8 @@ async def test_run_prettier_fix_unsupported_file(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_prettier_fix_skips_when_no_config(base_args):
+async def test_run_prettier_fix_skips_when_no_config(create_test_base_args):
+    base_args = create_test_base_args()
     with patch(
         "services.prettier.run_prettier_fix.get_prettier_config", return_value=None
     ):
@@ -142,7 +133,8 @@ async def test_run_prettier_fix_skips_when_no_config(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_prettier_fix_subprocess_failure(base_args):
+async def test_run_prettier_fix_subprocess_failure(create_test_base_args):
+    base_args = create_test_base_args()
     with patch(
         "services.prettier.run_prettier_fix.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},
@@ -168,7 +160,8 @@ async def test_run_prettier_fix_subprocess_failure(base_args):
 
 
 @pytest.mark.asyncio
-async def test_run_prettier_fix_timeout(base_args):
+async def test_run_prettier_fix_timeout(create_test_base_args):
+    base_args = create_test_base_args()
     with patch(
         "services.prettier.run_prettier_fix.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},
@@ -209,7 +202,8 @@ async def test_run_prettier_fix_timeout(base_args):
     ],
 )
 @pytest.mark.asyncio
-async def test_run_prettier_fix_supported_extensions(base_args, file_path):
+async def test_run_prettier_fix_supported_extensions(create_test_base_args, file_path):
+    base_args = create_test_base_args()
     with patch(
         "services.prettier.run_prettier_fix.get_prettier_config",
         return_value={"filename": ".prettierrc", "content": "{}"},

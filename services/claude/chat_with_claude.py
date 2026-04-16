@@ -8,7 +8,8 @@ from anthropic._exceptions import OverloadedError
 from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 
 # Local imports
-from constants.claude import CONTEXT_WINDOW, MAX_OUTPUT_TOKENS, ClaudeModelId
+from constants.claude import CONTEXT_WINDOW, MAX_OUTPUT_TOKENS
+from constants.models import ClaudeModelId
 from services.claude.client import claude
 from services.claude.strip_strict_from_tools import strip_strict_from_tools
 from services.claude.exceptions import (

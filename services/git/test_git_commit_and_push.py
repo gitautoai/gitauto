@@ -2,59 +2,25 @@
 import os
 import subprocess
 import tempfile
-from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.git_commit_and_push import git_commit_and_push
-from services.types.base_args import BaseArgs
 
 
-def _make_base_args():
-    return cast(
-        BaseArgs,
-        {
-            "owner_type": "Organization",
-            "owner_id": 123,
-            "owner": "test-owner",
-            "repo_id": 456,
-            "repo": "test-repo",
-            "clone_url": "https://x-access-token:token@github.com/test-owner/test-repo.git",
-            "is_fork": False,
-            "base_branch": "main",
-            "new_branch": "gitauto/issue-1",
-            "installation_id": 789,
-            "token": "test-token",
-            "sender_id": 1,
-            "sender_name": "test-user",
-            "sender_email": "test@example.com",
-            "sender_display_name": "Test User",
-            "reviewers": [],
-            "github_urls": [],
-            "other_urls": [],
-            "clone_dir": "/tmp/test-owner/test-repo/pr-1",
-            "pr_number": 1,
-            "pr_title": "Test PR",
-            "pr_body": "",
-            "pr_comments": [],
-            "pr_creator": "test-user",
-        },
-    )
-
-
-def test_git_commit_and_push_success():
+def test_git_commit_and_push_success(create_test_base_args):
     with patch("services.git.git_commit_and_push.run_subprocess"):
         result = git_commit_and_push(
-            base_args=_make_base_args(),
+            base_args=create_test_base_args(),
             message="Replace content of src/app.py",
             files=["src/app.py"],
         )
         assert result is True
 
 
-def test_git_commit_and_push_add_fails():
+def test_git_commit_and_push_add_fails(create_test_base_args):
     call_count = 0
 
     def mock_run(args, cwd):
@@ -67,14 +33,14 @@ def test_git_commit_and_push_add_fails():
 
     with patch("services.git.git_commit_and_push.run_subprocess", side_effect=mock_run):
         result = git_commit_and_push(
-            base_args=_make_base_args(),
+            base_args=create_test_base_args(),
             message="Replace content of bad.py",
             files=["bad.py"],
         )
         assert result is False
 
 
-def test_git_commit_and_push_commit_fails():
+def test_git_commit_and_push_commit_fails(create_test_base_args):
     def mock_run(args, cwd):
         if args[:2] == ["git", "commit"]:
             raise ValueError("Command failed: nothing to commit")
@@ -82,14 +48,14 @@ def test_git_commit_and_push_commit_fails():
 
     with patch("services.git.git_commit_and_push.run_subprocess", side_effect=mock_run):
         result = git_commit_and_push(
-            base_args=_make_base_args(),
+            base_args=create_test_base_args(),
             message="Update file.py",
             files=["file.py"],
         )
         assert result is False
 
 
-def test_git_commit_and_push_push_fails():
+def test_git_commit_and_push_push_fails(create_test_base_args):
     def mock_run(args, cwd):
         if args[:2] == ["git", "push"]:
             raise ValueError("Command failed: failed to push")
@@ -97,14 +63,14 @@ def test_git_commit_and_push_push_fails():
 
     with patch("services.git.git_commit_and_push.run_subprocess", side_effect=mock_run):
         result = git_commit_and_push(
-            base_args=_make_base_args(),
+            base_args=create_test_base_args(),
             message="Update file.py",
             files=["file.py"],
         )
         assert result is False
 
 
-def test_git_commit_and_push_skip_ci():
+def test_git_commit_and_push_skip_ci(create_test_base_args):
     commit_args_captured = []
 
     def mock_run(args, cwd):
@@ -113,7 +79,7 @@ def test_git_commit_and_push_skip_ci():
             commit_args_captured = args
         return MagicMock(returncode=0, stdout="")
 
-    base_args = _make_base_args()
+    base_args = create_test_base_args()
     base_args["skip_ci"] = True
 
     with patch("services.git.git_commit_and_push.run_subprocess", side_effect=mock_run):
@@ -127,7 +93,7 @@ def test_git_commit_and_push_skip_ci():
         assert "[skip ci]" in commit_args_captured[3]
 
 
-def test_git_commit_and_push_stages_specific_files():
+def test_git_commit_and_push_stages_specific_files(create_test_base_args):
     add_args_captured = []
 
     def mock_run(args, cwd):
@@ -138,7 +104,7 @@ def test_git_commit_and_push_stages_specific_files():
 
     with patch("services.git.git_commit_and_push.run_subprocess", side_effect=mock_run):
         result = git_commit_and_push(
-            base_args=_make_base_args(),
+            base_args=create_test_base_args(),
             message="Update old.py, new.py",
             files=["old.py", "new.py"],
         )
@@ -147,7 +113,7 @@ def test_git_commit_and_push_stages_specific_files():
         assert "new.py" in add_args_captured
 
 
-def test_git_commit_and_push_force_push():
+def test_git_commit_and_push_force_push(create_test_base_args):
     push_args_captured = []
 
     def mock_run(args, cwd):
@@ -158,7 +124,7 @@ def test_git_commit_and_push_force_push():
 
     with patch("services.git.git_commit_and_push.run_subprocess", side_effect=mock_run):
         result = git_commit_and_push(
-            base_args=_make_base_args(),
+            base_args=create_test_base_args(),
             message="Rebase onto release/20260422",
             files=["app.py"],
             force=True,
@@ -167,7 +133,7 @@ def test_git_commit_and_push_force_push():
         assert "--force-with-lease" in push_args_captured
 
 
-def test_git_commit_and_push_no_force_by_default():
+def test_git_commit_and_push_no_force_by_default(create_test_base_args):
     push_args_captured = []
 
     def mock_run(args, cwd):
@@ -178,7 +144,7 @@ def test_git_commit_and_push_no_force_by_default():
 
     with patch("services.git.git_commit_and_push.run_subprocess", side_effect=mock_run):
         result = git_commit_and_push(
-            base_args=_make_base_args(),
+            base_args=create_test_base_args(),
             message="Normal push",
             files=["app.py"],
         )

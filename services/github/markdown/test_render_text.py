@@ -1,3 +1,4 @@
+# pylint: disable=import-error,no-name-in-module
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -12,7 +13,9 @@ from services.github.markdown.render_text import render_text
 def mock_base_args(create_test_base_args):
     """Fixture providing test BaseArgs."""
     return create_test_base_args(
-        owner="test-owner", repo="test-repo", token="test-token-123"
+        owner="test-owner",
+        repo="test-repo",
+        token="test-token-123",
     )
 
 
@@ -57,7 +60,11 @@ def mock_create_headers(mock_headers):
 @pytest.fixture
 def integration_base_args(test_owner, test_repo, test_token, create_test_base_args):
     """Fixture providing real BaseArgs for integration testing."""
-    return create_test_base_args(owner=test_owner, repo=test_repo, token=test_token)
+    return create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+    )
 
 
 def test_render_text_successful_request(
@@ -147,7 +154,9 @@ def test_render_text_extracts_correct_base_args_values(
 ):
     """Test that function correctly extracts values from BaseArgs."""
     base_args = create_test_base_args(
-        owner="different-owner", repo="different-repo", token="different-token-456"
+        owner="different-owner",
+        repo="different-repo",
+        token="different-token-456",
     )
     text = "Test content"
 
@@ -459,7 +468,9 @@ def test_integration_render_text_with_invalid_token(
 ):
     """Integration test: render text with invalid token should return empty string."""
     base_args = create_test_base_args(
-        owner=test_owner, repo=test_repo, token="invalid-token"
+        owner=test_owner,
+        repo=test_repo,
+        token="invalid-token",
     )
     text = "# Test"
 

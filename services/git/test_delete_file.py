@@ -10,12 +10,8 @@ from services.git.delete_file import delete_file
 from services.git.git_clone_to_tmp import git_clone_to_tmp
 
 
-@pytest.fixture
-def base_args(create_test_base_args, tmp_path):
-    return create_test_base_args(clone_dir=str(tmp_path))
-
-
-def test_successful_deletion(base_args, tmp_path):
+def test_successful_deletion(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     (tmp_path / "test_file.py").write_text("content")
 
     result = delete_file("test_file.py", base_args)
@@ -24,19 +20,22 @@ def test_successful_deletion(base_args, tmp_path):
     assert not (tmp_path / "test_file.py").exists()
 
 
-def test_file_not_found(base_args):
+def test_file_not_found(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     result = delete_file("nonexistent_file.py", base_args)
     assert result == "Error: File nonexistent_file.py not found"
 
 
-def test_directory_path_error(base_args, tmp_path):
+def test_directory_path_error(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     (tmp_path / "my_dir").mkdir()
 
     result = delete_file("my_dir", base_args)
     assert result == "Error: 'my_dir' is a directory, not a file"
 
 
-def test_nested_file_deletion(base_args, tmp_path):
+def test_nested_file_deletion(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     nested = tmp_path / "path" / "to" / "nested"
     nested.mkdir(parents=True)
     (nested / "file.py").write_text("content")
@@ -47,7 +46,8 @@ def test_nested_file_deletion(base_args, tmp_path):
     assert not (nested / "file.py").exists()
 
 
-def test_kwargs_parameter_ignored(base_args, tmp_path):
+def test_kwargs_parameter_ignored(create_test_base_args, tmp_path):
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
     (tmp_path / "test_file.py").write_text("content")
 
     result = delete_file("test_file.py", base_args, extra_param="ignored")

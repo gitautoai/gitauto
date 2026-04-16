@@ -1,4 +1,4 @@
-# pylint: disable=redefined-outer-name
+# pylint: disable=unused-argument
 import os
 import subprocess
 import tempfile
@@ -10,43 +10,17 @@ from services.git.git_clone_to_tmp import git_clone_to_tmp
 from services.git.git_revert_file import git_revert_file
 
 
-@pytest.fixture
-def base_args():
-    return {
-        "owner_type": "Organization",
-        "owner_id": 1,
-        "owner": "test-owner",
-        "repo_id": 1,
-        "repo": "test-repo",
-        "clone_url": "https://x-access-token:tok@github.com/test-owner/test-repo.git",
-        "is_fork": False,
-        "base_branch": "main",
-        "new_branch": "feature-branch",
-        "installation_id": 1,
-        "token": "tok",
-        "sender_id": 1,
-        "sender_name": "bot",
-        "sender_email": None,
-        "sender_display_name": "Bot",
-        "reviewers": [],
-        "github_urls": [],
-        "other_urls": [],
-        "clone_dir": "/tmp/test-repo",
-        "pr_number": 42,
-        "pr_title": "Test PR",
-        "pr_body": "",
-        "pr_comments": [],
-        "pr_creator": "bot",
-    }
-
-
 @patch("services.git.git_revert_file.read_local_file", return_value="reverted content")
 @patch("services.git.git_revert_file.git_commit_and_push")
 @patch("services.git.git_revert_file.run_subprocess")
 def test_falls_back_to_base_branch_without_commit_sha(
-    mock_subprocess, mock_commit, _mock_read, base_args
+    mock_subprocess, mock_commit, _mock_read, create_test_base_args
 ):
     """Without latest_commit_sha (new_pr_handler), reverts to base_branch."""
+    base_args = create_test_base_args(
+        clone_dir="/tmp/test-repo",
+        latest_commit_sha="",
+    )
     result = git_revert_file(file_path="test/index.test.tsx", base_args=base_args)
 
     assert result.success is True
@@ -67,10 +41,13 @@ def test_falls_back_to_base_branch_without_commit_sha(
 @patch("services.git.git_revert_file.git_commit_and_push")
 @patch("services.git.git_revert_file.run_subprocess")
 def test_uses_latest_commit_sha_when_available(
-    mock_subprocess, _mock_commit, _mock_read, base_args
+    mock_subprocess, _mock_commit, _mock_read, create_test_base_args
 ):
     """With latest_commit_sha (check_suite/review handlers), reverts to that SHA."""
-    base_args["latest_commit_sha"] = "abc123def456"
+    base_args = create_test_base_args(
+        clone_dir="/tmp/test-repo",
+        latest_commit_sha="abc123def456",
+    )
 
     result = git_revert_file(file_path="src/app.ts", base_args=base_args)
 
@@ -88,8 +65,14 @@ def test_uses_latest_commit_sha_when_available(
     "services.git.git_revert_file.run_subprocess",
     side_effect=ValueError("git checkout failed"),
 )
-def test_returns_current_content_on_failure(_mock_subprocess, _mock_read, base_args):
+def test_returns_current_content_on_failure(
+    _mock_subprocess, _mock_read, create_test_base_args
+):
     """On failure, returns current file content so agent knows what it's working with."""
+    base_args = create_test_base_args(
+        clone_dir="/tmp/test-repo",
+        latest_commit_sha="",
+    )
     result = git_revert_file(file_path="src/broken.ts", base_args=base_args)
 
     assert result.success is False

@@ -31,6 +31,7 @@ from services.github.commits.get_head_commit_count_behind_base import (
 from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.slack.slack_notify import slack_notify
+from services.supabase.credits.check_purchase_exists import check_purchase_exists
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_reference import get_reference
 from services.github.pulls.get_pull_request import get_pull_request
@@ -46,6 +47,7 @@ from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
 from services.types.base_args import ReviewBaseArgs
 from services.webhook.utils.create_system_message import create_system_message
+from services.webhook.utils.get_preferred_model import get_preferred_model
 from services.webhook.utils.should_bail import should_bail
 from utils.files.get_local_file_content import get_local_file_content
 from utils.files.get_local_file_tree import get_local_file_tree
@@ -116,6 +118,12 @@ async def handle_review_run(
     if not repo_settings or not repo_settings.get("trigger_on_review_comment"):
         logger.info("trigger_on_review_comment is disabled, skipping")
         return
+
+    has_purchased = check_purchase_exists(owner_id=owner_id)
+    model_id = get_preferred_model(
+        repo_settings=repo_settings,
+        is_paid=has_purchased,
+    )
 
     # Extract other information
     installation_id: int = payload["installation"]["id"]
@@ -246,6 +254,7 @@ async def handle_review_run(
         # "review_position": review_position,
         "review_body": review_body,
         "review_comment": review_comment,
+        "model_id": model_id,
         "verify_consecutive_failures": 0,
         "quality_gate_fail_count": 0,
         "trigger": trigger,
@@ -460,7 +469,7 @@ async def handle_review_run(
             log_messages=log_messages,
             usage_id=usage_id,
             tools=TOOLS_FOR_REVIEW_COMMENTS,
-            model_id=None,
+            model_id=model_id,
         )
         messages = result.messages
         is_completed = result.is_completed

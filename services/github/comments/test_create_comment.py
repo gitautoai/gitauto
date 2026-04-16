@@ -1,24 +1,21 @@
-from typing import cast
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from services.github.comments.create_comment import create_comment
-from services.types.base_args import BaseArgs
 
 
-def test_create_comment_success(test_owner, test_repo, test_token):
+def test_create_comment_success(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "url": "https://api.github.com/repos/owner/repo/issues/comments/123"
     }
-    comment_args = cast(
-        BaseArgs,
-        {
-            "owner": test_owner,
-            "repo": test_repo,
-            "token": test_token,
-            "pr_number": 123,
-        },
+    comment_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        pr_number=123,
     )
 
     # Act
@@ -37,18 +34,17 @@ def test_create_comment_success(test_owner, test_repo, test_token):
     assert result == "https://api.github.com/repos/owner/repo/issues/comments/123"
 
 
-def test_create_comment_request_error(test_owner, test_repo, test_token):
+def test_create_comment_request_error(
+    test_owner, test_repo, test_token, create_test_base_args
+):
     # Arrange
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = Exception("API error")
-    comment_args = cast(
-        BaseArgs,
-        {
-            "owner": test_owner,
-            "repo": test_repo,
-            "token": test_token,
-            "pr_number": 123,
-        },
+    comment_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        pr_number=123,
     )
 
     # Act

@@ -1,18 +1,18 @@
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
-from typing import cast
 from unittest.mock import patch, MagicMock
 
 import pytest
 
 from services.phpunit.run_phpunit_test import run_phpunit_test
-from services.types.base_args import BaseArgs
 
 
 @pytest.mark.asyncio
 @patch("services.phpunit.run_phpunit_test.subprocess.run")
 @patch("services.phpunit.run_phpunit_test.os.path.exists")
-async def test_run_phpunit_test_success(mock_exists, mock_subprocess):
+async def test_run_phpunit_test_success(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     def exists_side_effect(path):
         if path == "/tmp/clone/vendor/bin/phpunit":
             return True
@@ -25,8 +25,10 @@ async def test_run_phpunit_test_success(mock_exists, mock_subprocess):
         returncode=0, stdout="OK (5 tests)", stderr=""
     )
 
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_phpunit_test(
         base_args=base_args,
@@ -38,9 +40,11 @@ async def test_run_phpunit_test_success(mock_exists, mock_subprocess):
 
 
 @pytest.mark.asyncio
-async def test_run_phpunit_test_no_test_files():
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+async def test_run_phpunit_test_no_test_files(create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_phpunit_test(
         base_args=base_args,
@@ -51,8 +55,12 @@ async def test_run_phpunit_test_no_test_files():
 
 
 @pytest.mark.asyncio
-async def test_run_phpunit_test_no_clone_dir():
-    base_args = cast(BaseArgs, {"owner": "test", "repo": "test", "clone_dir": ""})
+async def test_run_phpunit_test_no_clone_dir(create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="",
+    )
     result = await run_phpunit_test(
         base_args=base_args,
         test_file_paths=["tests/Unit/MyTest.php"],
@@ -63,9 +71,11 @@ async def test_run_phpunit_test_no_clone_dir():
 
 @pytest.mark.asyncio
 @patch("services.phpunit.run_phpunit_test.os.path.exists", return_value=False)
-async def test_run_phpunit_test_no_binary(mock_exists):
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+async def test_run_phpunit_test_no_binary(mock_exists, create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_phpunit_test(
         base_args=base_args,
@@ -78,7 +88,9 @@ async def test_run_phpunit_test_no_binary(mock_exists):
 @pytest.mark.asyncio
 @patch("services.phpunit.run_phpunit_test.subprocess.run")
 @patch("services.phpunit.run_phpunit_test.os.path.exists")
-async def test_run_phpunit_test_with_failures(mock_exists, mock_subprocess):
+async def test_run_phpunit_test_with_failures(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     def exists_side_effect(path):
         if path == "/tmp/clone/vendor/bin/phpunit":
             return True
@@ -93,8 +105,10 @@ async def test_run_phpunit_test_with_failures(mock_exists, mock_subprocess):
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_phpunit_test(
         base_args=base_args,
@@ -108,7 +122,9 @@ async def test_run_phpunit_test_with_failures(mock_exists, mock_subprocess):
 @pytest.mark.asyncio
 @patch("services.phpunit.run_phpunit_test.subprocess.run")
 @patch("services.phpunit.run_phpunit_test.os.path.exists")
-async def test_run_phpunit_test_exit_code_nonzero_but_ok(mock_exists, mock_subprocess):
+async def test_run_phpunit_test_exit_code_nonzero_but_ok(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     def exists_side_effect(path):
         if path == "/tmp/clone/vendor/bin/phpunit":
             return True
@@ -123,8 +139,10 @@ async def test_run_phpunit_test_exit_code_nonzero_but_ok(mock_exists, mock_subpr
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_phpunit_test(
         base_args=base_args,
@@ -138,7 +156,9 @@ async def test_run_phpunit_test_exit_code_nonzero_but_ok(mock_exists, mock_subpr
 @pytest.mark.asyncio
 @patch("services.phpunit.run_phpunit_test.subprocess.run")
 @patch("services.phpunit.run_phpunit_test.os.path.exists")
-async def test_run_phpunit_test_multiple_failures(mock_exists, mock_subprocess):
+async def test_run_phpunit_test_multiple_failures(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     def exists_side_effect(path):
         if path == "/tmp/clone/vendor/bin/phpunit":
             return True
@@ -154,8 +174,10 @@ async def test_run_phpunit_test_multiple_failures(mock_exists, mock_subprocess):
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_phpunit_test(
         base_args=base_args,
@@ -169,7 +191,9 @@ async def test_run_phpunit_test_multiple_failures(mock_exists, mock_subprocess):
 @pytest.mark.asyncio
 @patch("services.phpunit.run_phpunit_test.subprocess.run")
 @patch("services.phpunit.run_phpunit_test.os.path.exists")
-async def test_run_phpunit_test_one_of_three_fails(mock_exists, mock_subprocess):
+async def test_run_phpunit_test_one_of_three_fails(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     def exists_side_effect(path):
         if path == "/tmp/clone/vendor/bin/phpunit":
             return True
@@ -184,8 +208,10 @@ async def test_run_phpunit_test_one_of_three_fails(mock_exists, mock_subprocess)
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_phpunit_test(
         base_args=base_args,
@@ -204,7 +230,9 @@ async def test_run_phpunit_test_one_of_three_fails(mock_exists, mock_subprocess)
 @pytest.mark.asyncio
 @patch("services.phpunit.run_phpunit_test.subprocess.run")
 @patch("services.phpunit.run_phpunit_test.os.path.exists")
-async def test_run_phpunit_test_all_three_fail(mock_exists, mock_subprocess):
+async def test_run_phpunit_test_all_three_fail(
+    mock_exists, mock_subprocess, create_test_base_args
+):
     def exists_side_effect(path):
         if path == "/tmp/clone/vendor/bin/phpunit":
             return True
@@ -219,8 +247,10 @@ async def test_run_phpunit_test_all_three_fail(mock_exists, mock_subprocess):
         stderr="",
     )
 
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_phpunit_test(
         base_args=base_args,
@@ -240,7 +270,7 @@ async def test_run_phpunit_test_all_three_fail(mock_exists, mock_subprocess):
 @patch("services.phpunit.run_phpunit_test.subprocess.run")
 @patch("services.phpunit.run_phpunit_test.os.path.exists")
 async def test_run_phpunit_test_uses_bootstrap_when_no_config(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, create_test_base_args
 ):
     def exists_side_effect(path):
         if path == "/tmp/clone/vendor/bin/phpunit":
@@ -255,8 +285,10 @@ async def test_run_phpunit_test_uses_bootstrap_when_no_config(
         returncode=0, stdout="OK (1 test)", stderr=""
     )
 
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     await run_phpunit_test(
         base_args=base_args,
@@ -272,7 +304,7 @@ async def test_run_phpunit_test_uses_bootstrap_when_no_config(
 @patch("services.phpunit.run_phpunit_test.subprocess.run")
 @patch("services.phpunit.run_phpunit_test.os.path.exists")
 async def test_run_phpunit_test_suppresses_deprecation_warnings(
-    mock_exists, mock_subprocess
+    mock_exists, mock_subprocess, create_test_base_args
 ):
     def exists_side_effect(path):
         if path == "/tmp/clone/vendor/bin/phpunit":
@@ -286,8 +318,10 @@ async def test_run_phpunit_test_suppresses_deprecation_warnings(
         returncode=0, stdout="OK (1 test)", stderr=""
     )
 
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     await run_phpunit_test(
         base_args=base_args,
@@ -300,9 +334,11 @@ async def test_run_phpunit_test_suppresses_deprecation_warnings(
 
 
 @pytest.mark.asyncio
-async def test_run_phpunit_test_filters_non_php_files():
-    base_args = cast(
-        BaseArgs, {"owner": "test", "repo": "test", "clone_dir": "/tmp/clone"}
+async def test_run_phpunit_test_filters_non_php_files(create_test_base_args):
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
     )
     result = await run_phpunit_test(
         base_args=base_args,

@@ -48,6 +48,7 @@ from services.stripe.check_availability import check_availability
 from services.stripe.create_stripe_customer import create_stripe_customer
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.create_user_request import create_user_request
+from services.supabase.credits.check_purchase_exists import check_purchase_exists
 from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.email_sends.insert_email_send import insert_email_send
 from services.supabase.email_sends.update_email_send import update_email_send
@@ -57,6 +58,7 @@ from services.supabase.owners.update_stripe_customer_id import update_stripe_cus
 from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 from services.webhook.utils.create_system_message import create_system_message
+from services.webhook.utils.get_preferred_model import get_preferred_model
 from services.webhook.utils.should_bail import should_bail
 from utils.command.run_subprocess import run_subprocess
 from utils.files.detect_test_location_convention import detect_test_location_convention
@@ -172,6 +174,14 @@ async def handle_new_pr(
     user_message = availability_status["user_message"]
     billing_type = availability_status["billing_type"]
 
+    # Resolve which model to use based on repo settings and whether owner has purchased credits
+    has_purchased = check_purchase_exists(owner_id=owner_id)
+    model_id = get_preferred_model(
+        repo_settings=repo_settings,
+        is_paid=has_purchased,
+    )
+    base_args["model_id"] = model_id
+
     if availability_status["log_message"] and can_proceed:
         add_log_message(availability_status["log_message"], log_messages)
 
@@ -219,7 +229,12 @@ async def handle_new_pr(
 
     # Insert credit usage immediately (charge regardless of completion)
     if billing_type == "credit":
-        insert_credit(owner_id=owner_id, transaction_type="usage", usage_id=usage_id)
+        insert_credit(
+            owner_id=owner_id,
+            transaction_type="usage",
+            usage_id=usage_id,
+            model_id=model_id,
+        )
 
     # Check out the PR comments
     pr_comments = get_comments(pr_number=pr_number, base_args=base_args)
@@ -580,7 +595,7 @@ async def handle_new_pr(
             p=p,
             log_messages=log_messages,
             usage_id=usage_id,
-            model_id=None,
+            model_id=model_id,
         )
         messages = result.messages
         is_completed = result.is_completed

@@ -32,6 +32,7 @@ def run_quality_gate(clone_dir: str, impl_file: str, base_args: BaseArgs):
         source_content=source_content,
         source_path=impl_file,
         test_files=test_files,
+        model=base_args["model_id"],
     )
     if quality_results is None:
         logger.warning("Quality evaluation failed for %s, letting it pass", impl_file)

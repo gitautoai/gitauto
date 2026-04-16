@@ -87,7 +87,7 @@ python3 scripts/aws/filter_log_events_across_streams.py --hours 12 --owner Foxqu
 ## Testing Standards
 
 - **Auto-write tests**: When creating functions or fixing bugs, always write tests. Bug fix tests must fail without the fix.
-- **Real captured output only**: Capture real tool output for fixtures. Save raw data as-is — no stripping or partial extraction. If function operates on a subset, test should slice the fixture the same way production code does.
+- **Real captured output only**: BEFORE writing test data, search for existing fixtures (`**/fixtures/*.json`, `**/test_messages.json`) and real data sources (Supabase `llm_requests` table, AWS CloudWatch logs). Use full captured data AS-IS — no stripping, minimizing, or partial extraction. Never hand-craft test dicts when real data exists. If function operates on a subset, test should slice the fixture the same way production code does.
 - **Never generate expected output from the function under test**: That's circular. Create expected fixtures independently.
 - **Real cloned repos**: At `../owner/repo`. Run against real repos, never make up file paths.
 - **ZERO toy tests**: Use full `git ls-files` output as fixtures (hundreds/thousands of files, not 4). Save as fixture files, assert specific real mappings verified manually. Never curate a minimal list.

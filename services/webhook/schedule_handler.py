@@ -45,7 +45,9 @@ from services.supabase.coverages.update_quality_checks import update_quality_che
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.schedule_pauses.get_schedule_pause import get_schedule_pause
 from services.stripe.check_availability import check_availability
+from services.supabase.credits.check_purchase_exists import check_purchase_exists
 from services.types.base_args import BaseArgs
+from services.webhook.utils.get_preferred_model import get_preferred_model
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.find_test_files import find_test_files
 from utils.files.read_local_file import read_local_file
@@ -110,6 +112,12 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     if not availability_status["can_proceed"]:
         return {"status": "skipped", "message": availability_status["log_message"]}
+
+    has_purchased = check_purchase_exists(owner_id=owner_id)
+    model_id = get_preferred_model(
+        repo_settings=repo_settings,
+        is_paid=has_purchased,
+    )
 
     # Get repository files and coverage data
     clone_url = get_clone_url(owner_name, repo_name, token)
@@ -506,12 +514,12 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                 if content and content.strip():
                     test_files.append((tp, content))
 
-            # Run quality checks via Claude
             logger.info("Evaluating quality checks for %s", item_path)
             quality_results = evaluate_quality_checks(
                 source_content=source_content,
                 source_path=item_path,
                 test_files=test_files,
+                model=model_id,
             )
             if quality_results is None:
                 logger.warning(
@@ -631,6 +639,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         "pr_body": "",  # Set after create_pull_request below
         "pr_comments": [],
         "pr_creator": user_name,
+        "model_id": model_id,
         "verify_consecutive_failures": 0,
         "quality_gate_fail_count": 0,
     }

@@ -2,10 +2,10 @@
 
 from unittest.mock import patch, MagicMock, PropertyMock
 import pytest
-from config import CREDIT_AMOUNTS_USD
+from constants.models import CREDIT_GRANT_AMOUNT_USD
 from services.supabase.credits.check_grant_exists import check_grant_exists
 
-GRANT_AMOUNT = CREDIT_AMOUNTS_USD["grant"]
+GRANT_AMOUNT = CREDIT_GRANT_AMOUNT_USD
 
 
 @pytest.fixture
