@@ -1,7 +1,6 @@
 from constants.models import (
     DEFAULT_FREE_MODEL,
     DEFAULT_PAID_MODEL,
-    FREE_TIER_MODELS,
     MODEL_ID_BY_VALUE,
     ModelId,
     USER_SELECTABLE_MODELS,
@@ -30,25 +29,15 @@ def get_preferred_model(
         logger.warning("Model %s is not user-selectable, ignoring", preferred)
         preferred = None
 
-    # 2. Free user logic
-    if not is_paid:
-        if not preferred or preferred not in FREE_TIER_MODELS:
-            if preferred:
-                logger.info(
-                    "Free user selected premium model %s, overriding to %s",
-                    preferred,
-                    DEFAULT_FREE_MODEL,
-                )
-            else:
-                logger.info("Free user, no preference, using %s", DEFAULT_FREE_MODEL)
-            return DEFAULT_FREE_MODEL
-        logger.info("Free user, using preferred model %s", preferred)
+    # 2. DB has a valid model set → use it regardless of billing tier
+    if preferred:
+        logger.info("Using DB preferred model %s", preferred)
         return preferred
 
-    # 3. Paid user logic
-    if not preferred:
+    # 3. No preference set → default based on billing tier
+    if is_paid:
         logger.info("Paid user, no preference, using %s", DEFAULT_PAID_MODEL)
         return DEFAULT_PAID_MODEL
 
-    logger.info("Paid user, using preferred model %s", preferred)
-    return preferred
+    logger.info("Free user, no preference, using %s", DEFAULT_FREE_MODEL)
+    return DEFAULT_FREE_MODEL
