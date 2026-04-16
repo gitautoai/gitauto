@@ -69,7 +69,8 @@ def test_convert_real_messages_tool_result():
     assert msg.role == "user"
     assert len(msg.parts) == 1
     fr = msg.parts[0].function_response
-    assert fr.name == "toolu_01UqpdeuMtRAfShXJjZnM1xr"
+    # name must be function name (matching FunctionDeclaration), not tool_use_id
+    assert fr.name == "get_remote_file_content"
     assert fr.id == "toolu_01UqpdeuMtRAfShXJjZnM1xr"
     assert fr.response == {
         "result": "Opened file: 'services/anthropic/test_client.py' with line numbers for your information.\n\n```services/anthropic/test_client.py\n 1:import pytest\n```"
@@ -97,7 +98,7 @@ def test_convert_real_messages_all_tool_use_ids():
 
 
 def test_convert_real_messages_all_tool_result_ids():
-    """All 4 tool_result blocks reference the correct tool_use_ids."""
+    """All 4 tool_result blocks have correct IDs."""
     messages = _load_real_messages()
     result = convert_messages_to_google(messages)
     expected_tool_result_ids = [
@@ -110,8 +111,31 @@ def test_convert_real_messages_all_tool_result_ids():
     for content in result:
         for part in content.parts:
             if part.function_response:
-                actual_ids.append(part.function_response.name)
+                actual_ids.append(part.function_response.id)
     assert actual_ids == expected_tool_result_ids
+
+
+def test_function_response_name_matches_function_declaration_name():
+    """FunctionResponse.name must be the function name, not tool_use_id.
+    Google AI requires FunctionResponse.name to match FunctionDeclaration.name.
+    Using tool_use_id as the name causes 400 INVALID_ARGUMENT on the second API call.
+    Bug: PR 782 failed because FunctionResponse.name was 'vpfs0f3y' instead of
+    'get_local_file_content'."""
+    messages = _load_real_messages()
+    result = convert_messages_to_google(messages)
+    # Expected: function names from the preceding tool_use blocks
+    expected_function_names = [
+        "get_remote_file_content",
+        "get_remote_file_content",
+        "get_remote_file_content",
+        "write_and_commit_file",
+    ]
+    actual_names = []
+    for content in result:
+        for part in content.parts:
+            if part.function_response:
+                actual_names.append(part.function_response.name)
+    assert actual_names == expected_function_names
 
 
 def test_convert_real_messages_write_and_commit_args():

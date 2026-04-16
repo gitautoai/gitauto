@@ -17,6 +17,9 @@ def convert_messages_to_google(messages: list[MessageParam]):
     Anthropic tool_result -> Google FunctionResponse."""
     contents: list[types.Content] = []
 
+    # Map tool_use_id -> function name for FunctionResponse.name (must match FunctionDeclaration.name)
+    tool_id_to_name: dict[str, str] = {}
+
     for msg in messages:
         role = msg["role"]
         raw_content = msg["content"]
@@ -41,6 +44,7 @@ def convert_messages_to_google(messages: list[MessageParam]):
                     args = block["input"]
                     if not isinstance(args, dict):
                         args = {}
+                    tool_id_to_name[block["id"]] = block["name"]
                     parts.append(
                         types.Part(
                             function_call=types.FunctionCall(
@@ -58,12 +62,14 @@ def convert_messages_to_google(messages: list[MessageParam]):
                         content_val = json.dumps(content_val)
                     elif not isinstance(content_val, str):
                         content_val = ""
+                    tool_use_id = block["tool_use_id"]
+                    func_name = tool_id_to_name.get(tool_use_id, tool_use_id)
                     parts.append(
                         types.Part(
                             function_response=types.FunctionResponse(
-                                name=block["tool_use_id"],
+                                name=func_name,
                                 response={"result": content_val},
-                                id=block["tool_use_id"],
+                                id=tool_use_id,
                             )
                         )
                     )
