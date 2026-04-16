@@ -36,8 +36,11 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: uv sync --frozen
 
       - name: Run billing consistency check
         run: |

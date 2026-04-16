@@ -17,9 +17,9 @@ echo -e "Starting GitAuto development environment..."
 if [ ! -d "venv" ]; then
     echo -e "Creating virtual environment..."
     python3 -m venv --upgrade-deps venv
-    echo -e "Installing dependencies..."
     source venv/bin/activate
-    pip install -r requirements.txt
+    echo -e "Installing dependencies..."
+    uv sync
 else
     # Activate existing virtual environment
     source venv/bin/activate

@@ -18,9 +18,10 @@
 ```bash
 pre-commit run --all-files
 
-# When adding new dependencies
-pip install package_name
-pip freeze > requirements.txt
+# When adding new dependencies (prod)
+uv add package_name
+# When adding new dev dependencies (linters, test tools, type stubs)
+uv add --group dev package_name
 ```
 
 ### Database Access

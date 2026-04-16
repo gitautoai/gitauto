@@ -9,9 +9,9 @@ jobs:
       - image: cimg/python:3.13
     steps:
       - checkout
-      - python/install-packages:
-          pkg-manager: pip
-          pip-dependency-file: requirements.txt
+      - run:
+          name: Install uv and dependencies
+          command: pip install uv && uv sync --frozen
       - run:
           name: Run passing tests
           command: |
@@ -26,9 +26,9 @@ jobs:
       - image: cimg/python:3.13
     steps:
       - checkout
-      - python/install-packages:
-          pkg-manager: pip
-          pip-dependency-file: requirements.txt
+      - run:
+          name: Install uv and dependencies
+          command: pip install uv && uv sync --frozen
       - run:
           name: Run intentionally failing tests
           command: |

@@ -22,5 +22,6 @@ coverage/
 infrastructure/lambda-env-backup.json
 mcp.json
 pylint_results.txt
+requirements.txt
 tmp
 venv
