@@ -1,4 +1,5 @@
 # Standard imports
+import asyncio
 import json
 from typing import Any, cast
 import urllib.parse
@@ -107,6 +108,13 @@ def handler(event, context):
                 thread_ts,
             )
         return None
+
+    # Python 3.14 removed implicit event loop creation in asyncio.get_event_loop(), which Mangum's HTTPCycle.__call__ still uses. Ensure one exists before each request.
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        logger.info("No event loop found, creating one for Mangum")
+        asyncio.set_event_loop(asyncio.new_event_loop())
 
     # mangum_handler converts requests from API Gateway to FastAPI routing system
     return mangum_handler(event=event, context=context)

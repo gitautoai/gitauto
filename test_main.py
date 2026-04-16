@@ -819,6 +819,30 @@ class TestLogStatements:
         assert str(call_args[0][1]) == "JSON parsing error"
 
 
+class TestEventLoopSetup:
+    @patch("main.mangum_handler")
+    def test_handler_creates_event_loop_when_missing(self, mock_mangum_handler):
+        """Python 3.14 removed implicit event loop creation in asyncio.get_event_loop().
+        Verify handler creates one before calling mangum_handler."""
+        event = {"key": "value"}
+        context = {"context": "data"}
+        mock_mangum_handler.return_value = {"status": "success"}
+
+        # Remove the current event loop to simulate Python 3.14 behavior
+        policy = asyncio.get_event_loop_policy()
+        policy.set_event_loop(None)  # type: ignore[arg-type]
+
+        # handler() should NOT raise RuntimeError — it ensures a loop exists
+        result = handler(event=event, context=context)
+
+        mock_mangum_handler.assert_called_with(event=event, context=context)
+        assert result == {"status": "success"}
+
+        # Verify an event loop now exists
+        loop = asyncio.get_event_loop()
+        assert loop is not None
+
+
 class TestModuleImports:
     def test_required_imports_available(self):
         """Test that all required modules and functions are properly imported."""
