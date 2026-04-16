@@ -4,6 +4,10 @@ FROM public.ecr.aws/lambda/python:3.14
 # Copy to Lambda root(which is specified in Lambda function, usually /var/task/ directory)
 COPY . ${LAMBDA_TASK_ROOT}
 
+# gcc: needed to build C extensions (e.g. pyiceberg) when no prebuilt 3.14 wheel exists
+# git, tar: needed at runtime for cloning repos and extracting archives
+RUN dnf install -y gcc git tar
+
 # Install uv (fast Python package manager) and prod-only dependencies
 # For Amazon Linux 2023-based images (Python 3.14): https://aws.amazon.com/blogs/compute/python-3-14-runtime-now-available-in-aws-lambda/
 # --frozen: use uv.lock exactly, no re-resolution
@@ -14,7 +18,6 @@ COPY . ${LAMBDA_TASK_ROOT}
 RUN pip install uv && \
     uv export --frozen --no-dev --no-hashes | \
     uv pip install --target "${LAMBDA_TASK_ROOT}" -r -
-RUN dnf install -y git tar
 
 # Install Node.js (including npm), n (version manager), and yarn
 # https://github.com/nodesource/distributions
