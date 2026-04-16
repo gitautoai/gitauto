@@ -246,6 +246,11 @@ async def chat_with_agent(
                 tool_result = tools_to_call[tool_name](
                     **tool_args, base_args=base_args, messages=messages
                 )
+            else:
+                # Model passed None or non-dict args (e.g. verify_task_is_complete with no args)
+                tool_result = tools_to_call[tool_name](
+                    base_args=base_args, messages=messages
+                )
             if inspect.iscoroutine(tool_result):
                 tool_result = await tool_result
 
