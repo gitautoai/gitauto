@@ -446,6 +446,56 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
 
 @pytest.mark.asyncio
 @patch("services.chat_with_agent.chat_with_model")
+@patch("services.agents.verify_task_is_complete.get_pull_request_files")
+@patch("services.chat_with_agent.update_comment")
+async def test_verify_task_is_complete_with_none_args_still_executes(
+    _mock_update_comment, mock_get_pr_files, mock_chat_with_model, create_test_base_args
+):
+    """PR 786: Gemma 4 31B called verify_task_is_complete with args=None instead of {}.
+    isinstance(None, dict) is False, so the tool was silently skipped and returned None.
+    Gemma then entered a dead loop returning empty responses for 20 iterations."""
+    mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
+    mock_chat_with_model.return_value = (
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "test_id",
+                    "name": "verify_task_is_complete",
+                    "input": {},
+                }
+            ],
+        },
+        [ToolCall(id="test_id", name="verify_task_is_complete", args=None)],
+        15,
+        10,
+    )
+
+    base_args = create_test_base_args(
+        model_id=GoogleModelId.GEMMA_4_31B,
+        owner="test-owner",
+        repo="test-repo",
+        pr_number=123,
+        token="test-token",
+    )
+
+    result = await chat_with_agent(
+        messages=[{"role": "user", "content": "test"}],
+        system_message="test system message",
+        base_args=base_args,
+        tools=[],
+        usage_id=123,
+        model_id=GoogleModelId.GEMMA_4_31B,
+    )
+
+    # verify_task_is_complete was called (not skipped), so is_completed should be True
+    assert result.is_completed is True
+    mock_get_pr_files.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.chat_with_model")
 async def test_regular_tool_returns_is_completed_false(
     mock_chat_with_model, create_test_base_args
 ):
