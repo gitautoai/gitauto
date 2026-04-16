@@ -55,7 +55,7 @@ jobs:
             SIZE_BEFORE=$SIZE_MB
 
             echo "Clearing old content via Python..."
-            python3 << 'EOF'
+            uv run python3 << 'EOF'
           from services.supabase.llm_requests.clear_old_content import clear_old_content
           result = clear_old_content(retention_days=14)
           if result is None:
@@ -96,7 +96,7 @@ jobs:
             SIZE_BEFORE=$SIZE_MB
 
             echo "Clearing old error logs via Python..."
-            python3 << 'EOF'
+            uv run python3 << 'EOF'
           from services.supabase.usage.clear_old_error_logs import clear_old_error_logs
           result = clear_old_error_logs(retention_days=14)
           if result is None:

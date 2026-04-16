@@ -54,7 +54,7 @@ jobs:
           if [ -n "${{ github.event.inputs.owner }}" ]; then
             ARGS="$ARGS --owner ${{ github.event.inputs.owner }}"
           fi
-          python3 scripts/supabase/check_billing_consistency.py $ARGS
+          uv run python3 scripts/supabase/check_billing_consistency.py $ARGS
 
       - name: Notify Slack on failure
         if: failure()
