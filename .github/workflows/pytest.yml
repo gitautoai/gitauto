@@ -12,7 +12,6 @@ on:
       - ".github/**"
       - ".gitignore"
       - "Dockerfile"
-      - "infrastructure/**"
       - "CODEOWNERS"
       - "LICENSE"
   # Run tests after merge and save coverage to Supabase as canonical source of truth
@@ -25,7 +24,6 @@ on:
       - ".github/**"
       - ".gitignore"
       - "Dockerfile"
-      - "infrastructure/**"
       - "CODEOWNERS"
       - "LICENSE"
   # Allow manual trigger for debugging
@@ -102,6 +100,11 @@ jobs:
 
           # Stripe credentials
           STRIPE_API_KEY: ${{ secrets.STAGE_STRIPE_API_KEY }}
+
+          # AWS credentials (SSM parameter validation in infrastructure tests)
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-west-1
 
           # Environment variables
           ENV: stage

@@ -11,7 +11,8 @@ CURRENT=$(grep '^version' pyproject.toml | sed 's/.*"\(.*\)"/\1/')
 MAJOR=$(echo "$CURRENT" | cut -d. -f1)
 MINOR=$(echo "$CURRENT" | cut -d. -f2)
 PATCH=$(echo "$CURRENT" | cut -d. -f3)
-if git diff --cached --diff-filter=A --name-only | grep -q .; then
+# Minor bump only for new impl .py files (not tests, scripts, schemas, infra)
+if git diff --cached --diff-filter=A --name-only -- '*.py' | grep -Ev '(^|/)test_|conftest\.py$|^schemas/|^infrastructure/|^scripts/' | grep -q .; then
     NEW_VERSION="$MAJOR.$((MINOR + 1)).0"
 else
     NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
