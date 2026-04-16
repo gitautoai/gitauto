@@ -3,6 +3,10 @@
 # Install: ln -sf ../../scripts/git/pre_commit_hook.sh .git/hooks/pre-commit
 set -uo pipefail
 
+# Activate .venv so tools (ruff, black, pylint, pyright, pytest) are on PATH
+# shellcheck disable=SC1091
+[ -f .venv/bin/activate ] && source .venv/bin/activate
+
 echo "=== Pre-commit hook ==="
 
 # Auto-increment version (major updated manually)
@@ -25,8 +29,8 @@ uv lock --quiet && git add pyproject.toml uv.lock
 # Generate TypedDict schemas
 python3 schemas/supabase/generate_types.py && git add schemas/supabase/
 
-# Get staged Python files (excluding deleted, venv, schemas)
-STAGED_PY_FILES=$(git diff --cached --name-only --diff-filter=d -- '*.py' | grep -v '^venv/' | grep -v '^schemas/')
+# Get staged Python files (excluding deleted, .venv, schemas)
+STAGED_PY_FILES=$(git diff --cached --name-only --diff-filter=d -- '*.py' | grep -v '^\.\?venv/' | grep -v '^schemas/')
 
 # Format and auto-fix staged Python files
 if [ -n "$STAGED_PY_FILES" ]; then
@@ -66,7 +70,7 @@ fi
 
 # Print statement check (whole repo, excluding dirs)
 echo "--- ruff T201 print check ---"
-ruff check --select=T201 . --exclude schemas/,venv/,scripts/
+ruff check --select=T201 . --exclude schemas/,.venv/,scripts/
 if [ $? -ne 0 ]; then
     echo "FAILED: Remove print statements before committing."
     exit 1

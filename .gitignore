@@ -4,6 +4,7 @@
 .history
 .pytest_cache
 .ruff_cache
+.venv
 __pycache__
 /scripts/*
 !/scripts/git/
@@ -24,4 +25,3 @@ mcp.json
 pylint_results.txt
 requirements.txt
 tmp
-venv

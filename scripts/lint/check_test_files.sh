@@ -4,7 +4,7 @@
 set -uo pipefail
 
 # Directories/files to exclude from the check
-EXCLUDE_PATTERN='^(venv/|schemas/|scripts/|infrastructure/|\.github/|services/types/)'
+EXCLUDE_PATTERN='^(\.?venv/|schemas/|scripts/|infrastructure/|\.github/|services/types/)'
 EXCLUDE_FILES='(conftest\.py|__init__\.py|main\.py)$'
 
 # Get staged Python impl files (exclude test files and excluded dirs/files)

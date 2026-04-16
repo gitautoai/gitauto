@@ -3,7 +3,7 @@
 # All three only run when Python files are staged.
 set -uo pipefail
 
-STAGED_PY_FILES=$(git diff --cached --name-only --diff-filter=d -- '*.py' | grep -v '^venv/' | grep -v '^schemas/')
+STAGED_PY_FILES=$(git diff --cached --name-only --diff-filter=d -- '*.py' | grep -v '^\.\?venv/' | grep -v '^schemas/')
 
 PYLINT_OUT=$(mktemp)
 PYRIGHT_OUT=$(mktemp)
