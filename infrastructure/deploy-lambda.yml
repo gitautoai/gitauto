@@ -129,8 +129,8 @@ Resources:
       PackageType: Image
       Code:
         ImageUri: !Ref ECRImageUri
-      # 3072 MB to prevent OOM (2048 MB hit limit during agent fix loops)
-      MemorySize: 3072
+      # Python (~800 MB) + Node.js/Jest (~2 GB) + mongod (~500 MB) + OS (~100 MB)
+      MemorySize: 4096
       EphemeralStorage:
         Size: 2048
       Timeout: 900

@@ -1,16 +1,19 @@
 # Standard imports
+import importlib
 from unittest.mock import MagicMock, patch
 
 # Third-party imports
 import pytest
 
 # Local imports
+import utils.memory.is_lambda_oom_approaching as oom_module
 from utils.memory.is_lambda_oom_approaching import (
     LAMBDA_MEMORY_MB,
+    NODE_MAX_OLD_SPACE_SIZE_MB,
     is_lambda_oom_approaching,
 )
 
-# 90% of 3072 = 2764.8 MB
+# 90% of 4096 = 3686.4 MB
 THRESHOLD_MB = LAMBDA_MEMORY_MB * 90 / 100
 
 
@@ -35,12 +38,12 @@ class TestIsLambdaOomApproaching:
     @patch("utils.memory.get_rss_mb._IS_MACOS", False)
     @patch("utils.memory.get_rss_mb.resource")
     def test_above_threshold_linux(self, mock_resource):
-        # 2800 MB in KB (above 2764.8 MB threshold)
-        mock_resource.getrusage.return_value = _mock_rusage(2800 * 1024)
+        # 3700 MB in KB (above 3686.4 MB threshold)
+        mock_resource.getrusage.return_value = _mock_rusage(3700 * 1024)
         mock_resource.RUSAGE_SELF = 0
         is_approaching, used_mb = is_lambda_oom_approaching()
         assert is_approaching is True
-        assert used_mb == 2800.0
+        assert used_mb == 3700.0
 
     @patch("utils.memory.get_rss_mb._IS_MACOS", True)
     @patch("utils.memory.get_rss_mb.resource")
@@ -55,32 +58,32 @@ class TestIsLambdaOomApproaching:
     @patch("utils.memory.get_rss_mb._IS_MACOS", True)
     @patch("utils.memory.get_rss_mb.resource")
     def test_above_threshold_macos(self, mock_resource):
-        # 2800 MB in bytes (macOS units)
-        mock_resource.getrusage.return_value = _mock_rusage(2800 * 1024 * 1024)
+        # 3700 MB in bytes (macOS units)
+        mock_resource.getrusage.return_value = _mock_rusage(3700 * 1024 * 1024)
         mock_resource.RUSAGE_SELF = 0
         is_approaching, used_mb = is_lambda_oom_approaching()
         assert is_approaching is True
-        assert used_mb == 2800.0
+        assert used_mb == 3700.0
 
     @patch("utils.memory.get_rss_mb._IS_MACOS", False)
     @patch("utils.memory.get_rss_mb.resource")
     def test_exact_threshold_not_approaching(self, mock_resource):
-        # Exactly at threshold (2764.8 MB) - use 2764 MB, not greater, so False
-        mock_resource.getrusage.return_value = _mock_rusage(2764 * 1024)
+        # Exactly at threshold (3686.4 MB) - use 3686 MB, not greater, so False
+        mock_resource.getrusage.return_value = _mock_rusage(3686 * 1024)
         mock_resource.RUSAGE_SELF = 0
         is_approaching, used_mb = is_lambda_oom_approaching()
         assert is_approaching is False
-        assert used_mb == 2764.0
+        assert used_mb == 3686.0
 
     @patch("utils.memory.get_rss_mb._IS_MACOS", False)
     @patch("utils.memory.get_rss_mb.resource")
     def test_just_above_threshold(self, mock_resource):
-        # 2765 MB - just above 2764.8 threshold
-        mock_resource.getrusage.return_value = _mock_rusage(2765 * 1024)
+        # 3687 MB - just above 3686.4 threshold
+        mock_resource.getrusage.return_value = _mock_rusage(3687 * 1024)
         mock_resource.RUSAGE_SELF = 0
         is_approaching, used_mb = is_lambda_oom_approaching()
         assert is_approaching is True
-        assert used_mb == 2765.0
+        assert used_mb == 3687.0
 
     @pytest.mark.parametrize(
         "used_kb, expected_approaching",
@@ -88,9 +91,9 @@ class TestIsLambdaOomApproaching:
             (0, False),
             (512 * 1024, False),
             (1024 * 1024, False),
-            (2764 * 1024, False),
-            (2765 * 1024, True),
-            (3072 * 1024, True),
+            (3686 * 1024, False),
+            (3687 * 1024, True),
+            (4096 * 1024, True),
         ],
         ids=["zero", "512mb", "1024mb", "at_threshold", "above_threshold", "at_limit"],
     )
@@ -105,5 +108,16 @@ class TestIsLambdaOomApproaching:
     def test_has_handle_exceptions_decorator(self):
         assert hasattr(is_lambda_oom_approaching, "__wrapped__")
 
-    def test_constant_matches_infrastructure(self):
-        assert LAMBDA_MEMORY_MB == 3072
+    def test_default_matches_infrastructure(self):
+        assert LAMBDA_MEMORY_MB == 4096
+
+    @patch.dict("os.environ", {"AWS_LAMBDA_FUNCTION_MEMORY_SIZE": "4096"})
+    def test_reads_memory_from_env_var(self):
+        importlib.reload(oom_module)
+        assert oom_module.LAMBDA_MEMORY_MB == 4096
+        assert oom_module.NODE_MAX_OLD_SPACE_SIZE_MB == 4096 - 1536
+        # Restore default for other tests
+        importlib.reload(oom_module)
+
+    def test_node_max_old_space_size_derivation(self):
+        assert NODE_MAX_OLD_SPACE_SIZE_MB == LAMBDA_MEMORY_MB - 1536
