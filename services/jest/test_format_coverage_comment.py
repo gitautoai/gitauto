@@ -5,7 +5,8 @@ from services.jest.parse_coverage_json import Coverage
 def test_full_coverage():
     cov = Coverage()
     result = format_coverage_comment(cov, "src/utils.ts")
-    assert "## Coverage for `src/utils.ts`" in result
+    assert "## Coverage" in result
+    assert "`src/utils.ts`" in result
     assert "| 100.0% | 100.0% | 100.0% | 100.0% |" in result
     assert "Uncovered" not in result
 

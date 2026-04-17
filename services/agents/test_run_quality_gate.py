@@ -31,9 +31,10 @@ def test_returns_specific_failure_details(
     base_args = create_test_base_args(test_file_paths=["test/foo.spec.ts"])
     result = run_quality_gate("/tmp/clone", "src/foo.ts", base_args)
 
-    assert "adversarial.null_undefined_inputs: No null tests" in result
-    assert "security.command_injection: No injection tests" in result
-    assert "business_logic" not in result
+    assert "adversarial.null_undefined_inputs: No null tests" in result.error
+    assert "security.command_injection: No injection tests" in result.error
+    assert "business_logic" not in result.error
+    assert result.passed_count == 1
 
 
 @patch("services.agents.run_quality_gate.evaluate_quality_checks")
@@ -52,4 +53,5 @@ def test_returns_empty_when_all_pass(mock_read, mock_evaluate, create_test_base_
     base_args = create_test_base_args(test_file_paths=["test/foo.spec.ts"])
     result = run_quality_gate("/tmp/clone", "src/foo.ts", base_args)
 
-    assert result == ""
+    assert result.error == ""
+    assert result.passed_count == 2
