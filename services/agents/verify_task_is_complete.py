@@ -9,7 +9,10 @@ from constants.files import (
     TS_TEST_FILE_EXTENSIONS,
 )
 from constants.node import FALLBACK_NODE_VERSION
-from services.agents.run_quality_gate import QUALITY_GATE_MESSAGE, run_quality_gate
+from services.agents.run_quality_gate import (
+    QUALITY_GATE_MESSAGE,
+    run_quality_gate,
+)
 from services.eslint.ensure_eslint_relaxed_for_tests import (
     ensure_eslint_relaxed_for_tests,
 )
@@ -277,17 +280,16 @@ async def verify_task_is_complete(
                 remaining_errors.append(f"- {jest_result.runner_name}: {err}")
             error_files.update(jest_result.error_files)
 
-    # Post coverage results as PR comment and check for incomplete coverage
+    # Check for incomplete coverage (comment is posted only after all gates pass)
+    coverage_comment_body = ""
     if jest_result.coverage and not jest_result.errors:
         cov = jest_result.coverage
         if cov.error:
             logger.warning("coverage: %s (not fixable by agent, skipping)", cov.error)
         else:
-            comment_body = format_coverage_comment(
+            coverage_comment_body = format_coverage_comment(
                 cov, impl_file_to_collect_coverage_from
             )
-            create_comment(body=comment_body, base_args=base_args)
-
             has_incomplete_coverage = (
                 cov.statement_pct < 100
                 or cov.branch_pct < 100
@@ -295,7 +297,7 @@ async def verify_task_is_complete(
                 or cov.line_pct < 100
             )
             if has_incomplete_coverage:
-                remaining_errors.append(f"- coverage:\n{comment_body}")
+                remaining_errors.append(f"- coverage:\n{coverage_comment_body}")
                 error_files.update(js_test_files)
 
     # Commit any snapshot files updated by jest -u
@@ -358,13 +360,54 @@ async def verify_task_is_complete(
                 f"failed {quality_gate_fail_count} times, accepting current quality",
                 thread_ts,
             )
+            # Post that we're giving up with the reason
+            last_error = base_args.get("last_quality_error", "")
+            if last_error:
+                reasons = []
+                for line in last_error.split("\n")[1:]:
+                    if ": " in line:
+                        reasons.append(f"- {line.split(': ', 1)[1]}")
+                if reasons:
+                    logger.info(
+                        "Posting self-review (giving up) with %d reasons", len(reasons)
+                    )
+                    note = (
+                        "## Self-Review\n\nI wasn't able to resolve these after multiple attempts:\n"
+                        + "\n".join(reasons)
+                    )
+                    create_comment(body=note, base_args=base_args)
+                else:
+                    logger.info(
+                        "No parseable reasons from last quality error, skipping self-review comment"
+                    )
+            else:
+                logger.info(
+                    "No last quality error stored, skipping self-review comment"
+                )
         else:
-            quality_error = run_quality_gate(
+            gate_result = run_quality_gate(
                 clone_dir=clone_dir, impl_file=impl_file, base_args=base_args
             )
-            if quality_error:
+            if gate_result.error:
+                logger.info("Quality gate rejected, posting self-review")
                 base_args["quality_gate_fail_count"] = quality_gate_fail_count + 1
-                remaining_errors.append(f"- {quality_error}")
+                base_args["last_quality_error"] = gate_result.error
+                remaining_errors.append(f"- {gate_result.error}")
+                # Post self-review so PR shows what GA found
+                reasons = []
+                for line in gate_result.error.split("\n")[1:]:
+                    if ": " in line:
+                        reasons.append(f"- {line.split(': ', 1)[1]}")
+                if reasons:
+                    note = "## Self-Review\n\n" + "\n".join(reasons)
+                    create_comment(body=note, base_args=base_args)
+            elif gate_result.passed_count:
+                logger.info(
+                    "Quality gate passed with %d checks", gate_result.passed_count
+                )
+                coverage_comment_body += (
+                    f"\n\nPassed {gate_result.passed_count} quality checks."
+                )
 
     if remaining_errors:
         error_msg = "\n".join(remaining_errors)
@@ -376,6 +419,13 @@ async def verify_task_is_complete(
             error_files=error_files,
             modified_files=modified_files,
         )
+
+    # Post coverage comment only once, after all gates pass or skip
+    if coverage_comment_body:
+        logger.info("Posting coverage comment")
+        create_comment(body=coverage_comment_body, base_args=base_args)
+    else:
+        logger.info("No coverage comment to post")
 
     return VerifyTaskIsCompleteResult(
         success=True,

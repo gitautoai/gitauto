@@ -6,7 +6,9 @@ from utils.error.handle_exceptions import handle_exceptions
 def format_coverage_comment(coverage: Coverage, impl_file: str):
     # Column order matches jest/vitest coverage table: Stmts, Branch, Funcs, Lines
     lines = [
-        f"## Coverage for `{impl_file}`",
+        "## Coverage",
+        "",
+        f"`{impl_file}`",
         "",
         "| Stmts | Branch | Funcs | Lines |",
         "|-------|--------|-------|-------|",

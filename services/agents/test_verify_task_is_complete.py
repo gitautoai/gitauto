@@ -5,6 +5,7 @@ from unittest.mock import patch, AsyncMock
 
 import pytest
 
+from services.agents.run_quality_gate import QualityGateResult
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.eslint.run_eslint_fix import ESLintResult
 from services.jest.run_js_ts_test import JsTsTestResult
@@ -1423,8 +1424,9 @@ async def test_quality_gate_runs_when_fail_count_below_3(
         {"filename": "test/foo.spec.ts", "status": "added"},
     ]
     mock_read.return_value = "test content"
-    mock_quality_gate.return_value = (
-        "Quality gate failed for src/foo.ts:\nadversarial.null_inputs: No null tests"
+    mock_quality_gate.return_value = QualityGateResult(
+        error="Quality gate failed for src/foo.ts:\nadversarial.null_inputs: No null tests",
+        passed_count=0,
     )
     base_args["trigger"] = "schedule"
     base_args["impl_file_to_collect_coverage_from"] = "src/foo.ts"

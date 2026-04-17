@@ -48,6 +48,7 @@ class BaseArgs(TypedDict):
     test_file_paths: NotRequired[list[str]]
     review_id: NotRequired[int]
     skip_ci: NotRequired[bool]
+    last_quality_error: NotRequired[str]
     slack_thread_ts: NotRequired[str | None]
     usage_id: NotRequired[int]
 
