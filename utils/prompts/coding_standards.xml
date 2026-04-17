@@ -34,6 +34,7 @@
 
   <coverage>
     <rule>100% coverage does NOT mean quality. When existing tests have 100% coverage, evaluate quality: check for tautological assertions, missing adversarial cases, missing comments. Rewrite low-quality tests rather than declaring "no changes needed".</rule>
+    <rule>Do NOT assume existing tests are "comprehensive" just because they look thorough or have high coverage. Always read and evaluate them critically.</rule>
   </coverage>
 
   <anti_patterns>
@@ -42,12 +43,24 @@
     <rule>NEVER write toy tests with 2-3 synthetic items. Use real-world data from the cloned repo. Real data (31+ files) exposes real bugs that toy tests miss. Mutation testing principle: if changing a key value still passes your tests, they're worthless.</rule>
   </anti_patterns>
 
-  <passthrough_methods>
-    <rule>When a method primarily wraps an external call (DB, API, git, file I/O), mocking that dependency makes the test tautological.</rule>
-    <rule>Search for existing test infrastructure (factories, seeders, fixtures, test DB, tmp_path, bare repos). If found, use it for real integration tests.</rule>
-    <rule>If no test infrastructure exists, verify the mock was called with correct parameters (interaction testing) rather than asserting output equals mock return value.</rule>
-    <rule>For methods with business logic AND external calls, mock the external dependency to test the business logic.</rule>
-  </passthrough_methods>
+  <test_levels>
+    <rule>Every test file MUST include tests at multiple levels. There are three levels, from most isolated to most realistic:</rule>
+    <rule>1. SOLITARY (mocked): Isolate the function under test by mocking all dependencies. Tests pure logic, edge cases, error handling. Every function needs solitary tests.</rule>
+    <rule>2. SOCIABLE (real collaborators): Use real internal collaborators instead of mocks, but no external services. Proves functions compose correctly. If you wrote a mock in a solitary test, you MUST also write a sociable test using the real collaborator to prove it actually works together.</rule>
+    <rule>3. INTEGRATION (real external services): Hit real DB, real APIs, real file systems. Needed for resolvers, DB queries, API wrappers, and any method whose primary job is an external call. Requires secrets and test infrastructure.</rule>
+    <rule>CRITICAL: If you mocked a dependency in a solitary test, that is NOT sufficient by itself. You MUST also write sociable or integration tests to prove the real dependency works. Mocking a DB call and asserting the mock returns what you told it to is tautological.</rule>
+    <rule>Separate levels with comment banners: `// ===== solitary =====`, `// ===== sociable =====`, `// ===== integration =====` (use the language's comment syntax).</rule>
+  </test_levels>
+
+  <integration_tests>
+    <rule>Search for existing test infrastructure (factories, seeders, fixtures, test DB, createTestContext, MongoMemoryServer, tmp_path, bare repos). If found, you MUST use it for data-access methods.</rule>
+    <rule>Free/internal services (DB, Redis, internal APIs): Guard with env var so they skip locally but run in CI where secrets exist.</rule>
+    <rule>JavaScript/TypeScript guard: `const mongoUri = process.env.MONGODB_URI; (mongoUri ? describe : describe.skip)('integration', () => { ... });`</rule>
+    <rule>Python guard: `@pytest.mark.skipif(not os.getenv("MONGODB_URI"), reason="No MongoDB credentials")`</rule>
+    <rule>Paid APIs (Stripe, Twilio, SendGrid, etc.): Use `describe.skip` unconditionally. These tests MUST exist as documentation and for manual verification, but MUST NOT run automatically in CI to avoid costs.</rule>
+    <rule>If the repo already has test infrastructure that manages its own connections (e.g., createTestContext()), follow that existing pattern instead of adding redundant guards.</rule>
+    <rule>Follow the repo's existing integration test patterns. If the repo has a testing/ directory with helpers, use those helpers.</rule>
+  </integration_tests>
 
   <dead_code>
     <rule>When linters flag unreachable code, REMOVE IT - don't suppress warnings or test unreachable paths.</rule>

@@ -4,6 +4,7 @@ from utils.quality_checks.get_checklist_hash import get_checklist_hash
 
 def test_checklist_has_all_categories():
     expected_categories = {
+        "integration",
         "adversarial",
         "security",
         "performance",

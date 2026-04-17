@@ -1,4 +1,4 @@
-# Path-based exclusion reasons — files that can never be unit tested regardless of content.
+# Path-based exclusion reasons — files that can never be tested regardless of content.
 # LLM-evaluated exclusions use free-text reasons and are re-evaluated when impl changes.
 REASON_NOT_CODE = "not code file"
 REASON_DEPENDENCY = "dependency file"

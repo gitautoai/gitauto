@@ -1,4 +1,9 @@
 QUALITY_CHECKLIST: dict[str, list[str]] = {
+    "integration": [
+        "db_operations_use_real_test_db",
+        "api_calls_tested_end_to_end",
+        "env_var_guards_for_secrets",
+    ],
     "business_logic": [
         "domain_rules",
         "state_transitions",

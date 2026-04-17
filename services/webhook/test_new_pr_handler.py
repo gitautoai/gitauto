@@ -42,7 +42,7 @@ def _get_base_args():
         "owner": "test_owner",
         "repo": "test_repo",
         "pr_number": 100,
-        "pr_title": "Schedule: Add unit tests to services/test_file.py",
+        "pr_title": "Schedule: Add unit and integration tests to services/test_file.py",
         "sender_name": "test_sender",
         "repo_full_name": "test_owner/test_repo",
         "pr_creator": "test_creator",
@@ -69,7 +69,7 @@ def _get_test_payload():
             "label": {"name": PRODUCT_ID},
             "issue": {
                 "number": 100,
-                "title": "Schedule: Add unit tests to services/test_file.py",
+                "title": "Schedule: Add unit and integration tests to services/test_file.py",
                 "body": "Test body",
             },
             "pull_request": {
@@ -1589,7 +1589,7 @@ async def test_new_pr_handler_token_accumulation(
             "owner": "test_owner",
             "repo": "test_repo",
             "pr_number": 100,
-            "pr_title": "Schedule: Add unit tests to services/test_file.py",
+            "pr_title": "Schedule: Add unit and integration tests to services/test_file.py",
             "sender_name": "test_sender",
             "repo_full_name": "test_owner/test_repo",
             "pr_creator": "test_creator",
@@ -1670,7 +1670,7 @@ async def test_new_pr_handler_token_accumulation(
             "label": {"name": "gitauto"},
             "issue": {
                 "number": 100,
-                "title": "Schedule: Add unit tests to services/test_file.py",
+                "title": "Schedule: Add unit and integration tests to services/test_file.py",
                 "body": "Test body",
             },
             "pull_request": {
@@ -1763,7 +1763,7 @@ async def test_few_test_files_include_contents_in_prompt(
             "owner": "test_owner",
             "repo": "test_repo",
             "pr_number": 100,
-            "pr_title": "Schedule: Add unit tests to src/logger.ts",
+            "pr_title": "Schedule: Add unit and integration tests to src/logger.ts",
             "sender_name": "test_sender",
             "repo_full_name": "test_owner/test_repo",
             "pr_creator": "test_creator",
@@ -1827,7 +1827,7 @@ async def test_few_test_files_include_contents_in_prompt(
             "label": {"name": "gitauto"},
             "issue": {
                 "number": 100,
-                "title": "Schedule: Add unit tests to src/logger.ts",
+                "title": "Schedule: Add unit and integration tests to src/logger.ts",
                 "body": "Test body",
             },
             "pull_request": {
@@ -1914,7 +1914,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
             "owner": "test_owner",
             "repo": "test_repo",
             "pr_number": 100,
-            "pr_title": "Schedule: Add unit tests to src/logger.ts",
+            "pr_title": "Schedule: Add unit and integration tests to src/logger.ts",
             "sender_name": "test_sender",
             "repo_full_name": "test_owner/test_repo",
             "pr_creator": "test_creator",
@@ -1974,7 +1974,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
             "label": {"name": "gitauto"},
             "issue": {
                 "number": 100,
-                "title": "Schedule: Add unit tests to src/logger.ts",
+                "title": "Schedule: Add unit and integration tests to src/logger.ts",
                 "body": "Test body",
             },
             "pull_request": {

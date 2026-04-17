@@ -492,7 +492,7 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
         mock_create_pr.assert_called_once()
         call_kwargs = mock_create_pr.call_args.kwargs
         assert "src/new_file.py" in call_kwargs["title"]
-        assert "Add unit tests to" in call_kwargs["title"]
+        assert "Add unit and integration tests to" in call_kwargs["title"]
 
         mock_insert.assert_called_once()
         coverage_record = mock_insert.call_args[0][0]
@@ -730,7 +730,7 @@ def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
     mock_get_open_pull_requests.return_value = [
         {
             "number": 100,
-            "title": "Schedule: Add unit tests to src/app.php",
+            "title": "Schedule: Add unit and integration tests to src/app.php",
             "base": {"ref": "release/20260311"},
             "user": {"login": "gitauto-ai[bot]"},
         },
@@ -1048,8 +1048,8 @@ def test_schedule_handler_all_none_coverage_treated_as_candidate(
     assert result["status"] == "success"
     mock_create_pr.assert_called_once()
     call_kwargs = mock_create_pr.call_args.kwargs
-    # No existing test file in file tree → "Add unit tests to" (not "Achieve 100%")
-    assert "Add unit tests to" in call_kwargs["title"]
+    # No existing test file in file tree → "Add unit and integration tests to" (not "Achieve 100%")
+    assert "Add unit and integration tests to" in call_kwargs["title"]
     assert "web/pickup/finishp.php" in call_kwargs["title"]
     # Body should not have metric bullet points for all-None coverage
     assert "Create tests for happy paths" in call_kwargs["body"]

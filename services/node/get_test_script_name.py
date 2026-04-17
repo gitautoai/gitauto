@@ -10,7 +10,9 @@ def get_test_script_name(clone_dir: str):
     """Get the best test script name and value from package.json.
 
     Returns (script_name, script_value) or (None, "") if not found.
-    Prefers "test:unit" over "test" because we only run unit tests.
+    Prefers "test" over "test:unit" to run all test levels (solitary, sociable,
+    integration). Integration tests skip via env var guards when secrets are
+    unavailable.
     The script_value is needed to determine the actual runner (jest vs vitest)
     because the installed binary may differ from what the script invokes.
     """
@@ -28,13 +30,13 @@ def get_test_script_name(clone_dir: str):
     if not isinstance(scripts, dict):
         return None, ""
 
-    # Prefer "test:unit" because we only run unit tests
-    test_unit = scripts.get("test:unit")
-    if isinstance(test_unit, str) and test_unit:
-        return "test:unit", test_unit
-
+    # Prefer "test" to run all test levels (integration tests skip via env var guards)
     test_script = scripts.get("test")
     if isinstance(test_script, str) and test_script:
         return "test", test_script
+
+    test_unit = scripts.get("test:unit")
+    if isinstance(test_unit, str) and test_unit:
+        return "test:unit", test_unit
 
     return None, ""

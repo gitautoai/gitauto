@@ -12,21 +12,23 @@ class TestGetPrTitle:
         """Test generating PR title with a basic file path."""
         file_path = "src/main.py"
         result = get_pr_title(file_path)
-        expected = "Schedule: Add unit tests to `src/main.py`"
+        expected = "Schedule: Add unit and integration tests to `src/main.py`"
         assert result == expected
 
     def test_get_pr_title_nested_file_path(self):
         """Test generating PR title with a nested file path."""
         file_path = "utils/helpers/database.py"
         result = get_pr_title(file_path)
-        expected = "Schedule: Add unit tests to `utils/helpers/database.py`"
+        expected = (
+            "Schedule: Add unit and integration tests to `utils/helpers/database.py`"
+        )
         assert result == expected
 
     def test_get_pr_title_empty_string(self):
         """Test generating PR title with an empty string."""
         file_path = ""
         result = get_pr_title(file_path)
-        expected = "Schedule: Add unit tests to ``"
+        expected = "Schedule: Add unit and integration tests to ``"
         assert result == expected
 
     def test_get_pr_title_special_characters(self):
@@ -40,7 +42,7 @@ class TestGetPrTitle:
 
         for file_path in test_cases:
             result = get_pr_title(file_path)
-            expected = f"Schedule: Add unit tests to `{file_path}`"
+            expected = f"Schedule: Add unit and integration tests to `{file_path}`"
             assert result == expected
 
 

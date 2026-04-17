@@ -2,7 +2,7 @@ from constants.messages import SETTINGS_LINKS
 from constants.urls import GH_BASE_URL
 
 SCHEDULE_PREFIX = "Schedule:"
-SCHEDULE_PREFIX_ADD = f"{SCHEDULE_PREFIX} Add unit tests to"
+SCHEDULE_PREFIX_ADD = f"{SCHEDULE_PREFIX} Add unit and integration tests to"
 SCHEDULE_PREFIX_INCREASE = f"{SCHEDULE_PREFIX} Achieve 100% test coverage for"
 SCHEDULE_PREFIX_QUALITY = f"{SCHEDULE_PREFIX} Strengthen tests for"
 
