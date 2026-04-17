@@ -1,7 +1,7 @@
 from utils.prompts.base_role import BASE_ROLE
 from utils.quality_checks.checklist import QUALITY_CHECKLIST
 
-SHOULD_TEST_FILE_PROMPT = f"""{BASE_ROLE} Look at this code and decide if it BOTH needs AND can be unit tested.
+SHOULD_TEST_FILE_PROMPT = f"""{BASE_ROLE} Look at this code and decide if it BOTH needs AND can be tested (solitary, sociable, and integration tests).
 
 Return TRUE if the code is structurally testable (can be imported in a test without crashing) AND any of these apply:
 1. The code has actual logic worth testing.

@@ -2,7 +2,7 @@ from utils.files.get_impl_file_from_pr_title import get_impl_file_from_pr_title
 
 
 def test_add_unit_tests_prefix():
-    title = "Schedule: Add unit tests to services/github/client.py"
+    title = "Schedule: Add unit and integration tests to services/github/client.py"
     assert get_impl_file_from_pr_title(title) == "services/github/client.py"
 
 
@@ -21,7 +21,7 @@ def test_empty_title():
 
 
 def test_file_at_root():
-    title = "Schedule: Add unit tests to client.py"
+    title = "Schedule: Add unit and integration tests to client.py"
     assert get_impl_file_from_pr_title(title) == "client.py"
 
 
@@ -31,7 +31,7 @@ def test_no_file_extension():
 
 
 def test_backtick_wrapped_path():
-    title = "Schedule: Add unit tests to `services/github/client.py`"
+    title = "Schedule: Add unit and integration tests to `services/github/client.py`"
     assert get_impl_file_from_pr_title(title) == "services/github/client.py"
 
 

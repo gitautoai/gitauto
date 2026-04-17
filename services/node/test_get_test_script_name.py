@@ -72,13 +72,13 @@ def test_get_test_script_name_ghostwriter_vitest():
         assert result == ("test", "vitest run")
 
 
-def test_get_test_script_name_posthog_prefers_test_unit():
-    # posthog: has both "test" and "test:unit", should prefer "test:unit"
+def test_get_test_script_name_posthog_prefers_test():
+    # posthog: has both "test" and "test:unit", should prefer "test" to run all test levels
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "package.json"), "w", encoding=UTF8) as f:
             json.dump({"scripts": POSTHOG_SCRIPTS}, f)
         result = get_test_script_name(tmpdir)
-        assert result == ("test:unit", "jest --testPathPattern=frontend/")
+        assert result == ("test", "pnpm test:unit && pnpm test:visual")
 
 
 def test_get_test_script_name_circle_ci_test_jest_with_node_options():
