@@ -1,7 +1,7 @@
 # Local imports
 from constants.models import CREDIT_GRANT_AMOUNT_USD, ModelId
 from schemas.supabase.types import CreditTransactionType
-from services.supabase.credits.get_credit_cost import get_credit_cost
+from services.supabase.credits.get_credit_price import get_credit_price
 from services.supabase.client import supabase
 from utils.error.handle_exceptions import handle_exceptions
 
@@ -14,7 +14,7 @@ def insert_credit(
     model_id: ModelId | None = None,
 ):
     if transaction_type == "usage":
-        amount_usd = -get_credit_cost(model_id)
+        amount_usd = -get_credit_price(model_id)
     elif transaction_type == "grant":
         amount_usd = CREDIT_GRANT_AMOUNT_USD
     else:

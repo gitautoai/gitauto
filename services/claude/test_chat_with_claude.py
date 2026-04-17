@@ -13,6 +13,7 @@ def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
     mock_response = Mock()
     mock_response.content = [Mock(type="text", text="Hello! How can I help you?")]
     mock_response.usage = Mock(output_tokens=15)
+    mock_insert_llm_request.return_value = {"total_cost_usd": 0.05}
 
     mock_claude.messages.create.return_value = mock_response
     mock_claude.messages.count_tokens.return_value = Mock(input_tokens=20)
@@ -31,13 +32,13 @@ def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
         created_by="4:test-user",
     )
 
-    assistant_message, tool_calls, token_input, token_output = result
-    assert assistant_message["role"] == "assistant"
-    content = cast(list, assistant_message["content"])
+    assert result.assistant_message["role"] == "assistant"
+    content = cast(list, result.assistant_message["content"])
     assert content[0]["text"] == "Hello! How can I help you?"
-    assert not tool_calls
-    assert token_input == 20
-    assert token_output == 15
+    assert not result.tool_calls
+    assert result.token_input == 20
+    assert result.token_output == 15
+    assert result.cost_usd == 0.05
 
     mock_insert_llm_request.assert_called_once()
     call_args = mock_insert_llm_request.call_args[1]
@@ -88,11 +89,10 @@ def test_chat_with_claude_with_tool_use(mock_claude, mock_insert_llm_request):
         created_by="4:test-user",
     )
 
-    _, tool_calls, _, _ = result
-    assert len(tool_calls) == 1
-    assert tool_calls[0].id == "tool_123"
-    assert tool_calls[0].name == "test_function"
-    assert tool_calls[0].args == {"param": "value"}
+    assert len(result.tool_calls) == 1
+    assert result.tool_calls[0].id == "tool_123"
+    assert result.tool_calls[0].name == "test_function"
+    assert result.tool_calls[0].args == {"param": "value"}
 
     mock_insert_llm_request.assert_called_once()
 
@@ -116,8 +116,7 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
         created_by="4:test-user",
     )
 
-    _, _, _, token_output = result
-    assert token_output == 0  # output tokens should be 0 when no usage info
+    assert result.token_output == 0  # output tokens should be 0 when no usage info
     mock_insert_llm_request.assert_called_once()
 
 

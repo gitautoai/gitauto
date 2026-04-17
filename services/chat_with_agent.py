@@ -32,10 +32,11 @@ from utils.progress_bar.progress_bar import create_progress_bar
 
 
 @dataclass
-class AgentResult:
+class AgentResult:  # pylint: disable=too-many-instance-attributes
     messages: list[MessageParam]
     token_input: int
     token_output: int
+    cost_usd: float
     is_completed: bool
     completion_reason: str
     p: int
@@ -67,12 +68,7 @@ async def chat_with_agent(
         logger.info("Using model: %s", current_model)
 
         try:
-            (
-                response_message,
-                tool_calls,
-                token_input,
-                token_output,
-            ) = chat_with_model(
+            llm_result = chat_with_model(
                 messages=messages,
                 system_content=system_message,
                 tools=tools,
@@ -125,13 +121,14 @@ async def chat_with_agent(
             )
 
     # Return if no tool calls (agent returned text without calling a tool)
-    if not tool_calls:
-        logger.info("No tools were called. Response: %s", response_message)
-        messages.append(response_message)
+    if not llm_result.tool_calls:
+        logger.info("No tools were called. Response: %s", llm_result.assistant_message)
+        messages.append(llm_result.assistant_message)
         return AgentResult(
             messages=messages,
-            token_input=token_input,
-            token_output=token_output,
+            token_input=llm_result.token_input,
+            token_output=llm_result.token_output,
+            cost_usd=llm_result.cost_usd,
             is_completed=False,
             completion_reason="",
             p=p,
@@ -139,10 +136,10 @@ async def chat_with_agent(
         )
 
     # Append assistant message before processing tool calls
-    messages.append(response_message)
+    messages.append(llm_result.assistant_message)
 
     # Extract text from the assistant message for completion context
-    content = response_message["content"]
+    content = llm_result.assistant_message["content"]
     if isinstance(content, str):
         assistant_text = content
     else:
@@ -156,11 +153,11 @@ async def chat_with_agent(
     tool_result_blocks: list[ToolResultBlockParam] = []
     log_msgs: list[str] = []
     is_completed = False
-    num_tool_calls = len(tool_calls)
+    num_tool_calls = len(llm_result.tool_calls)
     logger.info("Processing %d tool call(s)", num_tool_calls)
 
     # pylint: disable-next=too-many-nested-blocks
-    for i, tc in enumerate(tool_calls, start=1):
+    for i, tc in enumerate(llm_result.tool_calls, start=1):
         tool_use_id = tc.id
         tool_name = tc.name
         tool_args = tc.args
@@ -505,7 +502,7 @@ async def chat_with_agent(
     if log_msgs:
         update_comment(
             body=create_progress_bar(
-                p=p + 5 * len(tool_calls), msg="\n".join(log_messages)
+                p=p + 5 * len(llm_result.tool_calls), msg="\n".join(log_messages)
             ),
             base_args=base_args,
         )
@@ -520,10 +517,11 @@ async def chat_with_agent(
 
     return AgentResult(
         messages=messages,
-        token_input=token_input,
-        token_output=token_output,
+        token_input=llm_result.token_input,
+        token_output=llm_result.token_output,
+        cost_usd=llm_result.cost_usd,
         is_completed=is_completed,
         completion_reason=assistant_text,
-        p=p + 5 * len(tool_calls),
+        p=p + 5 * len(llm_result.tool_calls),
         is_planned=False,
     )

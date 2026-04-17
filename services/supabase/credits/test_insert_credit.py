@@ -53,7 +53,7 @@ def test_usage_inserts_correct_data_with_usage_id(mock_supabase, mock_query_chai
     usage_id = 456
 
     with patch(
-        "services.supabase.credits.insert_credit.get_credit_cost",
+        "services.supabase.credits.insert_credit.get_credit_price",
         return_value=MAX_CREDIT_COST_USD,
     ):
         result = insert_credit(
@@ -78,7 +78,7 @@ def test_usage_with_model_id_uses_model_specific_cost(mock_supabase, mock_query_
     model_id = GoogleModelId.GEMMA_4_31B
 
     with patch(
-        "services.supabase.credits.insert_credit.get_credit_cost",
+        "services.supabase.credits.insert_credit.get_credit_price",
         return_value=2,
     ):
         result = insert_credit(
@@ -124,7 +124,7 @@ def test_insert_exception_returns_none(mock_supabase, mock_query_chain):
     mock_query_chain["table"].insert.side_effect = Exception("Insert error")
 
     with patch(
-        "services.supabase.credits.insert_credit.get_credit_cost",
+        "services.supabase.credits.insert_credit.get_credit_price",
         return_value=MAX_CREDIT_COST_USD,
     ):
         result = insert_credit(owner_id=555555, transaction_type="usage")
@@ -168,7 +168,7 @@ def test_various_usage_ids(mock_supabase, mock_query_chain, usage_id):
     owner_id = 123456
 
     with patch(
-        "services.supabase.credits.insert_credit.get_credit_cost",
+        "services.supabase.credits.insert_credit.get_credit_price",
         return_value=MAX_CREDIT_COST_USD,
     ):
         result = insert_credit(

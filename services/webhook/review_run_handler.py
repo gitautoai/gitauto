@@ -9,7 +9,7 @@ from anthropic.types import MessageParam
 
 # Local imports
 from config import GITHUB_APP_USER_NAME, PRODUCT_ID
-from constants.agent import MAX_ITERATIONS
+from constants.agent import COST_CAP_RATIO, MAX_ITERATIONS
 from constants.triggers import ReviewTrigger
 from services.github.types.webhook.review_run_payload import ReviewRunPayload
 from services.agents.verify_task_is_complete import verify_task_is_complete
@@ -32,6 +32,7 @@ from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.slack.slack_notify import slack_notify
 from services.supabase.credits.check_purchase_exists import check_purchase_exists
+from services.supabase.credits.get_credit_price import get_credit_price
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_reference import get_reference
 from services.github.pulls.get_pull_request import get_pull_request
@@ -426,12 +427,15 @@ async def handle_review_run(
         trigger=trigger, repo_settings=repo_settings, clone_dir=clone_dir
     )
 
+    cost_cap_usd = get_credit_price(model_id) * COST_CAP_RATIO
+
     for _iteration in range(MAX_ITERATIONS):
         if should_bail(
             current_time=current_time,
             phase="execution",
             base_args=base_args,
             slack_thread_ts=thread_ts,
+            cost_cap_usd=cost_cap_usd,
         ):
             break
 

@@ -63,6 +63,7 @@ def _mock_tool_call_response(
 @patch("services.google_ai.chat_with_google.get_google_ai_client")
 def test_text_response(mock_get_client, mock_insert):
     """Text-only response returns correct assistant message and token counts."""
+    mock_insert.return_value = {"total_cost_usd": 0.0}
     mock_client = Mock()
     mock_client.models.generate_content.return_value = _mock_text_response(
         "Hello! How can I help?", prompt_tokens=20, candidates_tokens=15
@@ -81,14 +82,14 @@ def test_text_response(mock_get_client, mock_insert):
         created_by="4:test-user",
     )
 
-    assistant_message, tool_calls, token_input, token_output = result
-    assert assistant_message == {
+    assert result.assistant_message == {
         "role": "assistant",
         "content": [{"type": "text", "text": "Hello! How can I help?"}],
     }
-    assert not tool_calls
-    assert token_input == 20
-    assert token_output == 15
+    assert not result.tool_calls
+    assert result.token_input == 20
+    assert result.token_output == 15
+    assert result.cost_usd == 0.0
 
     mock_insert.assert_called_once()
     call_kwargs = mock_insert.call_args[1]
@@ -103,6 +104,7 @@ def test_text_response(mock_get_client, mock_insert):
 @patch("services.google_ai.chat_with_google.get_google_ai_client")
 def test_tool_call_response(mock_get_client, mock_insert):
     """Response with text + function_call returns tool_calls and correct message."""
+    mock_insert.return_value = {"total_cost_usd": 0.05}
     mock_client = Mock()
     mock_client.models.generate_content.return_value = _mock_tool_call_response(
         text="I'll read that file.",
@@ -135,8 +137,7 @@ def test_tool_call_response(mock_get_client, mock_insert):
         created_by="4:test-user",
     )
 
-    assistant_message, tool_calls, token_input, token_output = result
-    assert assistant_message == {
+    assert result.assistant_message == {
         "role": "assistant",
         "content": [
             {"type": "text", "text": "I'll read that file."},
@@ -148,18 +149,19 @@ def test_tool_call_response(mock_get_client, mock_insert):
             },
         ],
     }
-    assert len(tool_calls) == 1
-    assert tool_calls[0].id == "toolu_abc123"
-    assert tool_calls[0].name == "get_remote_file_content"
-    assert tool_calls[0].args == {"file_path": "README.md"}
-    assert token_input == 30
-    assert token_output == 25
+    assert len(result.tool_calls) == 1
+    assert result.tool_calls[0].id == "toolu_abc123"
+    assert result.tool_calls[0].name == "get_remote_file_content"
+    assert result.tool_calls[0].args == {"file_path": "README.md"}
+    assert result.token_input == 30
+    assert result.token_output == 25
 
 
 @patch("services.google_ai.chat_with_google.insert_llm_request")
 @patch("services.google_ai.chat_with_google.get_google_ai_client")
 def test_no_usage_metadata(mock_get_client, mock_insert):
     """When usage_metadata is None, token counts default to 0."""
+    mock_insert.return_value = {"total_cost_usd": 0.0}
     response = _mock_text_response("Response")
     response.usage_metadata = None
     mock_client = Mock()
@@ -175,15 +177,15 @@ def test_no_usage_metadata(mock_get_client, mock_insert):
         created_by="4:test-user",
     )
 
-    _, _, token_input, token_output = result
-    assert token_input == 0
-    assert token_output == 0
+    assert result.token_input == 0
+    assert result.token_output == 0
 
 
 @patch("services.google_ai.chat_with_google.insert_llm_request")
 @patch("services.google_ai.chat_with_google.get_google_ai_client")
 def test_empty_candidates(mock_get_client, mock_insert):
     """When candidates list is empty, returns empty content."""
+    mock_insert.return_value = {"total_cost_usd": 0.0}
     response = Mock()
     response.candidates = []
     response.usage_metadata = Mock(prompt_token_count=10, candidates_token_count=0)
@@ -200,10 +202,9 @@ def test_empty_candidates(mock_get_client, mock_insert):
         created_by="4:test-user",
     )
 
-    assistant_message, tool_calls, _, _ = result
     # No parts → content_list is empty → falls back to empty content_text
-    assert assistant_message == {"role": "assistant", "content": ""}
-    assert not tool_calls
+    assert result.assistant_message == {"role": "assistant", "content": ""}
+    assert not result.tool_calls
 
 
 @patch("services.google_ai.chat_with_google.insert_llm_request")
@@ -247,12 +248,11 @@ def test_function_call_without_id_generates_one(mock_get_client, mock_insert):
         created_by="4:test-user",
     )
 
-    _, tool_calls, _, _ = result
-    assert len(tool_calls) == 1
-    assert tool_calls[0].id.startswith("toolu_")
-    assert len(tool_calls[0].id) == 30  # "toolu_" + 24 hex chars
-    assert tool_calls[0].name == "run_command"
-    assert tool_calls[0].args == {"command": "ls"}
+    assert len(result.tool_calls) == 1
+    assert result.tool_calls[0].id.startswith("toolu_")
+    assert len(result.tool_calls[0].id) == 30  # "toolu_" + 24 hex chars
+    assert result.tool_calls[0].name == "run_command"
+    assert result.tool_calls[0].args == {"command": "ls"}
 
 
 # --- Sociable integration tests: real Google AI API calls ---
@@ -286,12 +286,11 @@ def test_integration_text_response(mock_insert):
         created_by="4:integration-test",
     )
 
-    assistant_message, tool_calls, token_input, token_output = result
-    assert assistant_message["role"] == "assistant"
-    assert isinstance(assistant_message["content"], (str, list))
-    assert not tool_calls
-    assert token_input > 0
-    assert token_output > 0
+    assert result.assistant_message["role"] == "assistant"
+    assert isinstance(result.assistant_message["content"], (str, list))
+    assert not result.tool_calls
+    assert result.token_input > 0
+    assert result.token_output > 0
 
     mock_insert.assert_called_once()
     call_kwargs = mock_insert.call_args[1]
@@ -321,17 +320,16 @@ def test_integration_tool_call_with_real_tools(mock_insert):
         created_by="4:integration-test",
     )
 
-    assistant_message, tool_calls, token_input, token_output = result
-    assert assistant_message["role"] == "assistant"
-    assert token_input > 0
-    assert token_output > 0
+    assert result.assistant_message["role"] == "assistant"
+    assert result.token_input > 0
+    assert result.token_output > 0
     # Model should call a file-reading tool
-    assert len(tool_calls) >= 1
-    tool_names = [tc.name for tc in tool_calls]
+    assert len(result.tool_calls) >= 1
+    tool_names = [tc.name for tc in result.tool_calls]
     assert any(
         name in tool_names for name in ("get_local_file_content", "query_file")
     ), f"Expected a file-reading tool call, got: {tool_names}"
     # Each tool call has a valid id
-    for tc in tool_calls:
+    for tc in result.tool_calls:
         assert tc.id
         assert tc.name

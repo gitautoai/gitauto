@@ -10,7 +10,7 @@ from anthropic.types import MessageParam
 
 # Local imports
 from config import EMAIL_LINK, GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
-from constants.agent import MAX_ITERATIONS
+from constants.agent import COST_CAP_RATIO, MAX_ITERATIONS
 from constants.general import MAX_GITAUTO_COMMITS_PER_PR, MAX_INFRA_RETRIES
 from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_FAILED_MESSAGE
 from services.agents.verify_task_is_complete import verify_task_is_complete
@@ -55,6 +55,7 @@ from services.php.ensure_php_packages import ensure_php_packages
 from services.slack.slack_notify import slack_notify
 from services.supabase.check_suites.insert_check_suite import insert_check_suite
 from services.supabase.credits.check_purchase_exists import check_purchase_exists
+from services.supabase.credits.get_credit_price import get_credit_price
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 from services.supabase.codecov_tokens.get_codecov_token import get_codecov_token
 from services.supabase.create_user_request import create_user_request
@@ -711,12 +712,15 @@ async def handle_check_suite(
         trigger=trigger, repo_settings=repo_settings, clone_dir=clone_dir
     )
 
+    cost_cap_usd = get_credit_price(model_id) * COST_CAP_RATIO
+
     for _iteration in range(MAX_ITERATIONS):
         if should_bail(
             current_time=current_time,
             phase="execution",
             base_args=base_args,
             slack_thread_ts=thread_ts,
+            cost_cap_usd=cost_cap_usd,
         ):
             break
 

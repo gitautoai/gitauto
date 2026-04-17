@@ -8,7 +8,7 @@ import time
 from anthropic.types import MessageParam
 
 # Local imports
-from constants.agent import MAX_ITERATIONS
+from constants.agent import COST_CAP_RATIO, MAX_ITERATIONS
 from constants.messages import SETTINGS_LINKS
 from constants.triggers import NewPrTrigger
 from services.agents.verify_task_is_complete import verify_task_is_complete
@@ -49,6 +49,7 @@ from services.stripe.create_stripe_customer import create_stripe_customer
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.create_user_request import create_user_request
 from services.supabase.credits.check_purchase_exists import check_purchase_exists
+from services.supabase.credits.get_credit_price import get_credit_price
 from services.supabase.credits.insert_credit import insert_credit
 from services.supabase.email_sends.insert_email_send import insert_email_send
 from services.supabase.email_sends.update_email_send import update_email_send
@@ -569,6 +570,8 @@ async def handle_new_pr(
     total_token_output = 0
     is_completed = False
     completion_reason = ""
+    revenue_usd = get_credit_price(model_id)
+    cost_cap_usd = revenue_usd * COST_CAP_RATIO
 
     system_message = create_system_message(
         trigger=trigger, repo_settings=repo_settings, clone_dir=clone_dir
@@ -580,6 +583,7 @@ async def handle_new_pr(
             phase="pr processing",
             base_args=base_args,
             slack_thread_ts=None,
+            cost_cap_usd=cost_cap_usd,
         ):
             break
 
@@ -600,6 +604,7 @@ async def handle_new_pr(
         p = result.p
         total_token_input += result.token_input
         total_token_output += result.token_output
+
         if is_completed:
             logger.info(
                 "Agent signaled completion via verify_task_is_complete, breaking loop"

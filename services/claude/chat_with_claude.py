@@ -1,17 +1,12 @@
-# Standard imports
-from dataclasses import dataclass
 import time
 
-# Third party imports
 from anthropic import AuthenticationError
 from anthropic._exceptions import OverloadedError
 from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 
-# Local imports
 from constants.claude import CONTEXT_WINDOW, MAX_OUTPUT_TOKENS
 from constants.models import ClaudeModelId
 from services.claude.client import claude
-from services.claude.strip_strict_from_tools import strip_strict_from_tools
 from services.claude.exceptions import (
     ClaudeAuthenticationError,
     ClaudeOverloadedError,
@@ -19,16 +14,11 @@ from services.claude.exceptions import (
 from services.claude.remove_outdated_file_edit_attempts import (
     remove_outdated_file_edit_attempts,
 )
+from services.claude.strip_strict_from_tools import strip_strict_from_tools
 from services.claude.trim_messages import trim_messages_to_token_limit
+from services.llm_result import LlmResult, ToolCall
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 from utils.error.handle_exceptions import handle_exceptions
-
-
-@dataclass
-class ToolCall:
-    id: str
-    name: str
-    args: dict | None
 
 
 @handle_exceptions(raise_on_error=True)
@@ -126,7 +116,7 @@ def chat_with_claude(
     # Combine system message with user messages for logging
     system_msg: MessageParam = {"role": "user", "content": system_content}
     full_messages = [system_msg, *messages]
-    insert_llm_request(
+    llm_record = insert_llm_request(
         usage_id=usage_id,
         provider="claude",
         model_id=model_id,
@@ -137,10 +127,12 @@ def chat_with_claude(
         response_time_ms=response_time_ms,
         created_by=created_by,
     )
+    cost_usd = llm_record["total_cost_usd"] if llm_record else 0.0
 
-    return (
-        assistant_message,
-        tool_calls,
-        token_input,
-        token_output,
+    return LlmResult(
+        assistant_message=assistant_message,
+        tool_calls=tool_calls,
+        token_input=token_input,
+        token_output=token_output,
+        cost_usd=cost_usd,
     )

@@ -3,7 +3,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=MAX_CREDIT_COST_USD, raise_on_error=False)
-def get_credit_cost(model_id: ModelId | None):
+def get_credit_price(model_id: ModelId | None):
     if not model_id:
         return MAX_CREDIT_COST_USD
     entry = MODEL_REGISTRY.get(model_id)

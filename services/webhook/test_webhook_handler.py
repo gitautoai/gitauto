@@ -231,7 +231,10 @@ class TestHandleWebhookEvent:
         payload = {
             "action": "labeled",
             "label": {"name": "gitauto"},
-            "pull_request": {"number": 42, "head": {"ref": "gitauto/dashboard-20250101-120000-Ab12"}},
+            "pull_request": {
+                "number": 42,
+                "head": {"ref": "gitauto/dashboard-20250101-120000-Ab12"},
+            },
             "sender": {"login": "test-user", "id": 12345},
         }
 
@@ -252,7 +255,10 @@ class TestHandleWebhookEvent:
         payload = {
             "action": "labeled",
             "label": {"name": "gitauto"},
-            "pull_request": {"number": 42, "head": {"ref": "gitauto/schedule-20250101-120000-Ab12"}},
+            "pull_request": {
+                "number": 42,
+                "head": {"ref": "gitauto/schedule-20250101-120000-Ab12"},
+            },
             "sender": {"login": "test-user", "id": 12345},
         }
 
@@ -273,7 +279,10 @@ class TestHandleWebhookEvent:
         payload = {
             "action": "labeled",
             "label": {"name": "dependencies"},
-            "pull_request": {"number": 99, "head": {"ref": "dependabot/npm_and_yarn/ajv-6.14.0"}},
+            "pull_request": {
+                "number": 99,
+                "head": {"ref": "dependabot/npm_and_yarn/ajv-6.14.0"},
+            },
             "sender": {"login": "dependabot[bot]", "id": 49699333},
         }
 
@@ -290,7 +299,10 @@ class TestHandleWebhookEvent:
         payload = {
             "action": "labeled",
             "label": {"name": "gitauto"},
-            "pull_request": {"number": 99, "head": {"ref": "dependabot/npm_and_yarn/ajv-6.14.0"}},
+            "pull_request": {
+                "number": 99,
+                "head": {"ref": "dependabot/npm_and_yarn/ajv-6.14.0"},
+            },
             "sender": {"login": "dependabot[bot]", "id": 49699333},
         }
 
@@ -307,7 +319,10 @@ class TestHandleWebhookEvent:
         payload = {
             "action": "labeled",
             "label": {"name": "gitauto"},
-            "pull_request": {"number": 42, "head": {"ref": "gitauto/schedule-20250101-120000-Ab12"}},
+            "pull_request": {
+                "number": 42,
+                "head": {"ref": "gitauto/schedule-20250101-120000-Ab12"},
+            },
             "sender": {"login": "gitauto[bot]", "id": 160085510},
         }
 
@@ -395,6 +410,7 @@ class TestHandleWebhookEvent:
             payload = {
                 "action": "closed",
                 "pull_request": {
+                    "number": 456,
                     "merged_at": "2023-01-01T00:00:00Z",
                     "head": {"ref": "feature/some-branch"},
                 },
@@ -529,7 +545,7 @@ class TestHandleWebhookEvent:
         self, mock_handle_review_run
     ):
         """Test handling of pull request review comment created event."""
-        payload = {"action": "created"}
+        payload = {"action": "created", "pull_request": {"number": 456}}
 
         await handle_webhook_event(
             event_name="pull_request_review_comment", payload=payload
@@ -544,7 +560,7 @@ class TestHandleWebhookEvent:
         self, mock_handle_review_run
     ):
         """Test handling of pull request review comment edited event."""
-        payload = {"action": "edited"}
+        payload = {"action": "edited", "pull_request": {"number": 456}}
 
         await handle_webhook_event(
             event_name="pull_request_review_comment", payload=payload
