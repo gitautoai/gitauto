@@ -9,6 +9,9 @@ set -uo pipefail
 
 echo "=== Pre-commit hook ==="
 
+# Keep local main in sync with remote (no checkout needed)
+git fetch origin main:main 2>/dev/null || true
+
 # Auto-increment version (major updated manually)
 # New files → minor bump (1.X.0), modifications only → patch bump (1.0.X)
 CURRENT=$(grep '^version' pyproject.toml | sed 's/.*"\(.*\)"/\1/')

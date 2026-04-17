@@ -18,7 +18,8 @@ on:
 
 env:
   ENV: prod
-  GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+  GH_APP_ID: ${{ secrets.PROD_GH_APP_ID }}
+  GH_PRIVATE_KEY: ${{ secrets.PROD_GH_PRIVATE_KEY }}
   SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
   SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
   SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}

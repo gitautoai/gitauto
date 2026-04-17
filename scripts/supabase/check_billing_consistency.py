@@ -27,19 +27,24 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 load_dotenv()
 
-# Billing checks must always run against PROD Supabase
-os.environ["SUPABASE_URL"] = os.environ.get("SUPABASE_URL_PRD", "")
-os.environ["SUPABASE_SERVICE_ROLE_KEY"] = os.environ.get(
-    "SUPABASE_SERVICE_ROLE_KEY_PRD", ""
-)
+# Billing checks must always run against PROD Supabase (locally, _PRD overrides dev .env)
+if os.environ.get("SUPABASE_URL_PRD"):
+    os.environ["SUPABASE_URL"] = os.environ["SUPABASE_URL_PRD"]
+if os.environ.get("SUPABASE_SERVICE_ROLE_KEY_PRD"):
+    os.environ["SUPABASE_SERVICE_ROLE_KEY"] = os.environ[
+        "SUPABASE_SERVICE_ROLE_KEY_PRD"
+    ]
 
-from scripts.github.get_installation_token import get_installation_token
 from scripts.supabase.compare_billing_records import compare_billing_records
 from scripts.supabase.format_billing_report import format_billing_report
 from scripts.supabase.get_github_prs_by_owner import get_github_prs_by_owner
+from services.github.token.get_installation_token import get_installation_access_token
 from services.slack.slack_notify import slack_notify
 from services.supabase.credits.get_credit_records_by_owner import (
     get_credit_records_by_owner,
+)
+from services.supabase.installations.get_installation_by_owner import (
+    get_installation_by_owner,
 )
 from services.supabase.usage.get_usage_records_by_owner import (
     get_usage_records_by_owner,
@@ -112,8 +117,12 @@ def main():
         print(f"\n--- {owner_name} (owner_id={owner_id}) ---")
 
         # Get GitHub token for this owner
+        installation = get_installation_by_owner(owner_name)
+        if not installation:
+            print(f"  Skipping {owner_name}: no active installation found")
+            continue
         try:
-            token = get_installation_token(owner_name)
+            token = get_installation_access_token(installation["installation_id"])
         except (ValueError, requests.HTTPError) as e:
             print(f"  Skipping {owner_name}: {e}")
             continue
