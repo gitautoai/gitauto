@@ -498,21 +498,11 @@ async def handle_new_pr(
         user_input_obj["test_naming_convention"] = test_naming
 
     # Detect repo's test location convention (co-located, __tests__, separate dir)
-    # Skip auto-detection if user explicitly configured test file location
-    # Cross-ref: website repo app/dashboard/rules/config/structured-rules.ts testFileLocation options
-    structured_rules = repo_settings.get("structured_rules") if repo_settings else None
-    explicit_location = None
-    if isinstance(structured_rules, dict):
-        test_file_location = structured_rules.get("testFileLocation")
-        if test_file_location and test_file_location != "Auto-detect from repo":
-            explicit_location = test_file_location
-    if explicit_location:
-        user_input_obj["test_location_convention"] = explicit_location
-        logger.info("Using explicit test location setting: %s", explicit_location)
-    else:
-        test_location = detect_test_location_convention(clone_dir)
-        if test_location:
-            user_input_obj["test_location_convention"] = test_location
+    # Always auto-detect from the actual repo. Dashboard testFileLocation default ("Co-located with source") was overriding auto-detection for repos whose tests are actually in separate directories (e.g. test/specs/).
+    test_location = detect_test_location_convention(clone_dir)
+    if test_location:
+        user_input_obj["test_location_convention"] = test_location
+        logger.info("Auto-detected test location convention: %s", test_location)
 
     user_input = dumps(user_input_obj)
     messages: list[MessageParam] = [{"role": "user", "content": user_input}]

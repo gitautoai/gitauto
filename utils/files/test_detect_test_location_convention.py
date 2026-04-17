@@ -133,3 +133,37 @@ def test_spec_directory_counts_as_separate():
         result = detect_test_location_convention(tmp)
         assert result is not None
         assert result.startswith("separate")
+
+
+def test_majority_below_80_percent_returns_none():
+    # 3 separate + 1 co-located = 75% separate, under 80% threshold
+    with tempfile.TemporaryDirectory() as tmp:
+        _create_files(
+            tmp,
+            [
+                "src/utils/foo.test.ts",
+                "tests/test_bar.py",
+                "tests/test_baz.py",
+                "tests/test_qux.py",
+            ],
+        )
+        result = detect_test_location_convention(tmp)
+        assert result is None
+
+
+def test_exactly_80_percent_returns_dominant():
+    # 4 separate + 1 co-located = 80% separate, meets threshold
+    with tempfile.TemporaryDirectory() as tmp:
+        _create_files(
+            tmp,
+            [
+                "src/utils/foo.test.ts",
+                "tests/test_bar.py",
+                "tests/test_baz.py",
+                "tests/test_qux.py",
+                "tests/test_quux.py",
+            ],
+        )
+        result = detect_test_location_convention(tmp)
+        assert result is not None
+        assert result.startswith("separate")

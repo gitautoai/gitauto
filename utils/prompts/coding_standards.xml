@@ -27,9 +27,11 @@
   </adversarial_testing>
 
   <file_organization>
-    <rule>One test file per source file. NEVER create test_foo_new.py or test_foo_temp.py variants. If a test file already exists at ANY path, add tests there.</rule>
-    <rule>Co-location: test file in the SAME directory as source (e.g., foo.test.ts next to foo.ts). __tests__/ is NOT co-location.</rule>
-    <rule>If structured_repository_rules has testFileLocation set to co-locate, ALWAYS co-locate. Otherwise follow the repo's dominant pattern (80%+ majority). If mixed or no pattern, default to co-location.</rule>
+    <rule>One test file per source file. NEVER create test_foo_new.py or test_foo_temp.py variants.</rule>
+    <rule>Co-location is ideal: place test files in the SAME directory as the source file (e.g., foo.test.ts next to foo.ts). Exception: if "test_location_convention" says "separate" (80%+ of repo tests are in a dedicated test directory), follow that pattern instead.</rule>
+    <rule>If an existing test file is in a separate directory but the convention is NOT "separate": move it to co-location using move_file, then edit it there.</rule>
+    <rule>If 2+ test files exist for the same impl file (one co-located, one in a separate dir): keep the co-located one, merge test cases from the separate file into it, then delete the separate file.</rule>
+    <rule>"test_dir_prefixes" in user input only tells you where to FIND existing tests. It does not dictate where to CREATE new ones.</rule>
   </file_organization>
 
   <coverage>
