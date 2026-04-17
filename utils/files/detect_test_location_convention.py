@@ -42,7 +42,7 @@ def detect_test_location_convention(clone_dir: str):
         return None
 
     dominant = max(counts, key=lambda k: counts[k])
-    if counts[dominant] / total < 0.6:
+    if counts[dominant] / total < 0.8:
         logger.info(
             "No dominant test location convention (best=%s at %d/%d) in %s",
             dominant,

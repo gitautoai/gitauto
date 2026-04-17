@@ -2005,3 +2005,118 @@ async def test_many_test_files_include_paths_only_in_prompt(
     assert len(test_file_msgs) == 5
     # read_local_file called: 1 for impl file + 5 for top test files = 6
     assert mock_read_local_file.call_count == 6
+
+
+@pytest.mark.asyncio
+@patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
+@patch("services.webhook.new_pr_handler.insert_credit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.read_local_file")
+@patch("services.webhook.new_pr_handler.find_test_files")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
+@patch("services.webhook.new_pr_handler.ensure_node_packages")
+@patch("services.webhook.new_pr_handler.get_owner")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.detect_test_location_convention")
+async def test_auto_detect_location_ignores_dashboard_setting(
+    mock_detect_location,
+    mock_deconstruct_github_payload,
+    mock_render_text,
+    mock_check_availability,
+    mock_create_comment,
+    mock_get_owner,
+    mock_ensure_node_packages,
+    mock_prepare_repo,
+    mock_find_test_files,
+    mock_read_local_file,
+    mock_create_user_request,
+    mock_chat_with_agent,
+    mock_update_comment,
+    mock_update_usage,
+    mock_create_progress_bar,
+    mock_slack_notify,
+    mock_get_comments,
+    mock_get_remote_file_content_by_url,
+    mock_create_empty_commit,
+    mock_should_bail,
+    mock_insert_credit,
+    _mock_run_subprocess,
+):
+    # Auto-detection returns "separate" even though dashboard says "Co-located"
+    mock_detect_location.return_value = (
+        "separate test directory (e.g., test/specs/foo.spec.ts)"
+    )
+    mock_deconstruct_github_payload.return_value = (
+        {
+            **_get_base_args(),
+            "github_urls": {},
+            "clone_url": "https://x-access-token:t@github.com/o/r.git",
+            "base_branch": "main",
+        },
+        None,
+    )
+    mock_render_text.return_value = "body"
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "credit",
+        "credit_balance_usd": 50,
+        "user_message": "",
+        "log_message": "ok",
+    }
+    mock_create_comment.return_value = "https://api.github.com/comment/1"
+    mock_get_owner.return_value = {
+        "id": 456,
+        "credit_balance_usd": 100,
+        # Dashboard says "Co-located with source" but auto-detect says "separate"
+        "structured_rules": {"testFileLocation": "Co-located with source"},
+    }
+    mock_create_user_request.return_value = 999
+    mock_find_test_files.return_value = []
+    mock_read_local_file.return_value = "function foo() {}"
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        completion_reason="",
+        p=0,
+        is_planned=False,
+        cost_usd=0.0,
+    )
+    mock_update_comment.return_value = None
+    mock_update_usage.return_value = None
+    mock_create_progress_bar.return_value = "Progress: 0%"
+    mock_slack_notify.return_value = "thread_1"
+    mock_get_comments.return_value = []
+    mock_get_remote_file_content_by_url.return_value = ("", "")
+    mock_create_empty_commit.return_value = None
+    mock_insert_credit.return_value = None
+
+    payload = _get_test_payload()
+    await handle_new_pr(payload=payload, trigger="dashboard")
+
+    # detect_test_location_convention must always be called (not skipped)
+    mock_detect_location.assert_called_once()
+
+    # Verify auto-detected "separate" appears in user_input, not dashboard default
+    call_kwargs = mock_chat_with_agent.call_args.kwargs
+    messages = call_kwargs["messages"]
+    user_input = json.loads(messages[0]["content"])
+    assert (
+        user_input["test_location_convention"]
+        == "separate test directory (e.g., test/specs/foo.spec.ts)"
+    )
