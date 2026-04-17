@@ -18,6 +18,7 @@ from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 from utils.logs.minimize_jest_test_logs import minimize_jest_test_logs
+from utils.memory.is_lambda_oom_approaching import NODE_MAX_OLD_SPACE_SIZE_MB
 from utils.process.kill_processes_by_name import kill_processes_by_name
 
 
@@ -94,6 +95,9 @@ async def run_js_ts_test(
             env["MONGOMS_DISTRO"] = get_distro_for_mongodb_server_version(
                 mongodb_server_version
             )
+
+    # Cap Node.js heap so it OOMs gracefully (catchable JS error) instead of killing the Lambda
+    env["NODE_OPTIONS"] = f"--max-old-space-size={NODE_MAX_OLD_SPACE_SIZE_MB}"
 
     # Kill any lingering mongod processes from previous verify_task_is_complete calls.
     # MongoMemoryServer uses a fixed port (e.g. 34213) hardcoded in customer tests.
