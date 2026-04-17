@@ -231,7 +231,7 @@ class TestHandleWebhookEvent:
         payload = {
             "action": "labeled",
             "label": {"name": "gitauto"},
-            "pull_request": {"head": {"ref": "gitauto/dashboard-20250101-120000-Ab12"}},
+            "pull_request": {"number": 42, "head": {"ref": "gitauto/dashboard-20250101-120000-Ab12"}},
             "sender": {"login": "test-user", "id": 12345},
         }
 
@@ -252,7 +252,7 @@ class TestHandleWebhookEvent:
         payload = {
             "action": "labeled",
             "label": {"name": "gitauto"},
-            "pull_request": {"head": {"ref": "gitauto/schedule-20250101-120000-Ab12"}},
+            "pull_request": {"number": 42, "head": {"ref": "gitauto/schedule-20250101-120000-Ab12"}},
             "sender": {"login": "test-user", "id": 12345},
         }
 
@@ -273,7 +273,7 @@ class TestHandleWebhookEvent:
         payload = {
             "action": "labeled",
             "label": {"name": "dependencies"},
-            "pull_request": {"head": {"ref": "dependabot/npm_and_yarn/ajv-6.14.0"}},
+            "pull_request": {"number": 99, "head": {"ref": "dependabot/npm_and_yarn/ajv-6.14.0"}},
             "sender": {"login": "dependabot[bot]", "id": 49699333},
         }
 
@@ -290,7 +290,7 @@ class TestHandleWebhookEvent:
         payload = {
             "action": "labeled",
             "label": {"name": "gitauto"},
-            "pull_request": {"head": {"ref": "dependabot/npm_and_yarn/ajv-6.14.0"}},
+            "pull_request": {"number": 99, "head": {"ref": "dependabot/npm_and_yarn/ajv-6.14.0"}},
             "sender": {"login": "dependabot[bot]", "id": 49699333},
         }
 
@@ -307,7 +307,7 @@ class TestHandleWebhookEvent:
         payload = {
             "action": "labeled",
             "label": {"name": "gitauto"},
-            "pull_request": {"head": {"ref": "gitauto/schedule-20250101-120000-Ab12"}},
+            "pull_request": {"number": 42, "head": {"ref": "gitauto/schedule-20250101-120000-Ab12"}},
             "sender": {"login": "gitauto[bot]", "id": 160085510},
         }
 
@@ -326,7 +326,7 @@ class TestHandleWebhookEvent:
         payload = {
             "action": "labeled",
             "label": {"name": "gitauto"},
-            "pull_request": {"head": {"ref": "feature/some-branch"}},
+            "pull_request": {"number": 99, "head": {"ref": "feature/some-branch"}},
             "sender": {"login": "test-user", "id": 12345},
         }
 

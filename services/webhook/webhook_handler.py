@@ -143,6 +143,8 @@ async def handle_webhook_event(
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
     if event_name == "pull_request" and action == "labeled":
         typed_payload = cast(PrLabeledPayload, payload)
+        pr_number = typed_payload["pull_request"]["number"]
+        set_pr_number(pr_number)
 
         # Only process when the "gitauto" label is specifically added
         label_name = typed_payload["label"]["name"]
@@ -166,8 +168,6 @@ async def handle_webhook_event(
 
         suffix = head_ref[len(prefix) :]
         trigger = cast(NewPrTrigger, suffix.split("-")[0])
-        pr_number = typed_payload["pull_request"]["number"]
-        set_pr_number(pr_number)
         set_trigger(trigger)
         await handle_new_pr(
             payload=typed_payload,
