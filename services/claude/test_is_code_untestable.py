@@ -28,6 +28,19 @@ def _set_mock_response(mock_claude, result: bool, category: str, reason: str):
     ]
 
 
+def test_uses_opus_47_model(mock_claude):
+    _set_mock_response(mock_claude, False, "testable", "testable")
+
+    is_code_untestable(
+        file_path="src/app.tsx",
+        file_content="const x = 1;",
+        uncovered_lines="1",
+    )
+
+    call_args = mock_claude.beta.messages.create.call_args
+    assert call_args.kwargs["model"] == "claude-opus-4-7"
+
+
 def test_returns_testable_when_no_uncovered_code(mock_claude):
     result = is_code_untestable(
         file_path="src/app.tsx",

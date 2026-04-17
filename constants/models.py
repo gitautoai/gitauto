@@ -5,6 +5,7 @@ from typing import TypedDict
 class ClaudeModelId(StrEnum):
     """Claude models — user-selectable and fallback-only."""
 
+    OPUS_4_7 = "claude-opus-4-7"
     OPUS_4_6 = "claude-opus-4-6"
     SONNET_4_6 = "claude-sonnet-4-6"
     OPUS_4_5 = "claude-opus-4-5"
@@ -41,9 +42,9 @@ class ModelInfo(TypedDict):
 
 MODEL_REGISTRY: dict[ModelId, ModelInfo] = {
     # Claude (user-selectable)
-    ClaudeModelId.OPUS_4_6: ModelInfo(
+    ClaudeModelId.OPUS_4_7: ModelInfo(
         provider=ModelProvider.CLAUDE,
-        display_name="Claude Opus 4.6",
+        display_name="Claude Opus 4.7",
         credit_cost_usd=8,
         user_selectable=True,
         free_tier=False,
@@ -56,6 +57,13 @@ MODEL_REGISTRY: dict[ModelId, ModelInfo] = {
         free_tier=True,
     ),
     # Claude (fallback-only, same cost as their newer versions)
+    ClaudeModelId.OPUS_4_6: ModelInfo(
+        provider=ModelProvider.CLAUDE,
+        display_name="Claude Opus 4.6",
+        credit_cost_usd=8,
+        user_selectable=False,
+        free_tier=False,
+    ),
     ClaudeModelId.OPUS_4_5: ModelInfo(
         provider=ModelProvider.CLAUDE,
         display_name="Claude Opus 4.5",
@@ -100,6 +108,6 @@ FREE_TIER_MODELS = [
     m for m, r in MODEL_REGISTRY.items() if r["user_selectable"] and r["free_tier"]
 ]
 DEFAULT_FREE_MODEL = GoogleModelId.GEMMA_4_31B
-DEFAULT_PAID_MODEL = ClaudeModelId.OPUS_4_6
+DEFAULT_PAID_MODEL = ClaudeModelId.OPUS_4_7
 MAX_CREDIT_COST_USD = max(entry["credit_cost_usd"] for entry in MODEL_REGISTRY.values())
 CREDIT_GRANT_AMOUNT_USD = MAX_CREDIT_COST_USD * 3

@@ -95,6 +95,10 @@ async def test_not_completed_closes_pr_and_deletes_branch(
     mock_close_pr.assert_called_once()
     mock_delete_branch.assert_called_once()
 
+    # Setup handler hardcodes Opus 4.7 for reliable tool-use
+    agent_kwargs = mock_agent.call_args.kwargs
+    assert agent_kwargs["model_id"] == "claude-opus-4-7"
+
 
 @pytest.mark.asyncio
 @patch(f"{MODULE}.slack_notify")

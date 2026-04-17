@@ -3,6 +3,15 @@ from constants.models import GoogleModelId, MODEL_REGISTRY, ModelProvider
 from services.supabase.llm_requests.calculate_costs import calculate_costs
 
 
+def test_calculate_costs_claude_opus_47():
+    input_cost, output_cost = calculate_costs("claude", "claude-opus-4-7", 1000, 500)
+    expected_input = (1000 / 1_000_000) * 5.00
+    expected_output = (500 / 1_000_000) * 25.00
+
+    assert input_cost == expected_input
+    assert output_cost == expected_output
+
+
 def test_calculate_costs_claude_opus_46():
     input_cost, output_cost = calculate_costs("claude", "claude-opus-4-6", 1000, 500)
     expected_input = (1000 / 1_000_000) * 5.00

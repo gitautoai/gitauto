@@ -66,6 +66,18 @@ class TestEvaluateCondition:
 
         assert result == EvaluationResult(False, "evaluation failed")
 
+    def test_uses_opus_47_model(self, mock_claude):
+        mock_response = MagicMock()
+        mock_response.content = [
+            MagicMock(text='{"result": true, "reason": "testable"}')
+        ]
+        mock_claude.beta.messages.create.return_value = mock_response
+
+        evaluate_condition(content="code", system_prompt="Check this.")
+
+        call_args = mock_claude.beta.messages.create.call_args
+        assert call_args.kwargs["model"] == "claude-opus-4-7"
+
     def test_uses_structured_output_schema(self, mock_claude):
         mock_response = MagicMock()
         mock_response.content = [

@@ -64,3 +64,19 @@ def test_anthropic_models_exist():
         m for m, r in MODEL_REGISTRY.items() if r["provider"] == ModelProvider.CLAUDE
     ]
     assert len(anthropic_models) >= 1
+
+
+def test_opus_47_is_user_selectable():
+    info = MODEL_REGISTRY[ClaudeModelId.OPUS_4_7]
+    assert info["user_selectable"] is True
+    assert info["credit_cost_usd"] == 8
+
+
+def test_opus_46_is_fallback_only():
+    info = MODEL_REGISTRY[ClaudeModelId.OPUS_4_6]
+    assert info["user_selectable"] is False
+    assert info["credit_cost_usd"] == 8
+
+
+def test_default_paid_model_is_opus_47():
+    assert DEFAULT_PAID_MODEL == ClaudeModelId.OPUS_4_7

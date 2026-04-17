@@ -24,7 +24,7 @@ def test_routes_to_anthropic_for_opus(mock_claude: MagicMock):
         messages=[{"role": "user", "content": "test"}],
         system_content="system",
         tools=[],
-        model_id=ClaudeModelId.OPUS_4_6,
+        model_id=ClaudeModelId.OPUS_4_7,
         usage_id=1,
         created_by="test",
     )

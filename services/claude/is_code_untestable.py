@@ -106,8 +106,8 @@ def is_code_untestable(
 Is this code dead (unreachable/redundant) or genuinely untestable (reachable at runtime but impossible to test)?"""
 
     response = claude.beta.messages.create(
-        model=ClaudeModelId.OPUS_4_6,
-        max_tokens=MAX_OUTPUT_TOKENS[ClaudeModelId.OPUS_4_6],
+        model=ClaudeModelId.OPUS_4_7,
+        max_tokens=MAX_OUTPUT_TOKENS[ClaudeModelId.OPUS_4_7],
         temperature=0,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": content}],

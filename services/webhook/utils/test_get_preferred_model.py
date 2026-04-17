@@ -94,6 +94,18 @@ def test_typo_model_paid_user():
 # --- Non-user-selectable models (fallback-only) ---
 
 
+def test_non_selectable_opus_4_6_free_user():
+    settings = cast(Repositories, {"preferred_model": ClaudeModelId.OPUS_4_6})
+    result = get_preferred_model(repo_settings=settings, is_paid=False)
+    assert result == DEFAULT_FREE_MODEL
+
+
+def test_non_selectable_opus_4_6_paid_user():
+    settings = cast(Repositories, {"preferred_model": ClaudeModelId.OPUS_4_6})
+    result = get_preferred_model(repo_settings=settings, is_paid=True)
+    assert result == DEFAULT_PAID_MODEL
+
+
 def test_non_selectable_opus_4_5_free_user():
     settings = cast(Repositories, {"preferred_model": ClaudeModelId.OPUS_4_5})
     result = get_preferred_model(repo_settings=settings, is_paid=False)
@@ -154,19 +166,19 @@ def test_free_user_selects_sonnet_4_6():
 # --- Free user with premium models (DB setting honored regardless of tier) ---
 
 
-def test_free_user_selects_opus_4_6_honored():
-    settings = cast(Repositories, {"preferred_model": ClaudeModelId.OPUS_4_6})
+def test_free_user_selects_opus_4_7_honored():
+    settings = cast(Repositories, {"preferred_model": ClaudeModelId.OPUS_4_7})
     result = get_preferred_model(repo_settings=settings, is_paid=False)
-    assert result == ClaudeModelId.OPUS_4_6
+    assert result == ClaudeModelId.OPUS_4_7
 
 
 # --- Paid user with each user-selectable model ---
 
 
-def test_paid_user_selects_opus_4_6():
-    settings = cast(Repositories, {"preferred_model": ClaudeModelId.OPUS_4_6})
+def test_paid_user_selects_opus_4_7():
+    settings = cast(Repositories, {"preferred_model": ClaudeModelId.OPUS_4_7})
     result = get_preferred_model(repo_settings=settings, is_paid=True)
-    assert result == ClaudeModelId.OPUS_4_6
+    assert result == ClaudeModelId.OPUS_4_7
 
 
 def test_paid_user_selects_sonnet_4_6():
