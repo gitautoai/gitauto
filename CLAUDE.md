@@ -27,11 +27,11 @@ uv add --group dev package_name
 ### Database Access
 
 ```bash
-scripts/supabase/tables.sh                              # List all tables (dev)
-scripts/supabase/describe.sh users                      # Show columns for a table (dev)
-scripts/supabase/query.sh "SELECT * FROM users LIMIT 1" # Run a query (dev, tabular)
-scripts/supabase/query.sh -x "SELECT * FROM users LIMIT 1" # Vertical display
-scripts/supabase/query.sh --prod "SELECT ..."           # Run against production
+scripts/supabase/tables.sh --dev                              # List all tables (dev)
+scripts/supabase/describe.sh --dev users                      # Show columns for a table (dev)
+scripts/supabase/query.sh --dev "SELECT * FROM users LIMIT 1" # Run a query (dev, tabular)
+scripts/supabase/query.sh --dev -x "SELECT * FROM users LIMIT 1" # Vertical display
+scripts/supabase/query.sh --prd "SELECT ..."                  # Run against production
 ```
 
 ### Sentry CLI
@@ -135,7 +135,7 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
     - Technical, descriptive title. **No `## Test plan`**.
     - **Two posts** (last section, customer-facing only): GitAuto (changelog) + Wes (personal voice, don't emphasize "GitAuto")
     - Format: `## Social Media Post (GitAuto)` and `## Social Media Post (Wes)` headers (parsed by `extract-social-posts.js`)
-    - **GitAuto post**: Changelog format — one-liner headline + change bullets. No storytelling.
+    - **GitAuto post**: Changelog format — one-liner headline + customer-facing feature bullets (no test/internal changes). Each feature on one line. Include items mentioned in the PR title.
     - **Wes post**: Honest stories. Vary openers — check recent posts first.
     - Guidelines: No em dashes (—). Under 280 chars. No marketing keywords. No negative framing. No internal names. No small numbers — use relative language.
 8. If Sentry issue: `python3 scripts/sentry/get_issue.py AGENT-XXX` then `python3 scripts/sentry/resolve_issue.py AGENT-XXX ...`

@@ -9,6 +9,13 @@ set -uo pipefail
 
 echo "=== Pre-commit hook ==="
 
+# Block commits directly to main
+BRANCH=$(git branch --show-current)
+if [ "$BRANCH" = "main" ]; then
+    echo "FAILED: Cannot commit directly to main. Use a feature branch."
+    exit 1
+fi
+
 # Keep local main in sync with remote (no checkout needed)
 git fetch origin main:main 2>/dev/null || true
 
