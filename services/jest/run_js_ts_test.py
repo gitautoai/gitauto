@@ -78,6 +78,9 @@ async def run_js_ts_test(
     # MongoMemoryServer looks for mongod binary here. CodeBuild caches it to S3 as mongodb-binaries.tar.gz, extracted alongside node_modules by download_and_extract_s3_deps into {clone_dir}/mongodb-binaries/.
     env["MONGOMS_DOWNLOAD_DIR"] = os.path.join(clone_dir, "mongodb-binaries")
 
+    # Skip MD5 check so stale cached binaries don't fail the run. Staleness is handled separately by refreshing the S3 cache.
+    env["MONGOMS_MD5_CHECK"] = "false"
+
     # MONGOMS_ARCHIVE_NAME bypasses OS auto-detection entirely by specifying the full archive filename. Pre-cached by CodeBuild to S3.
     archive_name = get_mongoms_archive_name(clone_dir)
     if archive_name:

@@ -133,16 +133,17 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
    - NO co-author lines or `[skip ci]`
 7. Check for existing PR: `gh pr list --head $(git branch --show-current) --state open` — if exists, **STOP and ask**
 8. `git push`
-9. Check recent posts: `scripts/git/recent_social_posts.sh gitauto` and `scripts/git/recent_social_posts.sh wes`
-10. `gh pr create --title "PR title" --body "PR description" --assignee @me`
+9. `gh pr create --title "PR title" --assignee @me` — create PR immediately, no body
+10. Check recent posts: `scripts/git/recent_social_posts.sh gitauto` and `scripts/git/recent_social_posts.sh wes`
+11. `gh pr edit <number> --body "..."` — add summary and social posts after checking recent posts
     - Technical, descriptive title. **No `## Test plan`**.
     - **Two posts** (last section, customer-facing only): GitAuto (changelog) + Wes (personal voice, don't emphasize "GitAuto")
     - Format: `## Social Media Post (GitAuto)` and `## Social Media Post (Wes)` headers (parsed by `extract-social-posts.js`)
     - **GitAuto post**: Changelog format — one-liner headline + change bullets. No storytelling.
     - **Wes post**: Honest stories. Vary openers — check recent posts first.
     - Guidelines: No em dashes (—). Under 280 chars. No marketing keywords. No negative framing. No internal names. No small numbers — use relative language.
-11. If Sentry issue: `python3 scripts/sentry/get_issue.py AGENT-XXX` then `python3 scripts/sentry/resolve_issue.py AGENT-XXX ...`
-12. **Blog post** in `../website/app/blog/posts/`:
+12. If Sentry issue: `python3 scripts/sentry/get_issue.py AGENT-XXX` then `python3 scripts/sentry/resolve_issue.py AGENT-XXX ...`
+13. **Blog post** in `../website/app/blog/posts/`:
     - `YYYY-MM-DD-kebab-case-title.mdx`. Universal dev lesson, not GitAuto internals (exception: deep technical content).
     - **Skip if lesson is thin** — argue back if no real insight.
     - `metadata.title`: **34-44 chars** (layout appends `- GitAuto Blog` for 50-60 total). Verify no duplicate slug.
@@ -172,7 +173,7 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
       - Unsplash API: `source .env && curl "https://api.unsplash.com/search/photos?query=QUERY&orientation=landscape&client_id=$UNSPLASH_ACCESS_KEY"`, download with `?w=1200&h=630&fit=crop&crop=entropy`
       - Convert to PNG: `sips -s format png downloaded.jpg --out ../website/public/og/blog/{slug}.png`
       - Dev.to crops to 1000x420 — keep important content centered.
-13. **Docs page** in `../website/app/docs/`: Create new or update existing. Browse for best-fit category. New pages: 3 files (`page.tsx`, `layout.tsx`, `jsonld.ts`).
+14. **Docs page** in `../website/app/docs/`: Create new or update existing. Browse for best-fit category. New pages: 3 files (`page.tsx`, `layout.tsx`, `jsonld.ts`).
 
 ## CRITICAL: Fixing Foxquilt PRs
 

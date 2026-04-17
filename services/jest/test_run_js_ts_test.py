@@ -378,6 +378,31 @@ async def test_run_js_ts_test_sets_mongoms_download_dir(
     assert env["MONGOMS_DOWNLOAD_DIR"] == "/tmp/clone/mongodb-binaries"
 
 
+@pytest.mark.asyncio
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_sets_mongoms_md5_check_false(
+    mock_exists, mock_subprocess, create_test_base_args
+):
+    """Verify MONGOMS_MD5_CHECK=false so stale cached binaries don't fail the run."""
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+    base_args = create_test_base_args(
+        clone_dir="/tmp/clone",
+    )
+    await run_js_ts_test(
+        base_args=base_args,
+        test_file_paths=["src/index.test.ts"],
+        source_file_paths=[],
+        impl_file_to_collect_coverage_from="",
+    )
+
+    call_kwargs = mock_subprocess.call_args_list[0].kwargs
+    env = call_kwargs["env"]
+    assert env["MONGOMS_MD5_CHECK"] == "false"
+
+
 # Real Jest output captured from foxden-rating-quoting-backend on 2026-03-23.
 # Jest writes PASS/FAIL to stderr, coverage tables to stdout.
 # This was the root cause of a bug where run_js_ts_test checked only result.stdout.

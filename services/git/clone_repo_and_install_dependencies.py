@@ -26,8 +26,8 @@ def clone_repo_and_install_dependencies(
     git_fetch(clone_dir, clone_url, pr_branch)
     git_checkout(clone_dir, pr_branch)
 
-    # Step 3: Extract dependencies from S3 tarball to clone_dir
-    download_and_extract_s3_deps(owner, repo, clone_dir)
+    # Step 3: Extract cached dependencies from S3
+    download_and_extract_s3_deps(owner_name=owner, repo_name=repo, clone_dir=clone_dir)
 
     # Step 4: Copy config templates (e.g., .env.example → .env)
     copy_config_templates(clone_dir)

@@ -12,6 +12,7 @@ from constants.agent import COST_CAP_RATIO, MAX_ITERATIONS
 from constants.messages import SETTINGS_LINKS
 from constants.triggers import NewPrTrigger
 from services.agents.verify_task_is_complete import verify_task_is_complete
+from services.aws.s3.refresh_mongodb_cache import refresh_mongodb_cache
 from services.agents.verify_task_is_ready import verify_task_is_ready
 from services.chat_with_agent import chat_with_agent
 from services.claude.is_code_untestable import CodeAnalysisResult, is_code_untestable
@@ -321,6 +322,14 @@ async def handle_new_pr(
         base_branch=base_args["base_branch"],
         pr_branch=new_branch_name,
         token=token,
+        clone_dir=clone_dir,
+    )
+
+    # Fire-and-forget: refresh mongodb-binaries on S3 for the next run
+    refresh_mongodb_cache(
+        owner_id=owner_id,
+        owner_name=owner_name,
+        repo_name=repo_name,
         clone_dir=clone_dir,
     )
 

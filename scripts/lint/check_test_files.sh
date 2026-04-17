@@ -45,7 +45,11 @@ if [ -n "$STAGED_IMPL_MODIFIED" ]; then
         test_file="$dir/test_$base"
         if [ -f "$test_file" ]; then
             if ! echo "$STAGED_ALL" | grep -qF "$test_file"; then
-                echo "TEST NOT STAGED: $file changed but $test_file is not staged"
+                if ! git diff --quiet "$test_file" 2>/dev/null; then
+                    echo "TEST NOT STAGED: $test_file has changes, stage it"
+                else
+                    echo "TEST NOT UPDATED: $file changed but $test_file has no changes, update it"
+                fi
                 FAIL=1
             fi
         fi
