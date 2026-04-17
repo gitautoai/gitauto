@@ -446,6 +446,7 @@ async def test_handle_check_suite_full_workflow(
             completion_reason="",
             p=50,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -455,6 +456,7 @@ async def test_handle_check_suite_full_workflow(
             completion_reason="",
             p=75,
             is_planned=False,
+            cost_usd=0.0,
         ),
     ]
 
@@ -1086,6 +1088,7 @@ async def test_check_run_handler_token_accumulation(
             completion_reason="",
             p=90,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[{"role": "user", "content": "test"}],
@@ -1095,6 +1098,7 @@ async def test_check_run_handler_token_accumulation(
             completion_reason="",
             p=95,
             is_planned=False,
+            cost_usd=0.0,
         ),
     ]
 
@@ -1347,6 +1351,7 @@ async def test_handle_check_suite_codecov_failure(
             completion_reason="",
             p=50,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -1356,6 +1361,7 @@ async def test_handle_check_suite_codecov_failure(
             completion_reason="",
             p=75,
             is_planned=False,
+            cost_usd=0.0,
         ),
     ]
 
@@ -1472,6 +1478,7 @@ async def test_handle_check_suite_codecov_no_token(
             completion_reason="",
             p=50,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -1481,6 +1488,7 @@ async def test_handle_check_suite_codecov_no_token(
             completion_reason="",
             p=75,
             is_planned=False,
+            cost_usd=0.0,
         ),
     ]
 
@@ -1593,6 +1601,7 @@ async def test_handle_check_suite_max_iterations_forces_verification(
             completion_reason="",
             p=50,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -1602,6 +1611,7 @@ async def test_handle_check_suite_max_iterations_forces_verification(
             completion_reason="",
             p=75,
             is_planned=False,
+            cost_usd=0.0,
         ),
     ]
 

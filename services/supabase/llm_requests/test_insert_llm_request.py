@@ -1,3 +1,4 @@
+import datetime
 import json
 from unittest.mock import Mock, patch
 
@@ -6,13 +7,35 @@ from anthropic.types import MessageParam
 from constants.models import ClaudeModelId
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 
+MOCK_DB_ROW = {
+    "id": 1,
+    "usage_id": 123,
+    "provider": "claude",
+    "model_id": ClaudeModelId.SONNET_4_6,
+    "input_content": json.dumps([{"role": "user", "content": "test"}]),
+    "input_length": 35,
+    "input_tokens": 10,
+    "input_cost_usd": 0.001,
+    "output_content": json.dumps({"role": "assistant", "content": "response"}),
+    "output_length": 42,
+    "output_tokens": 5,
+    "output_cost_usd": 0.005,
+    "total_cost_usd": 0.006,
+    "response_time_ms": 1000,
+    "error_message": None,
+    "created_at": datetime.datetime(2026, 4, 16),
+    "created_by": "test",
+    "updated_at": datetime.datetime(2026, 4, 16),
+    "updated_by": "test",
+}
+
 
 @patch("services.supabase.llm_requests.insert_llm_request.supabase")
 @patch("services.supabase.llm_requests.insert_llm_request.calculate_costs")
 def test_insert_llm_request_success(mock_calculate_costs, mock_supabase):
     mock_calculate_costs.return_value = (0.001, 0.005)
     mock_result = Mock()
-    mock_result.data = [{"id": 1}]
+    mock_result.data = [MOCK_DB_ROW]
     mock_supabase.table.return_value.insert.return_value.execute.return_value = (
         mock_result
     )
@@ -32,7 +55,9 @@ def test_insert_llm_request_success(mock_calculate_costs, mock_supabase):
         created_by="test",
     )
 
-    assert result == {"id": 1}
+    assert result is not None
+    assert result["id"] == 1
+    assert result["total_cost_usd"] == 0.006
     mock_calculate_costs.assert_called_once_with(
         "claude", ClaudeModelId.SONNET_4_6, 10, 5
     )

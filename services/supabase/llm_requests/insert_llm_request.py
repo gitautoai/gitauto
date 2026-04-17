@@ -2,6 +2,7 @@ import json
 
 from anthropic.types import MessageParam
 
+from schemas.supabase.types import LlmRequests
 from services.supabase.client import supabase
 from services.supabase.llm_requests.calculate_costs import calculate_costs
 from utils.error.handle_exceptions import handle_exceptions
@@ -55,4 +56,4 @@ def insert_llm_request(
     }
 
     result = supabase.table("llm_requests").insert(data).execute()
-    return result.data[0] if result.data else None
+    return LlmRequests(**result.data[0]) if result.data else None

@@ -24,6 +24,7 @@ def _make_agent_result(is_completed=False):
         completion_reason="",
         p=0,
         is_planned=False,
+        cost_usd=0.0,
     )
 
 

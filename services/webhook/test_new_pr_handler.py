@@ -239,6 +239,7 @@ async def test_image_urls_processing(
         completion_reason="",
         p=0,
         is_planned=False,
+        cost_usd=0.0,
     )
     mock_get_pr_files.return_value = []
 
@@ -322,6 +323,7 @@ async def test_image_unsupported_format_skipped(
         completion_reason="",
         p=0,
         is_planned=False,
+        cost_usd=0.0,
     )
     mock_get_pr_files.return_value = []
 
@@ -403,6 +405,7 @@ async def test_image_base64_fetch_failed(
         completion_reason="",
         p=0,
         is_planned=False,
+        cost_usd=0.0,
     )
     mock_get_pr_files.return_value = []
 
@@ -642,6 +645,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
             completion_reason="",
             p=10,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -651,6 +655,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
             completion_reason="",
             p=20,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -660,6 +665,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
             completion_reason="",
             p=30,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -669,6 +675,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
             completion_reason="",
             p=40,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -678,6 +685,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
             completion_reason="",
             p=50,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -687,6 +695,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
             completion_reason="",
             p=60,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -696,6 +705,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
             completion_reason="",
             p=70,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -705,6 +715,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
             completion_reason="",
             p=80,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -714,6 +725,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
             completion_reason="",
             p=90,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -723,6 +735,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
             completion_reason="",
             p=95,
             is_planned=False,
+            cost_usd=0.0,
         ),
     ]
     mock_verify_task_is_complete.return_value = {
@@ -816,6 +829,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
             completion_reason="",
             p=10,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -825,6 +839,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
             completion_reason="",
             p=20,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -834,6 +849,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
             completion_reason="",
             p=30,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -843,6 +859,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
             completion_reason="",
             p=40,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -852,6 +869,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
             completion_reason="",
             p=50,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -861,6 +879,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
             completion_reason="",
             p=60,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -870,6 +889,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
             completion_reason="",
             p=70,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -879,6 +899,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
             completion_reason="",
             p=80,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -888,6 +909,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
             completion_reason="",
             p=90,
             is_planned=False,
+            cost_usd=0.0,
         ),
     ]
     mock_verify_task_is_complete.return_value = {
@@ -978,6 +1000,7 @@ async def test_retry_counter_reset_on_successful_loop(
             completion_reason="",
             p=10,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -987,6 +1010,7 @@ async def test_retry_counter_reset_on_successful_loop(
             completion_reason="",
             p=20,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[],
@@ -996,6 +1020,7 @@ async def test_retry_counter_reset_on_successful_loop(
             completion_reason="",
             p=100,
             is_planned=False,
+            cost_usd=0.0,
         ),
     ]
 
@@ -1083,6 +1108,7 @@ async def test_non_test_file_skipped_in_header_merge(
         completion_reason="",
         p=50,
         is_planned=False,
+        cost_usd=0.0,
     )
     mock_get_pr_files.return_value = [{"filename": "src/main.py"}]
     mock_is_test_file.return_value = False
@@ -1175,6 +1201,7 @@ async def test_test_file_header_merge(
         completion_reason="",
         p=50,
         is_planned=False,
+        cost_usd=0.0,
     )
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
@@ -1270,6 +1297,7 @@ async def test_test_file_header_merge_no_content(
         completion_reason="",
         p=50,
         is_planned=False,
+        cost_usd=0.0,
     )
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
@@ -1372,6 +1400,7 @@ async def test_test_file_header_merge_no_change(
         completion_reason="",
         p=50,
         is_planned=False,
+        cost_usd=0.0,
     )
     mock_get_pr_files.return_value = [{"filename": "tests/test_example.py"}]
     mock_is_test_file.return_value = True
@@ -1474,6 +1503,7 @@ async def test_credits_depleted_email_sent(
         completion_reason="",
         p=50,
         is_planned=False,
+        cost_usd=0.0,
     )
     mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
     mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 0}
@@ -1605,6 +1635,7 @@ async def test_new_pr_handler_token_accumulation(
             completion_reason="",
             p=90,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[
@@ -1617,6 +1648,7 @@ async def test_new_pr_handler_token_accumulation(
             completion_reason="",
             p=95,
             is_planned=False,
+            cost_usd=0.0,
         ),
     ]
     mock_get_pull_request_files.return_value = [
@@ -1770,6 +1802,7 @@ async def test_few_test_files_include_contents_in_prompt(
         completion_reason="",
         p=0,
         is_planned=False,
+        cost_usd=0.0,
     )
     mock_update_comment.return_value = None
     mock_update_usage.return_value = None
@@ -1916,6 +1949,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
         completion_reason="",
         p=0,
         is_planned=False,
+        cost_usd=0.0,
     )
     mock_update_comment.return_value = None
     mock_update_usage.return_value = None

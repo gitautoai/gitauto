@@ -1,7 +1,6 @@
 # Standard imports
 import time
 import uuid
-from dataclasses import dataclass
 
 # Third-party imports
 from anthropic.types import MessageParam, ToolUnionParam
@@ -12,16 +11,10 @@ from constants.models import GoogleModelId
 from services.google_ai.client import get_google_ai_client
 from services.google_ai.convert_messages import convert_messages_to_google
 from services.google_ai.convert_tools import convert_tools_to_google
+from services.llm_result import LlmResult, ToolCall
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
-
-
-@dataclass
-class ToolCall:
-    id: str
-    name: str
-    args: dict | None
 
 
 @handle_exceptions(raise_on_error=True)
@@ -105,7 +98,7 @@ def chat_with_google(
     # Log to Supabase
     system_msg: MessageParam = {"role": "user", "content": system_content}
     full_messages = [system_msg, *messages]
-    insert_llm_request(
+    llm_record = insert_llm_request(
         usage_id=usage_id,
         provider="google",
         model_id=model_id,
@@ -116,6 +109,7 @@ def chat_with_google(
         response_time_ms=response_time_ms,
         created_by=created_by,
     )
+    cost_usd = llm_record["total_cost_usd"] if llm_record else 0.0
 
     logger.info(
         "Google AI response: model=%s, input_tokens=%d, output_tokens=%d, tool_calls=%d",
@@ -125,9 +119,10 @@ def chat_with_google(
         len(tool_calls),
     )
 
-    return (
-        assistant_message,
-        tool_calls,
-        token_input,
-        token_output,
+    return LlmResult(
+        assistant_message=assistant_message,
+        tool_calls=tool_calls,
+        token_input=token_input,
+        token_output=token_output,
+        cost_usd=cost_usd,
     )

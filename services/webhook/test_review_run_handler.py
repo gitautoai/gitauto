@@ -6,13 +6,13 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from config import PRODUCT_ID
-
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
 from services.chat_with_agent import AgentResult
 from services.github.pulls.get_review_thread_comments import ReviewThreadResult
 from services.webhook.review_run_handler import handle_review_run
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture
@@ -163,6 +163,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
             completion_reason="",
             p=40,
             is_planned=False,
+            cost_usd=0.0,
         ),
     ]
 
@@ -297,6 +298,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
             completion_reason="",
             p=40,
             is_planned=False,
+            cost_usd=0.0,
         ),
         AgentResult(
             messages=[{"role": "user", "content": "review"}],
@@ -306,6 +308,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
             completion_reason="",
             p=60,
             is_planned=False,
+            cost_usd=0.0,
         ),
     ]
 
@@ -542,6 +545,7 @@ async def test_bot_first_review_comment_is_processed(
         completion_reason="Removed the unused variable as suggested.",
         p=40,
         is_planned=False,
+        cost_usd=0.0,
     )
 
     await handle_review_run(mock_bot_review_comment_payload, trigger="pr_file_review")
@@ -736,6 +740,7 @@ async def test_human_review_comment_always_processed(
         completion_reason="Fixed the logic as requested.",
         p=40,
         is_planned=False,
+        cost_usd=0.0,
     )
 
     await handle_review_run(mock_review_comment_payload, trigger="pr_file_review")
@@ -874,6 +879,7 @@ async def test_pr_comment_uses_create_comment_not_reply(
         completion_reason="Completed the task as requested.",
         p=40,
         is_planned=False,
+        cost_usd=0.0,
     )
 
     await handle_review_run(mock_pr_comment_payload, trigger="pr_comment")
@@ -1164,6 +1170,7 @@ async def test_bot_pr_comment_mentioning_pr_file_is_processed(
         completion_reason="Addressed the lint error.",
         p=40,
         is_planned=False,
+        cost_usd=0.0,
     )
 
     await handle_review_run(mock_bot_pr_comment_payload, trigger="pr_comment")

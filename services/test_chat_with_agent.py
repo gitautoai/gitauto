@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 from constants.models import ClaudeModelId, GoogleModelId, ModelId
 from services.chat_with_agent import chat_with_agent
-from services.claude.chat_with_claude import ToolCall
+from services.llm_result import LlmResult, ToolCall
 from services.claude.exceptions import ClaudeOverloadedError
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
 
@@ -15,11 +15,12 @@ from services.claude.tools.file_modify_result import FileMoveResult, FileWriteRe
 async def test_chat_with_agent_passes_usage_id_to_claude(
     mock_chat_with_model, create_test_base_args
 ):
-    mock_chat_with_model.return_value = (
-        {"role": "assistant", "content": "response"},
-        [],
-        15,
-        10,
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={"role": "assistant", "content": "response"},
+        tool_calls=[],
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=GoogleModelId.GEMMA_4_31B)
@@ -43,11 +44,12 @@ async def test_chat_with_agent_passes_usage_id_to_claude(
 async def test_chat_with_agent_returns_token_counts(
     mock_chat_with_model, create_test_base_args
 ):
-    mock_chat_with_model.return_value = (
-        {"role": "assistant", "content": "response"},
-        [],
-        25,
-        15,
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={"role": "assistant", "content": "response"},
+        tool_calls=[],
+        token_input=25,
+        token_output=15,
+        cost_usd=0.0,
     )
 
     base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
@@ -63,6 +65,61 @@ async def test_chat_with_agent_returns_token_counts(
 
     assert result.token_input == 25
     assert result.token_output == 15
+    assert result.cost_usd == 0.0
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.chat_with_model")
+async def test_cost_usd_computed_for_claude_model(
+    mock_chat_with_model, create_test_base_args
+):
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={"role": "assistant", "content": "response"},
+        tool_calls=[],
+        token_input=30_000,
+        token_output=500,
+        cost_usd=0.1625,
+    )
+
+    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
+
+    result = await chat_with_agent(
+        messages=[{"role": "user", "content": "test"}],
+        system_message="test system message",
+        base_args=base_args,
+        tools=[],
+        usage_id=789,
+        model_id=ClaudeModelId.OPUS_4_6,
+    )
+
+    assert result.cost_usd == 0.1625
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.chat_with_model")
+async def test_cost_usd_computed_for_google_model(
+    mock_chat_with_model, create_test_base_args
+):
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={"role": "assistant", "content": "response"},
+        tool_calls=[],
+        token_input=100_000,
+        token_output=2_000,
+        cost_usd=0.0162,
+    )
+
+    base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
+
+    result = await chat_with_agent(
+        messages=[{"role": "user", "content": "test"}],
+        system_message="test system message",
+        base_args=base_args,
+        tools=[],
+        usage_id=789,
+        model_id=GoogleModelId.GEMINI_2_5_FLASH,
+    )
+
+    assert result.cost_usd == 0.0162
 
 
 @pytest.mark.asyncio
@@ -72,8 +129,8 @@ async def test_get_local_file_content_start_line_end_line_logging(
     mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that start_line and end_line parameters are properly logged in chat_with_agent."""
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -84,15 +141,16 @@ async def test_get_local_file_content_start_line_end_line_logging(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id",
                 name="get_local_file_content",
                 args={"file_path": "test.py", "start_line": 10, "end_line": 20},
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
@@ -131,8 +189,8 @@ async def test_delete_file_logging(
     mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that delete_file function calls are properly logged in chat_with_agent."""
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -143,13 +201,14 @@ async def test_delete_file_logging(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id", name="delete_file", args={"file_path": "test_file.py"}
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
@@ -190,8 +249,8 @@ async def test_move_file_logging(
     mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that move_file function calls are properly logged in chat_with_agent."""
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -205,15 +264,16 @@ async def test_move_file_logging(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id",
                 name="move_file",
                 args={"old_file_path": "old_file.py", "new_file_path": "new_file.py"},
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=GoogleModelId.GEMMA_4_31B)
@@ -252,8 +312,8 @@ async def test_move_file_logging(
 async def test_write_and_commit_file_handles_new_content_arg_name(
     mock_chat_with_model, create_test_base_args
 ):
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -267,15 +327,16 @@ async def test_write_and_commit_file_handles_new_content_arg_name(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id",
                 name="write_and_commit_file",
                 args={"file_path": "test.py", "new_content": "updated content"},
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
@@ -307,8 +368,8 @@ async def test_write_and_commit_file_handles_new_content_arg_name(
 async def test_unavailable_tool_sends_slack_notification(
     mock_slack_notify, mock_chat_with_model, create_test_base_args
 ):
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -319,9 +380,10 @@ async def test_unavailable_tool_sends_slack_notification(
                 }
             ],
         },
-        [ToolCall(id="test_id", name="bash", args={"command": "ls -la"})],
-        15,
-        10,
+        tool_calls=[ToolCall(id="test_id", name="bash", args={"command": "ls -la"})],
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
@@ -354,8 +416,8 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
     _mock_update_comment, mock_get_pr_files, mock_chat_with_model, create_test_base_args
 ):
     mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -366,9 +428,10 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
                 }
             ],
         },
-        [ToolCall(id="test_id", name="verify_task_is_complete", args={})],
-        15,
-        10,
+        tool_calls=[ToolCall(id="test_id", name="verify_task_is_complete", args={})],
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(
@@ -403,8 +466,8 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
     mock_get_pr_files, _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     mock_get_pr_files.return_value = []
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -415,9 +478,10 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
                 }
             ],
         },
-        [ToolCall(id="test_id", name="verify_task_is_complete", args={})],
-        15,
-        10,
+        tool_calls=[ToolCall(id="test_id", name="verify_task_is_complete", args={})],
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(
@@ -455,8 +519,8 @@ async def test_verify_task_is_complete_with_none_args_still_executes(
     isinstance(None, dict) is False, so the tool was silently skipped and returned None.
     Gemma then entered a dead loop returning empty responses for 20 iterations."""
     mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -467,9 +531,10 @@ async def test_verify_task_is_complete_with_none_args_still_executes(
                 }
             ],
         },
-        [ToolCall(id="test_id", name="verify_task_is_complete", args=None)],
-        15,
-        10,
+        tool_calls=[ToolCall(id="test_id", name="verify_task_is_complete", args=None)],
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(
@@ -499,8 +564,8 @@ async def test_verify_task_is_complete_with_none_args_still_executes(
 async def test_regular_tool_returns_is_completed_false(
     mock_chat_with_model, create_test_base_args
 ):
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -511,15 +576,16 @@ async def test_regular_tool_returns_is_completed_false(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id",
                 name="get_local_file_content",
                 args={"file_path": "test.py"},
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
@@ -547,11 +613,12 @@ async def test_regular_tool_returns_is_completed_false(
 async def test_no_tool_call_returns_is_completed_false(
     mock_chat_with_model, create_test_base_args
 ):
-    mock_chat_with_model.return_value = (
-        {"role": "assistant", "content": "I'm thinking about it..."},
-        [],
-        15,
-        10,
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={"role": "assistant", "content": "I'm thinking about it..."},
+        tool_calls=[],
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
@@ -576,8 +643,8 @@ async def test_file_write_result_success_includes_formatted_content(
     _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that FileWriteResult with success=True includes formatted content with line numbers."""
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -588,15 +655,16 @@ async def test_file_write_result_success_includes_formatted_content(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id",
                 name="apply_diff_to_file",
                 args={"file_path": "test.py", "diff": "some diff"},
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
@@ -638,8 +706,8 @@ async def test_apply_diff_no_changes_logs_tool_result_message(
     mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that apply_diff_to_file with no changes uses tool_result.message instead of hardcoded 'Committed changes'."""
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -650,15 +718,16 @@ async def test_apply_diff_no_changes_logs_tool_result_message(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id",
                 name="apply_diff_to_file",
                 args={"file_path": "test.py", "diff": "some diff"},
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=GoogleModelId.GEMMA_4_31B)
@@ -710,8 +779,8 @@ async def test_file_write_result_failure_returns_message_only(
     _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that FileWriteResult with success=False returns only the message."""
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -722,15 +791,16 @@ async def test_file_write_result_failure_returns_message_only(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id",
                 name="apply_diff_to_file",
                 args={"file_path": "test.py", "diff": "bad diff"},
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
@@ -769,8 +839,8 @@ async def test_file_move_result_returns_message(
     _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that FileMoveResult returns the message."""
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -784,15 +854,16 @@ async def test_file_move_result_returns_message(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id",
                 name="move_file",
                 args={"old_file_path": "old.py", "new_file_path": "new.py"},
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
@@ -832,8 +903,8 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
     mock_replace, _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that reading a full file calls replace_old_file_content with is_full_file_read=True."""
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -844,15 +915,16 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id",
                 name="get_local_file_content",
                 args={"file_path": "src/main.py"},
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
@@ -886,8 +958,8 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
     mock_replace, _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that reading a partial file calls replace_old_file_content with is_full_file_read=False."""
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -902,15 +974,16 @@ async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id",
                 name="get_local_file_content",
                 args={"file_path": "src/main.py", "start_line": 10, "end_line": 20},
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=GoogleModelId.GEMMA_4_31B)
@@ -943,8 +1016,8 @@ async def test_multiple_parallel_tool_calls(
     _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
     """Test that multiple tool_use blocks are all executed and results returned in one message."""
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -967,7 +1040,7 @@ async def test_multiple_parallel_tool_calls(
                 },
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="tool_1", name="get_local_file_content", args={"file_path": "a.py"}
             ),
@@ -978,8 +1051,9 @@ async def test_multiple_parallel_tool_calls(
                 id="tool_3", name="get_local_file_content", args={"file_path": "c.py"}
             ),
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)
@@ -1027,8 +1101,8 @@ async def test_gitauto_md_edit_always_allowed(
     mock_chat_with_model,
     create_test_base_args,
 ):
-    mock_chat_with_model.return_value = (
-        {
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
             "role": "assistant",
             "content": [
                 {
@@ -1042,7 +1116,7 @@ async def test_gitauto_md_edit_always_allowed(
                 }
             ],
         },
-        [
+        tool_calls=[
             ToolCall(
                 id="test_id",
                 name="write_and_commit_file",
@@ -1052,8 +1126,9 @@ async def test_gitauto_md_edit_always_allowed(
                 },
             )
         ],
-        15,
-        10,
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
     )
 
     base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
@@ -1102,7 +1177,13 @@ async def test_opus_falls_back_to_opus_45_on_error(
             assert kwargs["model_id"] == ClaudeModelId.OPUS_4_6
             raise RuntimeError("Opus 4.6 down")
         assert kwargs["model_id"] == ClaudeModelId.OPUS_4_5
-        return ({"role": "assistant", "content": "ok"}, [], 10, 5)
+        return LlmResult(
+            assistant_message={"role": "assistant", "content": "ok"},
+            tool_calls=[],
+            token_input=10,
+            token_output=5,
+            cost_usd=0.05,
+        )
 
     mock_chat_with_model.side_effect = side_effect
     base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
@@ -1131,7 +1212,13 @@ async def test_sonnet_never_falls_back_to_opus(
         models_tried.append(kwargs["model_id"])
         if len(models_tried) < 3:
             raise RuntimeError("model down")
-        return ({"role": "assistant", "content": "ok"}, [], 10, 5)
+        return LlmResult(
+            assistant_message={"role": "assistant", "content": "ok"},
+            tool_calls=[],
+            token_input=10,
+            token_output=5,
+            cost_usd=0.05,
+        )
 
     mock_chat_with_model.side_effect = side_effect
     base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
@@ -1201,7 +1288,13 @@ async def test_overload_retries_then_falls_back(
             raise ClaudeOverloadedError("529")
         # 4th call: Opus 4.5 succeeds
         assert kwargs["model_id"] == ClaudeModelId.OPUS_4_5
-        return ({"role": "assistant", "content": "ok"}, [], 10, 5)
+        return LlmResult(
+            assistant_message={"role": "assistant", "content": "ok"},
+            tool_calls=[],
+            token_input=10,
+            token_output=5,
+            cost_usd=0.05,
+        )
 
     mock_chat_with_model.side_effect = side_effect
     base_args = create_test_base_args(model_id=GoogleModelId.GEMINI_2_5_FLASH)

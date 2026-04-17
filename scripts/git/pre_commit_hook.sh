@@ -1,5 +1,5 @@
 #!/bin/bash
-# Git pre-commit hook. No stashing - runs on the working directory as-is.
+# Git pre-commit hook. Does NOT auto-stage — user handles staging.
 # Install: ln -sf ../../scripts/git/pre_commit_hook.sh .git/hooks/pre-commit
 set -uo pipefail
 
@@ -35,17 +35,12 @@ python3 schemas/supabase/generate_types.py && git add schemas/supabase/
 # Get staged Python files (excluding deleted, .venv, schemas)
 STAGED_PY_FILES=$(git diff --cached --name-only --diff-filter=d -- '*.py' | grep -v '^\.\?venv/' | grep -v '^schemas/')
 
-# Format and auto-fix staged Python files
+# Format staged Python files (user re-stages if needed)
 if [ -n "$STAGED_PY_FILES" ]; then
     # shellcheck disable=SC2086
     black $STAGED_PY_FILES
     # shellcheck disable=SC2086
-    git add $STAGED_PY_FILES
-
-    # shellcheck disable=SC2086
     ruff check --fix $STAGED_PY_FILES
-    # shellcheck disable=SC2086
-    git add $STAGED_PY_FILES
 fi
 
 # Markdownlint for staged .md files

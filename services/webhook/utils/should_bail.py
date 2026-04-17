@@ -3,6 +3,7 @@ from services.git.check_branch_exists import check_branch_exists
 from services.github.comments.update_comment import update_comment
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.slack.slack_notify import slack_notify
+from services.supabase.llm_requests.get_total_cost_for_pr import get_total_cost_for_pr
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -19,6 +20,7 @@ def should_bail(
     phase: str,
     base_args: BaseArgs,
     slack_thread_ts: str | None,
+    cost_cap_usd: float,
 ):
     """Check if the loop should stop. Handles logging, comment updates, and slack."""
     owner = base_args["owner"]
@@ -39,6 +41,18 @@ def should_bail(
         if is_oom_approaching:
             msg = get_oom_message(used_mb, phase)
             logger.error(msg)
+
+    # Cost cap: bail silently (log only, no comment to user)
+    if not msg and pr_number:
+        total_cost = get_total_cost_for_pr(owner, repo, pr_number)
+        if total_cost >= cost_cap_usd:
+            logger.warning(
+                "Cost cap reached: $%.2f >= $%.2f cap. Stopping %s silently.",
+                total_cost,
+                cost_cap_usd,
+                phase,
+            )
+            return True
 
     if not msg:
         if pr_number and not is_pull_request_open(
