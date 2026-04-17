@@ -11,7 +11,12 @@ from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def download_and_extract_s3_deps(owner_name: str, repo_name: str, clone_dir: str):
+def download_and_extract_s3_deps(
+    *,
+    owner_name: str,
+    repo_name: str,
+    clone_dir: str,
+):
     """Download cached dependency tarballs from S3 and extract to clone_dir."""
     for dep_dir in SUPPORTED_DEPENDENCY_DIRS:
         target_path = os.path.join(clone_dir, dep_dir)

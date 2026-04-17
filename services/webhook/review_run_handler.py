@@ -14,6 +14,7 @@ from constants.triggers import ReviewTrigger
 from services.github.types.webhook.review_run_payload import ReviewRunPayload
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.agents.verify_task_is_ready import verify_task_is_ready
+from services.aws.s3.refresh_mongodb_cache import refresh_mongodb_cache
 from services.chat_with_agent import chat_with_agent
 from services.node.ensure_node_packages import ensure_node_packages
 from services.node.set_npm_token_env import set_npm_token_env
@@ -268,6 +269,14 @@ async def handle_review_run(
         base_branch=base_branch,
         pr_branch=head_branch,
         token=token,
+        clone_dir=clone_dir,
+    )
+
+    # Fire-and-forget: refresh mongodb-binaries on S3 for the next run
+    refresh_mongodb_cache(
+        owner_id=owner_id,
+        owner_name=owner_name,
+        repo_name=repo_name,
         clone_dir=clone_dir,
     )
 

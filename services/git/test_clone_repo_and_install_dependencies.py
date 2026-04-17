@@ -81,7 +81,9 @@ def test_prepare_repo_clones_base_then_checks_out_pr(
     mock_git_clone_to_tmp.assert_called_once_with("/tmp/repo", clone_url, "main")
     mock_git_fetch.assert_called_once_with("/tmp/repo", clone_url, "feature")
     mock_git_checkout.assert_called_once_with("/tmp/repo", "feature")
-    mock_s3_extract.assert_called_once_with("owner", "repo", "/tmp/repo")
+    mock_s3_extract.assert_called_once_with(
+        owner_name="owner", repo_name="repo", clone_dir="/tmp/repo"
+    )
     mock_copy_config.assert_called_once_with("/tmp/repo")
 
 

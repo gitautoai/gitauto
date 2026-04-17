@@ -15,6 +15,12 @@ from services.webhook.review_run_handler import handle_review_run
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
+@pytest.fixture(autouse=True)
+def _mock_refresh_mongodb_cache():
+    with patch("services.webhook.review_run_handler.refresh_mongodb_cache"):
+        yield
+
+
 @pytest.fixture
 def mock_review_comment_payload():
     """Realistic review comment payload for PR review handler."""

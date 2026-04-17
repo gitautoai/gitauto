@@ -14,6 +14,12 @@ from services.github.types.github_types import PrLabeledPayload
 from services.webhook.new_pr_handler import handle_new_pr
 
 
+@pytest.fixture(autouse=True)
+def _mock_refresh_mongodb_cache():
+    with patch("services.webhook.new_pr_handler.refresh_mongodb_cache"):
+        yield
+
+
 def test_handle_new_pr_signature():
     """Test that handle_new_pr has the expected signature with lambda_info parameter"""
 

@@ -18,6 +18,12 @@ from services.chat_with_agent import AgentResult
 from services.webhook.check_suite_handler import handle_check_suite
 
 
+@pytest.fixture(autouse=True)
+def _mock_refresh_mongodb_cache():
+    with patch("services.webhook.check_suite_handler.refresh_mongodb_cache"):
+        yield
+
+
 @pytest.fixture
 def mock_check_run_payload(test_owner, test_repo):
     """Fixture providing a mock check suite payload."""

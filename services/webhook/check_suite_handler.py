@@ -15,6 +15,7 @@ from constants.general import MAX_GITAUTO_COMMITS_PER_PR, MAX_INFRA_RETRIES
 from constants.messages import PERMISSION_DENIED_MESSAGE, CHECK_RUN_FAILED_MESSAGE
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.agents.verify_task_is_ready import verify_task_is_ready
+from services.aws.s3.refresh_mongodb_cache import refresh_mongodb_cache
 from services.chat_with_agent import chat_with_agent
 from services.circleci.get_build_logs import get_circleci_build_logs
 from services.circleci.get_workflow_jobs import get_circleci_workflow_jobs
@@ -280,7 +281,14 @@ async def handle_check_suite(
         clone_dir=clone_dir,
     )
 
-    # Merge base branch into PR only when GitHub detects conflicts
+    # Fire-and-forget: refresh mongodb-binaries on S3 for the next run
+    refresh_mongodb_cache(
+        owner_id=owner_id,
+        owner_name=owner_name,
+        repo_name=repo_name,
+        clone_dir=clone_dir,
+    )
+
     mergeable_state = full_pr.get("mergeable_state")
     if mergeable_state == "dirty":
         logger.info("Merging base branch, mergeable_state=%s", mergeable_state)
