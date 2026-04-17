@@ -11,6 +11,7 @@ def calculate_costs(
     # Pricing per 1M tokens (input/output)
     pricing = {
         "claude": {
+            "claude-opus-4-7": {"input": 5.00, "output": 25.00},
             "claude-opus-4-6": {"input": 5.00, "output": 25.00},
             "claude-opus-4-5": {"input": 5.00, "output": 25.00},
             "claude-sonnet-4-6": {"input": 3.00, "output": 15.00},

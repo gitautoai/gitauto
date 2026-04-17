@@ -9,6 +9,7 @@ from services.get_fallback_models import (
 def test_claude_chain_order():
     """Claude chain has newest Opus first, then fallback models."""
     assert CLAUDE_FALLBACK_MODELS == [
+        ClaudeModelId.OPUS_4_7,
         ClaudeModelId.OPUS_4_6,
         ClaudeModelId.OPUS_4_5,
         ClaudeModelId.SONNET_4_6,
@@ -26,9 +27,10 @@ def test_google_chain_order():
 
 def test_get_fallback_models_opus_excludes_self():
     """Opus fallbacks don't include Opus itself."""
-    fallbacks = get_fallback_models(ClaudeModelId.OPUS_4_6)
-    assert ClaudeModelId.OPUS_4_6 not in fallbacks
+    fallbacks = get_fallback_models(ClaudeModelId.OPUS_4_7)
+    assert ClaudeModelId.OPUS_4_7 not in fallbacks
     assert fallbacks == [
+        ClaudeModelId.OPUS_4_6,
         ClaudeModelId.OPUS_4_5,
         ClaudeModelId.SONNET_4_6,
         ClaudeModelId.SONNET_4_5,
@@ -39,6 +41,7 @@ def test_get_fallback_models_sonnet_46_excludes_opus():
     """Sonnet ($4) never falls back to Opus ($8)."""
     fallbacks = get_fallback_models(ClaudeModelId.SONNET_4_6)
     assert fallbacks == [ClaudeModelId.SONNET_4_5]
+    assert ClaudeModelId.OPUS_4_7 not in fallbacks
     assert ClaudeModelId.OPUS_4_6 not in fallbacks
     assert ClaudeModelId.OPUS_4_5 not in fallbacks
 

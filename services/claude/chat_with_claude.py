@@ -14,7 +14,6 @@ from services.claude.exceptions import (
 from services.claude.remove_outdated_file_edit_attempts import (
     remove_outdated_file_edit_attempts,
 )
-from services.claude.strip_strict_from_tools import strip_strict_from_tools
 from services.claude.trim_messages import trim_messages_to_token_limit
 from services.llm_result import LlmResult, ToolCall
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
@@ -42,14 +41,6 @@ def chat_with_claude(
     messages, token_input = trim_messages_to_token_limit(
         messages=messages, client=claude, model=model_id, max_input=max_input
     )
-
-    # Strip "strict" from tools for models that don't support it
-    if model_id not in (
-        ClaudeModelId.SONNET_4_6,
-        ClaudeModelId.SONNET_4_5,
-        ClaudeModelId.OPUS_4_6,
-    ):
-        tools = strip_strict_from_tools(tools)
 
     # https://docs.anthropic.com/en/api/messages
     start_time = time.time()

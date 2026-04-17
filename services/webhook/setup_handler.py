@@ -59,9 +59,9 @@ async def setup_handler(
 ):
     set_owner_repo(owner_name, repo_name)
     set_trigger("setup")
-    model_id = (
-        ClaudeModelId.OPUS_4_6
-    )  # Setup runs once per repo, needs reliable tool-use
+
+    # Setup runs once per repo, needs reliable tool-use
+    model_id = ClaudeModelId.OPUS_4_7
     logger.info(
         "Setup triggered by sender_name=%s sender_id=%d source=%s for %s/%s",
         sender_name,

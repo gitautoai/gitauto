@@ -147,3 +147,40 @@ def test_chat_with_claude_calls_optimization_functions(
     )
 
     mock_remove_outdated_file_edit_attempts.assert_called_once()
+
+
+@patch("services.claude.chat_with_claude.insert_llm_request")
+@patch("services.claude.chat_with_claude.claude")
+def test_strict_tools_passed_through_unchanged(mock_claude, mock_insert_llm_request):
+    """Strict tools must not be stripped — all current models support strict."""
+    mock_response = Mock()
+    mock_response.content = [Mock(type="text", text="ok")]
+    mock_response.usage = Mock(output_tokens=5)
+    mock_insert_llm_request.return_value = {"total_cost_usd": 0.01}
+    mock_claude.messages.create.return_value = mock_response
+    mock_claude.messages.count_tokens.return_value = Mock(input_tokens=10)
+
+    tools = cast(
+        list[ToolUnionParam],
+        [
+            {
+                "name": "test_tool",
+                "description": "Test",
+                "strict": True,
+                "input_schema": {"type": "object", "properties": {}},
+            }
+        ],
+    )
+
+    chat_with_claude(
+        messages=cast(list[MessageParam], [{"role": "user", "content": "test"}]),
+        system_content="system",
+        tools=tools,
+        model_id=ClaudeModelId.HAIKU_4_5,
+        usage_id=999,
+        created_by="4:test-user",
+    )
+
+    call_args = mock_claude.messages.create.call_args
+    passed_tools = call_args.kwargs["tools"]
+    assert passed_tools[0]["strict"] is True

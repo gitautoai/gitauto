@@ -119,30 +119,27 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
 
 **CRITICAL: NEVER start without explicit user request. PR must be clean — don't ignore failures.**
 
-1. `git status` to see ALL changes
-2. `scripts/git/list_changed_files.sh` — store for staging reference
-3. Verify not on main: `git branch --show-current`
-4. `git fetch origin main && git merge origin/main`
-5. `git commit -m "descriptive message"` — user has already run `git add` before saying "lgtm"
+1. `git fetch origin main && git merge origin/main`
+2. `git commit -m "descriptive message"` — user has already run `git add` before saying "lgtm"
    - Pre-commit hook runs automatically (see `scripts/git/pre_commit_hook.sh`): pip-freeze, generate-types, black, ruff, print/logging checks, then pylint + pyright + pytest concurrently
    - Install: `ln -sf ../../scripts/git/pre_commit_hook.sh .git/hooks/pre-commit`
    - **If hooks fail**: fix, re-stage, commit again. Don't stage other sessions' files.
    - **`--no-verify`** only for trivial non-code changes
    - Unused mock params: `# pyright: reportUnusedVariable=false` at top
    - NO co-author lines or `[skip ci]`
-6. Check for existing PR: `gh pr list --head $(git branch --show-current) --state open` — if exists, **STOP and ask**
-7. `git push`
-8. `gh pr create --title "PR title" --body "" --assignee @me` — create PR immediately, no body
-9. Check recent posts: `scripts/git/recent_social_posts.sh gitauto` and `scripts/git/recent_social_posts.sh wes`
-10. `gh pr edit <number> --body "..."` — add summary and social posts after checking recent posts
+3. Check for existing PR: `gh pr list --head $(git branch --show-current) --state open` — if exists, **STOP and ask**
+4. `git push`
+5. `gh pr create --title "PR title" --body "" --assignee @me` — create PR immediately, no body
+6. Check recent posts: `scripts/git/recent_social_posts.sh gitauto` and `scripts/git/recent_social_posts.sh wes`
+7. `gh pr edit <number> --body "..."` — add summary and social posts after checking recent posts
     - Technical, descriptive title. **No `## Test plan`**.
     - **Two posts** (last section, customer-facing only): GitAuto (changelog) + Wes (personal voice, don't emphasize "GitAuto")
     - Format: `## Social Media Post (GitAuto)` and `## Social Media Post (Wes)` headers (parsed by `extract-social-posts.js`)
     - **GitAuto post**: Changelog format — one-liner headline + change bullets. No storytelling.
     - **Wes post**: Honest stories. Vary openers — check recent posts first.
     - Guidelines: No em dashes (—). Under 280 chars. No marketing keywords. No negative framing. No internal names. No small numbers — use relative language.
-11. If Sentry issue: `python3 scripts/sentry/get_issue.py AGENT-XXX` then `python3 scripts/sentry/resolve_issue.py AGENT-XXX ...`
-12. **Blog post** in `../website/app/blog/posts/`:
+8. If Sentry issue: `python3 scripts/sentry/get_issue.py AGENT-XXX` then `python3 scripts/sentry/resolve_issue.py AGENT-XXX ...`
+9. **Blog post** in `../website/app/blog/posts/`:
     - `YYYY-MM-DD-kebab-case-title.mdx`. Universal dev lesson, not GitAuto internals (exception: deep technical content).
     - **Skip if lesson is thin** — argue back if no real insight.
     - `metadata.title`: **34-44 chars** (layout appends `- GitAuto Blog` for 50-60 total). Verify no duplicate slug.
@@ -172,7 +169,7 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
       - Unsplash API: `source .env && curl "https://api.unsplash.com/search/photos?query=QUERY&orientation=landscape&client_id=$UNSPLASH_ACCESS_KEY"`, download with `?w=1200&h=630&fit=crop&crop=entropy`
       - Convert to PNG: `sips -s format png downloaded.jpg --out ../website/public/og/blog/{slug}.png`
       - Dev.to crops to 1000x420 — keep important content centered.
-13. **Docs page** in `../website/app/docs/`: Create new or update existing. Browse for best-fit category. New pages: 3 files (`page.tsx`, `layout.tsx`, `jsonld.ts`).
+10. **Docs page** in `../website/app/docs/`: Create new or update existing. Browse for best-fit category. New pages: 3 files (`page.tsx`, `layout.tsx`, `jsonld.ts`).
 
 ## CRITICAL: Fixing Foxquilt PRs
 

@@ -10,6 +10,7 @@ from utils.logging.logging_config import logger
 
 # Full fallback chains for resilience — includes non-user-selectable models
 CLAUDE_FALLBACK_MODELS: list[ModelId] = [
+    ClaudeModelId.OPUS_4_7,
     ClaudeModelId.OPUS_4_6,
     ClaudeModelId.OPUS_4_5,
     ClaudeModelId.SONNET_4_6,

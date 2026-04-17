@@ -81,7 +81,7 @@ async def test_cost_usd_computed_for_claude_model(
         cost_usd=0.1625,
     )
 
-    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
+    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_7)
 
     result = await chat_with_agent(
         messages=[{"role": "user", "content": "test"}],
@@ -89,7 +89,7 @@ async def test_cost_usd_computed_for_claude_model(
         base_args=base_args,
         tools=[],
         usage_id=789,
-        model_id=ClaudeModelId.OPUS_4_6,
+        model_id=ClaudeModelId.OPUS_4_7,
     )
 
     assert result.cost_usd == 0.1625
@@ -211,7 +211,7 @@ async def test_delete_file_logging(
         cost_usd=0.05,
     )
 
-    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
+    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_7)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(
@@ -224,7 +224,7 @@ async def test_delete_file_logging(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=ClaudeModelId.OPUS_4_6,
+            model_id=ClaudeModelId.OPUS_4_7,
         )
 
     call_args = mock_update_comment.call_args_list
@@ -435,7 +435,7 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
     )
 
     base_args = create_test_base_args(
-        model_id=ClaudeModelId.OPUS_4_6,
+        model_id=ClaudeModelId.OPUS_4_7,
         owner="test-owner",
         repo="test-repo",
         pr_number=123,
@@ -448,7 +448,7 @@ async def test_verify_task_is_complete_with_pr_changes_returns_is_completed_true
         base_args=base_args,
         tools=[],
         usage_id=123,
-        model_id=ClaudeModelId.OPUS_4_6,
+        model_id=ClaudeModelId.OPUS_4_7,
     )
 
     is_completed = result.is_completed
@@ -667,7 +667,7 @@ async def test_file_write_result_success_includes_formatted_content(
         cost_usd=0.05,
     )
 
-    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
+    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_7)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__contains__.return_value = True
@@ -686,7 +686,7 @@ async def test_file_write_result_success_includes_formatted_content(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=ClaudeModelId.OPUS_4_6,
+            model_id=ClaudeModelId.OPUS_4_7,
         )
 
     messages = result.messages
@@ -927,7 +927,7 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
         cost_usd=0.05,
     )
 
-    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
+    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_7)
 
     with patch("services.chat_with_agent.tools_to_call") as mock_tools:
         mock_tools.__getitem__.return_value = Mock(
@@ -941,7 +941,7 @@ async def test_full_file_read_calls_replace_with_is_full_file_read_true(
             base_args=base_args,
             tools=[],
             usage_id=123,
-            model_id=ClaudeModelId.OPUS_4_6,
+            model_id=ClaudeModelId.OPUS_4_7,
         )
 
     mock_replace.assert_called_once()
@@ -1164,19 +1164,16 @@ async def test_gitauto_md_edit_always_allowed(
 
 @pytest.mark.asyncio
 @patch("services.chat_with_agent.chat_with_model")
-async def test_opus_falls_back_to_opus_45_on_error(
+async def test_opus_falls_back_through_chain_on_error(
     mock_chat_with_model, create_test_base_args
 ):
-    """Opus 4.6 ($8) falls back to Opus 4.5 ($8), not Sonnet."""
-    call_count = 0
+    """Opus 4.7 ($8) falls back through 4.6 → 4.5, not Sonnet."""
+    models_tried: list[ModelId] = []
 
     def side_effect(**kwargs):
-        nonlocal call_count
-        call_count += 1
-        if call_count == 1:
-            assert kwargs["model_id"] == ClaudeModelId.OPUS_4_6
-            raise RuntimeError("Opus 4.6 down")
-        assert kwargs["model_id"] == ClaudeModelId.OPUS_4_5
+        models_tried.append(kwargs["model_id"])
+        if len(models_tried) < 3:
+            raise RuntimeError("model down")
         return LlmResult(
             assistant_message={"role": "assistant", "content": "ok"},
             tool_calls=[],
@@ -1186,7 +1183,7 @@ async def test_opus_falls_back_to_opus_45_on_error(
         )
 
     mock_chat_with_model.side_effect = side_effect
-    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_6)
+    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_7)
 
     await chat_with_agent(
         messages=[{"role": "user", "content": "test"}],
@@ -1194,10 +1191,14 @@ async def test_opus_falls_back_to_opus_45_on_error(
         base_args=base_args,
         tools=[],
         usage_id=1,
-        model_id=ClaudeModelId.OPUS_4_6,
+        model_id=ClaudeModelId.OPUS_4_7,
     )
 
-    assert call_count == 2
+    assert models_tried == [
+        ClaudeModelId.OPUS_4_7,
+        ClaudeModelId.OPUS_4_6,
+        ClaudeModelId.OPUS_4_5,
+    ]
 
 
 @pytest.mark.asyncio
@@ -1236,7 +1237,7 @@ async def test_sonnet_never_falls_back_to_opus(
 
     for model in models_tried:
         assert model not in (
-            ClaudeModelId.OPUS_4_6,
+            ClaudeModelId.OPUS_4_7,
             ClaudeModelId.OPUS_4_5,
         ), f"Sonnet fallback tried Opus model {model}"
 
@@ -1276,18 +1277,18 @@ async def test_gemma_never_falls_back_to_gemini(
 async def test_overload_retries_then_falls_back(
     mock_chat_with_model, _mock_sleep, create_test_base_args
 ):
-    """Overload retries exhaust on Opus 4.6, then falls back to Opus 4.5."""
+    """Overload retries exhaust on Opus 4.7, then falls back to Opus 4.6."""
     call_count = 0
 
     def side_effect(**kwargs):
         nonlocal call_count
         call_count += 1
-        # First 3 calls: Opus 4.6 overloaded (1 initial + 2 retries)
+        # First 3 calls: Opus 4.7 overloaded (1 initial + 2 retries)
         if call_count <= 3:
-            assert kwargs["model_id"] == ClaudeModelId.OPUS_4_6
+            assert kwargs["model_id"] == ClaudeModelId.OPUS_4_7
             raise ClaudeOverloadedError("529")
-        # 4th call: Opus 4.5 succeeds
-        assert kwargs["model_id"] == ClaudeModelId.OPUS_4_5
+        # 4th call: falls back to Opus 4.6 and succeeds
+        assert kwargs["model_id"] == ClaudeModelId.OPUS_4_6
         return LlmResult(
             assistant_message={"role": "assistant", "content": "ok"},
             tool_calls=[],
@@ -1305,7 +1306,7 @@ async def test_overload_retries_then_falls_back(
         base_args=base_args,
         tools=[],
         usage_id=1,
-        model_id=ClaudeModelId.OPUS_4_6,
+        model_id=ClaudeModelId.OPUS_4_7,
     )
 
     assert call_count == 4
