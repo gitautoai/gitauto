@@ -73,7 +73,7 @@ from services.webhook.utils.get_preferred_model import get_preferred_model
 from services.webhook.utils.should_bail import should_bail
 from utils.files.get_local_file_tree import get_local_file_tree
 from utils.logging.add_log_message import add_log_message
-from utils.logging.logging_config import logger, set_pr_number, set_trigger
+from utils.logging.logging_config import logger, set_pr_number
 from utils.logs.clean_logs import clean_logs
 from utils.logs.detect_infra_failure import detect_infra_failure
 from utils.logs.normalize_log_for_hashing import normalize_log_for_hashing
@@ -92,7 +92,6 @@ async def handle_check_suite(
 ):
     current_time = time.time()
     trigger = "test_failure"
-    set_trigger(trigger)
 
     # Extract repository and installation info
     repo = payload["repository"]
@@ -124,6 +123,9 @@ async def handle_check_suite(
     check_suite = payload["check_suite"]
     head_branch = check_suite["head_branch"]
     if not head_branch or not head_branch.startswith(PRODUCT_ID):
+        logger.info(
+            "Ignoring check_suite: head_branch=%s is not a GitAuto branch", head_branch
+        )
         return
 
     # Get failed check runs from the check suite
@@ -136,6 +138,7 @@ async def handle_check_suite(
     )
 
     if not failed_check_runs:
+        logger.info("No failed check runs in check_suite_id=%s", check_suite["id"])
         return
 
     # Use the first failed check run
@@ -197,6 +200,9 @@ async def handle_check_suite(
     # Extract PR related variables and return if no PR is associated with this check suite
     pull_requests = check_suite["pull_requests"]
     if not pull_requests:
+        logger.info(
+            "No pull requests associated with check_suite_id=%s", check_suite["id"]
+        )
         return
 
     pull_request = pull_requests[0]
@@ -212,6 +218,7 @@ async def handle_check_suite(
     # Get repository settings - check if trigger_on_test_failure is enabled
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_test_failure"):
+        logger.info("trigger_on_test_failure disabled for PR #%s", pr_number)
         return
 
     has_purchased = check_purchase_exists(owner_id=owner_id)

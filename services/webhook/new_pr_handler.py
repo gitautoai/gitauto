@@ -75,7 +75,7 @@ from utils.files.should_skip_test import should_skip_test
 from utils.formatting.format_with_line_numbers import format_content_with_line_numbers
 from utils.images.get_base64 import get_base64
 from utils.logging.add_log_message import add_log_message
-from utils.logging.logging_config import logger, set_pr_number, set_trigger
+from utils.logging.logging_config import logger
 from utils.memory.gc_collect_and_log import gc_collect_and_log
 from utils.pr_templates.schedule import SCHEDULE_PREFIX_INCREASE
 from utils.progress_bar.progress_bar import create_progress_bar
@@ -88,7 +88,6 @@ async def handle_new_pr(
     trigger: NewPrTrigger,
     lambda_info: dict[str, str | None] | None = None,
 ) -> None:
-    set_trigger(trigger)
     current_time: float = time.time()
 
     # Deconstruct payload
@@ -311,8 +310,6 @@ async def handle_new_pr(
     test_files: dict[str, str] = {}
     parent = str(Path(impl_file_path).parent)
     target_dir = parent if parent != "." else None
-
-    set_pr_number(pr_number)
 
     # Clone repo to tmp (runs in parallel with remaining work, awaited before exit)
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
@@ -603,7 +600,6 @@ async def handle_new_pr(
         p = result.p
         total_token_input += result.token_input
         total_token_output += result.token_output
-
         if is_completed:
             logger.info(
                 "Agent signaled completion via verify_task_is_complete, breaking loop"

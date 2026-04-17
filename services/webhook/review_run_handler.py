@@ -52,7 +52,7 @@ from services.webhook.utils.should_bail import should_bail
 from utils.files.get_local_file_content import get_local_file_content
 from utils.files.get_local_file_tree import get_local_file_tree
 from utils.logging.add_log_message import add_log_message
-from utils.logging.logging_config import logger, set_pr_number, set_trigger
+from utils.logging.logging_config import logger
 from utils.memory.gc_collect_and_log import gc_collect_and_log
 from utils.progress_bar.progress_bar import create_progress_bar
 
@@ -63,7 +63,6 @@ async def handle_review_run(
     lambda_info: dict[str, str | None] | None = None,
 ):
     current_time = time.time()
-    set_trigger(trigger)
     # Extract comment fields
     review = payload["comment"]
     review_id = review["id"]
@@ -92,7 +91,6 @@ async def handle_review_run(
     # Extract PR related variables
     pull_request = payload["pull_request"]
     pr_number = pull_request["number"]
-    set_pr_number(pr_number)
     pr_title = pull_request["title"]
     pr_body = pull_request["body"]
     pr_url = pull_request["url"]

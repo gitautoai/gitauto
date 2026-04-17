@@ -10,13 +10,12 @@ from services.github.types.webhook.push import PushWebhookPayload
 from services.supabase.repositories.get_repository import get_repository
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_test_file import is_test_file
-from utils.logging.logging_config import logger, set_trigger
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def handle_push(payload: PushWebhookPayload):
     """https://docs.github.com/en/webhooks/webhook-events-and-payloads#push"""
-    set_trigger("push")
     repository = payload["repository"]
     owner_id = repository["owner"]["id"]
     owner_name = repository["owner"]["login"]

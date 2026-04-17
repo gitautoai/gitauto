@@ -79,11 +79,14 @@ async def handle_webhook_event(
 
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
     if event_name == "push":
+        set_trigger("push")
+        logger.info("Handling push event")
         handle_push(payload=cast(PushWebhookPayload, payload))
         return
 
     # For other events, we need to check the action
     if not action:
+        logger.info("No action in payload for event=%s, skipping", event_name)
         return
 
     # if event_name == "marketplace_purchase" and action in ("purchased"):
@@ -92,6 +95,7 @@ async def handle_webhook_event(
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=created#installation
     if event_name == "installation" and action in ("created"):
+        set_trigger("installation")
         typed_payload = cast(InstallationPayload, payload)
         owner_name = typed_payload["installation"]["account"]["login"]
         sender_name = typed_payload["sender"]["login"]
@@ -103,12 +107,15 @@ async def handle_webhook_event(
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=deleted#installation
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=suspend#installation
     if event_name == "installation" and action in ("deleted", "suspend"):
+        set_trigger("installation")
+        logger.info("Handling installation %s", action)
         typed_payload = cast(InstallationPayload, payload)
         handle_installation_deleted_or_suspended(payload=typed_payload, action=action)
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=unsuspend#installation
     if event_name == "installation" and action in ("unsuspend"):
+        set_trigger("installation")
         typed_payload = cast(InstallationPayload, payload)
         owner_name = typed_payload["installation"]["account"]["login"]
         sender_name = typed_payload["sender"]["login"]
@@ -120,12 +127,15 @@ async def handle_webhook_event(
     # Handle repository additions/removals when GitAuto is added to a repository
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation_repositories
     if event_name == "installation_repositories":
+        set_trigger("installation_repositories")
         typed_payload = cast(InstallationRepositoriesPayload, payload)
         if action == "added":
+            logger.info("Handling installation_repositories added")
             handle_installation_repos_added(payload=typed_payload)
             return
 
         if action == "removed":
+            logger.info("Handling installation_repositories removed")
             handle_installation_repos_removed(payload=typed_payload)
             return
 
@@ -133,6 +143,8 @@ async def handle_webhook_event(
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
     if event_name == "pull_request" and action == "labeled":
         typed_payload = cast(PrLabeledPayload, payload)
+        pr_number = typed_payload["pull_request"]["number"]
+        set_pr_number(pr_number)
 
         # Only process when the "gitauto" label is specifically added
         label_name = typed_payload["label"]["name"]
@@ -156,6 +168,7 @@ async def handle_webhook_event(
 
         suffix = head_ref[len(prefix) :]
         trigger = cast(NewPrTrigger, suffix.split("-")[0])
+        set_trigger(trigger)
         await handle_new_pr(
             payload=typed_payload,
             trigger=trigger,
@@ -174,19 +187,23 @@ async def handle_webhook_event(
         ref = pull_request["head"]["ref"]
 
         if not merged_at or not ref:
+            logger.info("PR closed but not merged or no ref, skipping")
             return
+
+        # Set context after confirming PR is merged, before any further loggers
+        set_trigger("pr_merged")
+        pr_number = pull_request["number"]
+        set_pr_number(pr_number)
 
         if not ref.startswith(PRODUCT_ID + "/"):
+            logger.info("PR closed but not a GitAuto branch: %s", ref)
             return
 
-        set_trigger("pr_merged")
         repository = typed_payload["repository"]
         owner_name = repository["owner"]["login"]
         repo_name = repository["name"]
 
         # Update usage records for this PR to mark as merged
-        pr_number = pull_request["number"]
-        set_pr_number(pr_number)
         repo_id = repository["id"]
         owner_id = repository["owner"]["id"]
 
@@ -204,7 +221,11 @@ async def handle_webhook_event(
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment
     # Do nothing when action is "deleted"
     if event_name == "pull_request_review_comment" and action in ("created", "edited"):
+        set_trigger("pr_file_review")
         typed_payload = cast(ReviewRunPayload, payload)
+        pr_number = typed_payload["pull_request"]["number"]
+        set_pr_number(pr_number)
+        logger.info("Handling pull_request_review_comment %s", action)
         await handle_review_run(
             payload=typed_payload,
             trigger="pr_file_review",
@@ -215,6 +236,9 @@ async def handle_webhook_event(
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review
     if event_name == "pull_request_review" and action in ("submitted", "edited"):
         typed_payload = cast(PullRequestReviewPayload, payload)
+        set_trigger("pr_review")
+        pr_number = typed_payload["pull_request"]["number"]
+        set_pr_number(pr_number)
         sender_login = typed_payload["sender"]["login"]
         if sender_login == GITHUB_APP_USER_NAME:
             logger.info("Ignoring PR review from GitAuto itself")
@@ -229,7 +253,6 @@ async def handle_webhook_event(
         state = review["state"]
         owner_name = typed_payload["repository"]["owner"]["login"]
         repo_name = typed_payload["repository"]["name"]
-        pr_number = typed_payload["pull_request"]["number"]
         body = review["body"] or ""
 
         if state == "approved":
@@ -294,10 +317,14 @@ async def handle_webhook_event(
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
     # Handle general PR comments (not inline review comments)
     if event_name == "issue_comment" and action in ("created", "edited"):
+        set_trigger("pr_comment")
         typed_payload = cast(IssueCommentWebhookPayload, payload)
+        issue = typed_payload["issue"]
+        pr_number = issue["number"]
+        set_pr_number(pr_number)
 
         # Only handle PR comments, not issue comments
-        if not typed_payload["issue"].get("pull_request"):
+        if not issue.get("pull_request"):
             logger.info("Ignoring issue comment (not a PR comment)")
             return
 
@@ -307,11 +334,9 @@ async def handle_webhook_event(
             return
 
         # Fetch full PR object since issue_comment payload only has a stub
-        issue = typed_payload["issue"]
         repo_payload = typed_payload["repository"]
         owner_name = repo_payload["owner"]["login"]
         repo_name = repo_payload["name"]
-        pr_number = issue["number"]
         installation_id = typed_payload["installation"]["id"]
         token = get_installation_access_token(installation_id=installation_id)
         pr = get_pull_request(
@@ -344,6 +369,7 @@ async def handle_webhook_event(
     if event_name == "workflow_run" and action == "completed":
         set_trigger("workflow_run_completed")
         if payload["workflow_run"]["conclusion"] == "success":
+            logger.info("Processing successful workflow_run for coverage")
             handle_coverage_report(
                 owner_id=payload["repository"]["owner"]["id"],
                 owner_name=payload["repository"]["owner"]["login"],
@@ -354,6 +380,11 @@ async def handle_webhook_event(
                 head_branch=payload["workflow_run"]["head_branch"],
                 head_sha=payload["workflow_run"]["head_sha"],
                 user_name=payload["sender"]["login"],
+            )
+        else:
+            logger.info(
+                "Ignoring non-success workflow_run conclusion: %s",
+                payload["workflow_run"]["conclusion"],
             )
         return
 
@@ -366,11 +397,14 @@ async def handle_webhook_event(
 
         # Handle failures (test failures)
         if conclusion in GITHUB_CHECK_RUN_FAILURES:
+            set_trigger("test_failure")
+            logger.info("Handling check_suite failure: conclusion=%s", conclusion)
             await handle_check_suite(payload=typed_payload, lambda_info=lambda_info)
             return
 
         # Skip non-success conclusions
         if conclusion != "success":
+            logger.info("Ignoring check_suite with conclusion=%s", conclusion)
             return
 
         # Handle successful check for all CI systems

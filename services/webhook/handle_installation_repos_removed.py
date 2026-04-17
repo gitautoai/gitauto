@@ -9,6 +9,9 @@ from utils.logging.logging_config import logger
 def handle_installation_repos_removed(payload: InstallationRepositoriesPayload):
     installation_id = payload["installation"]["id"]
     if not is_installation_valid(installation_id=installation_id):
+        logger.info(
+            "Installation %s is not valid, skipping repos removed", installation_id
+        )
         return
 
     owner_name = payload["installation"]["account"]["login"]
