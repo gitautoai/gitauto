@@ -1,6 +1,6 @@
 [project]
 name = "GitAuto"
-version = "1.1.22"
+version = "1.1.23"
 requires-python = ">=3.14"
 dependencies = [
     "annotated-doc==0.0.4",

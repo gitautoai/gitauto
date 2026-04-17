@@ -157,9 +157,13 @@ def main():
         if mismatches:
             has_mismatches = True
 
-    # Slack notification with combined report
-    full_report = "\n\n".join(all_reports)
-    slack_notify(text=full_report)
+    # Slack notification: summary in channel, detail in thread
+    status = "<!channel> MISMATCH" if has_mismatches else "OK"
+    summary = f"Billing check ({args.start} to {args.end}): {status}"
+    ts = slack_notify(text=summary)
+    if ts:
+        full_report = "\n\n".join(all_reports)
+        slack_notify(text=full_report, thread_ts=ts)
 
     if has_mismatches:
         sys.exit(1)
