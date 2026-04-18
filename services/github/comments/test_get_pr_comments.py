@@ -7,7 +7,7 @@ import requests
 from faker import Faker
 
 from config import TIMEOUT
-from services.github.comments.get_all_comments import get_all_comments
+from services.github.comments.get_pr_comments import get_pr_comments
 
 fake = Faker()
 
@@ -29,18 +29,18 @@ def token():
 
 @pytest.fixture
 def mock_requests_get():
-    with patch("services.github.comments.get_all_comments.requests.get") as mock:
+    with patch("services.github.comments.get_pr_comments.requests.get") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_create_headers(token):
-    with patch("services.github.comments.get_all_comments.create_headers") as mock:
+    with patch("services.github.comments.get_pr_comments.create_headers") as mock:
         mock.return_value = {"Authorization": f"Bearer {token}"}
         yield mock
 
 
-def test_get_all_comments_success(
+def test_get_pr_comments_success(
     owner, repo, token, mock_requests_get, mock_create_headers
 ):
     expected_comments = [
@@ -51,7 +51,9 @@ def test_get_all_comments_success(
     mock_response.json.return_value = expected_comments
     mock_requests_get.return_value = mock_response
 
-    result = get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
+    result = get_pr_comments(
+        owner=owner, repo=repo, pr_number=123, token=token, exclude_self=False
+    )
 
     assert result == expected_comments
     mock_create_headers.assert_called_once_with(token=token)
@@ -59,44 +61,50 @@ def test_get_all_comments_success(
     mock_response.raise_for_status.assert_called_once()
 
 
-def test_get_all_comments_empty_response(owner, repo, token, mock_requests_get):
+def test_get_pr_comments_empty_response(owner, repo, token, mock_requests_get):
     mock_response = MagicMock()
     mock_response.json.return_value = []
     mock_requests_get.return_value = mock_response
 
-    result = get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
+    result = get_pr_comments(
+        owner=owner, repo=repo, pr_number=123, token=token, exclude_self=False
+    )
 
     assert not result
     mock_requests_get.assert_called_once()
 
 
-def test_get_all_comments_correct_url_construction(
+def test_get_pr_comments_correct_url_construction(
     owner, repo, token, mock_requests_get
 ):
     mock_response = MagicMock()
     mock_response.json.return_value = []
     mock_requests_get.return_value = mock_response
 
-    get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
+    get_pr_comments(
+        owner=owner, repo=repo, pr_number=123, token=token, exclude_self=False
+    )
 
     expected_url = f"https://api.github.com/repos/{owner}/{repo}/issues/123/comments"
     call_args = mock_requests_get.call_args
     assert call_args[1]["url"] == expected_url
 
 
-def test_get_all_comments_timeout_parameter(owner, repo, token, mock_requests_get):
+def test_get_pr_comments_timeout_parameter(owner, repo, token, mock_requests_get):
     mock_response = MagicMock()
     mock_response.json.return_value = []
     mock_requests_get.return_value = mock_response
 
-    get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
+    get_pr_comments(
+        owner=owner, repo=repo, pr_number=123, token=token, exclude_self=False
+    )
 
     call_args = mock_requests_get.call_args
     assert "timeout" in call_args[1]
     assert call_args[1]["timeout"] == TIMEOUT
 
 
-def test_get_all_comments_http_error(owner, repo, token, mock_requests_get):
+def test_get_pr_comments_http_error(owner, repo, token, mock_requests_get):
     mock_response = MagicMock()
     http_error = requests.exceptions.HTTPError("404 Not Found")
     mock_error_response = MagicMock()
@@ -107,20 +115,24 @@ def test_get_all_comments_http_error(owner, repo, token, mock_requests_get):
     mock_response.raise_for_status.side_effect = http_error
     mock_requests_get.return_value = mock_response
 
-    result = get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
+    result = get_pr_comments(
+        owner=owner, repo=repo, pr_number=123, token=token, exclude_self=False
+    )
 
     assert not result
 
 
-def test_get_all_comments_network_error(owner, repo, token, mock_requests_get):
+def test_get_pr_comments_network_error(owner, repo, token, mock_requests_get):
     mock_requests_get.side_effect = requests.exceptions.ConnectionError("Network error")
 
-    result = get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
+    result = get_pr_comments(
+        owner=owner, repo=repo, pr_number=123, token=token, exclude_self=False
+    )
 
     assert not result
 
 
-def test_get_all_comments_uses_github_api_url_constant(
+def test_get_pr_comments_uses_github_api_url_constant(
     owner, repo, token, mock_requests_get
 ):
     mock_response = MagicMock()
@@ -128,10 +140,12 @@ def test_get_all_comments_uses_github_api_url_constant(
     mock_requests_get.return_value = mock_response
 
     with patch(
-        "services.github.comments.get_all_comments.GITHUB_API_URL",
+        "services.github.comments.get_pr_comments.GITHUB_API_URL",
         "https://custom.api.github.com",
     ):
-        get_all_comments(owner=owner, repo=repo, pr_number=123, token=token)
+        get_pr_comments(
+            owner=owner, repo=repo, pr_number=123, token=token, exclude_self=False
+        )
 
     expected_url = (
         f"https://custom.api.github.com/repos/{owner}/{repo}/issues/123/comments"
@@ -140,12 +154,12 @@ def test_get_all_comments_uses_github_api_url_constant(
     assert call_args[1]["url"] == expected_url
 
 
-def test_get_all_comments_decorator_configuration():
-    assert hasattr(get_all_comments, "__wrapped__")
+def test_get_pr_comments_decorator_configuration():
+    assert hasattr(get_pr_comments, "__wrapped__")
 
 
-def test_get_all_comments_function_signature_compliance():
-    sig = inspect.signature(get_all_comments)
+def test_get_pr_comments_function_signature_compliance():
+    sig = inspect.signature(get_pr_comments)
     params = list(sig.parameters.keys())
-    expected_params = ["owner", "repo", "pr_number", "token"]
+    expected_params = ["owner", "repo", "pr_number", "token", "exclude_self"]
     assert params == expected_params

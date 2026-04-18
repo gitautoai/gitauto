@@ -1,5 +1,5 @@
 from services.github.types.pull_request import PullRequest
-from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
+from services.github.types.webhook.pr_comment import IssueCommentWebhookPayload
 from services.github.types.webhook.review_run_payload import ReviewRunPayload
 from utils.error.handle_exceptions import handle_exceptions
 

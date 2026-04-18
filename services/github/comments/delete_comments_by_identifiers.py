@@ -2,7 +2,7 @@ from services.github.comments.delete_comment import delete_comment
 from services.github.comments.filter_comments_by_identifiers import (
     filter_comments_by_identifiers,
 )
-from services.github.comments.get_all_comments import get_all_comments
+from services.github.comments.get_pr_comments import get_pr_comments
 from utils.error.handle_exceptions import handle_exceptions
 
 
@@ -16,8 +16,12 @@ def delete_comments_by_identifiers(
     identifiers: list[str],
 ):
     """Delete all comments containing the identifiers made by GitAuto"""
-    comments = get_all_comments(
-        owner=owner, repo=repo, pr_number=pr_number, token=token
+    comments = get_pr_comments(
+        owner=owner,
+        repo=repo,
+        pr_number=pr_number,
+        token=token,
+        exclude_self=False,
     )
     matching_comments = filter_comments_by_identifiers(comments, identifiers)
     for comment in matching_comments:

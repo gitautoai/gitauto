@@ -11,6 +11,7 @@ from anthropic.types import MessageParam
 from config import GITHUB_APP_USER_NAME, PRODUCT_ID
 from constants.agent import COST_CAP_RATIO, MAX_ITERATIONS
 from constants.triggers import ReviewTrigger
+from payloads.github.pull_request_review_comment.types import ReviewComment
 from services.github.types.webhook.review_run_payload import ReviewRunPayload
 from services.agents.verify_task_is_complete import verify_task_is_complete
 from services.agents.verify_task_is_ready import verify_task_is_ready
@@ -26,6 +27,7 @@ from services.git.clone_repo_and_install_dependencies import (
 )
 from services.git.git_merge_base_into_pr import git_merge_base_into_pr
 from services.github.comments.create_comment import create_comment
+from services.github.comments.get_pr_comments import get_pr_comments
 from services.github.commits.get_head_commit_count_behind_base import (
     get_head_commit_count_behind_base,
 )
@@ -33,17 +35,22 @@ from services.github.comments.reply_to_comment import reply_to_comment
 from services.github.comments.update_comment import update_comment
 from services.slack.slack_notify import slack_notify
 from services.supabase.credits.check_purchase_exists import check_purchase_exists
+from services.supabase.webhook_deliveries.insert_webhook_delivery import (
+    insert_webhook_delivery,
+)
 from services.supabase.credits.get_credit_price import get_credit_price
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_reference import get_reference
 from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
-from services.github.pulls.get_review_summary import get_review_summary
+from services.github.pulls.get_review_inline_comments import get_review_inline_comments
+from services.github.pulls.get_review_summary_comment import get_review_summary_comment
 from services.github.pulls.get_review_thread_comments import get_review_thread_comments
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
 from services.claude.tools.tools import TOOLS_FOR_REVIEW_COMMENTS
+from services.github.comments.update_progress import update_progress
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
@@ -51,7 +58,8 @@ from services.types.base_args import ReviewBaseArgs
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.get_preferred_model import get_preferred_model
 from services.webhook.utils.should_bail import should_bail
-from utils.files.get_local_file_content import get_local_file_content
+from utils.files.read_local_file import read_local_file
+from utils.formatting.format_with_line_numbers import format_content_with_line_numbers
 from utils.files.get_local_file_tree import get_local_file_tree
 from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger
@@ -140,7 +148,7 @@ async def handle_review_run(
     review_summary = ""
     pull_request_review_id = review.get("pull_request_review_id")
     if pull_request_review_id:
-        summary_body = get_review_summary(
+        summary_body = get_review_summary_comment(
             owner=owner_name,
             repo=repo_name,
             pr_number=pr_number,
@@ -150,13 +158,61 @@ async def handle_review_run(
         if summary_body and summary_body.strip():
             review_summary = summary_body
 
+    # Batch: when a reviewer (e.g. Devin) submits a review with N inline comments, GitHub fires N webhooks. Without dedup, each triggers a separate Lambda that races to push, wasting tokens. Only one invocation wins the lock; it sleeps, fetches all comments, and handles them in one session.
+    review_inline_comments: list[ReviewComment] = []
+    if pull_request_review_id and trigger == "pr_file_review":
+        logger.info("Attempting batch dedup for review_id=%d", pull_request_review_id)
+        dedup_key = f"review-dedup-{repo_id}-{pr_number}-{pull_request_review_id}"
+        inserted = insert_webhook_delivery(
+            delivery_id=dedup_key, event_name="pr_file_review_dedup"
+        )
+        if inserted is False:
+            logger.info(
+                "Another invocation handling review_id=%d for PR #%d, skipping",
+                pull_request_review_id,
+                pr_number,
+            )
+            return
+
+        # Real data: Devin review_id 4117870568 on SpiderPlus PR #13871 (2026-04-16) had 4 inline comments created 01:57:24–01:57:32 UTC but submitted together at 01:57:33 — GitHub webhooks fire at submission (~1s apart). 10s gives ample headroom including Lambda cold starts.
+        logger.info("Won batch lock, sleeping 10s for sibling webhooks")
+        time.sleep(10)
+        review_inline_comments = (
+            get_review_inline_comments(
+                owner=owner_name,
+                repo=repo_name,
+                pr_number=pr_number,
+                review_id=pull_request_review_id,
+                token=token,
+            )
+            or []
+        )
+        logger.info(
+            "Fetched %d inline comments from review %d",
+            len(review_inline_comments),
+            pull_request_review_id,
+        )
+
     # Get list of changed files in the PR (used for bot relevance check and later for file processing)
     pr_files = get_pull_request_files(
         owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
     )
 
-    # For PR-level comments (no file path), check bot relevance and loop prevention
-    if not review_path:
+    # Build review_comment based on multiple review inline comments, PR-level, or single inline comment
+    if review_inline_comments:
+        logger.info(
+            "Building combined review_comment from %d review inline comments",
+            len(review_inline_comments),
+        )
+        parts = [f"## Review with {len(review_inline_comments)} inline comments\n"]
+        for i, rc in enumerate(review_inline_comments, 1):
+            rc_path = rc.get("path", "")
+            rc_line = rc.get("line", "?")
+            rc_body = rc.get("body", "")
+            parts.append(f"### Comment {i}: `{rc_path}` Line {rc_line}\n{rc_body}\n")
+        review_comment = "\n".join(parts)
+    elif not review_path:
+        # For PR-level comments (no file path), check bot relevance and loop prevention
         if review_author_is_bot:
             # Check if bot comment mentions any PR file paths (skip irrelevant bot comments like Security Hub scans)
             pr_file_paths = [f["filename"] for f in pr_files]
@@ -227,7 +283,16 @@ async def handle_review_run(
         "clone_url": get_clone_url(owner_name, repo_name, token),
         "is_fork": is_fork,
         "pr_number": pr_number,
-        "pr_comments": [],
+        "pr_comments": [
+            f"@{c['user']['login']} ({c['created_at']}): {c['body']}"
+            for c in get_pr_comments(
+                owner=owner_name,
+                repo=repo_name,
+                pr_number=pr_number,
+                token=token,
+                exclude_self=True,
+            )
+        ],
         "latest_commit_sha": pull_request["head"]["sha"],
         "base_branch": base_branch,
         "new_branch": head_branch,
@@ -340,35 +405,83 @@ async def handle_review_run(
     p = 0
     log_messages: list[str] = []
     if not review_author_is_bot:
+        logger.info("Posting greeting comment for human reviewer")
         msg = "Thanks for the feedback. I'm on it."
         add_log_message(msg, log_messages)
         comment_body = create_progress_bar(p=0, msg="\n".join(log_messages))
         if review_path:
+            logger.info("Replying inline to review comment on %s", review_path)
             comment_url = reply_to_comment(base_args=base_args, body=comment_body)
         else:
+            logger.info("Creating top-level PR comment for review_id=%s", review_id)
             original_url = f"https://github.com/{owner_name}/{repo_name}/pull/{pr_number}#issuecomment-{review_id}"
             mention = f"@{sender_name}'s " if not review_author_is_bot else ""
             linked_body = f"Re: {mention}[comment]({original_url})\n\n{comment_body}"
             comment_url = create_comment(base_args=base_args, body=linked_body)
         base_args["comment_url"] = comment_url
+    else:
+        logger.info("Skipping greeting comment for bot reviewer %s", sender_name)
 
-    # Get a review commented file (skip when no specific file path)
-    review_file = ""
-    if review_path:
-        review_file = get_local_file_content(file_path=review_path, base_args=base_args)
-        if not review_author_is_bot:
-            p += 5
-            add_log_message(
-                f"Read the file `{review_path}` you commented on.", log_messages
+    # Get review commented file(s) — stored as separate messages (not inside JSON) so replace_old_file_content() can find and replace them when agent re-reads.
+    review_file_messages: list[MessageParam] = []
+    if review_inline_comments:
+        logger.info(
+            "Reading files for %d review inline comments", len(review_inline_comments)
+        )
+        unique_paths: list[str] = list(
+            dict.fromkeys(
+                str(rc.get("path")) for rc in review_inline_comments if rc.get("path")
             )
-            comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-            update_comment(body=comment_body, base_args=base_args)
+        )
+        for fp in unique_paths:
+            raw = read_local_file(file_path=fp, base_dir=clone_dir)
+            if raw:
+                logger.info("Read review inline comment file %s", fp)
+                formatted = format_content_with_line_numbers(file_path=fp, content=raw)
+                review_file_messages.append({"role": "user", "content": formatted})
+            else:
+                logger.info("Batched file %s not found or empty", fp)
+        if not review_author_is_bot:
+            p = update_progress(
+                msg=f"Read {len(unique_paths)} files from review comments.",
+                p=p,
+                log_messages=log_messages,
+                base_args=base_args,
+            )
+        else:
+            logger.info(
+                "Skipping progress update for bot reviewer (review inline comments)"
+            )
+    elif review_path:
+        logger.info("Reading single review file %s", review_path)
+        raw = read_local_file(file_path=review_path, base_dir=clone_dir)
+        if raw:
+            logger.info("Read review file %s", review_path)
+            formatted = format_content_with_line_numbers(
+                file_path=review_path, content=raw
+            )
+            review_file_messages.append({"role": "user", "content": formatted})
+        else:
+            logger.info("Review file %s not found or empty", review_path)
+        if not review_author_is_bot:
+            p = update_progress(
+                msg=f"Read the file `{review_path}` you commented on.",
+                p=p,
+                log_messages=log_messages,
+                base_args=base_args,
+            )
+        else:
+            logger.info("Skipping progress update for bot reviewer (single file)")
+    else:
+        logger.info("No review file path — PR-level comment, skipping file read")
 
     if not review_author_is_bot:
-        p += 5
-        add_log_message(f"Found {len(pr_files)} changed files in the PR.", log_messages)
-        comment_body = create_progress_bar(p=p, msg="\n".join(log_messages))
-        update_comment(body=comment_body, base_args=base_args)
+        p = update_progress(
+            msg=f"Found {len(pr_files)} changed files in the PR.",
+            p=p,
+            log_messages=log_messages,
+            base_args=base_args,
+        )
 
     # Validate files for syntax issues before editing
     files_to_validate = [f["filename"] for f in pr_files if f["status"] != "removed"]
@@ -403,7 +516,6 @@ async def handle_review_run(
         "step_1_review_comment": review_comment,
         "pull_request_title": pr_title,
         "pull_request_body": pr_body,
-        "review_file": review_file,
         "pr_files": pr_files,
         "today": today,
         "root_files": root_files,
@@ -423,8 +535,9 @@ async def handle_review_run(
         input_message["step_2b_remaining_unfixable_errors"] = pre_existing_errors
     user_input = json.dumps(obj=input_message)
 
-    # Create messages
+    # Create messages — file content in separate messages for replace_old_file_content()
     messages: list[MessageParam] = [{"role": "user", "content": user_input}]
+    messages.extend(review_file_messages)
 
     # Loop a process explore repo and commit changes until the ticket is resolved
     total_token_input = 0
@@ -458,7 +571,7 @@ async def handle_review_run(
             logger.info(completion_reason)
             break
 
-        # Check if the review thread was resolved while we were working (no thread for PR comments)
+        # Check if the review thread was resolved while we were working
         if review_path:
             thread_check = get_review_thread_comments(
                 owner=owner_name,

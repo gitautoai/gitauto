@@ -17,6 +17,7 @@ from services.github.types.github_types import (
     PrLabeledPayload,
 )
 from services.github.types.pull_request_webhook_payload import PullRequestWebhookPayload
+from services.github.types.webhook.pr_comment import IssueCommentWebhookPayload
 from services.webhook.webhook_handler import handle_webhook_event
 
 
@@ -1401,3 +1402,8 @@ class TestHandleWebhookEvent:
 
         mock_slack_notify.assert_not_called()
         mock_handle_review_run.assert_not_called()
+
+
+def test_issue_comment_webhook_payload_importable():
+    """Verify IssueCommentWebhookPayload is importable from pr_comment module (renamed from issue_comment)."""
+    assert IssueCommentWebhookPayload is not None

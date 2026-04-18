@@ -24,7 +24,7 @@ from services.git.clone_repo_and_install_dependencies import (
 )
 from services.git.write_and_commit_file import write_and_commit_file
 from services.github.comments.create_comment import create_comment
-from services.github.comments.get_comments import get_comments
+from services.github.comments.get_pr_comments import get_pr_comments
 from services.github.comments.update_comment import update_comment
 from services.github.files.get_remote_file_content_by_url import (
     get_remote_file_content_by_url,
@@ -238,7 +238,17 @@ async def handle_new_pr(
         )
 
     # Check out the PR comments
-    pr_comments = get_comments(pr_number=pr_number, base_args=base_args)
+    pr_comment_objs = get_pr_comments(
+        owner=owner_name,
+        repo=repo_name,
+        pr_number=pr_number,
+        token=token,
+        exclude_self=True,
+    )
+    pr_comments = [
+        f"@{c['user']['login']} ({c['created_at']}): {c['body']}"
+        for c in pr_comment_objs
+    ]
     comment_body = f"Found {len(pr_comments)} PR comments."
     p += 5
     add_log_message(comment_body, log_messages)
@@ -663,10 +673,18 @@ async def handle_new_pr(
     )
     update_comment(body=body_after_pr, base_args=base_args)
 
-    # Update PR body with Claude-generated summary of what GA did
-    agent_comments = get_comments(
-        pr_number=pr_number, base_args=base_args, includes_me=True
+    # Re-fetch because GitAuto posted new comments during the agent run
+    agent_comment_objs = get_pr_comments(
+        owner=owner_name,
+        repo=repo_name,
+        pr_number=pr_number,
+        token=token,
+        exclude_self=False,
     )
+    agent_comments = [
+        f"@{c['user']['login']} ({c['created_at']}): {c['body']}"
+        for c in agent_comment_objs
+    ]
     pr_body_summary = generate_and_upsert_pr_body_section(
         owner_name=owner_name,
         repo_name=repo_name,

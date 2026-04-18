@@ -17,7 +17,7 @@ from services.github.types.github_types import (
     PrClosedPayload,
     PrLabeledPayload,
 )
-from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
+from services.github.types.webhook.pr_comment import IssueCommentWebhookPayload
 from services.github.types.webhook.pull_request_review import PullRequestReviewPayload
 from services.github.types.webhook.push import PushWebhookPayload
 from services.slack.slack_notify import slack_notify
