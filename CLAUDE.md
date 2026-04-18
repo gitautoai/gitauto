@@ -130,7 +130,7 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
 3. Check for existing PR: `gh pr list --head $(git branch --show-current) --state open` — if exists, **STOP and ask**
 4. `git push`
 5. `gh pr create --title "PR title" --body "" --assignee @me` — create PR immediately, no body
-6. Check recent posts: `scripts/git/recent_social_posts.sh gitauto` and `scripts/git/recent_social_posts.sh wes`
+6. Check recent posts: `scripts/git/recent_social_posts.sh`
 7. `gh pr edit <number> --body "..."` — add summary and social posts after checking recent posts
     - Technical, descriptive title. **No `## Test plan`**.
     - **Two posts** (last section, customer-facing only): GitAuto (changelog) + Wes (personal voice, don't emphasize "GitAuto")

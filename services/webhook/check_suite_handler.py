@@ -700,6 +700,16 @@ async def handle_check_suite(
     else:
         ci_log_value = minimized_log
 
+    # Truncate patch — it sits in the first message and repeats in every LLM call
+    max_patch_chars = 1000
+    for f in changed_files:
+        patch = f.get("patch")
+        if patch and len(patch) > max_patch_chars:
+            f["patch"] = (
+                patch[:max_patch_chars]
+                + f"\n... [truncated, {len(patch):,} chars total]"
+            )
+
     input_message: dict[str, str | list[str] | None] = {
         "pull_request_title": pr_title,
         "changed_files": json.dumps(obj=changed_files),

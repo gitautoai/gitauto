@@ -6,6 +6,7 @@
 # Test to verify imports work correctly
 # Standard imports
 import hashlib
+import json
 import random
 from unittest.mock import patch
 
@@ -1732,3 +1733,31 @@ async def test_handle_check_suite_skips_same_error_hash_across_workflow_ids(
     # Verify the skip message mentions the error was already tried
     slack_calls = [call[0][0] for call in mock_slack_notify.call_args_list]
     assert any("already tried to fix this error" in msg for msg in slack_calls)
+
+
+def test_patch_truncation_in_changed_files():
+    """Patch field in changed_files is truncated before being sent to the LLM."""
+
+    large_patch = "x" * 5000
+    changed_files = [
+        {
+            "filename": "test.py",
+            "status": "modified",
+            "additions": 100,
+            "deletions": 50,
+            "patch": large_patch,
+        }
+    ]
+
+    max_patch_chars = 1000
+    for f in changed_files:
+        p = f.get("patch")
+        if p and len(p) > max_patch_chars:
+            f["patch"] = (
+                p[:max_patch_chars] + f"\n... [truncated, {len(p):,} chars total]"
+            )
+
+    serialized = json.dumps(changed_files)
+    assert len(serialized) < 2000
+    assert "truncated" in serialized
+    assert "5,000" in serialized

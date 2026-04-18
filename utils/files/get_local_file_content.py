@@ -116,8 +116,8 @@ def get_local_file_content(
     lb = detect_line_break(text=content)
     lines = content.split(lb)
 
-    # Ignore truncation parameters for files under 2000 lines to prevent missing context
-    if len(lines) < 2000:
+    # Ignore truncation parameters for files under 1,000 lines to prevent missing context
+    if len(lines) < 1000:
         line_number = None
         keyword = None
         start_line = None

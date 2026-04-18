@@ -7,7 +7,9 @@ from utils.files.get_local_file_content import get_local_file_content
 
 def test_reads_text_file_with_line_numbers(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
-        Path(tmp, "hello.py").write_text("print('hello')\nprint('world')\n")
+        Path(tmp, "hello.py").write_text(
+            "print('hello')\nprint('world')\n", encoding="utf-8"
+        )
 
         base_args = create_test_base_args(clone_dir=tmp)
         result = get_local_file_content(file_path="hello.py", base_args=base_args)
@@ -37,7 +39,7 @@ def test_directory_returns_error(create_test_base_args):
 
 def test_empty_file(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
-        Path(tmp, "empty.py").write_text("")
+        Path(tmp, "empty.py").write_text("", encoding="utf-8")
 
         base_args = create_test_base_args(clone_dir=tmp)
         result = get_local_file_content(file_path="empty.py", base_args=base_args)
@@ -47,7 +49,7 @@ def test_empty_file(create_test_base_args):
 
 def test_strips_leading_slash_from_file_path(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
-        Path(tmp, "file.py").write_text("content\n")
+        Path(tmp, "file.py").write_text("content\n", encoding="utf-8")
 
         base_args = create_test_base_args(clone_dir=tmp)
         result = get_local_file_content(file_path="/file.py", base_args=base_args)
@@ -57,7 +59,7 @@ def test_strips_leading_slash_from_file_path(create_test_base_args):
 
 def test_multiple_params_returns_error(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
-        Path(tmp, "file.py").write_text("content\n")
+        Path(tmp, "file.py").write_text("content\n", encoding="utf-8")
 
         base_args = create_test_base_args(clone_dir=tmp)
         result = get_local_file_content(
@@ -73,7 +75,7 @@ def test_multiple_params_returns_error(create_test_base_args):
 def test_invalid_line_number_string_returns_error(create_test_base_args):
     """LLM can send strings for int params at runtime despite type hints."""
     with tempfile.TemporaryDirectory() as tmp:
-        Path(tmp, "file.py").write_text("content\n")
+        Path(tmp, "file.py").write_text("content\n", encoding="utf-8")
 
         base_args = create_test_base_args(clone_dir=tmp)
         kwargs = {
@@ -88,7 +90,7 @@ def test_invalid_line_number_string_returns_error(create_test_base_args):
 
 def test_start_line_greater_than_end_line_returns_error(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
-        Path(tmp, "file.py").write_text("content\n")
+        Path(tmp, "file.py").write_text("content\n", encoding="utf-8")
 
         base_args = create_test_base_args(clone_dir=tmp)
         result = get_local_file_content(
@@ -102,10 +104,10 @@ def test_start_line_greater_than_end_line_returns_error(create_test_base_args):
 
 
 def test_truncation_ignored_for_small_files(create_test_base_args):
-    """Files under 2000 lines should always return full content."""
+    """Files under 1000 lines should always return full content."""
     with tempfile.TemporaryDirectory() as tmp:
         lines = [f"line {i}" for i in range(100)]
-        Path(tmp, "small.py").write_text("\n".join(lines))
+        Path(tmp, "small.py").write_text("\n".join(lines), encoding="utf-8")
 
         base_args = create_test_base_args(clone_dir=tmp)
         result = get_local_file_content(
@@ -120,10 +122,32 @@ def test_truncation_ignored_for_small_files(create_test_base_args):
         assert "line 99" in result
 
 
+def test_keyword_ignored_for_small_files(create_test_base_args):
+    """Keyword filter is ignored for small files — full content returned to prevent missing context."""
+    with tempfile.TemporaryDirectory() as tmp:
+        lines = [f"line {i}" for i in range(500)]
+        lines[400] = "UNIQUE_KEYWORD_HERE"
+        Path(tmp, "small.py").write_text("\n".join(lines), encoding="utf-8")
+
+        base_args = create_test_base_args(clone_dir=tmp)
+        result = get_local_file_content(
+            file_path="small.py",
+            base_args=base_args,
+            keyword="UNIQUE_KEYWORD_HERE",
+        )
+
+        # Full content returned because file is under 1000 lines
+        assert "UNIQUE_KEYWORD_HERE" in result
+        assert "line 0" in result
+        assert "line 499" in result
+
+
 def test_nested_file_path(create_test_base_args):
     with tempfile.TemporaryDirectory() as tmp:
         os.makedirs(os.path.join(tmp, "src", "utils"))
-        Path(tmp, "src", "utils", "helper.py").write_text("def helper(): pass\n")
+        Path(tmp, "src", "utils", "helper.py").write_text(
+            "def helper(): pass\n", encoding="utf-8"
+        )
 
         base_args = create_test_base_args(clone_dir=tmp)
         result = get_local_file_content(
