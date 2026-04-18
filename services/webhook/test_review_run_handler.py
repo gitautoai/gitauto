@@ -79,7 +79,11 @@ def mock_review_comment_payload():
 @patch("services.webhook.review_run_handler.create_user_request")
 @patch("services.webhook.review_run_handler.get_review_thread_comments")
 @patch("services.webhook.review_run_handler.reply_to_comment")
-@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch(
+    "services.webhook.review_run_handler.format_content_with_line_numbers",
+    side_effect=lambda file_path, content: content,
+)
+@patch("services.webhook.review_run_handler.read_local_file")
 @patch("services.webhook.review_run_handler.get_pull_request_files")
 @patch("services.webhook.review_run_handler.update_comment")
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
@@ -115,6 +119,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     mock_update_comment,
     mock_get_pr_files,
     mock_get_file_content,
+    _mock_format,
     mock_reply_to_comment,
     mock_get_thread_comments,
     mock_create_user_request,
@@ -215,7 +220,11 @@ async def test_review_run_handler_accumulates_tokens_correctly(
 @patch("services.webhook.review_run_handler.create_user_request")
 @patch("services.webhook.review_run_handler.get_review_thread_comments")
 @patch("services.webhook.review_run_handler.reply_to_comment")
-@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch(
+    "services.webhook.review_run_handler.format_content_with_line_numbers",
+    side_effect=lambda file_path, content: content,
+)
+@patch("services.webhook.review_run_handler.read_local_file")
 @patch("services.webhook.review_run_handler.get_pull_request_files")
 @patch("services.webhook.review_run_handler.update_comment")
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
@@ -252,6 +261,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
     mock_update_comment,
     mock_get_pr_files,
     mock_get_file_content,
+    _mock_format,
     mock_reply_to_comment,
     mock_get_thread_comments,
     mock_create_user_request,
@@ -382,7 +392,11 @@ def mock_bot_review_comment_payload():
 @patch("services.webhook.review_run_handler.create_user_request")
 @patch("services.webhook.review_run_handler.get_review_thread_comments")
 @patch("services.webhook.review_run_handler.reply_to_comment")
-@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch(
+    "services.webhook.review_run_handler.format_content_with_line_numbers",
+    side_effect=lambda file_path, content: content,
+)
+@patch("services.webhook.review_run_handler.read_local_file")
 @patch("services.webhook.review_run_handler.get_pull_request_files")
 @patch("services.webhook.review_run_handler.update_comment")
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
@@ -418,6 +432,7 @@ async def test_thread_resolved_during_loop_stops_agent(
     _mock_update_comment,
     mock_get_pr_files,
     mock_get_file_content,
+    _mock_format,
     mock_reply_to_comment,
     mock_get_thread_comments,
     mock_create_user_request,
@@ -473,7 +488,11 @@ async def test_thread_resolved_during_loop_stops_agent(
 @patch("services.webhook.review_run_handler.create_user_request")
 @patch("services.webhook.review_run_handler.get_review_thread_comments")
 @patch("services.webhook.review_run_handler.reply_to_comment")
-@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch(
+    "services.webhook.review_run_handler.format_content_with_line_numbers",
+    side_effect=lambda file_path, content: content,
+)
+@patch("services.webhook.review_run_handler.read_local_file")
 @patch("services.webhook.review_run_handler.get_pull_request_files")
 @patch("services.webhook.review_run_handler.update_comment")
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
@@ -509,6 +528,7 @@ async def test_bot_first_review_comment_is_processed(
     _mock_update_comment,
     mock_get_pr_files,
     mock_get_file_content,
+    _mock_format,
     mock_reply_to_comment,
     mock_get_thread_comments,
     mock_create_user_request,
@@ -658,7 +678,11 @@ async def test_bot_reply_after_gitauto_replied_is_skipped(
 @patch("services.webhook.review_run_handler.create_user_request")
 @patch("services.webhook.review_run_handler.get_review_thread_comments")
 @patch("services.webhook.review_run_handler.reply_to_comment")
-@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch(
+    "services.webhook.review_run_handler.format_content_with_line_numbers",
+    side_effect=lambda file_path, content: content,
+)
+@patch("services.webhook.review_run_handler.read_local_file")
 @patch("services.webhook.review_run_handler.get_pull_request_files")
 @patch("services.webhook.review_run_handler.update_comment")
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
@@ -694,6 +718,7 @@ async def test_human_review_comment_always_processed(
     _mock_update_comment,
     mock_get_pr_files,
     mock_get_file_content,
+    _mock_format,
     mock_reply_to_comment,
     mock_get_thread_comments,
     mock_create_user_request,
@@ -817,7 +842,11 @@ def mock_pr_comment_payload():
 @patch("services.webhook.review_run_handler.get_review_thread_comments")
 @patch("services.webhook.review_run_handler.reply_to_comment")
 @patch("services.webhook.review_run_handler.create_comment")
-@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch(
+    "services.webhook.review_run_handler.format_content_with_line_numbers",
+    side_effect=lambda file_path, content: content,
+)
+@patch("services.webhook.review_run_handler.read_local_file")
 @patch("services.webhook.review_run_handler.get_pull_request_files")
 @patch("services.webhook.review_run_handler.update_comment")
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
@@ -853,6 +882,7 @@ async def test_pr_comment_uses_create_comment_not_reply(
     _mock_update_comment,
     mock_get_pr_files,
     _mock_get_file_content,
+    _mock_format,
     mock_create_comment,
     mock_reply_to_comment,
     mock_get_thread_comments,
@@ -902,7 +932,7 @@ async def test_pr_comment_uses_create_comment_not_reply(
     # get_review_thread_comments NOT called (no thread for PR comments)
     mock_get_thread_comments.assert_not_called()
 
-    # get_local_file_content NOT called (no review_path)
+    # read_local_file NOT called (no review_path)
     _mock_get_file_content.assert_not_called()
 
     # Agent was called
@@ -923,7 +953,11 @@ async def test_pr_comment_uses_create_comment_not_reply(
 @patch("services.webhook.review_run_handler.get_review_thread_comments")
 @patch("services.webhook.review_run_handler.reply_to_comment")
 @patch("services.webhook.review_run_handler.create_comment")
-@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch(
+    "services.webhook.review_run_handler.format_content_with_line_numbers",
+    side_effect=lambda file_path, content: content,
+)
+@patch("services.webhook.review_run_handler.read_local_file")
 @patch("services.webhook.review_run_handler.get_pull_request_files")
 @patch("services.webhook.review_run_handler.update_comment")
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
@@ -959,6 +993,7 @@ async def test_question_comment_agent_replies_without_code_changes(
     _mock_update_comment,
     mock_get_pr_files,
     _mock_get_file_content,
+    _mock_format,
     mock_create_comment,
     mock_reply_to_comment,
     mock_get_thread_comments,
@@ -1103,7 +1138,11 @@ async def test_bot_pr_comment_irrelevant_to_pr_files_is_skipped(
 @patch("services.webhook.review_run_handler.get_review_thread_comments")
 @patch("services.webhook.review_run_handler.reply_to_comment")
 @patch("services.webhook.review_run_handler.create_comment")
-@patch("services.webhook.review_run_handler.get_local_file_content")
+@patch(
+    "services.webhook.review_run_handler.format_content_with_line_numbers",
+    side_effect=lambda file_path, content: content,
+)
+@patch("services.webhook.review_run_handler.read_local_file")
 @patch("services.webhook.review_run_handler.get_pull_request_files")
 @patch("services.webhook.review_run_handler.update_comment")
 @patch("services.webhook.review_run_handler.should_bail", return_value=False)
@@ -1139,6 +1178,7 @@ async def test_bot_pr_comment_mentioning_pr_file_is_processed(
     _mock_update_comment,
     mock_get_pr_files,
     _mock_get_file_content,
+    _mock_format,
     mock_create_comment,
     mock_reply_to_comment,
     mock_get_thread_comments,
@@ -1182,3 +1222,221 @@ async def test_bot_pr_comment_mentioning_pr_file_is_processed(
     await handle_review_run(mock_bot_pr_comment_payload, trigger="pr_comment")
 
     mock_chat_with_agent.assert_called_once()
+
+
+@pytest.fixture
+def mock_batched_review_payload():
+    """Payload for a review comment that has a pull_request_review_id (part of a multi-comment review)."""
+    return {
+        "action": "created",
+        "comment": {
+            "id": 12345,
+            "node_id": "PRRC_kwDOJTestNodeId",
+            "path": "src/main.py",
+            "subject_type": "line",
+            "line": 42,
+            "side": "RIGHT",
+            "body": "Fix this function.",
+            "user": {"login": "test-reviewer", "type": "User"},
+            "pull_request_review_id": 77777,
+        },
+        "pull_request": {
+            "number": 123,
+            "title": "Add new feature",
+            "body": "This PR adds a new feature",
+            "url": "https://api.github.com/repos/test-owner/test-repo/pulls/123",
+            "user": {"login": "gitauto-ai[bot]"},
+            "head": {
+                "ref": f"{PRODUCT_ID}/dashboard-20250101-155924-Ab1C",
+                "sha": "abc123def456",
+            },
+            "base": {"ref": "main"},
+        },
+        "repository": {
+            "id": 98765,
+            "name": "test-repo",
+            "owner": {
+                "id": 11111,
+                "login": "test-owner",
+                "type": "Organization",
+            },
+            "clone_url": "https://github.com/test-owner/test-repo.git",
+            "fork": False,
+        },
+        "sender": {"id": 22222, "login": "test-reviewer"},
+        "installation": {"id": 33333},
+    }
+
+
+@patch(
+    "services.webhook.review_run_handler.insert_webhook_delivery", return_value=False
+)
+@patch("services.webhook.review_run_handler.get_review_summary_comment")
+@patch("services.webhook.review_run_handler.set_npm_token_env")
+@patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
+@patch("services.webhook.review_run_handler.get_repository")
+@patch("services.webhook.review_run_handler.check_purchase_exists")
+@patch("services.webhook.review_run_handler.get_email_from_commits")
+@patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
+@pytest.mark.asyncio
+async def test_batch_dedup_second_invocation_returns_early(
+    _mock_get_email,
+    _mock_check_purchase,
+    mock_get_repo,
+    mock_get_user_public_info,
+    mock_get_token,
+    _mock_set_npm_token_env,
+    _mock_get_review_summary_comment,
+    mock_insert_webhook_delivery,
+    mock_batched_review_payload,
+):
+    """Second invocation for same review_id should return early (insert_webhook_delivery returns False)."""
+    mock_get_token.return_value = "ghs_test_token"
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
+    )()
+    mock_get_repo.return_value = {"id": 98765, "trigger_on_review_comment": True}
+
+    result = await handle_review_run(
+        mock_batched_review_payload, trigger="pr_file_review"
+    )
+
+    assert result is None
+    mock_insert_webhook_delivery.assert_called_once_with(
+        delivery_id="review-dedup-98765-123-77777",
+        event_name="pr_file_review_dedup",
+    )
+
+
+@patch("services.webhook.review_run_handler.get_pull_request")
+@patch("services.webhook.review_run_handler.slack_notify")
+@patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
+@patch("services.webhook.review_run_handler.set_npm_token_env")
+@patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
+@patch("services.webhook.review_run_handler.get_repository")
+@patch("services.webhook.review_run_handler.create_user_request")
+@patch("services.webhook.review_run_handler.get_review_thread_comments")
+@patch("services.webhook.review_run_handler.reply_to_comment")
+@patch(
+    "services.webhook.review_run_handler.format_content_with_line_numbers",
+    side_effect=lambda file_path, content: content,
+)
+@patch("services.webhook.review_run_handler.read_local_file")
+@patch("services.webhook.review_run_handler.get_pull_request_files")
+@patch("services.webhook.review_run_handler.update_comment")
+@patch("services.webhook.review_run_handler.should_bail", return_value=False)
+@patch("services.webhook.review_run_handler.chat_with_agent")
+@patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
+@patch("services.webhook.review_run_handler.update_usage")
+@patch("services.webhook.review_run_handler.ensure_node_packages")
+@patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch(
+    "services.webhook.review_run_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.review_run_handler.git_merge_base_into_pr")
+@patch("services.webhook.review_run_handler.ensure_php_packages")
+@patch(
+    "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
+)
+@patch("services.webhook.review_run_handler.insert_webhook_delivery", return_value=True)
+@patch("services.webhook.review_run_handler.get_review_inline_comments")
+@patch(
+    "services.webhook.review_run_handler.get_review_summary_comment", return_value=""
+)
+@patch("services.webhook.review_run_handler.check_purchase_exists")
+@patch("services.webhook.review_run_handler.get_email_from_commits")
+@patch("services.webhook.review_run_handler.time")
+@patch("services.webhook.review_run_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
+@pytest.mark.asyncio
+async def test_batch_builds_combined_review_comment(
+    _mock_get_pr_comments,
+    mock_time,
+    _mock_get_email,
+    _mock_check_purchase,
+    _mock_get_review_summary_comment,
+    mock_get_review_inline_comments,
+    _mock_insert_webhook_delivery,
+    _mock_verify_task_is_ready,
+    _mock_ensure_php,
+    _mock_merge_base,
+    _mock_get_behind,
+    _mock_prepare_repo,
+    _mock_ensure_node,
+    _mock_update_usage,
+    _mock_get_reference,
+    _mock_create_empty_commit,
+    mock_chat_with_agent,
+    _mock_should_bail,
+    _mock_update_comment,
+    mock_get_pr_files,
+    mock_get_file_content,
+    _mock_format,
+    mock_reply_to_comment,
+    _mock_get_thread_comments,
+    mock_create_user_request,
+    mock_get_repo,
+    mock_get_user_public_info,
+    mock_get_token,
+    _mock_set_npm_token_env,
+    _mock_get_local_file_tree,
+    _mock_slack_notify,
+    _mock_get_pull_request,
+    mock_batched_review_payload,
+):
+    """When batched, review_comment should combine all inline comments from the review."""
+    mock_time.time.return_value = 1000.0
+    mock_time.sleep = lambda x: None
+    mock_get_token.return_value = "ghs_test_token"
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
+    )()
+    mock_get_repo.return_value = {"id": 98765, "trigger_on_review_comment": True}
+    mock_create_user_request.return_value = 777
+    _mock_verify_task_is_ready.return_value = VerifyTaskIsReadyResult()
+    mock_reply_to_comment.return_value = "http://comment-url"
+    mock_get_file_content.return_value = "def main():\n    pass"
+    mock_get_pr_files.return_value = [{"filename": "src/main.py", "status": "modified"}]
+
+    # Return 3 inline comments for the review
+    mock_get_review_inline_comments.return_value = [
+        {"id": 1, "body": "Fix this", "path": "src/main.py", "line": 10},
+        {"id": 2, "body": "Rename var", "path": "src/main.py", "line": 20},
+        {"id": 3, "body": "Add test", "path": "src/utils.py", "line": 5},
+    ]
+
+    _mock_get_thread_comments.return_value = type(
+        "ThreadCheck", (), {"is_resolved": False}
+    )()
+
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[{"role": "user", "content": "review"}],
+        token_input=100,
+        token_output=50,
+        is_completed=True,
+        completion_reason="Done.",
+        p=40,
+        is_planned=False,
+        cost_usd=0.0,
+    )
+
+    await handle_review_run(mock_batched_review_payload, trigger="pr_file_review")
+
+    mock_chat_with_agent.assert_called_once()
+    call_kwargs = mock_chat_with_agent.call_args.kwargs
+    base_args = call_kwargs["base_args"]
+    review_comment = base_args["review_comment"]
+    # Verify combined comment structure
+    assert "3 inline comments" in review_comment
+    assert "Comment 1:" in review_comment
+    assert "Comment 2:" in review_comment
+    assert "Comment 3:" in review_comment
+    assert "Fix this" in review_comment
+    assert "Rename var" in review_comment
+    assert "Add test" in review_comment
+    # Verify file content was read for both unique paths
+    assert mock_get_file_content.call_count == 2

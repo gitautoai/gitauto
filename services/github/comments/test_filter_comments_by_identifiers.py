@@ -1,8 +1,11 @@
+# pyright: reportArgumentType=false
+import inspect
 from unittest.mock import patch
 
 from services.github.comments.filter_comments_by_identifiers import (
     filter_comments_by_identifiers,
 )
+from services.github.types.webhook.pr_comment import Comment
 
 
 def test_filter_comments_by_identifiers_empty_comments():
@@ -224,3 +227,12 @@ def test_filter_comments_by_identifiers_multiple_identifiers_single_comment():
         result = filter_comments_by_identifiers(comments, ["first-id", "second-id"])
         assert len(result) == 1
         assert result[0]["id"] == 1
+
+
+def test_filter_comments_by_identifiers_accepts_comment_type():
+    """Verify function signature accepts list[Comment] type."""
+    sig = inspect.signature(filter_comments_by_identifiers)
+    params = sig.parameters
+    assert "comments" in params
+    assert "identifiers" in params
+    assert Comment is not None

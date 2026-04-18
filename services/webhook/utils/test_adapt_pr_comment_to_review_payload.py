@@ -3,7 +3,7 @@
 from typing import cast
 
 from services.github.types.pull_request import PullRequest
-from services.github.types.webhook.issue_comment import IssueCommentWebhookPayload
+from services.github.types.webhook.pr_comment import IssueCommentWebhookPayload
 from services.webhook.utils.adapt_pr_comment_to_review_payload import (
     adapt_pr_comment_to_review_payload,
 )

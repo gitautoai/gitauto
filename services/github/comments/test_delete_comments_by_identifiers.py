@@ -13,9 +13,9 @@ fake = Faker()
 
 
 @pytest.fixture
-def mock_get_all_comments():
+def mock_get_pr_comments():
     with patch(
-        "services.github.comments.delete_comments_by_identifiers.get_all_comments"
+        "services.github.comments.delete_comments_by_identifiers.get_pr_comments"
     ) as mock:
         yield mock
 
@@ -37,7 +37,7 @@ def mock_delete_comment():
 
 
 def test_delete_comments_by_identifiers_successful_deletion(
-    mock_get_all_comments,
+    mock_get_pr_comments,
     mock_filter_comments_by_identifiers,
     mock_delete_comment,
 ):
@@ -50,7 +50,7 @@ def test_delete_comments_by_identifiers_successful_deletion(
         {"id": 1, "body": "Comment with id-1", "user": {"login": "gitauto-ai[bot]"}},
         {"id": 2, "body": "Comment with id-2", "user": {"login": "gitauto-ai[bot]"}},
     ]
-    mock_get_all_comments.return_value = sample_comments
+    mock_get_pr_comments.return_value = sample_comments
     mock_filter_comments_by_identifiers.return_value = sample_comments
     mock_delete_comment.return_value = None
 
@@ -65,14 +65,18 @@ def test_delete_comments_by_identifiers_successful_deletion(
     )
 
     assert result is None
-    mock_get_all_comments.assert_called_once_with(
-        owner=owner, repo=repo, pr_number=pr_number, token=token
+    mock_get_pr_comments.assert_called_once_with(
+        owner=owner,
+        repo=repo,
+        pr_number=pr_number,
+        token=token,
+        exclude_self=False,
     )
     assert mock_delete_comment.call_count == 2
 
 
 def test_delete_comments_by_identifiers_no_comments_found(
-    mock_get_all_comments,
+    mock_get_pr_comments,
     mock_filter_comments_by_identifiers,
     mock_delete_comment,
 ):
@@ -81,7 +85,7 @@ def test_delete_comments_by_identifiers_no_comments_found(
     pr_number = fake.random_int(min=1, max=999)
     token = fake.sha256()
 
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_filter_comments_by_identifiers.return_value = []
 
     result = delete_comments_by_identifiers(
@@ -97,7 +101,7 @@ def test_delete_comments_by_identifiers_no_comments_found(
 
 
 def test_delete_comments_by_identifiers_no_matching_comments(
-    mock_get_all_comments,
+    mock_get_pr_comments,
     mock_filter_comments_by_identifiers,
     mock_delete_comment,
 ):
@@ -109,7 +113,7 @@ def test_delete_comments_by_identifiers_no_matching_comments(
     sample_comments = [
         {"id": 1, "body": "Some comment", "user": {"login": "gitauto-ai[bot]"}}
     ]
-    mock_get_all_comments.return_value = sample_comments
+    mock_get_pr_comments.return_value = sample_comments
     mock_filter_comments_by_identifiers.return_value = []
 
     result = delete_comments_by_identifiers(
@@ -125,7 +129,7 @@ def test_delete_comments_by_identifiers_no_matching_comments(
 
 
 def test_delete_comments_by_identifiers_exception_handling(
-    mock_get_all_comments,
+    mock_get_pr_comments,
     mock_filter_comments_by_identifiers,
     mock_delete_comment,
 ):
@@ -134,7 +138,7 @@ def test_delete_comments_by_identifiers_exception_handling(
     pr_number = fake.random_int(min=1, max=999)
     token = fake.sha256()
 
-    mock_get_all_comments.side_effect = Exception("API error")
+    mock_get_pr_comments.side_effect = Exception("API error")
 
     result = delete_comments_by_identifiers(
         owner=owner,
@@ -150,7 +154,7 @@ def test_delete_comments_by_identifiers_exception_handling(
 
 
 def test_delete_comments_by_identifiers_delete_comment_exception(
-    mock_get_all_comments,
+    mock_get_pr_comments,
     mock_filter_comments_by_identifiers,
     mock_delete_comment,
 ):
@@ -162,7 +166,7 @@ def test_delete_comments_by_identifiers_delete_comment_exception(
     matching_comments = [
         {"id": 1, "body": "test", "user": {"login": "gitauto-ai[bot]"}}
     ]
-    mock_get_all_comments.return_value = matching_comments
+    mock_get_pr_comments.return_value = matching_comments
     mock_filter_comments_by_identifiers.return_value = matching_comments
     mock_delete_comment.side_effect = Exception("Delete failed")
 

@@ -8,7 +8,7 @@ from utils.error.handle_exceptions import handle_exceptions
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def get_review_summary(
+def get_review_summary_comment(
     owner: str, repo: str, pr_number: int, review_id: int, token: str
 ):
     """https://docs.github.com/en/rest/pulls/reviews#get-a-review-for-a-pull-request"""

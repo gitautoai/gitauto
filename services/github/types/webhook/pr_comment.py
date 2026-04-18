@@ -1,5 +1,6 @@
-from typing import Literal, NotRequired, TypedDict
+from typing import Literal, NotRequired, Optional, TypedDict
 
+from services.github.types.app import App
 from services.github.types.installation import Installation
 from services.github.types.issue import Issue, PrIssue
 from services.github.types.organization import Organization
@@ -9,12 +10,15 @@ from services.github.types.user import User
 
 
 class Comment(TypedDict):
+    """PR issue comment. performed_via_github_app is App when made via GitHub App (e.g. GitAuto), None when made by a human."""
+
     id: int
     node_id: str
     user: User
     body: str
     created_at: str
     updated_at: str
+    performed_via_github_app: Optional[App]
 
 
 BodyChange = TypedDict("BodyChange", {"from": str})

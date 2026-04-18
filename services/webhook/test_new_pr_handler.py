@@ -189,13 +189,13 @@ async def test_stripe_customer_id_update(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_image_urls_processing(
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -229,7 +229,15 @@ async def test_image_urls_processing(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = ["Comment text"]
+    mock_get_pr_comments.return_value = [
+        {
+            "id": 1,
+            "body": "Comment text",
+            "user": {"login": "testuser"},
+            "created_at": "2025-01-01T00:00:00Z",
+            "performed_via_github_app": None,
+        }
+    ]
     mock_extract_image_urls.side_effect = [
         [{"url": "http://example.com/image.png", "alt": "image"}],
         [{"url": "http://example.com/comment.png", "alt": "comment img"}],
@@ -277,13 +285,13 @@ async def test_image_urls_processing(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_image_unsupported_format_skipped(
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -316,7 +324,7 @@ async def test_image_unsupported_format_skipped(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = [
         {"url": "http://example.com/image.svg", "alt": "svg image"}
     ]
@@ -357,13 +365,13 @@ async def test_image_unsupported_format_skipped(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_image_base64_fetch_failed(
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -397,7 +405,7 @@ async def test_image_base64_fetch_failed(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = [
         {"url": "http://example.com/image.png", "alt": "image"}
     ]
@@ -445,13 +453,13 @@ async def test_image_base64_fetch_failed(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_timeout_approaching_breaks_loop(
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -485,7 +493,7 @@ async def test_timeout_approaching_breaks_loop(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
     mock_get_pr_files.return_value = []
@@ -520,13 +528,13 @@ async def test_timeout_approaching_breaks_loop(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_branch_deleted_breaks_loop(
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -560,7 +568,7 @@ async def test_branch_deleted_breaks_loop(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
     mock_get_pr_files.return_value = []
@@ -597,13 +605,13 @@ async def test_branch_deleted_breaks_loop(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -638,7 +646,7 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
     mock_get_pr_files.return_value = []
@@ -781,13 +789,13 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_retry_loop_exhausted_explored_but_not_committed(
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -822,7 +830,7 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
     mock_get_pr_files.return_value = []
@@ -953,13 +961,13 @@ async def test_retry_loop_exhausted_explored_but_not_committed(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_retry_counter_reset_on_successful_loop(
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -993,7 +1001,7 @@ async def test_retry_counter_reset_on_successful_loop(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
     mock_get_pr_files.return_value = []
@@ -1060,7 +1068,7 @@ async def test_retry_counter_reset_on_successful_loop(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 @patch("services.webhook.new_pr_handler.generate_and_upsert_pr_body_section")
@@ -1068,7 +1076,7 @@ async def test_non_test_file_skipped_in_header_merge(
     _mock_generate_pr_body,
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -1103,7 +1111,7 @@ async def test_non_test_file_skipped_in_header_merge(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
     mock_chat_with_agent.return_value = AgentResult(
@@ -1151,7 +1159,7 @@ async def test_non_test_file_skipped_in_header_merge(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 @patch("services.webhook.new_pr_handler.generate_and_upsert_pr_body_section")
@@ -1159,7 +1167,7 @@ async def test_test_file_header_merge(
     _mock_generate_pr_body,
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -1196,7 +1204,7 @@ async def test_test_file_header_merge(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
     mock_chat_with_agent.return_value = AgentResult(
@@ -1247,7 +1255,7 @@ async def test_test_file_header_merge(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 @patch("services.webhook.new_pr_handler.generate_and_upsert_pr_body_section")
@@ -1255,7 +1263,7 @@ async def test_test_file_header_merge_no_content(
     _mock_generate_pr_body,
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -1292,7 +1300,7 @@ async def test_test_file_header_merge_no_content(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
     mock_chat_with_agent.return_value = AgentResult(
@@ -1350,7 +1358,7 @@ async def test_test_file_header_merge_no_content(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 @patch("services.webhook.new_pr_handler.generate_and_upsert_pr_body_section")
@@ -1358,7 +1366,7 @@ async def test_test_file_header_merge_no_change(
     _mock_generate_pr_body,
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -1395,7 +1403,7 @@ async def test_test_file_header_merge_no_change(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
     mock_chat_with_agent.return_value = AgentResult(
@@ -1451,13 +1459,13 @@ async def test_test_file_header_merge_no_change(
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.create_comment")
 @patch("services.webhook.new_pr_handler.render_text")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.check_availability")
 @patch("services.webhook.new_pr_handler.deconstruct_github_payload")
 async def test_credits_depleted_email_sent(
     mock_deconstruct,
     mock_check_availability,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_render_text,
     mock_create_comment,
     mock_create_progress_bar,
@@ -1498,7 +1506,7 @@ async def test_credits_depleted_email_sent(
         "user_message": "",
         "log_message": "Proceeding",
     }
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_extract_image_urls.return_value = []
     mock_get_remote_file.return_value = ("", "")
     mock_chat_with_agent.return_value = AgentResult(
@@ -1539,7 +1547,7 @@ async def test_credits_depleted_email_sent(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.create_empty_commit")
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -1567,7 +1575,7 @@ async def test_new_pr_handler_token_accumulation(
     mock_update_usage,
     mock_create_progress_bar,
     mock_slack_notify,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_get_remote_file_content_by_url,
     mock_create_empty_commit,
     mock_should_bail,
@@ -1610,7 +1618,7 @@ async def test_new_pr_handler_token_accumulation(
     mock_render_text.return_value = "Rendered PR body"
     mock_slack_notify.return_value = "thread_123"
     mock_create_progress_bar.return_value = "Progress bar content"
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_get_remote_file_content_by_url.return_value = ("", "")
     mock_create_empty_commit.return_value = None
     mock_insert_credit.return_value = None
@@ -1714,7 +1722,7 @@ async def test_new_pr_handler_token_accumulation(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.create_empty_commit")
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -1746,7 +1754,7 @@ async def test_few_test_files_include_contents_in_prompt(
     mock_update_usage,
     mock_create_progress_bar,
     mock_slack_notify,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_get_remote_file_content_by_url,
     mock_create_empty_commit,
     mock_should_bail,
@@ -1814,7 +1822,7 @@ async def test_few_test_files_include_contents_in_prompt(
     mock_update_usage.return_value = None
     mock_create_progress_bar.return_value = "Progress: 0%"
     mock_slack_notify.return_value = "thread_1"
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_get_remote_file_content_by_url.return_value = ("", "")
     mock_create_empty_commit.return_value = None
     mock_insert_credit.return_value = None
@@ -1865,7 +1873,7 @@ async def test_few_test_files_include_contents_in_prompt(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.create_empty_commit")
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -1897,7 +1905,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
     mock_update_usage,
     mock_create_progress_bar,
     mock_slack_notify,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_get_remote_file_content_by_url,
     mock_create_empty_commit,
     mock_should_bail,
@@ -1961,7 +1969,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
     mock_update_usage.return_value = None
     mock_create_progress_bar.return_value = "Progress: 0%"
     mock_slack_notify.return_value = "thread_1"
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_get_remote_file_content_by_url.return_value = ("", "")
     mock_create_empty_commit.return_value = None
     mock_insert_credit.return_value = None
@@ -2015,7 +2023,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
 @patch("services.webhook.new_pr_handler.should_bail", return_value=False)
 @patch("services.webhook.new_pr_handler.create_empty_commit")
 @patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
-@patch("services.webhook.new_pr_handler.get_comments")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
 @patch("services.webhook.new_pr_handler.slack_notify")
 @patch("services.webhook.new_pr_handler.create_progress_bar")
 @patch("services.webhook.new_pr_handler.update_usage")
@@ -2049,7 +2057,7 @@ async def test_auto_detect_location_ignores_dashboard_setting(
     mock_update_usage,
     mock_create_progress_bar,
     mock_slack_notify,
-    mock_get_comments,
+    mock_get_pr_comments,
     mock_get_remote_file_content_by_url,
     mock_create_empty_commit,
     mock_should_bail,
@@ -2101,7 +2109,7 @@ async def test_auto_detect_location_ignores_dashboard_setting(
     mock_update_usage.return_value = None
     mock_create_progress_bar.return_value = "Progress: 0%"
     mock_slack_notify.return_value = "thread_1"
-    mock_get_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_get_remote_file_content_by_url.return_value = ("", "")
     mock_create_empty_commit.return_value = None
     mock_insert_credit.return_value = None

@@ -35,7 +35,7 @@ from services.github.check_suites.get_failed_check_runs import (
     get_failed_check_runs_from_check_suite,
 )
 from services.github.comments.create_comment import create_comment
-from services.github.comments.get_all_comments import get_all_comments
+from services.github.comments.get_pr_comments import get_pr_comments
 from services.github.comments.update_comment import update_comment
 from services.github.installations.get_installation_permissions import (
     get_installation_permissions,
@@ -246,7 +246,16 @@ async def handle_check_suite(
         "pr_number": pr_number,
         "pr_title": pr_title,
         "pr_body": full_pr["body"] or "",
-        "pr_comments": [],  # Not needed - check_suite agent uses CI error logs, not PR discussion
+        "pr_comments": [
+            f"@{c['user']['login']} ({c['created_at']}): {c['body']}"
+            for c in get_pr_comments(
+                owner=owner_name,
+                repo=repo_name,
+                pr_number=pr_number,
+                token=token,
+                exclude_self=True,
+            )
+        ],
         "latest_commit_sha": check_run["head_sha"],
         "pr_creator": sender_name,
         "base_branch": base_branch,
@@ -324,8 +333,12 @@ async def handle_check_suite(
 
     # Check if CI-failed comment already exists (skip if GitAuto is already handling this PR).
     # Exception: if the LATEST CI-failed comment is from an infra retry (contains "Re-triggering CI"), proceed because CI was re-triggered and failed with real errors.
-    comments = get_all_comments(
-        owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
+    comments = get_pr_comments(
+        owner=owner_name,
+        repo=repo_name,
+        pr_number=pr_number,
+        token=token,
+        exclude_self=False,
     )
     gitauto_failed_comments = [
         c

@@ -169,7 +169,7 @@ async def test_handle_check_suite_skips_when_trigger_disabled(
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.get_pull_request")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.ensure_node_packages")
 @patch("services.webhook.check_suite_handler.ensure_php_packages")
@@ -186,7 +186,7 @@ async def test_handle_check_suite_skips_when_comment_exists(
     _mock_ensure_php,
     _mock_start_async,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     mock_slack_notify,
     mock_get_pr,
     mock_get_repo,
@@ -214,8 +214,12 @@ async def test_handle_check_suite_skips_when_comment_exists(
         "base": {"ref": "main"},
     }
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = [
-        {"user": {"login": GITHUB_APP_USER_NAME}, "body": CHECK_RUN_FAILED_MESSAGE}
+    mock_get_pr_comments.return_value = [
+        {
+            "user": {"login": GITHUB_APP_USER_NAME},
+            "body": CHECK_RUN_FAILED_MESSAGE,
+            "created_at": "2025-01-01T00:00:00Z",
+        }
     ]
 
     await handle_check_suite(payload)
@@ -224,7 +228,7 @@ async def test_handle_check_suite_skips_when_comment_exists(
     mock_get_failed_runs.assert_called_once()
     mock_get_pr.assert_called_once()
     mock_get_repo.assert_called()
-    mock_get_all_comments.assert_called_once()
+    assert mock_get_pr_comments.call_count == 2
     mock_create_comment.assert_not_called()
     mock_slack_notify.assert_called()
 
@@ -234,7 +238,7 @@ async def test_handle_check_suite_skips_when_comment_exists(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -279,7 +283,7 @@ async def test_handle_check_suite_race_condition_prevention(
     mock_cancel_workflows,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -301,7 +305,7 @@ async def test_handle_check_suite_race_condition_prevention(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = (
         "https://github.com/test/test/issues/1#issuecomment-123"
     )
@@ -360,7 +364,7 @@ async def test_handle_check_suite_race_condition_prevention(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -401,7 +405,7 @@ async def test_handle_check_suite_full_workflow(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -423,7 +427,7 @@ async def test_handle_check_suite_full_workflow(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -494,7 +498,7 @@ async def test_handle_check_suite_full_workflow(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -527,7 +531,7 @@ async def test_handle_check_suite_with_404_logs(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -549,7 +553,7 @@ async def test_handle_check_suite_with_404_logs(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -593,7 +597,7 @@ async def test_handle_check_suite_with_404_logs(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -622,7 +626,7 @@ async def test_handle_check_suite_with_none_logs(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -644,7 +648,7 @@ async def test_handle_check_suite_with_none_logs(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -684,7 +688,7 @@ async def test_handle_check_suite_with_none_logs(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -721,7 +725,7 @@ async def test_handle_check_suite_with_existing_retry_pair(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -743,7 +747,7 @@ async def test_handle_check_suite_with_existing_retry_pair(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -796,7 +800,7 @@ async def test_handle_check_suite_with_existing_retry_pair(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -835,7 +839,7 @@ async def test_handle_check_suite_with_closed_pr(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -857,7 +861,7 @@ async def test_handle_check_suite_with_closed_pr(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -899,7 +903,7 @@ async def test_handle_check_suite_with_closed_pr(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -938,7 +942,7 @@ async def test_handle_check_suite_with_deleted_branch(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -960,7 +964,7 @@ async def test_handle_check_suite_with_deleted_branch(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -1002,7 +1006,7 @@ async def test_handle_check_suite_with_deleted_branch(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -1043,7 +1047,7 @@ async def test_check_run_handler_token_accumulation(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -1065,7 +1069,7 @@ async def test_check_run_handler_token_accumulation(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = 888
     mock_get_pr.return_value = {
@@ -1127,7 +1131,7 @@ async def test_check_run_handler_token_accumulation(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -1170,7 +1174,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -1192,7 +1196,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_slack_notify.return_value = "thread-123"
     mock_create_user_request.return_value = 999
@@ -1251,7 +1255,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -1295,7 +1299,7 @@ async def test_handle_check_suite_codecov_failure(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -1321,7 +1325,7 @@ async def test_handle_check_suite_codecov_failure(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -1388,7 +1392,7 @@ async def test_handle_check_suite_codecov_failure(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -1430,7 +1434,7 @@ async def test_handle_check_suite_codecov_no_token(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -1456,7 +1460,7 @@ async def test_handle_check_suite_codecov_no_token(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -1510,7 +1514,7 @@ async def test_handle_check_suite_codecov_no_token(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -1552,7 +1556,7 @@ async def test_handle_check_suite_max_iterations_forces_verification(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     _mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -1574,7 +1578,7 @@ async def test_handle_check_suite_max_iterations_forces_verification(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_create_user_request.return_value = "usage-id-123"
     mock_get_pr.return_value = {
@@ -1632,7 +1636,7 @@ async def test_handle_check_suite_max_iterations_forces_verification(
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
 @patch("services.webhook.check_suite_handler.slack_notify")
-@patch("services.webhook.check_suite_handler.get_all_comments")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
 @patch("services.webhook.check_suite_handler.create_comment")
 @patch("services.webhook.check_suite_handler.create_user_request")
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
@@ -1667,7 +1671,7 @@ async def test_handle_check_suite_skips_same_error_hash_across_workflow_ids(
     _mock_cancel_workflow_runs,
     mock_create_user_request,
     mock_create_comment,
-    mock_get_all_comments,
+    mock_get_pr_comments,
     mock_slack_notify,
     mock_get_repo,
     mock_get_token,
@@ -1688,7 +1692,7 @@ async def test_handle_check_suite_skips_same_error_hash_across_workflow_ids(
         }
     ]
     mock_get_repo.return_value = {"trigger_on_test_failure": True}
-    mock_get_all_comments.return_value = []
+    mock_get_pr_comments.return_value = []
     mock_create_comment.return_value = "http://comment-url"
     mock_slack_notify.return_value = "thread-123"
     mock_create_user_request.return_value = 777
