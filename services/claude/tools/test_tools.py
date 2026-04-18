@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 import inspect
 from services.claude.tools import tools
 
@@ -79,6 +80,17 @@ def test_all_strict_tools_have_valid_schemas():
             assert len(required) == len(
                 properties
             ), f"Function '{func_name}' (variable: {var_name}) with strict=True must have all properties in required array"
+
+
+def test_git_diff_in_base_tools():
+    """git_diff should be available in all tool sets."""
+    base_names = [t["name"] for t in tools._TOOLS_BASE]
+    assert "git_diff" in base_names
+
+
+def test_git_diff_in_dispatch():
+    """git_diff must be in tools_to_call dispatch dict."""
+    assert "git_diff" in tools.tools_to_call
 
 
 def test_function_schema_discovery():

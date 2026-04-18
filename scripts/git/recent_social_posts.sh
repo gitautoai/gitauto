@@ -1,11 +1,21 @@
 #!/bin/bash
 # Usage: ./recent_social_posts.sh [gitauto|wes]
 # Shows recent social media posts from merged PRs.
-# Without argument: shows all posts.
+# Without argument: shows both GitAuto and Wes posts.
 # With "gitauto": shows only GitAuto posts.
 # With "wes": shows only Wes posts.
 
 FILTER="${1:-}"
+
+# No argument: run both and exit
+if [ -z "$FILTER" ]; then
+    "$0" gitauto
+    echo ""
+    echo "==="
+    echo ""
+    "$0" wes
+    exit 0
+fi
 
 if [ "$FILTER" = "gitauto" ]; then
     SECTION="## Social Media Post (GitAuto)"

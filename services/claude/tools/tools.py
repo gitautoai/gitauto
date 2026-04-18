@@ -18,6 +18,7 @@ from services.git.apply_diff_to_file import (
     APPLY_DIFF_TO_FILE,
     apply_diff_to_file,
 )
+from services.git.git_diff import GIT_DIFF, git_diff
 from services.git.create_directory import CREATE_DIRECTORY, create_directory
 from services.git.delete_file import DELETE_FILE, delete_file
 from services.git.git_revert_file import GIT_REVERT_FILE, git_revert_file
@@ -70,6 +71,7 @@ _TOOLS_BASE: list[ToolUnionParam] = [
     CURL,
     DELETE_FILE,
     FORGET_MESSAGES,
+    GIT_DIFF,
     GIT_REVERT_FILE,
     GET_LOCAL_FILE_TREE,
     MOVE_FILE,
@@ -122,6 +124,7 @@ tools_to_call: dict[str, Any] = {
     "curl": curl,
     "delete_file": delete_file,
     "forget_messages": forget_messages,
+    "git_diff": git_diff,
     "git_revert_file": git_revert_file,
     "get_local_file_content": get_local_file_content,
     "get_local_file_tree": get_local_file_tree,
