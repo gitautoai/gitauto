@@ -25,6 +25,9 @@ INFRA_FAILURE_PATTERNS = [
     # MongoMemoryServer binary crash (version/distro mismatch with cached S3 binary)
     "MongoMemoryServer Instance failed",
     'signal "SIGABRT"',
+    # AWS IAM permission errors (Lambda role lacks access to SSM/SecretsManager/etc.)
+    "AccessDeniedException",
+    "no identity-based policy allows",
 ]
 
 

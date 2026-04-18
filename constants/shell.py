@@ -24,4 +24,6 @@ ALLOWED_PREFIXES = (
     "pip index",
     "pip list",
     "pip show",
+    # System info (read-only)
+    "date",
 )

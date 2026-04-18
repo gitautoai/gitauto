@@ -82,6 +82,13 @@ class TestRunCommand:
         assert result is not None
         assert "not allowed" in result.lower()
 
+    @patch("services.shell.run_command.slack_notify")
+    def test_date_returns_current_date(self, _mock_slack, create_test_base_args):
+        base_args = create_test_base_args()
+        result = run_command(base_args, "date")
+        assert result is not None
+        assert len(result.strip()) > 0
+
     @pytest.mark.parametrize("prefix", ALLOWED_PREFIXES)
     def test_all_allowed_prefixes_are_read_only(self, prefix):
         # Verify no write commands snuck into the whitelist
