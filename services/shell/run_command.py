@@ -16,9 +16,9 @@ INLINE_OUTPUT_LIMIT = 2_000
 RUN_COMMAND: ToolUnionParam = {
     "name": "run_command",
     "description": (
-        "Run a read-only shell command to look up package versions or dependencies. "
+        "Run a read-only shell command to look up package versions, dependencies, or system info. "
         "Allowed: npm (view/list/outdated/search), yarn (info/list/why), "
-        "composer (show/outdated), pip (show/list/index), node -v, php -v/-m. "
+        "composer (show/outdated), pip (show/list/index), node -v, php -v/-m, date. "
         "Use this instead of fetching HTML pages for package version lookups."
     ),
     "input_schema": {

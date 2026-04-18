@@ -24,7 +24,7 @@ Failed asserting that 1 is identical to '1'.
 
 
 def test_detect_infra_failure_real_segfault_log():
-    real_log = SEGFAULT_LOG_PATH.read_text()
+    real_log = SEGFAULT_LOG_PATH.read_text(encoding="utf-8")
     result = detect_infra_failure(real_log)
     assert result == "Segmentation fault"
 
@@ -75,6 +75,18 @@ def test_detect_infra_failure_real_segfault_log():
             "    at ChildProcess.emit (node:events:519:28)",
             'signal "SIGABRT"',
         ),
+        # AWS IAM permission errors
+        (
+            "AccessDeniedException: User: arn:aws:sts::948023073771:assumed-role/pr-agent-prod-role/pr-agent-prod "
+            "is not authorized to perform: secretsmanager:GetSecretValue on resource: dev/foxden-billing "
+            "because no identity-based policy allows the secretsmanager:GetSecretValue action",
+            "AccessDeniedException",
+        ),
+        (
+            "User: arn:aws:sts::123:assumed-role/role/func is not authorized to perform: ssm:GetParameter "
+            "because no identity-based policy allows the ssm:GetParameter action",
+            "no identity-based policy allows",
+        ),
     ],
     ids=[
         "yarn_502",
@@ -91,6 +103,8 @@ def test_detect_infra_failure_real_segfault_log():
         "enomem",
         "mongoms_instance_failed",
         "sigabrt",
+        "aws_access_denied",
+        "aws_iam_policy_denied",
     ],
 )
 def test_detect_infra_failure_matches(error_log, expected):
