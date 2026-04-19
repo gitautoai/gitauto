@@ -56,6 +56,7 @@ def test_get_required_status_checks_success(
             "CircleCI Checks",
             "Aikido Security",
         }
+        assert result.app_ids == {12345, 67890}
         assert result.strict is True
 
 
@@ -78,6 +79,7 @@ def test_get_required_status_checks_403_no_permission(
 
         assert result.status_code == 403
         assert result.checks is None
+        assert result.app_ids is None
         assert result.strict is True
 
 
@@ -100,6 +102,7 @@ def test_get_required_status_checks_404_no_protection(
 
         assert result.status_code == 404
         assert not result.checks
+        assert result.app_ids is None
         assert result.strict is False
 
 
@@ -123,6 +126,7 @@ def test_get_required_status_checks_no_required_checks(
 
         assert result.status_code == 200
         assert not result.checks
+        assert result.app_ids is None
         assert result.strict is False
 
 
@@ -150,6 +154,7 @@ def test_get_required_status_checks_only_contexts(test_owner, test_repo, test_to
 
         assert result.status_code == 200
         assert result.checks == ["ci/circleci: test"]
+        assert result.app_ids is None
         assert result.strict is True
 
 
@@ -177,6 +182,7 @@ def test_get_required_status_checks_only_checks(test_owner, test_repo, test_toke
 
         assert result.status_code == 200
         assert result.checks == ["CircleCI Checks"]
+        assert result.app_ids == {12345}
         assert result.strict is False
 
 

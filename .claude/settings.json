@@ -1,5 +1,17 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/rwest/Repositories/gitauto/.claude/hooks/no-git-add.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "",

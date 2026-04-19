@@ -1,6 +1,7 @@
 from typing import Optional, TypedDict
 
 from services.github.types.label import Label
+from services.github.types.mergeable_state import MergeableState
 from services.github.types.ref import Ref
 from services.github.types.user import User
 
@@ -45,7 +46,7 @@ class PullRequest(TypedDict):
     merged: bool
     mergeable: Optional[bool]
     rebaseable: Optional[bool]
-    mergeable_state: str
+    mergeable_state: MergeableState
     merged_by: Optional[User]
     comments: int
     review_comments: int
