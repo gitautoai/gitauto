@@ -1,4 +1,9 @@
 QUALITY_CHECKLIST: dict[str, list[str]] = {
+    "case_coverage": [
+        "dimension_enumeration",
+        "combinatorial_matrix",
+        "explicit_expected_per_cell",
+    ],
     "integration": [
         "db_operations_use_real_test_db",
         "api_calls_tested_end_to_end",
