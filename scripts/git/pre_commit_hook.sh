@@ -75,7 +75,7 @@ fi
 
 # Print statement check (whole repo, excluding dirs)
 echo "--- ruff T201 print check ---"
-ruff check --select=T201 . --exclude schemas/,.venv/,scripts/
+ruff check --select=T201 . --exclude schemas/,.venv/,scripts/,**/test_*.py,**/conftest.py
 if [ $? -ne 0 ]; then
     echo "FAILED: Remove print statements before committing."
     exit 1
@@ -89,6 +89,21 @@ if [ $? -ne 0 ]; then exit 1; fi
 # Test file checks (new files need tests, changed impl needs changed test)
 echo "--- test file check ---"
 scripts/lint/check_test_files.sh
+if [ $? -ne 0 ]; then exit 1; fi
+
+# Partial assertion check (assert X in Y is prohibited, use assert X == Y)
+echo "--- partial assertion check ---"
+scripts/lint/check_partial_assertions.sh
+if [ $? -ne 0 ]; then exit 1; fi
+
+# Private function check (def _xxx is prohibited, inline or own file)
+echo "--- private function check ---"
+scripts/lint/check_private_functions.sh
+if [ $? -ne 0 ]; then exit 1; fi
+
+# Cast usage check (cast() is prohibited in impl files)
+echo "--- cast usage check ---"
+scripts/lint/check_cast_usage.sh
 if [ $? -ne 0 ]; then exit 1; fi
 
 # Concurrent heavy checks (pylint, pyright, pytest)

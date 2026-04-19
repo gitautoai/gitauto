@@ -38,8 +38,16 @@ if [ -n "$STAGED_IMPL_NEW" ]; then
 fi
 
 # Check 2: Changed impl files with existing test files must have test also staged
+# Skip if the staged diff is comment-only (lines starting with # after +/-)
 if [ -n "$STAGED_IMPL_MODIFIED" ]; then
     for file in $STAGED_IMPL_MODIFIED; do
+        # Skip comment-only diffs (all added/removed lines are comments or blank)
+        if git diff --cached -- "$file" | grep -E '^[+-]' | grep -vE '^(\+\+\+|---)' \
+            | grep -vE '^[+-]\s*#' | grep -vE '^[+-]\s*$' | grep -q .; then
+            : # Has non-comment changes
+        else
+            continue
+        fi
         dir=$(dirname "$file")
         base=$(basename "$file")
         test_file="$dir/test_$base"
