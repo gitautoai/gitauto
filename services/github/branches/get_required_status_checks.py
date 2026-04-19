@@ -17,6 +17,7 @@ from utils.logging.logging_config import logger
 class StatusChecksResult:
     status_code: int = 201
     checks: list[str] | None = None
+    app_ids: set[int] | None = None
     strict: bool = True
 
 
@@ -65,10 +66,13 @@ def get_required_status_checks(owner: str, repo: str, branch: str, token: str):
 
     strict = required_status_checks.get("strict", False)
     contexts = set(required_status_checks.get("contexts", []))
-    checks = {
-        check.get("context") for check in required_status_checks.get("checks", [])
-    }
+    checks_list = required_status_checks.get("checks", [])
+    checks = {check.get("context") for check in checks_list}
+    app_ids = {check.get("app_id") for check in checks_list if check.get("app_id")}
 
     return StatusChecksResult(
-        status_code=200, checks=list(contexts | checks), strict=strict
+        status_code=200,
+        checks=list(contexts | checks),
+        app_ids=app_ids or None,
+        strict=strict,
     )

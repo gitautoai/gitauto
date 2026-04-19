@@ -14,7 +14,9 @@ from services.github.pulls.get_pull_request import get_pull_request
 from services.github.pulls.get_pull_request_files import get_pull_request_files
 from services.github.pulls.merge_pull_request import MergeMethod, merge_pull_request
 from services.github.token.get_installation_token import get_installation_access_token
+from services.github.types.check_suite import CheckSuite
 from services.github.types.github_types import CheckSuiteCompletedPayload
+from services.github.types.mergeable_state import MergeableState
 from services.slack.slack_notify import slack_notify
 from services.supabase.client import supabase
 from services.supabase.repository_features.get_repository_features import (
@@ -27,6 +29,14 @@ from utils.files.is_test_file import is_test_file
 from utils.logging.logging_config import logger, set_pr_number
 
 BLOCKED = "Auto-merge blocked"
+
+BLOCKED_STATE_REASONS: dict[MergeableState, str] = {
+    "behind": "PR branch is behind base branch",
+    "blocked": "The merge is blocked",
+    "dirty": "merge conflicts detected",
+    "draft": "PR is in draft mode",
+    "unknown": "GitHub still calculating mergeability",
+}
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -84,6 +94,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         .execute()
     )
     if result.data:
+        logger.info("Marking usage record as test-passed")
         usage_id = result.data[0]["id"]
         (
             supabase.table("usage")
@@ -91,12 +102,16 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             .eq("id", usage_id)
             .execute()
         )
+    else:
+        logger.info(
+            "No usage record found for PR #%s, skipping test-passed update", pr_number
+        )
 
     # Check if auto-merge is enabled BEFORE doing expensive API calls
     # (branch protection, check suites, PR details, etc.)
     repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)
     if not repo_features or not repo_features.get("auto_merge"):
-        logger.info("Auto-merge disabled for repo_id=%s", repo_id)
+        logger.info("Skipping because auto-merge is disabled for repo_id=%s", repo_id)
         return
 
     comment_args = cast(
@@ -123,39 +138,80 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         owner=owner_name, repo=repo_name, branch=base_branch, token=token
     )
 
-    if protection.checks:
-        logger.info("Using required status checks: %s", protection.checks)
-        for suite in all_suites:
+    # Filter out ghost suites: GitHub auto-creates a check suite for every installed app on each push, but apps that don't intend to run (e.g. GitAuto AI, Codecov) never create check runs, leaving the suite perpetually "queued". These would block auto-merge forever. A real suite (GitHub Actions, CircleCI) creates check runs immediately, even while queued.
+    active_suites: list[CheckSuite] = []
+    for suite in all_suites:
+        app_name = suite["app"]["name"]
+        if suite["status"] == "queued" and suite["latest_check_runs_count"] == 0:
+            logger.info(
+                "Skipping ghost suite '%s' because it is queued with 0 check runs",
+                app_name,
+            )
+            continue
+
+        logger.info(
+            "Active suite '%s': status=%s, check_runs=%d",
+            app_name,
+            suite["status"],
+            suite["latest_check_runs_count"],
+        )
+        active_suites.append(suite)
+
+    if not active_suites:
+        logger.info(
+            "All %s suites are ghost suites, nothing to wait for", len(all_suites)
+        )
+        # Fall through to mergeable_state check below
+    elif protection.checks:
+        logger.info(
+            "Using required status checks: %s (app_ids=%s)",
+            protection.checks,
+            protection.app_ids,
+        )
+        for suite in active_suites:
             app_name = suite["app"]["name"]
+            app_id = suite["app"]["id"]
             status = suite["status"]
-            if app_name in protection.checks and status != "completed":
+            if (
+                protection.app_ids
+                and app_id in protection.app_ids
+                and status != "completed"
+            ):
                 logger.info(
-                    "Required check '%s' not completed: status=%s", app_name, status
+                    "Returning because suite '%s' (app_id=%s) contains a required check and is not completed (status=%s)",
+                    app_name,
+                    app_id,
+                    status,
                 )
                 return
-        logger.info("All required checks completed")
+        logger.info("All suites with required checks completed, proceeding to merge")
     else:
         if protection.checks is None:
             logger.info(
                 "Could not read branch protection (status=%s), "
-                "waiting for all check suites to complete",
+                "will return if any check suite is not completed",
                 protection.status_code,
             )
         else:
             logger.info(
                 "No required checks configured, "
-                "waiting for all check suites to complete"
+                "will return if any check suite is not completed"
             )
-        for suite in all_suites:
+        for suite in active_suites:
             app_name = suite["app"]["name"]
             status = suite["status"]
             if status != "completed":
                 logger.info(
-                    "Check suite '%s' not completed: status=%s", app_name, status
+                    "Returning because check suite '%s' is not completed (status=%s)",
+                    app_name,
+                    status,
                 )
                 return
 
-        logger.info("All %s check suites completed", len(all_suites))
+        logger.info(
+            "All %s active check suites completed, proceeding to merge",
+            len(active_suites),
+        )
 
     # Fetch full PR details to get mergeable_state (not in simplified PR from check_suite webhook)
     full_pr = get_pull_request(
@@ -168,37 +224,32 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         slack_notify(slack_msg)
         return
 
-    # Check mergeable_state - only proceed if merging is allowed
-    # https://docs.github.com/en/graphql/reference/enums#mergestatestatus
-    mergeable_state = full_pr.get("mergeable_state", "")
-    logger.info("PR mergeable_state: %s", mergeable_state)
+    mergeable_state = full_pr["mergeable_state"]
+    logger.info("PR mergeable_state=%s", mergeable_state)
 
-    # Allow merge for: clean, unstable (failing non-required checks), has_hooks
-    if mergeable_state not in ["clean", "unstable", "has_hooks"]:
-        state_reasons = {
-            "behind": "PR branch is behind base branch",
-            "blocked": "The merge is blocked",
-            "dirty": "merge conflicts detected",
-            "draft": "PR is in draft mode",
-            "unknown": "GitHub still calculating mergeability",
-        }
+    # https://docs.github.com/en/graphql/reference/enums#mergestatestatus
+    if mergeable_state in BLOCKED_STATE_REASONS:
 
         if mergeable_state == "blocked":
+            logger.info(
+                "Merge blocked because mergeable_state=blocked, checking active suite statuses"
+            )
             check_statuses = [
                 f"{s['app']['name']}: status={s['status']}, conclusion={s.get('conclusion', 'null')}"
-                for s in all_suites
+                for s in active_suites
             ]
             reason = (
-                state_reasons["blocked"]
+                BLOCKED_STATE_REASONS["blocked"]
                 + ". Check suites: "
                 + "; ".join(check_statuses)
             )
         else:
-            reason = state_reasons.get(mergeable_state, "unknown reason")
+            logger.info("Merge blocked because mergeable_state=%s", mergeable_state)
+            reason = BLOCKED_STATE_REASONS.get(mergeable_state, "unknown reason")
 
-        # If any check suite is still in_progress, skip notification - we're just waiting
-        if any(s["status"] == "in_progress" for s in all_suites):
-            logger.info("Check suites still in progress, waiting...")
+        # If any active check suite is still running, skip notification and return
+        if any(s["status"] == "in_progress" for s in active_suites):
+            logger.info("Returning because active check suites are still running")
             return
 
         msg = f"{BLOCKED}: mergeable_state={mergeable_state} ({reason})"
@@ -217,6 +268,10 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         slack_notify(slack_msg)
         return
 
+    logger.info(
+        "PR mergeable_state=%s is acceptable, proceeding to merge", mergeable_state
+    )
+
     # Get PR files
     changed_files = get_pull_request_files(
         owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
@@ -225,6 +280,7 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     # Check if only test files restriction is enabled
     only_test_files = repo_features.get("auto_merge_only_test_files", False)
     if only_test_files:
+        logger.info("auto_merge_only_test_files enabled, checking changed files")
         non_test_files = [
             f["filename"]
             for f in changed_files
@@ -246,6 +302,9 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
             slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
             slack_notify(slack_msg)
             return
+        logger.info("All changed files are test/config files, proceeding to merge")
+    else:
+        logger.info("auto_merge_only_test_files disabled, skipping file check")
 
     # All conditions met - merge the PR
     merge_method = cast(MergeMethod, repo_features.get("merge_method", "merge"))
@@ -275,3 +334,6 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
         create_comment(body=msg, base_args=comment_args)
         slack_msg = f"`{owner_name}/{repo_name}` PR #{pr_number}: {msg}"
         slack_notify(slack_msg)
+        return
+
+    logger.info("Auto-merge succeeded for PR #%s", pr_number)
