@@ -1,9 +1,7 @@
-# Third party imports
 from anthropic.types import MessageParam, ToolUnionParam
 
-# Local imports
 from services.claude.measure_messages_chars import measure_messages_chars
-from services.claude.replace_old_file_content import replace_old_file_content
+from services.claude.remove_outdated_messages import remove_outdated_messages
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
@@ -40,16 +38,9 @@ def forget_messages(
     **_kwargs,
 ):
     chars_before = measure_messages_chars(messages)
-    count = 0
-    for fp in file_paths:
-        logger.info("Forgetting file content for: %s", fp)
-        replace_old_file_content(
-            messages,
-            fp,
-            is_full_file_read=True,
-            reason="agent already extracted needed patterns",
-        )
-        count += 1
+    remove_outdated_messages(messages, file_paths_to_remove=set(file_paths))
+
+    count = len(file_paths)
     chars_after = measure_messages_chars(messages)
     chars_saved = chars_before - chars_after
     pct = (chars_saved / chars_before * 100) if chars_before else 0

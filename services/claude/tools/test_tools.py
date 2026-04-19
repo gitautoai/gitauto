@@ -1,5 +1,7 @@
 # pylint: disable=protected-access
 import inspect
+
+from services.claude.file_tracking import FILE_EDIT_TOOLS
 from services.claude.tools import tools
 
 
@@ -40,18 +42,14 @@ def test_get_local_file_tree_schema_allows_optional_dir_path():
         "strict"
     ), "get_local_file_tree should not use strict=True because dir_path is optional"
 
-    # Should have dir_path in properties
-    input_schema = schema.get("input_schema", {})
-    properties = input_schema.get("properties", {})
-    assert isinstance(properties, dict), "properties should be a dict"
-    assert "dir_path" in properties, "dir_path should be defined in properties"
-
-    # dir_path should not be required (or required array should be empty/not include it)
-    required = input_schema.get("required", [])
-    assert isinstance(required, list), "required should be a list"
-    assert (
-        "dir_path" not in required
-    ), "dir_path should not be in required array since it has default value"
+    # dir_path should be the only property, and it should be optional (not required)
+    input_schema = schema.get("input_schema")
+    assert isinstance(input_schema, dict)
+    properties = input_schema.get("properties")
+    assert isinstance(properties, dict)
+    assert set(properties.keys()) == {"dir_path"}
+    required = input_schema.get("required")
+    assert required is None or required == []
 
 
 def test_all_strict_tools_have_valid_schemas():
@@ -82,15 +80,27 @@ def test_all_strict_tools_have_valid_schemas():
             ), f"Function '{func_name}' (variable: {var_name}) with strict=True must have all properties in required array"
 
 
+def test_file_edit_tools_moved_to_file_tracking():
+    # FILE_EDIT_TOOLS was moved from tools.py to file_tracking.py to avoid circular import
+    assert not hasattr(tools, "FILE_EDIT_TOOLS")
+    # Every edit tool must be dispatchable
+    for tool_name in FILE_EDIT_TOOLS:
+        assert (
+            tools.tools_to_call.get(tool_name) is not None
+        ), f"{tool_name} missing from tools_to_call"
+
+
 def test_git_diff_in_base_tools():
-    """git_diff should be available in all tool sets."""
-    base_names = [t["name"] for t in tools._TOOLS_BASE]
-    assert "git_diff" in base_names
+    # git_diff should be available in all tool sets
+    assert tools.GIT_DIFF["name"] == "git_diff"
+    # GIT_DIFF must be one of the base tools
+    matched = [t for t in tools._TOOLS_BASE if t["name"] == "git_diff"]
+    assert len(matched) == 1
 
 
 def test_git_diff_in_dispatch():
-    """git_diff must be in tools_to_call dispatch dict."""
-    assert "git_diff" in tools.tools_to_call
+    # git_diff must be in tools_to_call dispatch dict
+    assert tools.tools_to_call.get("git_diff") is not None
 
 
 def test_function_schema_discovery():

@@ -120,35 +120,6 @@ def test_chat_with_claude_no_usage_response(mock_claude, mock_insert_llm_request
     mock_insert_llm_request.assert_called_once()
 
 
-@patch("services.claude.chat_with_claude.remove_outdated_file_edit_attempts")
-@patch("services.claude.chat_with_claude.insert_llm_request")
-@patch("services.claude.chat_with_claude.claude")
-def test_chat_with_claude_calls_optimization_functions(
-    mock_claude,
-    _mock_insert_llm_request,
-    mock_remove_outdated_file_edit_attempts,
-):
-    mock_response = Mock()
-    mock_response.content = [Mock(type="text", text="Response")]
-    mock_response.usage = Mock(output_tokens=10)
-    mock_claude.messages.create.return_value = mock_response
-    mock_claude.messages.count_tokens.return_value = Mock(input_tokens=15)
-
-    original_messages = [{"role": "user", "content": "test"}]
-    mock_remove_outdated_file_edit_attempts.return_value = original_messages
-
-    chat_with_claude(
-        messages=cast(list[MessageParam], original_messages),
-        system_content="You are helpful",
-        tools=[],
-        model_id=ClaudeModelId.SONNET_4_6,
-        usage_id=101,
-        created_by="4:test-user",
-    )
-
-    mock_remove_outdated_file_edit_attempts.assert_called_once()
-
-
 @patch("services.claude.chat_with_claude.insert_llm_request")
 @patch("services.claude.chat_with_claude.claude")
 def test_strict_tools_passed_through_unchanged(mock_claude, mock_insert_llm_request):

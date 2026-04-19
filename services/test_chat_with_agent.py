@@ -11,6 +11,34 @@ from services.claude.tools.file_modify_result import FileMoveResult, FileWriteRe
 
 
 @pytest.mark.asyncio
+@patch("services.chat_with_agent.remove_outdated_messages")
+@patch("services.chat_with_agent.chat_with_model")
+async def test_calls_remove_outdated_messages_before_chat(
+    mock_chat_with_model, mock_remove, create_test_base_args
+):
+    """remove_outdated_messages is called each iteration before chat_with_model."""
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={"role": "assistant", "content": "response"},
+        tool_calls=[],
+        token_input=15,
+        token_output=10,
+        cost_usd=0.05,
+    )
+    base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
+
+    await chat_with_agent(
+        messages=[{"role": "user", "content": "test"}],
+        system_message="test system message",
+        base_args=base_args,
+        tools=[],
+        usage_id=123,
+        model_id=ClaudeModelId.SONNET_4_6,
+    )
+
+    mock_remove.assert_called_once()
+
+
+@pytest.mark.asyncio
 @patch("services.chat_with_agent.chat_with_model")
 async def test_chat_with_agent_passes_usage_id_to_claude(
     mock_chat_with_model, create_test_base_args
@@ -357,9 +385,9 @@ async def test_write_and_commit_file_handles_new_content_arg_name(
 
         mock_function.assert_called_once()
         call_kwargs = mock_function.call_args[1]
-        assert "file_content" in call_kwargs
+        # file_content passed, new_content absent (renamed param)
         assert call_kwargs["file_content"] == "updated content"
-        assert "new_content" not in call_kwargs
+        assert call_kwargs.get("new_content") is None
 
 
 @pytest.mark.asyncio
@@ -403,9 +431,13 @@ async def test_unavailable_tool_sends_slack_notification(
 
         assert mock_slack_notify.call_count == 1
         call_args = mock_slack_notify.call_args[0][0]
-        assert "bash" in call_args
-        assert "command" in call_args
-        assert "test-owner/test-repo" in call_args
+        # Exact Slack message format from chat_with_agent.py line 334-338
+        assert call_args == (
+            "🚨 LLM tried to call unavailable tool:\n"
+            "Tool: `bash`\n"
+            "Args: `{'command': 'ls -la'}`\n"
+            "Repo: `test-owner/test-repo`"
+        )
 
 
 @pytest.mark.asyncio
@@ -505,7 +537,7 @@ async def test_verify_task_is_complete_without_pr_changes_returns_is_completed_f
     messages = result.messages
     last_content = cast(list, messages[-1]["content"])
     last_message = last_content[0]["content"]
-    assert "No changes were needed" in last_message
+    assert last_message == "Task completed. No changes were needed."
 
 
 @pytest.mark.asyncio
@@ -693,10 +725,10 @@ async def test_file_write_result_success_includes_formatted_content(
     tool_result_content_list = cast(list, messages[-1]["content"])
     tool_result_content = tool_result_content_list[0]["content"]
 
-    assert "Updated test.py." in tool_result_content
-    assert "```test.py" in tool_result_content
-    assert "1:line1" in tool_result_content
-    assert "2:line2" in tool_result_content
+    # FileWriteResult(message="Updated test.py.", content="line1\nline2") → formatted with line numbers
+    assert (
+        tool_result_content == "Updated test.py.\n\n```test.py\n1:line1\n2:line2\n```"
+    )
 
 
 @pytest.mark.asyncio
@@ -898,120 +930,6 @@ async def test_file_move_result_returns_message(
 @pytest.mark.asyncio
 @patch("services.chat_with_agent.chat_with_model")
 @patch("services.chat_with_agent.update_comment")
-@patch("services.chat_with_agent.replace_old_file_content")
-async def test_full_file_read_calls_replace_with_is_full_file_read_true(
-    mock_replace, _mock_update_comment, mock_chat_with_model, create_test_base_args
-):
-    """Test that reading a full file calls replace_old_file_content with is_full_file_read=True."""
-    mock_chat_with_model.return_value = LlmResult(
-        assistant_message={
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-                    "id": "test_id",
-                    "name": "get_local_file_content",
-                    "input": {"file_path": "src/main.py"},
-                }
-            ],
-        },
-        tool_calls=[
-            ToolCall(
-                id="test_id",
-                name="get_local_file_content",
-                args={"file_path": "src/main.py"},
-            )
-        ],
-        token_input=15,
-        token_output=10,
-        cost_usd=0.05,
-    )
-
-    base_args = create_test_base_args(model_id=ClaudeModelId.OPUS_4_7)
-
-    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
-        mock_tools.__getitem__.return_value = Mock(
-            return_value="```src/main.py\n1:print('hello')\n```"
-        )
-        mock_tools.__contains__.return_value = True
-
-        await chat_with_agent(
-            messages=[{"role": "user", "content": "test"}],
-            system_message="test system message",
-            base_args=base_args,
-            tools=[],
-            usage_id=123,
-            model_id=ClaudeModelId.OPUS_4_7,
-        )
-
-    mock_replace.assert_called_once()
-    call_args = mock_replace.call_args
-    assert call_args[0][1] == "src/main.py"
-    assert call_args[1]["is_full_file_read"] is True
-
-
-@pytest.mark.asyncio
-@patch("services.chat_with_agent.chat_with_model")
-@patch("services.chat_with_agent.update_comment")
-@patch("services.chat_with_agent.replace_old_file_content")
-async def test_partial_file_read_calls_replace_with_is_full_file_read_false(
-    mock_replace, _mock_update_comment, mock_chat_with_model, create_test_base_args
-):
-    """Test that reading a partial file calls replace_old_file_content with is_full_file_read=False."""
-    mock_chat_with_model.return_value = LlmResult(
-        assistant_message={
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "tool_use",
-                    "id": "test_id",
-                    "name": "get_local_file_content",
-                    "input": {
-                        "file_path": "src/main.py",
-                        "start_line": 10,
-                        "end_line": 20,
-                    },
-                }
-            ],
-        },
-        tool_calls=[
-            ToolCall(
-                id="test_id",
-                name="get_local_file_content",
-                args={"file_path": "src/main.py", "start_line": 10, "end_line": 20},
-            )
-        ],
-        token_input=15,
-        token_output=10,
-        cost_usd=0.05,
-    )
-
-    base_args = create_test_base_args(model_id=GoogleModelId.GEMMA_4_31B)
-
-    with patch("services.chat_with_agent.tools_to_call") as mock_tools:
-        mock_tools.__getitem__.return_value = Mock(
-            return_value="```src/main.py#L10-L20\n10:code here\n```"
-        )
-        mock_tools.__contains__.return_value = True
-
-        await chat_with_agent(
-            messages=[{"role": "user", "content": "test"}],
-            system_message="test system message",
-            base_args=base_args,
-            tools=[],
-            usage_id=123,
-            model_id=GoogleModelId.GEMMA_4_31B,
-        )
-
-    mock_replace.assert_called_once()
-    call_args = mock_replace.call_args
-    assert call_args[0][1] == "src/main.py#L10-L20"
-    assert call_args[1]["is_full_file_read"] is False
-
-
-@pytest.mark.asyncio
-@patch("services.chat_with_agent.chat_with_model")
-@patch("services.chat_with_agent.update_comment")
 async def test_multiple_parallel_tool_calls(
     _mock_update_comment, mock_chat_with_model, create_test_base_args
 ):
@@ -1156,7 +1074,9 @@ async def test_gitauto_md_edit_always_allowed(
     # GITAUTO.md should be editable
     messages = result.messages
     last_content = cast(list, messages[-1]["content"])
-    assert "Updated GITAUTO.md." in last_content[0]["content"]
+    assert last_content[0]["content"] == (
+        "Updated GITAUTO.md.\n\n```GITAUTO.md\n1:## Testing\n2:- Use factories\n```"
+    )
 
 
 # --- Fallback chain tests ---
@@ -1235,11 +1155,8 @@ async def test_sonnet_never_falls_back_to_opus(
             model_id=ClaudeModelId.SONNET_4_6,
         )
 
-    for model in models_tried:
-        assert model not in (
-            ClaudeModelId.OPUS_4_7,
-            ClaudeModelId.OPUS_4_5,
-        ), f"Sonnet fallback tried Opus model {model}"
+    # Sonnet 4.6 ($4) fallback: [Sonnet 4.5] — never escalates to Opus ($8)
+    assert models_tried == [ClaudeModelId.SONNET_4_6, ClaudeModelId.SONNET_4_5]
 
 
 @pytest.mark.asyncio

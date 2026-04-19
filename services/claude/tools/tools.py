@@ -108,14 +108,6 @@ TOOLS_FOR_SETUP: list[ToolUnionParam] = _TOOLS_BASE + [
     GET_LOCAL_FILE_CONTENT,
 ]
 
-FILE_EDIT_TOOLS = [
-    "apply_diff_to_file",
-    "delete_file",
-    "move_file",
-    "search_and_replace",
-    "write_and_commit_file",
-]
-
 # Define tools to call
 tools_to_call: dict[str, Any] = {
     "apply_diff_to_file": apply_diff_to_file,

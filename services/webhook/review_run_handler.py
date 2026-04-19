@@ -422,7 +422,7 @@ async def handle_review_run(
     else:
         logger.info("Skipping greeting comment for bot reviewer %s", sender_name)
 
-    # Get review commented file(s) — stored as separate messages (not inside JSON) so replace_old_file_content() can find and replace them when agent re-reads.
+    # Get review commented file(s) — stored as separate messages (not inside JSON) so remove_outdated_messages() can find and replace them when agent re-reads.
     review_file_messages: list[MessageParam] = []
     if review_inline_comments:
         logger.info(
@@ -535,7 +535,7 @@ async def handle_review_run(
         input_message["step_2b_remaining_unfixable_errors"] = pre_existing_errors
     user_input = json.dumps(obj=input_message)
 
-    # Create messages — file content in separate messages for replace_old_file_content()
+    # Create messages — file content in separate messages for remove_outdated_messages()
     messages: list[MessageParam] = [{"role": "user", "content": user_input}]
     messages.extend(review_file_messages)
 

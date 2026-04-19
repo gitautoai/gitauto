@@ -8,7 +8,7 @@
   <principles>
     <rule>Test behavior, not implementation details. Focus on returned results and scenarios, not internal function calls.</rule>
     <rule>ALWAYS assert exact expected values: `assert func(input) == expected`. NEVER use `assert X not in result` or `assert result != Y` - these accept infinite wrong answers.</rule>
-    <rule>Determine expected values independently by examining real data. Never run the function and use its output as expected - that's circular.</rule>
+    <rule>Never blindly copy expected values from running the function. Running the impl to get output is OK, but you MUST manually trace through the logic to verify the result is correct. Understand WHY the output is what it is. If you can't explain each value, the test is worthless.</rule>
     <rule>Verify test interactions actually trigger the tested code paths - different frameworks may require different event approaches.</rule>
     <rule>Every test function MUST have a short inline comment explaining WHAT it tests and WHY. Example: "# Verify missing 'email' key raises ValidationError, not KeyError"</rule>
   </principles>
