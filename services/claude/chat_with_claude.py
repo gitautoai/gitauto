@@ -11,9 +11,6 @@ from services.claude.exceptions import (
     ClaudeAuthenticationError,
     ClaudeOverloadedError,
 )
-from services.claude.remove_outdated_file_edit_attempts import (
-    remove_outdated_file_edit_attempts,
-)
 from services.claude.trim_messages import trim_messages_to_token_limit
 from services.llm_result import LlmResult, ToolCall
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
@@ -29,10 +26,6 @@ def chat_with_claude(
     usage_id: int,
     created_by: str,
 ):
-    # https://docs.anthropic.com/en/api/client-sdks
-    # Apply message optimization functions to save tokens
-    messages = remove_outdated_file_edit_attempts(messages)
-
     # Check token count and delete messages if necessary
     buffer = 4096
     context_window = CONTEXT_WINDOW.get(model_id, 200_000)

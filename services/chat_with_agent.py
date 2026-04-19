@@ -12,11 +12,11 @@ from constants.models import ModelId
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.chat_with_model import chat_with_model
 from services.claude.exceptions import ClaudeOverloadedError
-from services.claude.replace_old_file_content import replace_old_file_content
-from services.claude.replace_old_verify_results import replace_old_verify_results
+from services.claude.remove_outdated_messages import remove_outdated_messages
 from services.claude.sanitize_tool_args import sanitize_tool_args
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
-from services.claude.tools.tools import FILE_EDIT_TOOLS, tools_to_call
+from services.claude.file_tracking import FILE_EDIT_TOOLS
+from services.claude.tools.tools import tools_to_call
 from services.github.comments.update_comment import update_comment
 from services.get_fallback_models import get_fallback_models
 from services.slack.slack_notify import slack_notify
@@ -66,6 +66,7 @@ async def chat_with_agent(
 
     while True:
         logger.info("Using model: %s", current_model)
+        remove_outdated_messages(messages, file_paths_to_remove=set())
 
         try:
             llm_result = chat_with_model(
@@ -258,9 +259,6 @@ async def chat_with_agent(
                 is_completed = tool_result.success
                 tool_result_content = tool_result.message
 
-                # Replace all previous verify results with placeholders to avoid accumulation
-                replace_old_verify_results(messages)
-
                 if is_completed:
                     msg = tool_result.message
                     base_args["verify_consecutive_failures"] = 0
@@ -362,13 +360,6 @@ async def chat_with_agent(
             and isinstance((file_path := tool_args.get("file_path")), str)
             and file_path
         ):
-            first_line = tool_result_content.split("\n")[0]
-            identifier = first_line[3:] if first_line.startswith("```") else file_path
-            is_full_file_read = identifier == file_path
-            replace_old_file_content(
-                messages, identifier, is_full_file_read=is_full_file_read
-            )
-
             if "line_number" in tool_args:
                 line_number = tool_args["line_number"]
                 line_info = (
@@ -435,7 +426,6 @@ async def chat_with_agent(
             and isinstance((file_path := tool_args.get("file_path")), str)
             and file_path
         ):
-            replace_old_file_content(messages, file_path, is_full_file_read=True)
             if isinstance(tool_result, FileWriteResult):
                 msg = tool_result.message
             else:
