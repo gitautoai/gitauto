@@ -5,7 +5,20 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 
+from constants.requests import USER_AGENT
 from services.http.curl import MAX_CURL_CHARS, curl
+
+HTML_SUFFIX = (
+    "\n\n[HTML page detected — tags stripped. "
+    "For better results, use web_fetch instead.]"
+)
+
+
+def _truncation_suffix(raw_len: int):
+    return (
+        f"\n\n[Truncated from {raw_len:,} to {MAX_CURL_CHARS:,} chars. "
+        "Use web_fetch for full HTML page summarization.]"
+    )
 
 
 class TestCurl:
@@ -36,10 +49,7 @@ class TestCurl:
 
         result = curl(base_args, "https://example.com")
 
-        assert "<html>" not in result
-        assert "<p>" not in result
-        assert "Hello World" in result
-        assert "HTML page detected" in result
+        assert result == "Hello World" + HTML_SUFFIX
 
     @patch("services.http.curl.requests.get")
     @patch("services.http.curl.slack_notify")
@@ -56,19 +66,18 @@ class TestCurl:
 
         result = curl(base_args, "https://example.com/big.txt")
 
-        # Should contain truncated content + truncation notice
-        assert "Truncated from 50,000" in result
-        assert "web_fetch" in result
+        assert result == ("x" * MAX_CURL_CHARS) + _truncation_suffix(50_000)
 
     @patch("services.http.curl.requests.get")
     @patch("services.http.curl.slack_notify")
     def test_curl_strips_html_then_truncates(
         self, _mock_slack, mock_get, create_test_base_args
     ):
-        # 120K of CSS (the real-world scenario that cost $16)
+        # HTML with CSS that was costing $16/run before we stripped and truncated it.
         css = "<style>" + ".c{" + "color:red;" * 10000 + "}</style>"
         body_text = "A" * 20_000
         html = f"<!DOCTYPE html><html><head>{css}</head><body>{body_text}</body></html>"
+        raw_len = len(html)
         mock_response = Mock()
         mock_response.text = html
         mock_response.headers = {"Content-Type": "text/html"}
@@ -80,9 +89,13 @@ class TestCurl:
             base_args, "https://circleci.com/developer/orbs/orb/circleci/node"
         )
 
-        # CSS should be stripped, body truncated to MAX_CURL_CHARS
-        assert "color:red" not in result
-        assert len(result) < MAX_CURL_CHARS + 500  # +buffer for suffix messages
+        # After strip_html: "A" * 20_000 (CSS inside <style> removed, tags removed).
+        # Suffix order in curl.py: HTML notice is prepended in front of the
+        # truncation notice, so the final string is content + html + trunc.
+        stripped = "A" * 20_000
+        truncated = stripped[:MAX_CURL_CHARS]
+        expected = truncated + HTML_SUFFIX + _truncation_suffix(raw_len)
+        assert result == expected
 
     @patch("services.http.curl.requests.get")
     @patch("services.http.curl.slack_notify")
@@ -126,9 +139,53 @@ class TestCurl:
 
         curl(base_args, "https://api.example.com/endpoint")
 
-        mock_slack.assert_called_once()
-        call_text = mock_slack.call_args[0][0]
-        assert "https://api.example.com/endpoint" in call_text
+        mock_slack.assert_called_once_with(
+            "🌐 Curl: `https://api.example.com/endpoint` (16 raw, 16 final)",
+            base_args.get("slack_thread_ts"),
+        )
+
+    @patch("services.http.curl.requests.get")
+    @patch("services.http.curl.slack_notify")
+    def test_curl_adds_bearer_for_github_api_when_token_present(
+        self, _mock_slack, mock_get, create_test_base_args
+    ):
+        """AGENT-35Y/35X: curl on api.github.com for a private repo must send
+        the installation token or GitHub returns 404."""
+        mock_response = Mock()
+        mock_response.text = '{"name": "file.ts"}'
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        base_args = create_test_base_args(token="ghs_installation_token")
+
+        curl(
+            base_args,
+            "https://api.github.com/repos/Foxquilt/foxden-billing/contents/x.ts?ref=abc",
+        )
+
+        sent_headers = mock_get.call_args.kwargs["headers"]
+        assert sent_headers == {
+            "User-Agent": USER_AGENT,
+            "Authorization": "Bearer ghs_installation_token",
+        }
+
+    @patch("services.http.curl.requests.get")
+    @patch("services.http.curl.slack_notify")
+    def test_curl_does_not_leak_token_to_non_github_hosts(
+        self, _mock_slack, mock_get, create_test_base_args
+    ):
+        """Never send the installation token to arbitrary third-party URLs."""
+        mock_response = Mock()
+        mock_response.text = "hello"
+        mock_response.headers = {"Content-Type": "text/plain"}
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        base_args = create_test_base_args(token="ghs_installation_token")
+
+        curl(base_args, "https://httpbin.org/get")
+
+        sent_headers = mock_get.call_args.kwargs["headers"]
+        assert sent_headers == {"User-Agent": USER_AGENT}
 
 
 class TestCurlIntegration:
@@ -137,10 +194,13 @@ class TestCurlIntegration:
     def test_real_curl_returns_raw_content(self, _mock_slack, create_test_base_args):
         base_args = create_test_base_args()
 
-        # httpbin.org/get returns a JSON response
+        # httpbin.org/get returns a JSON response whose exact bytes vary on
+        # every call (IP, user-agent headers echoed back). Assert the response
+        # is a non-empty string and parses as JSON with an expected shape.
         result = curl(base_args, "https://httpbin.org/get")
-
-        assert result is not None
         assert isinstance(result, str)
-        assert len(result) > 0
-        assert "headers" in result
+        assert result != ""
+        import json  # pylint: disable=import-outside-toplevel
+
+        parsed = json.loads(result)
+        assert set(parsed.keys()) >= {"args", "headers", "url"}

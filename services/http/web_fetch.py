@@ -7,6 +7,7 @@ from config import TIMEOUT
 from constants.models import ClaudeModelId
 from constants.requests import USER_AGENT
 from services.claude.chat_with_claude_simple import chat_with_claude_simple
+from services.http.github_auth_headers import github_auth_headers
 from services.slack.slack_notify import slack_notify
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
@@ -58,7 +59,9 @@ def web_fetch(base_args: BaseArgs, url: str, prompt: str, **_kwargs):
     repo = base_args.get("repo", "unknown")
     logger.info("Fetching URL: url=%s, owner=%s, repo=%s", url, owner, repo)
 
+    # raw.githubusercontent.com and api.github.com return 404 for private repos without a token (AGENT-364/363/23G). Send the installation token so fetching the agent's own private repo content works; harmless for other URLs.
     headers = {"User-Agent": USER_AGENT}
+    headers.update(github_auth_headers(url, base_args.get("token")))
     response = requests.get(url, headers=headers, timeout=TIMEOUT)
     response.raise_for_status()
 
@@ -103,4 +106,5 @@ def web_fetch(base_args: BaseArgs, url: str, prompt: str, **_kwargs):
         f"Success: {result is not None}",
         thread_ts,
     )
+    logger.info("web_fetch returning result for %s", url)
     return result
