@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 import requests
 
-from utils.error.handle_exceptions import handle_exceptions
+from utils.error.handle_exceptions import handle_exceptions, TRANSIENT_MAX_ATTEMPTS
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
@@ -269,9 +269,7 @@ def test_handle_exceptions_http_error_no_retry():
     """Test that non-rate-limit HTTP errors don't trigger retry and report to sentry."""
     with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
         "utils.error.handle_exceptions.time.sleep"
-    ) as mock_sleep, patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
-    ) as mock_sentry:
+    ) as mock_sleep, patch("sentry_sdk.capture_exception") as mock_sentry:
 
         mock_response = MagicMock()
         mock_response.status_code = 404
@@ -295,7 +293,7 @@ def test_handle_exceptions_http_error_no_retry():
 def test_handle_exceptions_connection_error():
     """Test that connection errors are handled without retry and report to sentry."""
     with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+        "sentry_sdk.capture_exception"
     ) as mock_sentry:
         conn_error = requests.exceptions.ConnectionError("Connection failed")
         mock_get.side_effect = conn_error
@@ -310,7 +308,7 @@ def test_handle_exceptions_connection_error():
 def test_handle_exceptions_timeout_error():
     """Test that timeout errors are handled without retry and report to sentry."""
     with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+        "sentry_sdk.capture_exception"
     ) as mock_sentry:
         timeout_error = requests.exceptions.Timeout("Request timed out")
         mock_get.side_effect = timeout_error
@@ -325,7 +323,7 @@ def test_handle_exceptions_timeout_error():
 def test_handle_exceptions_json_decode_error():
     """Test that JSON decode errors are handled without retry and report to sentry."""
     with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+        "sentry_sdk.capture_exception"
     ) as mock_sentry:
         mock_response = MagicMock()
         json_error = requests.exceptions.JSONDecodeError("Invalid JSON", "", 0)
@@ -343,7 +341,7 @@ def test_handle_exceptions_json_decode_error():
 def test_handle_exceptions_generic_exception():
     """Test that generic exceptions are handled and report to sentry."""
     with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
+        "sentry_sdk.capture_exception"
     ) as mock_sentry:
         value_error = ValueError("Generic error")
         mock_get.side_effect = value_error
@@ -432,9 +430,7 @@ def test_handle_exceptions_502_error_returns_default_no_sentry():
         error.response = response
         raise error
 
-    with patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
-    ) as mock_sentry:
+    with patch("sentry_sdk.capture_exception") as mock_sentry:
         result = func_raises_502()
         assert result == "fallback"
         mock_sentry.assert_not_called()
@@ -451,9 +447,7 @@ def test_handle_exceptions_503_error_returns_default_no_sentry():
         error.response = response
         raise error
 
-    with patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
-    ) as mock_sentry:
+    with patch("sentry_sdk.capture_exception") as mock_sentry:
         result = func_raises_503()
         assert result == "fallback"
         mock_sentry.assert_not_called()
@@ -469,9 +463,7 @@ def test_handle_exceptions_anthropic_500_no_sentry():
     def func_raises_anthropic_500():
         raise FakeServerError("Internal server error")
 
-    with patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
-    ) as mock_sentry:
+    with patch("sentry_sdk.capture_exception") as mock_sentry:
         result = func_raises_anthropic_500()
         assert result == "fallback"
         mock_sentry.assert_not_called()
@@ -486,9 +478,7 @@ def test_handle_exceptions_supabase_502_no_sentry():
         err.code = "502"  # type: ignore[attr-defined]
         raise err
 
-    with patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
-    ) as mock_sentry:
+    with patch("sentry_sdk.capture_exception") as mock_sentry:
         result = func_raises_supabase_502()
         assert result == "fallback"
         mock_sentry.assert_not_called()
@@ -503,9 +493,7 @@ def test_handle_exceptions_supabase_non_5xx_reports_sentry():
         err.code = "PGRST204"  # type: ignore[attr-defined]
         raise err
 
-    with patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
-    ) as mock_sentry:
+    with patch("sentry_sdk.capture_exception") as mock_sentry:
         result = func_raises_supabase_404()
         assert result == "fallback"
         mock_sentry.assert_called_once()
@@ -559,9 +547,7 @@ def test_handle_exceptions_403_remaining_positive_raises():
         error.response = response
         raise error
 
-    with patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
-    ) as mock_sentry:
+    with patch("sentry_sdk.capture_exception") as mock_sentry:
         with pytest.raises(requests.exceptions.HTTPError):
             func_403_remaining()
         mock_sentry.assert_called_once()
@@ -596,9 +582,7 @@ def test_handle_exceptions_http_error_non_rate_limit_raise_on_error():
         error.response = response
         raise error
 
-    with patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
-    ) as mock_sentry:
+    with patch("sentry_sdk.capture_exception") as mock_sentry:
         with pytest.raises(requests.exceptions.HTTPError):
             func_raises_404()
         mock_sentry.assert_called_once()
@@ -612,7 +596,7 @@ def test_handle_exceptions_json_decode_error_no_doc():
             delattr(error, "doc")
         raise error
 
-    with patch("utils.error.handle_exceptions.sentry_sdk.capture_exception"):
+    with patch("sentry_sdk.capture_exception"):
         result = func_json_error_no_doc()
         assert result == "default"
 
@@ -622,9 +606,7 @@ def test_handle_exceptions_json_decode_error_raise_on_error():
     def func_json_error_raises():
         raise json.JSONDecodeError("Invalid", "bad json", 0)
 
-    with patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
-    ) as mock_sentry:
+    with patch("sentry_sdk.capture_exception") as mock_sentry:
         with pytest.raises(json.JSONDecodeError):
             func_json_error_raises()
         mock_sentry.assert_called_once()
@@ -632,7 +614,7 @@ def test_handle_exceptions_json_decode_error_raise_on_error():
 
 @pytest.mark.asyncio
 async def test_async_handle_exceptions_returns_none_on_error():
-    with patch("utils.error.handle_exceptions.sentry_sdk.capture_exception"):
+    with patch("sentry_sdk.capture_exception"):
         coro = async_mock_function_for_testing()
         assert coro is not None
         result = await coro
@@ -641,7 +623,7 @@ async def test_async_handle_exceptions_returns_none_on_error():
 
 @pytest.mark.asyncio
 async def test_async_handle_exceptions_returns_custom_default():
-    with patch("utils.error.handle_exceptions.sentry_sdk.capture_exception"):
+    with patch("sentry_sdk.capture_exception"):
         coro = async_mock_function_with_custom_default()
         assert coro is not None
         result = await coro
@@ -650,7 +632,7 @@ async def test_async_handle_exceptions_returns_custom_default():
 
 @pytest.mark.asyncio
 async def test_async_handle_exceptions_raises_when_raise_on_error_true():
-    with patch("utils.error.handle_exceptions.sentry_sdk.capture_exception"):
+    with patch("sentry_sdk.capture_exception"):
         with pytest.raises(ValueError, match="Async test error"):
             coro = async_mock_function_with_raise_on_error()
             assert coro is not None
@@ -667,9 +649,7 @@ async def test_async_handle_exceptions_success_case():
 
 @pytest.mark.asyncio
 async def test_async_handle_exceptions_reports_to_sentry():
-    with patch(
-        "utils.error.handle_exceptions.sentry_sdk.capture_exception"
-    ) as mock_sentry:
+    with patch("sentry_sdk.capture_exception") as mock_sentry:
         coro = async_mock_function_for_testing()
         assert coro is not None
         await coro
@@ -694,3 +674,53 @@ async def test_async_handle_exceptions_cancelled_error_raises_when_raise_on_erro
 
     with pytest.raises(asyncio.CancelledError):
         await func_gets_cancelled()
+
+
+# --- Transient retry behavior (AGENT-36Z/36J) ---
+
+
+def test_decorator_retries_on_transient_value_error():
+    """Sentry AGENT-36Z/36J: retry a ValueError whose message indicates a
+    transient upstream failure, then succeed on the second attempt."""
+    attempts = {"count": 0}
+
+    @handle_exceptions(default_return_value=None, raise_on_error=False)
+    def flaky():
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise ValueError("Command failed: remote: Internal Server Error")
+        return "ok"
+
+    with patch("utils.error.handle_exceptions.time.sleep"):
+        assert flaky() == "ok"
+    assert attempts["count"] == 2
+
+
+def test_decorator_gives_up_after_max_attempts_on_transient_error():
+    """If every attempt hits a transient error, surface the failure via the
+    default_return_value — the bounded retry prevents infinite loops."""
+    attempts = {"count": 0}
+
+    @handle_exceptions(default_return_value="DEFAULT", raise_on_error=False)
+    def always_500():
+        attempts["count"] += 1
+        raise ValueError("Command failed: HTTP 502 Bad Gateway")
+
+    with patch("utils.error.handle_exceptions.time.sleep"):
+        assert always_500() == "DEFAULT"
+    # TRANSIENT_MAX_ATTEMPTS controls the total number of attempts.
+    assert attempts["count"] == TRANSIENT_MAX_ATTEMPTS
+
+
+def test_decorator_does_not_retry_non_transient_error():
+    """Non-transient failures must fail fast on the first attempt."""
+    attempts = {"count": 0}
+
+    @handle_exceptions(default_return_value="DEFAULT", raise_on_error=False)
+    def real_bug():
+        attempts["count"] += 1
+        raise ValueError("Command failed: fatal: pathspec 'x' did not match any files")
+
+    with patch("utils.error.handle_exceptions.time.sleep"):
+        assert real_bug() == "DEFAULT"
+    assert attempts["count"] == 1

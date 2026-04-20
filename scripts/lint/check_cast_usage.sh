@@ -2,13 +2,15 @@
 # Detect `cast` usage from typing module in staged Python implementation files.
 # Rule: No cast in impl files — fix underlying types or use isinstance narrowing.
 # Allowed in test files (test_*.py, conftest.py) for TypedDict fixtures.
+# Also allowed in utils/error/handle_exceptions.py: the generic decorator pattern with ParamSpec + TypeVar genuinely can't round-trip types without cast (async wrapper's Coroutine[...R] vs declared Callable[P, R]; helper returns typed Any).
 set -uo pipefail
 
 STAGED_PY_FILES=$(git diff --cached --name-only --diff-filter=d -- '*.py' \
     | grep -v '^\.\?venv/' \
     | grep -v '^schemas/' \
     | grep -vE '(^|/)test_' \
-    | grep -vE '(^|/)conftest\.py$')
+    | grep -vE '(^|/)conftest\.py$' \
+    | grep -v '^utils/error/handle_exceptions\.py$')
 
 if [ -z "$STAGED_PY_FILES" ]; then
     exit 0

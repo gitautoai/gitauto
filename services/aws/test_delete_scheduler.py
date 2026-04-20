@@ -204,15 +204,17 @@ def test_delete_scheduler_with_various_schedule_names(
 
 
 def test_delete_scheduler_logging_level(mock_scheduler_client):
-    """Test that the function uses logger.info for success messages."""
+    """Test that the function uses logger.info for success messages. Patch the
+    full module-level logger (not logger.info directly) so handle_exceptions'
+    shared Logger.info calls hit the real logger, not this test's mock."""
     schedule_name = "test-schedule"
     mock_scheduler_client.delete_schedule.return_value = None
 
-    with patch("services.aws.delete_scheduler.logger.info") as mock_info:
+    with patch("services.aws.delete_scheduler.logger") as mock_logger:
         result = delete_scheduler(schedule_name)
 
         assert result is True
-        mock_info.assert_called_once_with(
+        mock_logger.info.assert_called_once_with(
             "Deleted EventBridge Scheduler: %s", schedule_name
         )
 
