@@ -55,8 +55,14 @@ def test_create_empty_commit_skips_pre_commit_hooks(create_test_base_args):
         create_empty_commit(base_args_with_clone)
 
         commit_call = mock_subprocess.call_args_list[0]
-        assert "--no-verify" in commit_call[1]["args"]
-        assert "--allow-empty" in commit_call[1]["args"]
+        assert commit_call[1]["args"] == [
+            "git",
+            "commit",
+            "--allow-empty",
+            "--no-verify",
+            "-m",
+            "Empty commit to trigger final tests",
+        ]
 
 
 def test_create_empty_commit_failure(create_test_base_args):
@@ -74,6 +80,95 @@ def test_create_empty_commit_failure(create_test_base_args):
         result = create_empty_commit(base_args_with_clone)
 
         assert result is False
+
+
+def test_create_empty_commit_retries_on_non_fast_forward(create_test_base_args):
+    """Reproduces AGENT-36Y/30K: a concurrent handler (e.g. check_suite on an earlier
+    push) lands a commit on the branch while the agent loop is running, so the final
+    empty-commit push is rejected as non-fast-forward. We fetch, reset to remote tip,
+    recreate the empty commit on top, and push again."""
+    base_args_with_clone = create_test_base_args(
+        clone_url="https://x-access-token:token@github.com/test-owner/test-repo.git",
+        new_branch="gitauto/schedule-20260413-133550-Bk54",
+        clone_dir="/tmp/test-owner/test-repo/pr-514",
+    )
+    with patch("services.git.create_empty_commit.run_subprocess") as mock_subprocess:
+        reject_err = ValueError(
+            "Command failed: To https://github.com/test-owner/test-repo.git\n"
+            " ! [rejected]        HEAD -> gitauto/schedule-20260413-133550-Bk54 (fetch first)\n"
+            "error: failed to push some refs to 'https://github.com/test-owner/test-repo.git'\n"
+            "hint: Updates were rejected because the remote contains work that you do not\n"
+            "hint: have locally."
+        )
+        mock_subprocess.side_effect = [
+            None,  # commit (1st)
+            reject_err,  # push (1st, rejected)
+            None,  # fetch
+            None,  # reset --hard FETCH_HEAD
+            None,  # commit (2nd)
+            None,  # push (2nd, succeeds)
+        ]
+
+        result = create_empty_commit(base_args_with_clone)
+
+        assert result is True
+        clone_dir = "/tmp/test-owner/test-repo/pr-514"
+        clone_url = "https://x-access-token:token@github.com/test-owner/test-repo.git"
+        branch = "gitauto/schedule-20260413-133550-Bk54"
+        assert mock_subprocess.call_args_list == [
+            call(
+                args=[
+                    "git",
+                    "commit",
+                    "--allow-empty",
+                    "--no-verify",
+                    "-m",
+                    "Empty commit to trigger final tests",
+                ],
+                cwd=clone_dir,
+            ),
+            call(
+                args=["git", "push", clone_url, f"HEAD:refs/heads/{branch}"],
+                cwd=clone_dir,
+            ),
+            call(args=["git", "fetch", clone_url, branch], cwd=clone_dir),
+            call(args=["git", "reset", "--hard", "FETCH_HEAD"], cwd=clone_dir),
+            call(
+                args=[
+                    "git",
+                    "commit",
+                    "--allow-empty",
+                    "--no-verify",
+                    "-m",
+                    "Empty commit to trigger final tests",
+                ],
+                cwd=clone_dir,
+            ),
+            call(
+                args=["git", "push", clone_url, f"HEAD:refs/heads/{branch}"],
+                cwd=clone_dir,
+            ),
+        ]
+
+
+def test_create_empty_commit_does_not_retry_on_non_race_failure(create_test_base_args):
+    """A push failure that is not a non-fast-forward rejection should NOT trigger the
+    fetch-and-retry path — we'd just paper over real issues (auth, network, etc.)."""
+    base_args_with_clone = create_test_base_args(
+        clone_url="https://x-access-token:token@github.com/test-owner/test-repo.git",
+        new_branch="feature-branch",
+        clone_dir="/tmp/test-owner/test-repo/pr-123",
+    )
+    with patch("services.git.create_empty_commit.run_subprocess") as mock_subprocess:
+        mock_subprocess.side_effect = [
+            None,  # commit
+            ValueError("Command failed: fatal: Authentication failed"),  # push
+        ]
+
+        result = create_empty_commit(base_args_with_clone)
+
+        assert result is False
+        assert len(mock_subprocess.call_args_list) == 2
 
 
 def test_create_empty_commit_custom_message(create_test_base_args):
@@ -210,3 +305,94 @@ def test_integration_empty_commit_on_shallow_clone_with_new_branch(
     )
     result = create_empty_commit(base_args, message="Initial empty commit [skip ci]")
     assert result is True
+
+
+@pytest.mark.integration
+def test_integration_empty_commit_races_with_concurrent_push(
+    local_repo, tmp_path, create_test_base_args
+):
+    """Reproduces AGENT-36Y/30K: while our agent loop is running, another handler
+    pushes a commit to the same branch. Our final empty-commit push must recover by
+    fetching, rebasing on the new tip, and pushing again."""
+    bare_url, _ = local_repo
+
+    # Our agent's working clone
+    agent_dir = str(tmp_path / "agent")
+    subprocess.run(
+        ["git", "clone", bare_url, agent_dir], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "gitauto"],
+        cwd=agent_dir,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "gitauto@test.com"],
+        cwd=agent_dir,
+        check=True,
+        capture_output=True,
+    )
+
+    # A concurrent handler (separate clone) pushes a commit to main after ours is
+    # cloned but before our empty-commit push.
+    concurrent_dir = str(tmp_path / "concurrent")
+    subprocess.run(
+        ["git", "clone", bare_url, concurrent_dir], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "other"],
+        cwd=concurrent_dir,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "other@test.com"],
+        cwd=concurrent_dir,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "commit", "--allow-empty", "-m", "racing commit"],
+        cwd=concurrent_dir,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "push", "origin", "main"],
+        cwd=concurrent_dir,
+        check=True,
+        capture_output=True,
+    )
+    racing_sha = _get_sha(concurrent_dir, "HEAD")
+
+    # Our agent tries an empty commit — first push is rejected, retry succeeds.
+    base_args = create_test_base_args(
+        clone_url=bare_url,
+        new_branch="main",
+        clone_dir=agent_dir,
+    )
+    result = create_empty_commit(
+        base_args, message="Empty commit to trigger final tests"
+    )
+    assert result is True
+
+    # Verify remote head is our empty commit on top of the racing commit
+    subprocess.run(["git", "fetch"], cwd=agent_dir, check=True, capture_output=True)
+    remote_tip = _get_sha(agent_dir, "origin/main")
+    parent_sha = subprocess.run(
+        ["git", "rev-parse", f"{remote_tip}^"],
+        cwd=agent_dir,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert parent_sha == racing_sha
+    msg = subprocess.run(
+        ["git", "log", "-1", "--format=%s", remote_tip],
+        cwd=agent_dir,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert msg == "Empty commit to trigger final tests"
