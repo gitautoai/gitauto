@@ -5,9 +5,10 @@ from unittest.mock import Mock, patch
 import pytest
 from constants.models import ClaudeModelId, GoogleModelId, ModelId
 from services.chat_with_agent import chat_with_agent
-from services.llm_result import LlmResult, ToolCall
 from services.claude.exceptions import ClaudeOverloadedError
+from services.claude.tools import tools as tools_module
 from services.claude.tools.file_modify_result import FileMoveResult, FileWriteResult
+from services.llm_result import LlmResult, ToolCall
 
 
 @pytest.mark.asyncio
@@ -1245,3 +1246,79 @@ async def test_all_models_exhausted_raises(mock_chat_with_model, create_test_bas
             usage_id=1,
             model_id=GoogleModelId.GEMMA_4_31B,
         )
+
+
+@pytest.mark.asyncio
+@patch("services.chat_with_agent.chat_with_model")
+async def test_concurrent_push_from_tool_short_circuits_loop(
+    mock_chat_with_model, create_test_base_args
+):
+    """AGENT-36T: when a tool wrapper reports a concurrent push, chat_with_agent
+    must set AgentResult.concurrent_push_detected=True, stop processing further
+    tool calls this turn, and return so the handler can bail cleanly."""
+    mock_chat_with_model.return_value = LlmResult(
+        assistant_message={
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "call_1",
+                    "name": "write_and_commit_file",
+                    "input": {"file_path": "a.py", "file_content": "x"},
+                },
+                {
+                    "type": "tool_use",
+                    "id": "call_2",
+                    "name": "write_and_commit_file",
+                    "input": {"file_path": "b.py", "file_content": "y"},
+                },
+            ],
+        },
+        tool_calls=[
+            ToolCall(
+                id="call_1",
+                name="write_and_commit_file",
+                args={"file_path": "a.py", "file_content": "x"},
+            ),
+            ToolCall(
+                id="call_2",
+                name="write_and_commit_file",
+                args={"file_path": "b.py", "file_content": "y"},
+            ),
+        ],
+        token_input=10,
+        token_output=10,
+        cost_usd=0.01,
+    )
+
+    call_count = {"n": 0}
+
+    def fake_tool(**kwargs):
+        call_count["n"] += 1
+        return FileWriteResult(
+            success=False,
+            message=f"Concurrent push detected on branch while committing {kwargs.get('file_path')}.",
+            file_path=cast(str, kwargs.get("file_path", "")),
+            content="",
+            concurrent_push_detected=True,
+        )
+
+    with patch.dict(
+        tools_module.tools_to_call,
+        {"write_and_commit_file": fake_tool},
+        clear=False,
+    ), patch("services.chat_with_agent.update_comment"):
+        base_args = create_test_base_args(model_id=ClaudeModelId.SONNET_4_6)
+        result = await chat_with_agent(
+            messages=[{"role": "user", "content": "edit two files"}],
+            system_message="test",
+            base_args=base_args,
+            tools=[],
+            usage_id=1,
+            model_id=ClaudeModelId.SONNET_4_6,
+        )
+
+    assert result.concurrent_push_detected is True
+    assert result.is_completed is False
+    # Second tool call was skipped — we bailed after the first detected the race.
+    assert call_count["n"] == 1

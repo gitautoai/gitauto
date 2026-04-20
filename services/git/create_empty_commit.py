@@ -1,3 +1,4 @@
+from services.git.get_branch_head_author import get_branch_head_author
 from services.types.base_args import BaseArgs
 from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
@@ -28,15 +29,13 @@ def create_empty_commit(
                 err_text,
             )
             raise
-
-        # A concurrent handler (e.g. check_suite on an earlier push) landed a commit on this branch while our agent loop was running. Sync local to remote, drop our local empty commit, recreate on top of the new tip, and push. Our real work was already pushed by git_commit_and_push earlier in the flow, so the only local-but-not-remote commit here is the empty one we just made.
+        author = get_branch_head_author(clone_dir, clone_url, branch)
         logger.warning(
-            "Empty commit push rejected (non-fast-forward); syncing with remote %s and retrying",
+            "create_empty_commit abandoning %s: remote has commits we do not have (racer=%s). Retriggering CI on a state they chose to land is noise; returning False so the caller can post accurate status instead of claiming CI was re-triggered.",
             branch,
+            author,
         )
-        run_subprocess(args=["git", "fetch", clone_url, branch], cwd=clone_dir)
-        run_subprocess(args=["git", "reset", "--hard", "FETCH_HEAD"], cwd=clone_dir)
-        run_subprocess(args=commit_args, cwd=clone_dir)
-        run_subprocess(args=push_args, cwd=clone_dir)
+        return False
 
+    logger.info("create_empty_commit pushed on %s", branch)
     return True

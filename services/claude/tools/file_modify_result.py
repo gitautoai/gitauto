@@ -11,6 +11,7 @@ class FileWriteResult:
     content: str
     diff: str = ""
     commit_sha: str = ""
+    concurrent_push_detected: bool = False
 
 
 @dataclass
@@ -21,3 +22,14 @@ class FileMoveResult:
     message: str
     old_file_path: str
     new_file_path: str
+    concurrent_push_detected: bool = False
+
+
+@dataclass
+class FileDeleteResult:
+    """Result from file delete operations."""
+
+    success: bool
+    message: str
+    file_path: str
+    concurrent_push_detected: bool = False

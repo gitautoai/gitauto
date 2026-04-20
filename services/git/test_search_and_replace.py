@@ -14,7 +14,9 @@ import tempfile
 import pytest
 
 from services.claude.tools.file_modify_result import FileWriteResult
+from services.git import search_and_replace as search_and_replace_mod
 from services.git.git_clone_to_tmp import git_clone_to_tmp
+from services.git.git_commit_and_push import GitCommitResult
 from services.git.search_and_replace import search_and_replace
 
 
@@ -64,9 +66,8 @@ def test_successful_replacement(create_test_base_args, tmp_path):
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
     assert result.success is True
-    assert "Updated test.py" in result.message
+    assert result.message == "Updated test.py."
     assert (
         tmp_path / "test.py"
     ).read_text() == "print('hello modified world')\nprint('goodbye')\n"
@@ -81,9 +82,12 @@ def test_file_not_found(create_test_base_args, tmp_path):
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
-    assert result.success is False
-    assert "not found" in result.message
+    assert result == FileWriteResult(
+        success=False,
+        message="File 'nonexistent.py' not found.",
+        file_path="nonexistent.py",
+        content="",
+    )
 
 
 def test_directory_path_error(create_test_base_args, tmp_path):
@@ -97,9 +101,12 @@ def test_directory_path_error(create_test_base_args, tmp_path):
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
-    assert result.success is False
-    assert "directory" in result.message
+    assert result == FileWriteResult(
+        success=False,
+        message="'my_dir' is a directory, not a file.",
+        file_path="my_dir",
+        content="",
+    )
 
 
 def test_empty_old_string(create_test_base_args, tmp_path):
@@ -113,9 +120,12 @@ def test_empty_old_string(create_test_base_args, tmp_path):
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
-    assert result.success is False
-    assert "must not be empty" in result.message
+    assert result == FileWriteResult(
+        success=False,
+        message="old_string must not be empty. Provide the exact text to find.",
+        file_path="test.py",
+        content="content\n",
+    )
 
 
 def test_old_string_not_found(create_test_base_args, tmp_path):
@@ -129,9 +139,12 @@ def test_old_string_not_found(create_test_base_args, tmp_path):
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
-    assert result.success is False
-    assert "not found" in result.message
+    assert result == FileWriteResult(
+        success=False,
+        message="old_string not found in 'test.py'. Verify the exact text including whitespace and indentation.",
+        file_path="test.py",
+        content="print('hello')\n",
+    )
 
 
 def test_multiple_occurrences(create_test_base_args, tmp_path):
@@ -145,10 +158,12 @@ def test_multiple_occurrences(create_test_base_args, tmp_path):
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
-    assert result.success is False
-    assert "2 times" in result.message
-    assert "more surrounding context" in result.message
+    assert result == FileWriteResult(
+        success=False,
+        message="old_string found 2 times in 'test.py'. Add more surrounding context to make it unique.",
+        file_path="test.py",
+        content="foo\nfoo\nbar\n",
+    )
 
 
 def test_no_change_when_old_equals_new(create_test_base_args, tmp_path):
@@ -162,9 +177,12 @@ def test_no_change_when_old_equals_new(create_test_base_args, tmp_path):
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
-    assert result.success is True
-    assert "No changes" in result.message
+    assert result == FileWriteResult(
+        success=True,
+        message="No changes to test.py.",
+        file_path="test.py",
+        content="hello world\n",
+    )
 
 
 def test_preserve_crlf_line_endings(create_test_base_args, tmp_path):
@@ -181,8 +199,7 @@ def test_preserve_crlf_line_endings(create_test_base_args, tmp_path):
     assert isinstance(result, FileWriteResult)
     assert result.success is True
     content = (tmp_path / "test.txt").read_text(newline="")
-    assert "modified_line2" in content
-    assert "\r\n" in content
+    assert content == "line1\r\nmodified_line2\r\nline3\r\n"
 
 
 def test_nested_file_path(create_test_base_args, tmp_path):
@@ -230,11 +247,10 @@ def test_diff_included_in_message(create_test_base_args, tmp_path):
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
     assert result.success is True
-    assert "Diff:" not in result.message
-    assert "-beta" in result.diff
-    assert "+delta" in result.diff
+    assert result.message == "Updated test.py."
+    diff_lines = set(result.diff.splitlines())
+    assert {"-beta", "+delta"}.issubset(diff_lines)
 
 
 # ---------------------------------------------------------------------------
@@ -263,9 +279,11 @@ def test_pydecimal_convert_other_block_rejected_14_matches(
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
+    assert (
+        result.message
+        == "old_string found 14 times in '_pydecimal.py'. Add more surrounding context to make it unique."
+    )
     assert result.success is False
-    assert "14 times" in result.message
 
 
 def test_pydecimal_context_getcontext_block_rejected_39_matches(
@@ -282,9 +300,11 @@ def test_pydecimal_context_getcontext_block_rejected_39_matches(
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
+    assert (
+        result.message
+        == "old_string found 39 times in '_pydecimal.py'. Add more surrounding context to make it unique."
+    )
     assert result.success is False
-    assert "39 times" in result.message
 
 
 def test_pydecimal_add_method_unique_with_docstring(
@@ -304,19 +324,19 @@ def test_pydecimal_add_method_unique_with_docstring(
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
     assert result.success is True
+    assert result.message == "Updated _pydecimal.py."
     content = (tmp_path / "_pydecimal.py").read_text()
-    assert "NOTE: patched by search_and_replace test." in content
-    # __sub__ must be untouched
-    assert "def __sub__(self, other, context=None):" in content
+    # __add__ got the NOTE, __sub__ untouched
+    assert content.count("NOTE: patched by search_and_replace test.") == 1
+    assert content.count("def __sub__(self, other, context=None):") == 1
     # File is still large (no accidental truncation)
     assert len(content.split("\n")) > 6000
     # result.content must match what was written to disk
     assert result.content == content
-    # Diff must be in the diff field, not in message
-    assert "Diff:" not in result.message
-    assert "+        NOTE: patched by search_and_replace test." in result.diff
+    # Diff must be present, with our change
+    diff_lines = result.diff.splitlines()
+    assert diff_lines.count("+        NOTE: patched by search_and_replace test.") == 1
 
 
 def test_pydecimal_disambiguate_convert_other_via_method_signature(
@@ -336,20 +356,22 @@ def test_pydecimal_disambiguate_convert_other_via_method_signature(
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
     assert result.success is True
+    assert result.message == "Updated _pydecimal.py."
     content = (tmp_path / "_pydecimal.py").read_text()
     # Only __add__ should have the change
-    assert "_convert_other(other, raiseit=False)" in content
+    assert content.count("_convert_other(other, raiseit=False)") == 1
     # __sub__ still has the original pattern
     sub_idx = content.index("def __sub__(self")
     sub_block = content[sub_idx : sub_idx + 500]
-    assert "_convert_other(other)" in sub_block
-    assert "raiseit=False" not in sub_block
+    assert sub_block.count("_convert_other(other)") == 1
+    assert sub_block.count("raiseit=False") == 0
     # result.content matches disk and diff is present
     assert result.content == content
-    assert "Diff:" not in result.message
-    assert "+        other = _convert_other(other, raiseit=False)" in result.diff
+    diff_lines = result.diff.splitlines()
+    assert (
+        diff_lines.count("+        other = _convert_other(other, raiseit=False)") == 1
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -375,9 +397,11 @@ def test_argparse_call_signature_rejected_11_matches(
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
+    assert (
+        result.message
+        == "old_string found 11 times in 'argparse.py'. Add more surrounding context to make it unique."
+    )
     assert result.success is False
-    assert "11 times" in result.message
 
 
 def test_argparse_init_option_strings_rejected_12_matches(
@@ -394,10 +418,11 @@ def test_argparse_init_option_strings_rejected_12_matches(
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
     assert result.success is False
-    # Exact count depends on Python version but should be > 1
-    assert "times" in result.message
+    # Message is "old_string found N times in 'argparse.py'. ..." — assert the full format
+    needle = "'argparse.py'. Add more surrounding context to make it unique."
+    assert result.message.endswith(needle)
+    assert result.message.startswith("old_string found ")
 
 
 def test_argparse_help_action_call_unique_with_body(
@@ -417,22 +442,22 @@ def test_argparse_help_action_call_unique_with_body(
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
     assert result.success is True
+    assert result.message == "Updated argparse.py."
     content = (tmp_path / "argparse.py").read_text()
-    assert "parser.print_help(file=None)" in content
-    assert "parser.exit(status=0)" in content
+    assert content.count("parser.print_help(file=None)") == 1
+    assert content.count("parser.exit(status=0)") == 1
     # Other __call__ methods untouched (e.g. _VersionAction still has its own body)
     assert (
-        "parser.exit(message=formatter.format_help())" in content
-        or "parser._print_message" in content
+        content.count("parser.exit(message=formatter.format_help())") == 1
+        or content.count("parser._print_message") >= 1
     )
     assert len(content.split("\n")) > 2500
     # result.content matches disk and diff is present
     assert result.content == content
-    assert "Diff:" not in result.message
-    assert "+        parser.print_help(file=None)" in result.diff
-    assert "+        parser.exit(status=0)" in result.diff
+    diff_lines = result.diff.splitlines()
+    assert diff_lines.count("+        parser.print_help(file=None)") == 1
+    assert diff_lines.count("+        parser.exit(status=0)") == 1
 
 
 def test_argparse_disambiguate_call_via_class_context(
@@ -452,17 +477,17 @@ def test_argparse_disambiguate_call_via_class_context(
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
     assert result.success is True
+    assert result.message == "Updated argparse.py."
     content = (tmp_path / "argparse.py").read_text()
-    assert '"Display help and exit."' in content
+    assert content.count('"Display help and exit."') == 1
     # Other Action subclasses untouched
-    assert "class _VersionAction(Action):" in content
-    assert "class _StoreAction(Action):" in content
+    assert content.count("class _VersionAction(Action):") == 1
+    assert content.count("class _StoreAction(Action):") == 1
     # result.content matches disk and diff is present
     assert result.content == content
-    assert "Diff:" not in result.message
-    assert '+    """Display help and exit."""' in result.diff
+    diff_lines = result.diff.splitlines()
+    assert diff_lines.count('+    """Display help and exit."""') == 1
 
 
 # ---------------------------------------------------------------------------
@@ -488,9 +513,11 @@ def test_typing_reduce_rejected_7_matches(
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
+    assert (
+        result.message
+        == "old_string found 7 times in 'typing.py'. Add more surrounding context to make it unique."
+    )
     assert result.success is False
-    assert "7 times" in result.message
 
 
 def test_typing_repr_rejected_11_matches(
@@ -507,9 +534,11 @@ def test_typing_repr_rejected_11_matches(
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
+    assert (
+        result.message
+        == "old_string found 11 times in 'typing.py'. Add more surrounding context to make it unique."
+    )
     assert result.success is False
-    assert "11 times" in result.message
 
 
 def test_typing_special_form_class_unique(
@@ -541,15 +570,14 @@ def test_typing_special_form_class_unique(
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
     assert result.success is True
+    assert result.message == "Updated typing.py."
     content = (tmp_path / "typing.py").read_text()
-    assert "search_and_replace patched" in content
+    assert content.count("search_and_replace patched") == 1
     assert len(content.split("\n")) > 3500
     # result.content matches disk and diff is present
     assert result.content == content
-    assert "Diff:" not in result.message
-    assert result.diff
+    assert result.diff != ""
 
 
 # ---------------------------------------------------------------------------
@@ -615,7 +643,10 @@ def test_argparse_replacement_does_not_corrupt_other_classes(
         "_VersionAction",
         "_SubParsersAction",
     ]:
-        assert f"class {cls}(Action):" in content or f"class {cls}(Action)" in content
+        assert (
+            content.count(f"class {cls}(Action):")
+            + content.count(f"class {cls}(Action)\n")
+        ) >= 1
 
 
 # ---------------------------------------------------------------------------
@@ -635,9 +666,12 @@ def test_tabs_vs_spaces_mismatch_not_found(create_test_base_args, tmp_path):
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
-    assert result.success is False
-    assert "not found" in result.message
+    assert result == FileWriteResult(
+        success=False,
+        message="old_string not found in 'test.py'. Verify the exact text including whitespace and indentation.",
+        file_path="test.py",
+        content="def foo():\n\treturn 1\n",
+    )
 
 
 def test_crlf_multiline_old_string_with_lf_input(create_test_base_args, tmp_path):
@@ -655,13 +689,11 @@ def test_crlf_multiline_old_string_with_lf_input(create_test_base_args, tmp_path
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
     assert result.success is True
     content = (tmp_path / "test.cs").read_text(newline="")
-    assert "int x = 10;" in content
-    assert "int y = 20;" in content
-    assert "\r\n" in content
-    assert content.count("\n") == content.count("\r\n")
+    assert (
+        content == "public class Foo {\r\n    int x = 10;\r\n    int y = 20;\r\n}\r\n"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -682,9 +714,10 @@ def test_regex_metacharacters_treated_as_literal(create_test_base_args, tmp_path
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
     assert result.success is True
-    assert 'r"^(foo|bar|qux)\\.(baz)+$"' in (tmp_path / "test.py").read_text()
+    assert (tmp_path / "test.py").read_text() == (
+        'pattern = r"^(foo|bar|qux)\\.(baz)+$"\nother = "hello"\n'
+    )
 
 
 def test_unicode_content(create_test_base_args, tmp_path):
@@ -701,11 +734,10 @@ def test_unicode_content(create_test_base_args, tmp_path):
         base_args=base_args,
     )
 
-    assert isinstance(result, FileWriteResult)
     assert result.success is True
-    content = (tmp_path / "test.py").read_text()
-    assert 'message = "Hello, 世界!"' in content
-    assert "# コメント" in content
+    assert (tmp_path / "test.py").read_text() == (
+        '# コメント\nmessage = "Hello, 世界!"\nprint(message)\n'
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -852,14 +884,46 @@ def test_search_and_replace_end_to_end(local_repo, create_test_base_args):
         assert result.success is True
 
         with open(os.path.join(clone_dir, "README.md"), encoding="utf-8") as f:
-            assert "# Modified Test" in f.read()
+            content = f.read()
+        assert content.count("# Modified Test") == 1
 
         bare_dir = bare_url.replace("file://", "")
         log = subprocess.run(
-            ["git", "log", "--oneline", "feature/replace-test", "-1"],
+            ["git", "log", "--format=%s", "feature/replace-test", "-1"],
             cwd=bare_dir,
             capture_output=True,
             text=True,
             check=False,
         )
-        assert "Update README.md" in log.stdout
+        assert log.stdout.strip().splitlines()[0] == "Update README.md"
+
+
+def test_search_and_replace_propagates_concurrent_push(
+    create_test_base_args, tmp_path, monkeypatch
+):
+    """Concurrent push from git_commit_and_push must bubble up as FileWriteResult(concurrent_push_detected=True) so chat_with_agent breaks the agent loop cleanly."""
+    (tmp_path / "a.py").write_text("old line\n")
+
+    monkeypatch.setattr(
+        search_and_replace_mod,
+        "git_commit_and_push",
+        lambda **kwargs: GitCommitResult(success=False, concurrent_push_detected=True),
+    )
+
+    base_args = create_test_base_args(
+        clone_dir=str(tmp_path), new_branch="feature/raced"
+    )
+    result = search_and_replace(
+        old_string="old line",
+        new_string="new line",
+        file_path="a.py",
+        base_args=base_args,
+    )
+
+    assert result == FileWriteResult(
+        success=False,
+        message="Concurrent push detected on `feature/raced` while committing a.py. Another commit landed; aborting this edit.",
+        file_path="a.py",
+        content="",
+        concurrent_push_detected=True,
+    )

@@ -81,6 +81,11 @@ async def setup_handler(
             f"Setup skipped for {owner_name}/{repo_name}: no installation found",
             thread_ts=thread_ts,
         )
+        logger.info(
+            "Exiting setup_handler: no installation record for %s/%s, cannot run setup",
+            owner_name,
+            repo_name,
+        )
         return
     installation_id = installation["installation_id"]
     owner_id = installation["owner_id"]
@@ -89,9 +94,19 @@ async def setup_handler(
     repository = get_repository_by_name(owner_id, repo_name)
     repo_id = repository["repo_id"] if repository else 0
     if repository and repository.get("target_branch"):
+        logger.info(
+            "Dashboard-configured target_branch present for %s/%s; using it",
+            owner_name,
+            repo_name,
+        )
         target_branch = repository["target_branch"]
         logger.info("Using target_branch: %s", target_branch)
     else:
+        logger.info(
+            "No dashboard target_branch for %s/%s; falling back to remote default branch",
+            owner_name,
+            repo_name,
+        )
         clone_url = get_clone_url(owner_name, repo_name, token)
         target_branch = get_default_branch(clone_url=clone_url)
         if not target_branch:
@@ -99,6 +114,11 @@ async def setup_handler(
             slack_notify(
                 f"Setup skipped for {owner_name}/{repo_name}: repository is empty",
                 thread_ts=thread_ts,
+            )
+            logger.info(
+                "Exiting setup_handler: %s/%s has no default branch (empty repo)",
+                owner_name,
+                repo_name,
             )
             return
         logger.info("Using default branch as target: %s", target_branch)
@@ -116,6 +136,10 @@ async def setup_handler(
     sender_info = get_user_public_info(username=sender_name, token=token)
     sender_email = sender_info.email
     if not sender_email:
+        logger.info(
+            "Sender %s has no public email; falling back to commit-author email lookup for setup_handler",
+            sender_name,
+        )
         sender_email = get_email_from_commits(
             owner=owner_name, repo=repo_name, username=sender_name, token=token
         )
@@ -188,12 +212,21 @@ async def setup_handler(
     # GitHub Actions workflows (multiple .yml files in a directory)
     local_workflow_dir = os.path.join(clone_dir, GHA_WORKFLOW_DIR)
     if os.path.isdir(local_workflow_dir):
+        logger.info(
+            "GitHub Actions workflow dir present at %s; scanning .yml files",
+            local_workflow_dir,
+        )
         for filename in os.listdir(local_workflow_dir):
             if not filename.endswith(".yml"):
                 logger.info("Skipping non-YAML file: %s", filename)
                 continue
             content = read_local_file(file_path=filename, base_dir=local_workflow_dir)
             if content:
+                logger.info(
+                    "Captured GitHub Actions workflow %s (%d chars) for setup agent context",
+                    filename,
+                    len(content),
+                )
                 ci_configs[f"{GHA_WORKFLOW_DIR}/{filename} (GitHub Actions)"] = (
                     format_content_with_line_numbers(
                         file_path=f"{GHA_WORKFLOW_DIR}/{filename}", content=content
@@ -204,8 +237,19 @@ async def setup_handler(
     for config_path, ci_name in CI_CONFIG_FILES:
         full_path = os.path.join(clone_dir, config_path)
         if os.path.isfile(full_path):
+            logger.info(
+                "Found %s config at %s; reading for setup agent context",
+                ci_name,
+                config_path,
+            )
             content = read_local_file(file_path=config_path, base_dir=clone_dir)
             if content:
+                logger.info(
+                    "Captured %s config %s (%d chars) for setup agent context",
+                    ci_name,
+                    config_path,
+                    len(content),
+                )
                 ci_configs[f"{config_path} ({ci_name})"] = (
                     format_content_with_line_numbers(
                         file_path=config_path, content=content
@@ -247,7 +291,10 @@ async def setup_handler(
     is_completed = False
 
     completion_reason = ""
-    for _iteration in range(MAX_ITERATIONS):
+    for iteration in range(MAX_ITERATIONS):
+        logger.info(
+            "setup_handler agent loop iteration %d/%d", iteration + 1, MAX_ITERATIONS
+        )
         result = await chat_with_agent(
             messages=messages,
             system_message=SETUP_HANDLER_SYSTEM_MESSAGE,
@@ -264,6 +311,10 @@ async def setup_handler(
         if result.is_completed:
             logger.info("Setup agent completed successfully")
             is_completed = True
+            logger.info(
+                "Breaking setup agent loop on iteration %d: verify_task_is_complete reported success",
+                iteration + 1,
+            )
             break
 
     logger.info(
@@ -273,6 +324,14 @@ async def setup_handler(
     )
 
     if usage_id:
+        logger.info(
+            "Finalizing usage_id=%s for setup PR #%s: tokens_in=%d tokens_out=%d is_completed=%s",
+            usage_id,
+            pr_number,
+            total_token_input,
+            total_token_output,
+            is_completed,
+        )
         update_usage(
             usage_id=usage_id,
             is_completed=is_completed,
