@@ -18,6 +18,10 @@ Parameters:
   ECRImageUri:
     Type: String
     Description: ECR image URI (e.g., 123456789.dkr.ecr.us-west-1.amazonaws.com/pr-agent-prod:abc123)
+  LambdaTimeoutSeconds:
+    Type: Number
+    Description: Lambda max execution time. Exposed to the function as the LAMBDA_TIMEOUT_SECONDS env var so Python code reads one source of truth.
+    Default: 900
 
 Resources:
 
@@ -141,13 +145,15 @@ Resources:
       MemorySize: 4096
       EphemeralStorage:
         Size: 2048
-      Timeout: 900
+      Timeout: !Ref LambdaTimeoutSeconds
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
         Variables:
           # When adding/removing env vars: register in SSM (`aws ssm put-parameter --name /gitauto/KEY --value VAL --type SecureString --overwrite`), update infrastructure/lambda-env-backup.json, and update .env.template
           # Lambda's default HOME (/home/sbx_user1051) doesn't exist, causing npm/git/etc to fail when they try to write to HOME
           HOME: '/tmp'
+          # CFN Environment.Variables values must be strings; !Sub forces stringification of the Number parameter.
+          LAMBDA_TIMEOUT_SECONDS: !Sub '${LambdaTimeoutSeconds}'
           ANTHROPIC_API_KEY: '{{resolve:ssm:/gitauto/ANTHROPIC_API_KEY}}'
           GOOGLE_AI_API_KEY: '{{resolve:ssm:/gitauto/GOOGLE_AI_API_KEY}}'
           ENV: '{{resolve:ssm:/gitauto/ENV}}'

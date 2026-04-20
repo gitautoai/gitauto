@@ -400,6 +400,24 @@ class OwnersInsert(TypedDict):
     auto_reload_in_progress: NotRequired[datetime.datetime | None]
 
 
+class PrLocks(TypedDict):
+    owner_id: int
+    repo_id: int
+    pr_number: int
+    lambda_request_id: str
+    acquired_at: datetime.datetime
+    expires_at: datetime.datetime
+
+
+class PrLocksInsert(TypedDict):
+    owner_id: int
+    repo_id: int
+    pr_number: int
+    lambda_request_id: str
+    acquired_at: datetime.datetime
+    expires_at: datetime.datetime
+
+
 class RepoCoverage(TypedDict):
     id: int
     owner_id: int

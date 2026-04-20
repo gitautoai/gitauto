@@ -1,8 +1,11 @@
 # Standard imports
+import importlib
+import os
 from unittest.mock import patch
 import pytest
 
 # Local imports
+import utils.time.is_lambda_timeout_approaching as lambda_timeout_module
 from utils.time.is_lambda_timeout_approaching import (
     is_lambda_timeout_approaching,
     LAMBDA_TIMEOUT_SECONDS,
@@ -244,6 +247,17 @@ class TestIsLambdaTimeoutApproaching:
     def test_lambda_timeout_seconds_constant(self):
         """Test that LAMBDA_TIMEOUT_SECONDS constant has expected value."""
         assert LAMBDA_TIMEOUT_SECONDS == 900
+
+    def test_lambda_timeout_seconds_reads_env_var(self):
+        """CFN writes LAMBDA_TIMEOUT_SECONDS env var; Python must honor it."""
+        with patch.dict(os.environ, {"LAMBDA_TIMEOUT_SECONDS": "600"}):
+            reloaded = importlib.reload(lambda_timeout_module)
+            assert reloaded.LAMBDA_TIMEOUT_SECONDS == 600
+
+        # Restore the module to the default so later imports see the real value
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("LAMBDA_TIMEOUT_SECONDS", None)
+            importlib.reload(lambda_timeout_module)
 
     def test_function_has_handle_exceptions_decorator(self):
         """Test that the function is decorated with handle_exceptions."""
