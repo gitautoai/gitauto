@@ -23,6 +23,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/rwest/Repositories/gitauto/.claude/hooks/check-logger-coverage.sh",
+            "timeout": 15
+          }
+        ]
+      }
     ]
   },
   "permissions": {
