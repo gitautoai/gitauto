@@ -77,10 +77,79 @@ def test_delete_file_end_to_end(local_repo, create_test_base_args):
         assert not os.path.exists(os.path.join(clone_dir, "src", "main.py"))
 
         log = subprocess.run(
-            ["git", "log", "--oneline", "feature/delete-test", "-1"],
+            ["git", "log", "--format=%s", "feature/delete-test", "-1"],
             cwd=bare_dir,
             capture_output=True,
             text=True,
             check=False,
         )
-        assert "Delete src/main.py" in log.stdout
+        assert log.stdout.strip() == "Delete src/main.py"
+
+
+@pytest.mark.integration
+def test_delete_gitignored_file_skips_commit(local_repo, create_test_base_args):
+    """Reproduces AGENT-36X/36W/344: the agent deletes a local gitignored file
+    (e.g. mongodb-binaries/*.tgz cached from a prior CI run). delete_file used to
+    rm the file then run `git add <path>` which fails with 'pathspec did not match
+    any files' because git never tracked it. Now we detect untracked paths and
+    skip the commit entirely."""
+    bare_url, _work_dir = local_repo
+    bare_dir = bare_url.replace("file://", "")
+
+    with tempfile.TemporaryDirectory() as clone_dir:
+        git_clone_to_tmp(clone_dir, bare_url, "main")
+
+        # .gitignore the mongodb-binaries directory, then drop a file in it locally.
+        with open(os.path.join(clone_dir, ".gitignore"), "a", encoding="utf-8") as f:
+            f.write("mongodb-binaries/\n")
+        os.makedirs(os.path.join(clone_dir, "mongodb-binaries"), exist_ok=True)
+        (
+            os.path.join(clone_dir, "mongodb-binaries", "cache.tgz")
+        )  # noqa: B018 -- path existence below
+        with open(
+            os.path.join(clone_dir, "mongodb-binaries", "cache.tgz"),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            f.write("binary data")
+
+        # Capture remote head BEFORE deletion so we can prove nothing was pushed.
+        head_before = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=bare_dir,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+
+        base_args = create_test_base_args(
+            clone_dir=clone_dir,
+            clone_url=bare_url,
+            new_branch="feature/delete-gitignored",
+        )
+
+        result = delete_file("mongodb-binaries/cache.tgz", base_args)
+
+        assert result == "File mongodb-binaries/cache.tgz successfully deleted"
+        assert not os.path.exists(
+            os.path.join(clone_dir, "mongodb-binaries", "cache.tgz")
+        )
+
+        # No commit/push should have occurred because the file was never tracked.
+        head_after = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=bare_dir,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        assert head_after == head_before
+
+        # And the new_branch should not exist on the remote.
+        branch_check = subprocess.run(
+            ["git", "ls-remote", "--heads", bare_url, "feature/delete-gitignored"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        assert branch_check.stdout.strip() == ""
