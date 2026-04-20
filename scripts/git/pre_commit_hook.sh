@@ -86,6 +86,17 @@ echo "--- builtin logging check ---"
 scripts/lint/check_builtin_logging.sh
 if [ $? -ne 0 ]; then exit 1; fi
 
+# Logger coverage check (staged Python files)
+echo "--- logger coverage check ---"
+if [ -n "$STAGED_PY_FILES" ]; then
+    # shellcheck disable=SC2086
+    scripts/lint/check_logger_coverage.sh $STAGED_PY_FILES
+    if [ $? -ne 0 ]; then
+        echo "FAILED: Add logger calls per CLAUDE.md (see violations above)."
+        exit 1
+    fi
+fi
+
 # Test file checks (new files need tests, changed impl needs changed test)
 echo "--- test file check ---"
 scripts/lint/check_test_files.sh
