@@ -29,6 +29,8 @@ def test_opus_47_passes_model_and_max_tokens(mock_claude):
     kwargs = _mock_claude_call(mock_claude, ClaudeModelId.OPUS_4_7)
     assert kwargs["model"] == "claude-opus-4-7"
     assert kwargs["max_tokens"] == MAX_OUTPUT_TOKENS[ClaudeModelId.OPUS_4_7]
+    # Opus 4.7 deprecated temperature; ensure we don't pass it for any Claude model.
+    assert set(kwargs.keys()) == {"model", "max_tokens", "system", "messages"}
 
 
 @patch("services.claude.evaluate_quality_checks.claude")

@@ -35,6 +35,15 @@ def test_returns_text_and_inserts_llm_request(mock_claude, mock_insert):
         "content": "Summary of changes",
     }
 
+    # Opus 4.7 deprecated temperature. Ensure we don't pass it.
+    create_kwargs = mock_claude.messages.create.call_args.kwargs
+    assert set(create_kwargs.keys()) == {
+        "model",
+        "system",
+        "messages",
+        "max_tokens",
+    }
+
 
 @patch("services.claude.chat_with_claude_simple.insert_llm_request")
 @patch("services.claude.chat_with_claude_simple.claude")

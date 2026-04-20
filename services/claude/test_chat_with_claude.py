@@ -47,6 +47,16 @@ def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
     assert call_args["input_tokens"] == 20
     assert call_args["output_tokens"] == 15
 
+    # Opus 4.7 deprecated temperature (AGENT-36M cascade). Ensure we don't pass it.
+    create_kwargs = mock_claude.messages.create.call_args.kwargs
+    assert set(create_kwargs.keys()) == {
+        "model",
+        "system",
+        "messages",
+        "tools",
+        "max_tokens",
+    }
+
 
 @patch("services.claude.chat_with_claude.insert_llm_request")
 @patch("services.claude.chat_with_claude.claude")

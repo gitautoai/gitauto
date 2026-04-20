@@ -15,18 +15,19 @@ def chat_with_claude_simple(
     model_id: ClaudeModelId = ClaudeModelId.SONNET_4_6,
 ):
     start = time.time()
+    # Opus 4.7 deprecated the temperature parameter; omit it to stay compatible across models.
     response = claude.messages.create(
         model=model_id,
         system=system_input,
         messages=[{"role": "user", "content": user_input}],
         max_tokens=4096,
-        temperature=0.0,
     )
     response_time_ms = int((time.time() - start) * 1000)
 
     text = ""
     for block in response.content:
         if block.type == "text":
+            logger.info("chat_with_claude_simple: text block appended")
             text += block.text
     if not text:
         logger.warning("Claude returned empty text response")
@@ -45,4 +46,5 @@ def chat_with_claude_simple(
         created_by="chat_with_claude_simple",
     )
 
+    logger.info("chat_with_claude_simple returning text of length %d", len(text))
     return text

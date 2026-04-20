@@ -3,7 +3,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from services.claude.evaluate_condition import EvaluationResult, evaluate_condition
+from services.claude.evaluate_condition import (
+    RESPONSE_SCHEMA,
+    EvaluationResult,
+    evaluate_condition,
+)
 from utils.prompts.should_test_file import SHOULD_TEST_FILE_PROMPT
 
 
@@ -90,7 +94,28 @@ class TestEvaluateCondition:
         call_args = mock_claude.beta.messages.create.call_args
         assert call_args.kwargs["system"] == "Check this code."
         assert call_args.kwargs["betas"] == ["structured-outputs-2025-11-13"]
-        assert "output_config" in call_args.kwargs
+        assert call_args.kwargs["output_config"] == {"format": RESPONSE_SCHEMA}
+
+    def test_call_kwargs_do_not_include_temperature(self, mock_claude):
+        """Opus 4.7 deprecated temperature (AGENT-3HG-3J1 cluster on 2026-04-19).
+        Including it raises BadRequestError 400."""
+        mock_response = MagicMock()
+        mock_response.content = [
+            MagicMock(text='{"result": true, "reason": "testable"}')
+        ]
+        mock_claude.beta.messages.create.return_value = mock_response
+
+        evaluate_condition(content="code", system_prompt="check")
+
+        call_args = mock_claude.beta.messages.create.call_args
+        assert set(call_args.kwargs.keys()) == {
+            "model",
+            "max_tokens",
+            "system",
+            "messages",
+            "betas",
+            "output_config",
+        }
 
 
 @pytest.mark.skip(reason="Integration test - calls real API")
