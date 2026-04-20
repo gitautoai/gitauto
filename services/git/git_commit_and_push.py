@@ -21,6 +21,7 @@ def git_commit_and_push(
     run_subprocess(["git", "add"] + files, clone_dir)
 
     if skip_ci:
+        logger.info("git_commit_and_push: appending [skip ci] to message")
         message = f"{message} [skip ci]"
     message = format_commit_message(message=message, base_args=base_args)
 
@@ -31,6 +32,7 @@ def git_commit_and_push(
     run_subprocess(["git", "remote", "set-url", "origin", clone_url], clone_dir)
     push_cmd = ["git", "push"]
     if force:
+        logger.info("git_commit_and_push: force push via --force-with-lease")
         push_cmd.append("--force-with-lease")
     push_cmd.extend(["origin", f"HEAD:refs/heads/{new_branch}"])
     run_subprocess(push_cmd, clone_dir)

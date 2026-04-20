@@ -71,7 +71,7 @@ python3 scripts/aws/filter_log_events_across_streams.py --hours 12 --owner Foxqu
 ## Coding Standards
 
 - **No DOCSTRINGS**: Don't add unless told. Don't delete existing unless outdated.
-- **COMMENTS**: Don't delete unless outdated. Preserve URLs. One line when possible.
+- **COMMENTS**: Don't delete unless outdated. Preserve URLs. One line when possible. **Don't hard-wrap sentences mid-thought** — if a comment is two sentences, two lines is fine; but don't break one sentence across multiple lines because it makes the comment unreadable when scanned. Let the editor wrap it visually.
 - **LOGGERS**: Every `continue`, `break`, `return` inside a function MUST have a preceding `logger.info(...)` (or warning/error). Also log at every conditional branch to show which path was taken.
 - **`set_xxx` EARLIEST**: Call `set_trigger`, `set_owner_repo`, `set_pr_number` etc. at the earliest point in each handler, right after the value is known.
 - **Don't repeat structured log context**: `set_owner_repo` in `main.py` already adds `owner_repo` to every log entry. Don't repeat owner/repo in individual logger messages.

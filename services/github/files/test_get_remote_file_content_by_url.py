@@ -450,7 +450,16 @@ class TestGetRemoteFileContentByUrl:
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         assert file_path == "src/test.py"
-        assert "```src/test.py" in content
+        assert content == (
+            "```src/test.py\n"
+            "1: def hello_world():\n"
+            "2:     print('Hello, World!')\n"
+            "3:     return 'success'\n"
+            "4: \n"
+            "5: if __name__ == '__main__':\n"
+            "6:     hello_world()\n"
+            "```"
+        )
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src/test.py?ref=feature-branch",
             headers={"Authorization": "Bearer test-token"},
@@ -483,7 +492,16 @@ class TestGetRemoteFileContentByUrl:
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         assert file_path == "src/utils/helpers/file.py"
-        assert "```src/utils/helpers/file.py" in content
+        assert content == (
+            "```src/utils/helpers/file.py\n"
+            "1: def hello_world():\n"
+            "2:     print('Hello, World!')\n"
+            "3:     return 'success'\n"
+            "4: \n"
+            "5: if __name__ == '__main__':\n"
+            "6:     hello_world()\n"
+            "```"
+        )
         mock_requests_get.assert_called_once_with(
             url="https://api.github.com/repos/test-owner/test-repo/contents/src/utils/helpers/file.py?ref=main",
             headers={"Authorization": "Bearer test-token"},
@@ -629,7 +647,17 @@ class TestGetRemoteFileContentByUrl:
         result_file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         assert result_file_path == file_path
-        assert f"```{file_path}" in content
+        # Exact content: fenced block with filename header and numbered sample.
+        assert content == (
+            f"```{file_path}\n"
+            "1: def hello_world():\n"
+            "2:     print('Hello, World!')\n"
+            "3:     return 'success'\n"
+            "4: \n"
+            "5: if __name__ == '__main__':\n"
+            "6:     hello_world()\n"
+            "```"
+        )
         expected_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{file_path}?ref={ref}"
         mock_requests_get.assert_called_once_with(
             url=expected_url,
@@ -670,11 +698,13 @@ class TestGetRemoteFileContentByUrl:
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         assert file_path == "src/test.py"
-        assert "```src/test.py" in content
-        assert "1: # Large file" in content
-        assert "101: print('line')" in content
-        # Should have 102 lines total (1 header + 100 print lines + 1 empty line at end)
-        assert len(content.split("\n")) >= 104  # Including the header lines
+        # Build the exact expected content: "# Large file" + 100 "print('line')"
+        # rows + one trailing empty line (trailing newline in `large_content`).
+        numbered = ["1: # Large file"]
+        numbered.extend(f"{i + 2}: print('line')" for i in range(100))
+        numbered.append("102: ")  # trailing empty line from large_content's final \n
+        expected_body = "\n".join(numbered)
+        assert content == f"```src/test.py\n{expected_body}\n```"
 
     @patch("services.github.files.get_remote_file_content_by_url.requests.get")
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
@@ -694,9 +724,7 @@ class TestGetRemoteFileContentByUrl:
         mock_response.status_code = 404
         mock_requests_get.return_value = mock_response
 
-        with patch(
-            "utils.error.handle_exceptions.sentry_sdk.capture_exception"
-        ) as mock_sentry:
+        with patch("sentry_sdk.capture_exception") as mock_sentry:
             url = "https://github.com/test-owner/test-repo/blob/main/missing.py"
             result = get_remote_file_content_by_url(url, "test-token")
 
