@@ -77,22 +77,38 @@ def is_code_untestable(
 
     # Extract uncovered lines from file content
     if uncovered_lines:
+        logger.info(
+            "is_code_untestable: extracting uncovered_lines=%s", uncovered_lines
+        )
         line_nums = [int(n.strip()) for n in uncovered_lines.split(",") if n.strip()]
         lines = file_content.splitlines()
         extracted: list[str] = []
         for num in line_nums:
             if 0 < num <= len(lines):
+                logger.info("is_code_untestable: keeping line %d", num)
                 extracted.append(f"{num}: {lines[num - 1]}")
         if extracted:
+            logger.info(
+                "is_code_untestable: adding %d extracted lines to parts", len(extracted)
+            )
             parts.append(f"Uncovered lines:\n```\n{"\n".join(extracted)}\n```")
 
     if uncovered_functions:
+        logger.info(
+            "is_code_untestable: adding uncovered_functions=%s", uncovered_functions
+        )
         parts.append(f"Uncovered functions: {uncovered_functions}")
 
     if uncovered_branches:
+        logger.info(
+            "is_code_untestable: adding uncovered_branches=%s", uncovered_branches
+        )
         parts.append(f"Uncovered branches: {uncovered_branches}")
 
     if not parts:
+        logger.info(
+            "is_code_untestable: no uncovered code provided, returning testable"
+        )
         return CodeAnalysisResult(False, "testable", "No uncovered code provided")
 
     numbered_file = format_content_with_line_numbers(
@@ -105,10 +121,10 @@ def is_code_untestable(
 
 Is this code dead (unreachable/redundant) or genuinely untestable (reachable at runtime but impossible to test)?"""
 
+    # Opus 4.7 deprecated the temperature parameter; passing it raises 400.
     response = claude.beta.messages.create(
         model=ClaudeModelId.OPUS_4_7,
         max_tokens=MAX_OUTPUT_TOKENS[ClaudeModelId.OPUS_4_7],
-        temperature=0,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": content}],
         betas=["structured-outputs-2025-11-13"],
@@ -120,4 +136,5 @@ Is this code dead (unreachable/redundant) or genuinely untestable (reachable at 
         logger.error("Expected str but got %s: %s", type(text_attr), text_attr)
         return None
 
+    logger.info("is_code_untestable returning parsed result")
     return CodeAnalysisResult(**json.loads(text_attr.strip()))

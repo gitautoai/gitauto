@@ -36,18 +36,21 @@ def evaluate_quality_checks(
 
     user_message = f"## Source file: {source_path}\n\n```\n{source_content}\n```"
     if test_files:
+        logger.info("evaluate_quality_checks: appending %d test files", len(test_files))
         for path, content in test_files:
             user_message += f"\n\n## Test file: {path}\n\n```\n{content}\n```"
     else:
+        logger.info("evaluate_quality_checks: no test files for %s", source_path)
         user_message += "\n\n## Test file: No test file exists for this source file."
 
     provider = MODEL_REGISTRY[model]["provider"]
     if provider == ModelProvider.CLAUDE:
+        logger.info("evaluate_quality_checks: using Claude provider with %s", model)
         assert isinstance(model, ClaudeModelId)
+        # Opus 4.7 deprecated the temperature parameter; omit it to stay compatible across models.
         response = claude.messages.create(
             model=model,
             max_tokens=MAX_OUTPUT_TOKENS[model],
-            temperature=0,
             system=SYSTEM,
             messages=[{"role": "user", "content": user_message}],
         )
@@ -57,6 +60,7 @@ def evaluate_quality_checks(
             return None
         text = text_attr
     elif provider == ModelProvider.GOOGLE:
+        logger.info("evaluate_quality_checks: using Google provider with %s", model)
         assert isinstance(model, GoogleModelId)
         client = get_google_ai_client()
         config = types.GenerateContentConfig(
@@ -80,8 +84,10 @@ def evaluate_quality_checks(
     # Strip markdown code fences if present
     text = text.strip()
     if text.startswith("```"):
+        logger.info("evaluate_quality_checks: stripping markdown code fence")
         text = text.split("\n", 1)[1] if "\n" in text else text[3:]
         if text.endswith("```"):
+            logger.info("evaluate_quality_checks: stripping trailing fence")
             text = text[:-3].strip()
 
     result: dict[str, dict[str, dict[str, str]]] = json.loads(text)

@@ -43,12 +43,13 @@ def evaluate_condition(
     system_prompt: str,
 ):
     if not content or not system_prompt:
+        logger.info("evaluate_condition skipped: empty content or system_prompt")
         return EvaluationResult(False, "empty input")
 
+    # Opus 4.7 deprecated the temperature parameter; passing it raises 400.
     response = claude.beta.messages.create(
         model=ClaudeModelId.OPUS_4_7,
         max_tokens=MAX_OUTPUT_TOKENS[ClaudeModelId.OPUS_4_7],
-        temperature=0,
         system=system_prompt,
         messages=[{"role": "user", "content": content}],
         betas=["structured-outputs-2025-11-13"],
@@ -60,4 +61,5 @@ def evaluate_condition(
         logger.error("Expected str but got %s: %s", type(text_attr), text_attr)
         return EvaluationResult(False, "invalid response format")
 
+    logger.info("evaluate_condition returning parsed result")
     return EvaluationResult(**json.loads(text_attr.strip()))
