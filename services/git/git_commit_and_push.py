@@ -1,11 +1,20 @@
+from dataclasses import dataclass
+
 from services.git.format_commit_message import format_commit_message
+from services.git.get_branch_head_author import get_branch_head_author
 from services.types.base_args import BaseArgs
 from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
 
-@handle_exceptions(default_return_value=False, raise_on_error=False)
+@dataclass
+class GitCommitResult:
+    success: bool = False
+    concurrent_push_detected: bool = False
+
+
+@handle_exceptions(raise_on_error=True)
 def git_commit_and_push(
     base_args: BaseArgs,
     message: str,
@@ -35,7 +44,23 @@ def git_commit_and_push(
         logger.info("git_commit_and_push: force push via --force-with-lease")
         push_cmd.append("--force-with-lease")
     push_cmd.extend(["origin", f"HEAD:refs/heads/{new_branch}"])
-    run_subprocess(push_cmd, clone_dir)
+
+    try:
+        run_subprocess(push_cmd, clone_dir)
+    except ValueError as err:
+        err_text = str(err)
+        if "fetch first" not in err_text and "non-fast-forward" not in err_text:
+            logger.error("git push failed with unhandled error: %s", err_text)
+            raise
+
+        # Sentry AGENT-36T had this issue
+        author = get_branch_head_author(clone_dir, clone_url, new_branch)
+        logger.warning(
+            "git_commit_and_push bailing on %s: racer=%s advanced the branch (human or other GitAuto invocation). Not rebasing — would clobber their intent. Signaling concurrent_push_detected so the caller chain can break the agent loop cleanly and still run its cleanup.",
+            new_branch,
+            author,
+        )
+        return GitCommitResult(success=False, concurrent_push_detected=True)
 
     logger.info("Committed and pushed: %s", message.split("\n")[0])
-    return True
+    return GitCommitResult(success=True)

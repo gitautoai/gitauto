@@ -27,7 +27,7 @@ def test_handle_new_pr_signature():
     params = list(sig.parameters.keys())
 
     # Verify lambda_info parameter exists and is optional
-    assert "lambda_info" in params
+    assert params.count("lambda_info") == 1
     lambda_info_param = sig.parameters["lambda_info"]
     assert lambda_info_param.default is None  # Optional parameter with None default
 
@@ -1853,9 +1853,10 @@ async def test_few_test_files_include_contents_in_prompt(
     call_kwargs = mock_chat_with_agent.call_args.kwargs
     messages = call_kwargs["messages"]
     user_input = json.loads(messages[0]["content"])
-    assert "test_files_included" in user_input
+    user_input_keys = set(user_input.keys())
+    assert {"test_files_included"}.issubset(user_input_keys)
     assert len(user_input["test_files_included"]) == 3
-    assert "test_file_paths" not in user_input
+    assert user_input_keys.isdisjoint({"test_file_paths"})
     # Test file contents should be separate messages in ```path format
     test_file_msgs = [
         m
@@ -2000,9 +2001,9 @@ async def test_many_test_files_include_paths_only_in_prompt(
     call_kwargs = mock_chat_with_agent.call_args.kwargs
     messages = call_kwargs["messages"]
     user_input = json.loads(messages[0]["content"])
-    assert "test_files_included" in user_input
+    user_input_keys = set(user_input.keys())
+    assert {"test_files_included", "test_file_paths"}.issubset(user_input_keys)
     assert len(user_input["test_files_included"]) == 5
-    assert "test_file_paths" in user_input
     assert len(user_input["test_file_paths"]) == 2
     # Test file contents should be separate messages in ```path format
     test_file_msgs = [
@@ -2128,3 +2129,33 @@ async def test_auto_detect_location_ignores_dashboard_setting(
         user_input["test_location_convention"]
         == "separate test directory (e.g., test/specs/foo.spec.ts)"
     )
+
+
+def test_agent_result_concurrent_push_field_defaults_false_new_pr():
+    """new_pr handler breaks its agent loop + posts racer-push message when
+    AgentResult.concurrent_push_detected is True. Verify the new field exists
+    and defaults to False so existing AgentResult(...) construction stays valid."""
+    result = AgentResult(
+        messages=[],
+        token_input=0,
+        token_output=0,
+        is_completed=False,
+        completion_reason="",
+        p=0,
+        is_planned=False,
+        cost_usd=0.0,
+    )
+    assert result.concurrent_push_detected is False
+
+    raced = AgentResult(
+        messages=[],
+        token_input=0,
+        token_output=0,
+        is_completed=False,
+        completion_reason="",
+        p=0,
+        is_planned=False,
+        cost_usd=0.0,
+        concurrent_push_detected=True,
+    )
+    assert raced.concurrent_push_detected is True

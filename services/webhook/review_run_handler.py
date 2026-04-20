@@ -138,16 +138,27 @@ async def handle_review_run(
     token = get_installation_access_token(installation_id=installation_id)
     sender_info = get_user_public_info(username=sender_name, token=token)
     if not sender_info.email:
+        logger.info(
+            "Sender %s has no public email; falling back to commit-author email lookup",
+            sender_name,
+        )
         email = get_email_from_commits(
             owner=owner_name, repo=repo_name, username=sender_name, token=token
         )
         if email:
+            logger.info(
+                "Recovered email for sender %s from commit authors", sender_name
+            )
             sender_info.email = email
 
     # Fetch review summary body if this inline comment is part of a review
     review_summary = ""
     pull_request_review_id = review.get("pull_request_review_id")
     if pull_request_review_id:
+        logger.info(
+            "Inline comment belongs to review_id=%s; fetching top-level review summary",
+            pull_request_review_id,
+        )
         summary_body = get_review_summary_comment(
             owner=owner_name,
             repo=repo_name,
@@ -156,6 +167,11 @@ async def handle_review_run(
             token=token,
         )
         if summary_body and summary_body.strip():
+            logger.info(
+                "Attaching review summary (%d chars) from review_id=%s to agent context",
+                len(summary_body),
+                pull_request_review_id,
+            )
             review_summary = summary_body
 
     # Batch: when a reviewer (e.g. Devin) submits a review with N inline comments, GitHub fires N webhooks. Without dedup, each triggers a separate Lambda that races to push, wasting tokens. Only one invocation wins the lock; it sleeps, fetches all comments, and handles them in one session.
@@ -212,8 +228,16 @@ async def handle_review_run(
             parts.append(f"### Comment {i}: `{rc_path}` Line {rc_line}\n{rc_body}\n")
         review_comment = "\n".join(parts)
     elif not review_path:
+        logger.info(
+            "PR-level review comment (no file path) on PR #%s; applying bot-relevance filter",
+            pr_number,
+        )
         # For PR-level comments (no file path), check bot relevance and loop prevention
         if review_author_is_bot:
+            logger.info(
+                "PR-level comment from bot %s; checking if it references any of the PR's changed files",
+                review_author["login"],
+            )
             # Check if bot comment mentions any PR file paths (skip irrelevant bot comments like Security Hub scans)
             pr_file_paths = [f["filename"] for f in pr_files]
             mentions_pr_file = any(path in review_body for path in pr_file_paths)
@@ -226,6 +250,11 @@ async def handle_review_run(
                 return
         review_comment = review_body
     else:
+        logger.info(
+            "Inline review comment on %s:%s; fetching full thread for context",
+            review_path,
+            review_line,
+        )
         # Get all comments in the review thread
         thread_result = get_review_thread_comments(
             owner=owner_name,
@@ -243,6 +272,10 @@ async def handle_review_run(
 
         # If a bot posted this comment AND GitAuto already replied in the same thread, skip to prevent infinite bot-to-bot loops. But if GitAuto hasn't replied yet, process it (e.g. Devin's first review comment is valuable feedback).
         if review_author_is_bot and thread_comments:
+            logger.info(
+                "Inline comment from bot %s in an existing thread; checking whether GitAuto already replied to avoid bot-to-bot loop",
+                review_author["login"],
+            )
             gitauto_already_replied = any(
                 c["author"]["login"] == GITHUB_APP_USER_NAME for c in thread_comments
             )
@@ -256,12 +289,23 @@ async def handle_review_run(
         # Combine all comments in chronological order for context
         review_comment = f"## Review thread on {review_path} Line: {review_line}\n"
         if thread_comments:
+            logger.info(
+                "Assembling review_comment from %d thread messages on %s:%s",
+                len(thread_comments),
+                review_path,
+                review_line,
+            )
             for tc in thread_comments:
                 author = tc["author"]["login"]
                 body = tc["body"]
                 created_at = tc["createdAt"]
                 review_comment += f"{author} commented at {created_at}: {body}\n"
         else:
+            logger.warning(
+                "Thread fetch returned empty comments for %s:%s; falling back to single review body",
+                review_path,
+                review_line,
+            )
             # Fallback to single comment if thread fetch fails
             review_comment += f"{review_body}"
 
@@ -269,6 +313,10 @@ async def handle_review_run(
     start_msg = f"Review handler started: `{trigger}` by `{sender_name}` for `{pr_number}:{pr_title}` in `{owner_name}/{repo_name}`"
     thread_ts = slack_notify(start_msg)
     if not review_author_is_bot:
+        logger.info(
+            "Human reviewer on PR #%s; mentioning channel with reviewer display name in Slack thread",
+            pr_number,
+        )
         display_name = sender_info.display_name or sender_name
         slack_notify(f"<!channel> {display_name}: {review_body}", thread_ts)
 
@@ -442,6 +490,9 @@ async def handle_review_run(
             else:
                 logger.info("Batched file %s not found or empty", fp)
         if not review_author_is_bot:
+            logger.info(
+                "Reporting file-read progress to human reviewer on PR #%s", pr_number
+            )
             p = update_progress(
                 msg=f"Read {len(unique_paths)} files from review comments.",
                 p=p,
@@ -464,6 +515,10 @@ async def handle_review_run(
         else:
             logger.info("Review file %s not found or empty", review_path)
         if not review_author_is_bot:
+            logger.info(
+                "Reporting single-file read progress to human reviewer on PR #%s",
+                pr_number,
+            )
             p = update_progress(
                 msg=f"Read the file `{review_path}` you commented on.",
                 p=p,
@@ -476,6 +531,11 @@ async def handle_review_run(
         logger.info("No review file path — PR-level comment, skipping file read")
 
     if not review_author_is_bot:
+        logger.info(
+            "Reporting changed-files count (%d) to human reviewer on PR #%s",
+            len(pr_files),
+            pr_number,
+        )
         p = update_progress(
             msg=f"Found {len(pr_files)} changed files in the PR.",
             p=p,
@@ -493,6 +553,11 @@ async def handle_review_run(
     base_args["baseline_tsc_errors"] = set(validation_result.tsc_errors)
     pre_existing_errors = ""
     if validation_result.errors:
+        logger.warning(
+            "Pre-existing validation errors on PR #%s before edits begin: %d errors",
+            pr_number,
+            len(validation_result.errors),
+        )
         pre_existing_errors = "\n".join(validation_result.errors)
         logger.warning("Remaining errors:\n%s", pre_existing_errors)
     fixes_applied = validation_result.fixes_applied
@@ -507,8 +572,14 @@ async def handle_review_run(
     target_dir: str | None = None
     target_dir_files: list[str] = []
     if review_path:
+        logger.info(
+            "Narrowing agent scope to parent dir of review_path=%s", review_path
+        )
         parent = str(Path(review_path).parent)
         if parent != ".":
+            logger.info(
+                "Setting target_dir=%s for agent scope on PR #%s", parent, pr_number
+            )
             target_dir = parent
             target_dir_files = get_local_file_tree(base_args=base_args, dir_path=parent)
 
@@ -523,15 +594,23 @@ async def handle_review_run(
         "target_dir_files": target_dir_files,
     }
     if review_summary:
+        logger.info(
+            "Attaching review_summary (%d chars) to input_message", len(review_summary)
+        )
         input_message["review_summary"] = review_summary
     if fixes_applied or pre_existing_errors:
+        logger.info(
+            "Prettier/ESLint auto-fix ran before agent; attaching note to input_message"
+        )
         input_message["step_2_prettier_eslint_note"] = (
             "Before you start, we ran Prettier/ESLint --fix. "
             "Files may have changed. Read the latest content."
         )
     if fixes_applied:
+        logger.info("Attaching step_2a auto-fixed list to input_message")
         input_message["step_2a_auto_fixed_and_committed"] = fixes_applied
     if pre_existing_errors:
+        logger.info("Attaching step_2b pre-existing unfixable errors to input_message")
         input_message["step_2b_remaining_unfixable_errors"] = pre_existing_errors
     user_input = json.dumps(obj=input_message)
 
@@ -550,8 +629,15 @@ async def handle_review_run(
     )
 
     cost_cap_usd = get_credit_price(model_id) * COST_CAP_RATIO
+    concurrent_push_detected = False
 
-    for _iteration in range(MAX_ITERATIONS):
+    for iteration in range(MAX_ITERATIONS):
+        logger.info(
+            "Agent loop iteration %d/%d on PR #%s",
+            iteration + 1,
+            MAX_ITERATIONS,
+            pr_number,
+        )
         if should_bail(
             current_time=current_time,
             phase="execution",
@@ -559,6 +645,10 @@ async def handle_review_run(
             slack_thread_ts=thread_ts,
             cost_cap_usd=cost_cap_usd,
         ):
+            logger.info(
+                "Breaking agent loop on PR #%s: should_bail() tripped (timeout or cost cap)",
+                pr_number,
+            )
             break
 
         # Re-check trigger_on_review_comment in case it was disabled during execution
@@ -566,6 +656,10 @@ async def handle_review_run(
         if not refreshed_settings or not refreshed_settings.get(
             "trigger_on_review_comment"
         ):
+            logger.info(
+                "Review-comment trigger was disabled mid-execution on PR #%s; breaking loop",
+                pr_number,
+            )
             is_completed = True
             completion_reason = "Stopped because the review comment trigger was disabled during execution."
             logger.info(completion_reason)
@@ -573,6 +667,10 @@ async def handle_review_run(
 
         # Check if the review thread was resolved while we were working
         if review_path:
+            logger.info(
+                "Re-checking resolution state of review thread on PR #%s during loop",
+                pr_number,
+            )
             thread_check = get_review_thread_comments(
                 owner=owner_name,
                 repo=repo_name,
@@ -602,6 +700,19 @@ async def handle_review_run(
         total_token_input += result.token_input
         total_token_output += result.token_output
 
+        if result.concurrent_push_detected:
+            logger.warning(
+                "review_run: chat_with_agent reported concurrent_push_detected on PR #%s; breaking agent loop to bail cleanly",
+                pr_number,
+            )
+            concurrent_push_detected = True
+            completion_reason = f"Another commit landed on `{base_args['new_branch']}` while I was handling your review. Their push triggers CI on its own, so I'm stopping here — your push stands."
+            logger.info(
+                "review_run: breaking agent loop on PR #%s due to concurrent push",
+                pr_number,
+            )
+            break
+
         if is_completed:
             logger.info(
                 "Agent signaled completion via verify_task_is_complete, breaking loop"
@@ -611,8 +722,8 @@ async def handle_review_run(
         # Force GC between rounds to free temporary objects (messages, diffs) and reduce Lambda OOM risk
         gc_collect_and_log()
 
-    # Log if loop exhausted without completion and force verification
-    if not is_completed:
+    # Log if loop exhausted without completion and force verification (skip when a concurrent push was detected — verifying on stale state would re-trigger the same bail)
+    if not is_completed and not concurrent_push_detected:
         logger.warning(
             "Agent loop hit MAX_ITERATIONS (%d) without calling verify_task_is_complete. Forcing verification.",
             MAX_ITERATIONS,
@@ -620,20 +731,53 @@ async def handle_review_run(
         final_result = await verify_task_is_complete(base_args=base_args)
         is_completed = final_result.success
 
-    # Trigger final test workflows with an empty commit (skip if agent made no commits)
-    current_head = get_reference(
-        clone_url=base_args["clone_url"], branch=base_args["new_branch"]
-    )
-    if current_head != pull_request["head"]["sha"]:
-        if not review_author_is_bot:
-            update_comment(
-                body="Creating final empty commit to trigger workflows...",
-                base_args=base_args,
+    # Trigger final test workflows with an empty commit (skip if agent made no commits, or if concurrent push already advances CI)
+    if concurrent_push_detected:
+        logger.info(
+            "review_run: skipping final empty commit on PR #%s — racer's push triggers CI on its own",
+            pr_number,
+        )
+    else:
+        logger.info(
+            "review_run: checking whether agent made commits to warrant a final empty commit on PR #%s",
+            pr_number,
+        )
+        current_head = get_reference(
+            clone_url=base_args["clone_url"], branch=base_args["new_branch"]
+        )
+        if current_head != pull_request["head"]["sha"]:
+            logger.info(
+                "Agent made commits on %s (head changed from %s to %s); retriggering CI with empty commit",
+                base_args["new_branch"],
+                pull_request["head"]["sha"],
+                current_head,
             )
-        create_empty_commit(base_args=base_args)
+            if not review_author_is_bot:
+                logger.info(
+                    "Informing human reviewer on PR #%s about final empty commit",
+                    pr_number,
+                )
+                update_comment(
+                    body="Creating final empty commit to trigger workflows...",
+                    base_args=base_args,
+                )
+            pushed = create_empty_commit(base_args=base_args)
+            if not pushed and not review_author_is_bot:
+                logger.warning(
+                    "Empty commit skipped on %s: concurrent push detected",
+                    base_args["new_branch"],
+                )
+                update_comment(
+                    body=f"Another commit landed on `{base_args['new_branch']}` while I was working. Their push triggers CI on its own, so no empty commit needed.",
+                    base_args=base_args,
+                )
 
     # Use the agent's own explanation as the final reply, or a fallback if empty
     if not completion_reason:
+        logger.warning(
+            "Agent returned empty completion_reason for PR #%s; filling in fallback reply",
+            pr_number,
+        )
         completion_reason = (
             "Done." if is_completed else "I was unable to complete this task."
         )
@@ -641,15 +785,36 @@ async def handle_review_run(
             "completion_reason was empty, using fallback: %s", completion_reason
         )
     if not review_path:
+        logger.info(
+            "PR-level review on PR #%s; posting completion_reason as a new comment",
+            pr_number,
+        )
         create_comment(base_args=base_args, body=completion_reason)
     elif review_author_is_bot:
+        logger.info(
+            "Inline review from bot %s on %s; replying in the same thread",
+            review_author["login"],
+            review_path,
+        )
         reply_to_comment(base_args=base_args, body=completion_reason)
     else:
+        logger.info(
+            "Inline review from human on %s; updating existing progress comment on PR #%s",
+            review_path,
+            pr_number,
+        )
         update_comment(body=completion_reason, base_args=base_args)
 
     # Update usage record
     end_time = time.time()
     if usage_id:
+        logger.info(
+            "Finalizing usage_id=%s for PR #%s: tokens_in=%d tokens_out=%d",
+            usage_id,
+            pr_number,
+            total_token_input,
+            total_token_output,
+        )
         update_usage(
             usage_id=usage_id,
             token_input=total_token_input,
@@ -662,4 +827,9 @@ async def handle_review_run(
     # End notification
     end_msg = "Completed" if is_completed else "<!channel> Failed"
     slack_notify(end_msg, thread_ts)
+    logger.info(
+        "review_run_handler returning for PR #%s; is_completed=%s",
+        pr_number,
+        is_completed,
+    )
     return

@@ -152,6 +152,10 @@ async def handle_new_pr(
     # Ensure stripe customer exists (create if needed)
     stripe_customer_id = get_stripe_customer_id(owner_id)
     if not stripe_customer_id:
+        logger.info(
+            "Stripe customer missing for owner_id=%s; creating one so usage can be billed",
+            owner_id,
+        )
         stripe_customer_id = create_stripe_customer(
             owner_id=owner_id,
             owner_name=owner_name,
@@ -160,6 +164,10 @@ async def handle_new_pr(
             user_name=sender_name if sender_name else "unknown",
         )
         if stripe_customer_id:
+            logger.info(
+                "Persisting new Stripe customer_id for owner_id=%s (created via this invocation)",
+                owner_id,
+            )
             updated_by = f"{sender_id}:{sender_name}" if sender_id else "system"
             update_stripe_customer_id(owner_id, stripe_customer_id, updated_by)
 
@@ -184,6 +192,10 @@ async def handle_new_pr(
     base_args["model_id"] = model_id
 
     if availability_status["log_message"] and can_proceed:
+        logger.info(
+            "Appending availability log message to PR comment progress bar: %s",
+            availability_status["log_message"],
+        )
         add_log_message(availability_status["log_message"], log_messages)
 
     p += 5
@@ -193,6 +205,11 @@ async def handle_new_pr(
 
     # Notify the user if access is denied and early return
     if not can_proceed:
+        logger.warning(
+            "Availability check denied access for owner_id=%s on PR #%s; aborting handler",
+            owner_id,
+            pr_number,
+        )
         body = user_message
         update_comment(body=body, base_args=base_args)
         logger.info(body)
@@ -207,6 +224,9 @@ async def handle_new_pr(
 
         # Early return notification
         slack_notify(availability_status["log_message"], thread_ts)
+        logger.info(
+            "Exiting new_pr_handler: availability check denied on PR #%s", pr_number
+        )
         return
 
     # Create a usage record
@@ -230,6 +250,12 @@ async def handle_new_pr(
 
     # Insert credit usage immediately (charge regardless of completion)
     if billing_type == "credit":
+        logger.info(
+            "Charging credit for usage_id=%s on PR #%s (billing_type=credit, model=%s)",
+            usage_id,
+            pr_number,
+            model_id,
+        )
         insert_credit(
             owner_id=owner_id,
             transaction_type="usage",
@@ -259,6 +285,11 @@ async def handle_new_pr(
     # Check out the image URLs in the PR body and comments
     image_urls = extract_image_urls(text=pr_body_rendered)
     if image_urls:
+        logger.info(
+            "Found %d image URLs in PR body on PR #%s; reporting progress",
+            len(image_urls),
+            pr_number,
+        )
         comment_body = f"Found {len(image_urls)} images in the PR body."
         p += 5
         add_log_message(comment_body, log_messages)
@@ -304,6 +335,11 @@ async def handle_new_pr(
         file_path, content = get_remote_file_content_by_url(url=url, token=token)
         logger.info("```%s\n%s```\n", url, content)
         if file_path and content:
+            logger.info(
+                "Adding reference file %s (%d chars) from PR body URL to agent context",
+                file_path,
+                len(content),
+            )
             reference_files[file_path] = format_content_with_line_numbers(
                 file_path=file_path, content=content
             )
@@ -313,9 +349,19 @@ async def handle_new_pr(
     # Extract target implementation file
     impl_file_path = get_impl_file_from_pr_title(pr_title)
     if not impl_file_path:
+        logger.error(
+            "Could not parse target implementation file from PR title on PR #%s: %s",
+            pr_number,
+            pr_title,
+        )
         raise ValueError(f"No file path found in PR title: {pr_title}")
 
     if pr_title.startswith(SCHEDULE_PREFIX_INCREASE):
+        logger.info(
+            "Schedule-triggered coverage PR on PR #%s; recording impl_file_to_collect_coverage_from=%s",
+            pr_number,
+            impl_file_path,
+        )
         base_args["impl_file_to_collect_coverage_from"] = impl_file_path
     test_dir_prefixes = repo_settings["test_dir_prefixes"] if repo_settings else []
 
@@ -379,6 +425,11 @@ async def handle_new_pr(
         base_args=base_args,
     )
     if should_skip_test(impl_file_path, impl_file_content):
+        logger.info(
+            "should_skip_test returned True for %s; closing PR #%s without attempting test generation",
+            impl_file_path,
+            pr_number,
+        )
         msg = f"Closing PR: `{impl_file_path}` has no testable code (only docstrings, imports, constants, or type definitions)."
         logger.info(msg)
         add_log_message(msg, log_messages)
@@ -387,6 +438,9 @@ async def handle_new_pr(
             base_args=base_args,
         )
         close_pull_request(pr_number=base_args["pr_number"], base_args=base_args)
+        logger.info(
+            "Exiting new_pr_handler after closing untestable-code PR #%s", pr_number
+        )
         return
 
     # Check if uncovered code is dead or untestable (for schedule-triggered coverage issues)
@@ -394,10 +448,19 @@ async def handle_new_pr(
     coverage_dict = get_coverages(owner_id, repo_id, [impl_file_path])
     coverage_data = coverage_dict.get(impl_file_path)
     if coverage_data and impl_file_content:
+        logger.info(
+            "Coverage data present for %s on PR #%s; inspecting uncovered regions",
+            impl_file_path,
+            pr_number,
+        )
         uncovered_lines = coverage_data.get("uncovered_lines")
         uncovered_functions = coverage_data.get("uncovered_functions")
         uncovered_branches = coverage_data.get("uncovered_branches")
         if uncovered_lines or uncovered_functions or uncovered_branches:
+            logger.info(
+                "Uncovered regions found in %s; running is_code_untestable heuristic",
+                impl_file_path,
+            )
             untestable_code_info = is_code_untestable(
                 file_path=impl_file_path,
                 file_content=impl_file_content,
@@ -411,6 +474,11 @@ async def handle_new_pr(
                 untestable_code_info,
             )
             if untestable_code_info and untestable_code_info.result:
+                logger.info(
+                    "Flagging %s as dead/untestable on PR #%s; updating progress",
+                    impl_file_path,
+                    pr_number,
+                )
                 p += 5
                 add_log_message(
                     f"Detected dead/untestable code in `{impl_file_path}`", log_messages
@@ -440,6 +508,7 @@ async def handle_new_pr(
     for test_path in most_relevant_test_paths:
         content = read_local_file(test_path, base_dir=clone_dir)
         if not content:
+            logger.info("Skipping empty/missing relevant test file %s", test_path)
             continue
         test_files[test_path] = format_content_with_line_numbers(
             file_path=test_path, content=content
@@ -479,23 +548,53 @@ async def handle_new_pr(
     }
     # Only include non-empty values to reduce token usage
     if pr_comments:
+        logger.info(
+            "Attaching %d PR comments to agent input for PR #%s",
+            len(pr_comments),
+            pr_number,
+        )
         user_input_obj["pr_comments"] = pr_comments
     if target_dir:
+        logger.info("Attaching target_dir=%s to agent input", target_dir)
         user_input_obj["target_dir"] = target_dir
     if test_dir_prefixes:
+        logger.info(
+            "Attaching %d configured test_dir_prefixes to agent input",
+            len(test_dir_prefixes),
+        )
         user_input_obj["test_dir_prefixes"] = test_dir_prefixes
     if root_files:
+        logger.info(
+            "Attaching root_files tree (%d entries) to agent input", len(root_files)
+        )
         user_input_obj["root_files"] = root_files
     if target_dir:
+        logger.info(
+            "Reading target_dir_files tree for %s to attach to agent input", target_dir
+        )
         target_dir_files = get_local_file_tree(base_args=base_args, dir_path=target_dir)
         if target_dir_files:
+            logger.info(
+                "Attaching %d target_dir_files to agent input", len(target_dir_files)
+            )
             user_input_obj["target_dir_files"] = target_dir_files
     if test_files:
+        logger.info(
+            "Attaching %d test_files_included paths to agent input", len(test_files)
+        )
         # list() needed: dict_keys is not JSON serializable; content is in separate messages
         user_input_obj["test_files_included"] = list(test_files.keys())
     if remaining_test_paths:
+        logger.info(
+            "Attaching %d remaining_test_paths (paths only, no contents) to agent input",
+            len(remaining_test_paths),
+        )
         user_input_obj["test_file_paths"] = remaining_test_paths
     if not test_files and not remaining_test_paths:
+        logger.info(
+            "No test files found for impl_file_path=%s; asking agent to search before creating",
+            impl_file_path,
+        )
         search_term = Path(impl_file_path).stem
         user_input_obj["test_files_not_found"] = (
             f"No test file found by searching the repo for '{search_term}'. "
@@ -505,18 +604,30 @@ async def handle_new_pr(
     # Detect repo's test naming convention (e.g. .spec.ts, .test.ts, test_foo.py, FooTest.php)
     test_naming = detect_test_naming_convention(clone_dir)
     if test_naming:
+        logger.info(
+            "Auto-detected test naming convention for %s: %s", repo_name, test_naming
+        )
         user_input_obj["test_naming_convention"] = test_naming
 
     # Detect repo's test location convention (co-located, __tests__, separate dir)
     # Always auto-detect from the actual repo. Dashboard testFileLocation default ("Co-located with source") was overriding auto-detection for repos whose tests are actually in separate directories (e.g. test/specs/).
     test_location = detect_test_location_convention(clone_dir)
     if test_location:
+        logger.info(
+            "Attaching auto-detected test_location_convention=%s to agent input",
+            test_location,
+        )
         user_input_obj["test_location_convention"] = test_location
         logger.info("Auto-detected test location convention: %s", test_location)
 
     user_input = dumps(user_input_obj)
     messages: list[MessageParam] = [{"role": "user", "content": user_input}]
     if impl_file_content:
+        logger.info(
+            "Attaching formatted impl_file_content for %s (%d chars) as agent message",
+            impl_file_path,
+            len(impl_file_content),
+        )
         formatted_impl = format_content_with_line_numbers(
             file_path=impl_file_path, content=impl_file_content
         )
@@ -525,6 +636,10 @@ async def handle_new_pr(
         messages.append({"role": "user", "content": content})
     for path, content in reference_files.items():
         if path == impl_file_path:
+            logger.info(
+                "Skipping reference_file %s: identical to impl_file_path, already attached",
+                path,
+            )
             continue
         messages.append({"role": "user", "content": content})
 
@@ -540,19 +655,37 @@ async def handle_new_pr(
     base_args["baseline_tsc_errors"] = set(validation_result.tsc_errors)
     pre_existing_errors = ""
     if validation_result.errors:
+        logger.warning(
+            "Pre-existing validation errors on PR #%s before edits begin: %d errors",
+            pr_number,
+            len(validation_result.errors),
+        )
         pre_existing_errors = "\n".join(validation_result.errors)
         logger.warning("Remaining errors:\n%s", pre_existing_errors)
     fixes_applied = validation_result.fixes_applied
 
     # If uncovered code is dead or untestable, notify agent with category-specific action
     if untestable_code_info and untestable_code_info.result:
+        logger.info(
+            "Injecting untestable-code directive into agent messages (category=%s) for %s",
+            untestable_code_info.category,
+            impl_file_path,
+        )
         if untestable_code_info.category == "dead_code":
+            logger.info(
+                "dead_code branch: instructing agent to DELETE unreachable code in %s",
+                impl_file_path,
+            )
             untestable_msg = (
                 f"DEAD CODE detected in `{impl_file_path}`: {untestable_code_info.reason}\n\n"
                 "ACTION REQUIRED: REMOVE this dead/unreachable code entirely (e.g., use optional chaining, remove redundant guards). "
                 "Do NOT use istanbul ignore or coverage exclusion comments. Dead code must be deleted, not excluded."
             )
         else:
+            logger.info(
+                "untestable-but-reachable branch: allowing coverage-ignore comments in %s",
+                impl_file_path,
+            )
             untestable_msg = (
                 f"Genuinely untestable code detected in `{impl_file_path}`: {untestable_code_info.reason}\n\n"
                 "This code is reachable at runtime but untestable due to framework limitations. "
@@ -564,12 +697,24 @@ async def handle_new_pr(
         )
 
     if fixes_applied or pre_existing_errors:
+        logger.info(
+            "Prettier/ESLint auto-fix ran before agent; appending results message for PR #%s",
+            pr_number,
+        )
         parts = ["## Prettier/ESLint Results\n"]
         parts.append("We ran Prettier and ESLint with --fix on the source files.\n")
         if fixes_applied:
+            logger.info(
+                "Including %d auto-fixed entries in Prettier/ESLint results message",
+                len(fixes_applied),
+            )
             fixes_str = "\n".join(fixes_applied)
             parts.append(f"**Auto-fixed and committed:**\n{fixes_str}\n")
         if pre_existing_errors:
+            logger.info(
+                "Including pre-existing unfixable errors in Prettier/ESLint results message (%d chars)",
+                len(pre_existing_errors),
+            )
             parts.append(f"**Remaining unfixable errors:**\n{pre_existing_errors}\n")
         parts.append("Read the latest file content before making changes.")
         messages.append({"role": "user", "content": "\n".join(parts)})
@@ -586,7 +731,13 @@ async def handle_new_pr(
         trigger=trigger, repo_settings=repo_settings, clone_dir=clone_dir
     )
 
-    for _iteration in range(MAX_ITERATIONS):
+    for iteration in range(MAX_ITERATIONS):
+        logger.info(
+            "Agent loop iteration %d/%d on PR #%s",
+            iteration + 1,
+            MAX_ITERATIONS,
+            pr_number,
+        )
         if should_bail(
             current_time=current_time,
             phase="pr processing",
@@ -594,6 +745,10 @@ async def handle_new_pr(
             slack_thread_ts=None,
             cost_cap_usd=cost_cap_usd,
         ):
+            logger.info(
+                "Breaking agent loop on PR #%s: should_bail() tripped during pr processing phase",
+                pr_number,
+            )
             break
 
         # Call the agent to explore the codebase and commit changes
@@ -613,6 +768,18 @@ async def handle_new_pr(
         p = result.p
         total_token_input += result.token_input
         total_token_output += result.token_output
+
+        if result.concurrent_push_detected:
+            logger.warning(
+                "new_pr: chat_with_agent reported concurrent_push_detected on PR #%s; breaking agent loop to bail cleanly",
+                pr_number,
+            )
+            completion_reason = f"Another commit landed on `{base_args['new_branch']}` while I was working. Their push triggers CI on its own, so I'm stopping here — your push stands."
+            logger.info(
+                "new_pr: breaking agent loop on PR #%s due to concurrent push",
+                pr_number,
+            )
+            break
 
         if is_completed:
             logger.info(
@@ -639,14 +806,25 @@ async def handle_new_pr(
     for file_change in changed_files:
         file_path = file_change["filename"]
         if not is_test_file(file_path) or is_config_file(file_path):
+            logger.info(
+                "Skipping header-merge on %s: not a test file or is a config file",
+                file_path,
+            )
             continue
 
         file_content = read_local_file(file_path=file_path, base_dir=clone_dir)
         if not file_content:
+            logger.info(
+                "Skipping header-merge on %s: file unreadable or empty after agent run",
+                file_path,
+            )
             continue
 
         updated_content = merge_test_file_headers(file_content, file_path)
         if not updated_content or updated_content == file_content:
+            logger.info(
+                "Skipping header-merge on %s: headers already up to date", file_path
+            )
             continue
 
         write_and_commit_file(
@@ -663,7 +841,20 @@ async def handle_new_pr(
     update_comment(
         body=create_progress_bar(p=p, msg="\n".join(log_messages)), base_args=base_args
     )
-    create_empty_commit(base_args=base_args)
+    pushed = create_empty_commit(base_args=base_args)
+    if not pushed:
+        logger.warning(
+            "Empty commit skipped on %s: concurrent push detected",
+            base_args["new_branch"],
+        )
+        add_log_message(
+            f"Another commit landed on `{base_args['new_branch']}` while I was working. Their push triggers CI on its own, so no empty commit needed.",
+            log_messages,
+        )
+        update_comment(
+            body=create_progress_bar(p=p, msg="\n".join(log_messages)),
+            base_args=base_args,
+        )
 
     # Update the PR comment
     body_after_pr = build_pr_completion_comment(
@@ -702,10 +893,23 @@ async def handle_new_pr(
     )
 
     if pr_body_summary:
+        logger.info(
+            "Posting pr_body_summary (%d chars) to Slack thread for PR #%s",
+            len(pr_body_summary),
+            pr_number,
+        )
         slack_notify(pr_body_summary, thread_ts)
 
     end_time = time.time()
     if usage_id:
+        logger.info(
+            "Finalizing usage_id=%s for PR #%s: tokens_in=%d tokens_out=%d is_completed=%s",
+            usage_id,
+            pr_number,
+            total_token_input,
+            total_token_output,
+            is_completed,
+        )
         update_usage(
             usage_id=usage_id,
             is_completed=is_completed,
@@ -717,18 +921,40 @@ async def handle_new_pr(
 
     # Check if user just ran out of credits and send casual notification (deduplicated per owner)
     if billing_type == "credit":
+        logger.info(
+            "Credit-billed PR #%s; checking whether owner_id=%s just ran out of credits",
+            pr_number,
+            owner_id,
+        )
         owner = get_owner(owner_id=owner_id)
         if owner and owner["credit_balance_usd"] <= 0 and sender_id:
+            logger.info(
+                "Owner_id=%s credit_balance_usd<=0; reserving credits_depleted email slot (dedup per owner)",
+                owner_id,
+            )
             is_new = insert_email_send(
                 owner_id=owner_id, owner_name=owner_name, email_type="credits_depleted"
             )
             if is_new is not False:
+                logger.info(
+                    "credits_depleted email not sent before for owner_id=%s; looking up sender email",
+                    owner_id,
+                )
                 user = get_user(user_id=sender_id)
                 email = user.get("email") if user else None
                 if email:
+                    logger.info(
+                        "Sending credits_depleted email to sender_id=%s for owner_id=%s",
+                        sender_id,
+                        owner_id,
+                    )
                     subject, text = get_credits_depleted_email_text(sender_name)
                     result = send_email(to=email, subject=subject, text=text)
                     if result and result.get("id"):
+                        logger.info(
+                            "credits_depleted email sent successfully (resend_email_id=%s); persisting send record",
+                            result["id"],
+                        )
                         update_email_send(
                             owner_id=owner_id,
                             email_type="credits_depleted",
@@ -739,4 +965,7 @@ async def handle_new_pr(
     status = "Completed" if is_completed else "<!channel> Failed"
     end_msg = f"{status}: {owner_name}/{repo_name} {pr_url}"
     slack_notify(end_msg, thread_ts)
+    logger.info(
+        "new_pr_handler returning for PR #%s; is_completed=%s", pr_number, is_completed
+    )
     return

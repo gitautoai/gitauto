@@ -186,13 +186,11 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     # Verify execution call includes usage_id for API request tracking
     execution_call_kwargs = mock_chat_with_agent.call_args_list[0].kwargs
     assert execution_call_kwargs["usage_id"] == 777
-    assert "system_message" in execution_call_kwargs
-    assert isinstance(execution_call_kwargs["system_message"], str)
+    assert isinstance(execution_call_kwargs.get("system_message"), str)
 
     # Verify baseline_tsc_errors is set on base_args
     base_args = execution_call_kwargs["base_args"]
-    assert "baseline_tsc_errors" in base_args
-    assert isinstance(base_args["baseline_tsc_errors"], set)
+    assert isinstance(base_args.get("baseline_tsc_errors"), set)
 
     # CRITICAL: Verify update_usage was called with accumulated tokens
     mock_update_usage.assert_called_once()
@@ -204,7 +202,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     assert usage_call_kwargs["is_completed"] is True
 
     # Verify other expected parameters
-    assert "total_seconds" in usage_call_kwargs
+    assert isinstance(usage_call_kwargs.get("total_seconds"), int)
     assert usage_call_kwargs["pr_number"] == 123
     mock_get_repo.assert_called_with(owner_id=11111, repo_id=98765)
 
@@ -581,7 +579,7 @@ async def test_bot_first_review_comment_is_processed(
     # Bot gets a single reply (no progress updates) with the agent's explanation
     mock_reply_to_comment.assert_called()
     reply_body = mock_reply_to_comment.call_args_list[-1].kwargs.get("body", "")
-    assert "Removed the unused variable" in reply_body
+    assert reply_body.count("Removed the unused variable") == 1
 
 
 @patch("services.webhook.review_run_handler.set_npm_token_env")
@@ -780,7 +778,7 @@ async def test_human_review_comment_always_processed(
     mock_chat_with_agent.assert_called_once()
     # Human gets the agent's explanation via update_comment
     final_update_body = _mock_update_comment.call_args_list[-1].kwargs.get("body", "")
-    assert "Fixed the logic" in final_update_body
+    assert final_update_body.count("Fixed the logic") == 1
 
 
 @pytest.fixture
@@ -923,8 +921,8 @@ async def test_pr_comment_uses_create_comment_not_reply(
     # create_comment used for greeting (not reply_to_comment)
     mock_create_comment.assert_called()
     greeting_body = mock_create_comment.call_args_list[0].kwargs.get("body", "")
-    assert "Re:" in greeting_body
-    assert "comment" in greeting_body
+    assert greeting_body.count("Re:") == 1
+    assert greeting_body.count("comment") >= 1
 
     # reply_to_comment NOT used for greeting
     mock_reply_to_comment.assert_not_called()
@@ -1431,12 +1429,42 @@ async def test_batch_builds_combined_review_comment(
     base_args = call_kwargs["base_args"]
     review_comment = base_args["review_comment"]
     # Verify combined comment structure
-    assert "3 inline comments" in review_comment
-    assert "Comment 1:" in review_comment
-    assert "Comment 2:" in review_comment
-    assert "Comment 3:" in review_comment
-    assert "Fix this" in review_comment
-    assert "Rename var" in review_comment
-    assert "Add test" in review_comment
+    assert review_comment.count("3 inline comments") == 1
+    assert review_comment.count("Comment 1:") == 1
+    assert review_comment.count("Comment 2:") == 1
+    assert review_comment.count("Comment 3:") == 1
+    assert review_comment.count("Fix this") == 1
+    assert review_comment.count("Rename var") == 1
+    assert review_comment.count("Add test") == 1
     # Verify file content was read for both unique paths
     assert mock_get_file_content.call_count == 2
+
+
+def test_agent_result_concurrent_push_field_defaults_false_review_run():
+    """review_run handler breaks its agent loop + skips final empty commit when
+    AgentResult.concurrent_push_detected is True. Verify the new field exists
+    and defaults to False so existing AgentResult(...) construction stays valid."""
+    result = AgentResult(
+        messages=[],
+        token_input=0,
+        token_output=0,
+        is_completed=False,
+        completion_reason="",
+        p=0,
+        is_planned=False,
+        cost_usd=0.0,
+    )
+    assert result.concurrent_push_detected is False
+
+    raced = AgentResult(
+        messages=[],
+        token_input=0,
+        token_output=0,
+        is_completed=False,
+        completion_reason="",
+        p=0,
+        is_planned=False,
+        cost_usd=0.0,
+        concurrent_push_detected=True,
+    )
+    assert raced.concurrent_push_detected is True

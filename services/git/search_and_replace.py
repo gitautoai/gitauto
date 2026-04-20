@@ -67,6 +67,9 @@ def search_and_replace(
 
     # Check if path is a directory
     if os.path.isdir(local_path):
+        logger.warning(
+            "search_and_replace: %s is a directory, not a file; aborting", file_path
+        )
         return FileWriteResult(
             success=False,
             message=f"'{file_path}' is a directory, not a file.",
@@ -77,6 +80,9 @@ def search_and_replace(
     # Read the existing file
     original_text = read_local_file(file_path, clone_dir)
     if original_text is None:
+        logger.warning(
+            "search_and_replace: %s not found in clone_dir; aborting", file_path
+        )
         return FileWriteResult(
             success=False,
             message=f"File '{file_path}' not found.",
@@ -86,6 +92,9 @@ def search_and_replace(
 
     # Reject empty old_string
     if not old_string:
+        logger.warning(
+            "search_and_replace: empty old_string for %s; aborting", file_path
+        )
         return FileWriteResult(
             success=False,
             message="old_string must not be empty. Provide the exact text to find.",
@@ -96,12 +105,21 @@ def search_and_replace(
     # Normalize line endings in old_string/new_string to match the file
     original_line_break = detect_line_break(text=original_text)
     if original_line_break != "\n":
+        logger.info(
+            "search_and_replace: normalizing old_string/new_string line endings to %r to match %s",
+            original_line_break,
+            file_path,
+        )
         old_string = old_string.replace("\n", original_line_break)
         new_string = new_string.replace("\n", original_line_break)
 
     # Count occurrences
     count = original_text.count(old_string)
     if count == 0:
+        logger.warning(
+            "search_and_replace: old_string not found in %s; agent must adjust",
+            file_path,
+        )
         return FileWriteResult(
             success=False,
             message=f"old_string not found in '{file_path}'. Verify the exact text including whitespace and indentation.",
@@ -109,6 +127,11 @@ def search_and_replace(
             content=original_text,
         )
     if count > 1:
+        logger.warning(
+            "search_and_replace: old_string matches %d times in %s; agent must add context for uniqueness",
+            count,
+            file_path,
+        )
         return FileWriteResult(
             success=False,
             message=f"old_string found {count} times in '{file_path}'. Add more surrounding context to make it unique.",
@@ -143,10 +166,29 @@ def search_and_replace(
         f.write(new_content)
     logger.info("Updated: %s", local_path)
 
-    git_commit_and_push(
+    commit_result = git_commit_and_push(
         base_args=base_args, message=f"Update {file_path}", files=[file_path]
     )
+    if not commit_result.success:
+        logger.warning(
+            "search_and_replace: push for %s failed (concurrent_push_detected=%s on %s)",
+            file_path,
+            commit_result.concurrent_push_detected,
+            base_args["new_branch"],
+        )
+        return FileWriteResult(
+            success=False,
+            message=(
+                f"Concurrent push detected on `{base_args['new_branch']}` while committing {file_path}. Another commit landed; aborting this edit."
+                if commit_result.concurrent_push_detected
+                else f"Failed to commit/push {file_path}."
+            ),
+            file_path=file_path,
+            content="",
+            concurrent_push_detected=commit_result.concurrent_push_detected,
+        )
 
+    logger.info("search_and_replace: %s committed and pushed", file_path)
     return FileWriteResult(
         success=True,
         message=f"Updated {file_path}.",

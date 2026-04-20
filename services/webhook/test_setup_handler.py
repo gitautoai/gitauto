@@ -226,7 +226,7 @@ async def test_uses_target_branch_when_set(
     call_kwargs = mock_agent.call_args.kwargs
     content_blocks = call_kwargs["messages"][0]["content"]
     branch_block = content_blocks[1]["text"]
-    assert "develop" in branch_block
+    assert branch_block == "Target branch: develop"
 
 
 @pytest.mark.asyncio
@@ -295,8 +295,10 @@ async def test_passes_existing_workflows_to_claude(
     call_kwargs = mock_agent.call_args.kwargs
     content_blocks = call_kwargs["messages"][0]["content"]
     workflows_block = content_blocks[2]["text"]
-    assert "ci.yml" in workflows_block
-    assert "deploy.yml" in workflows_block
+    # Both workflow files appear exactly once, framed as keys in the configs dict
+    assert workflows_block.startswith("Existing CI configs:\n")
+    assert workflows_block.count(".github/workflows/ci.yml (GitHub Actions)") == 1
+    assert workflows_block.count(".github/workflows/deploy.yml (GitHub Actions)") == 1
 
 
 @pytest.mark.asyncio
@@ -454,8 +456,9 @@ async def test_system_message_mentions_coverage(
     )
 
     call_kwargs = mock_agent.call_args.kwargs
-    assert "coverage" in call_kwargs["system_message"].lower()
-    assert "coverage-report" in call_kwargs["system_message"]
+    system_message = call_kwargs["system_message"]
+    assert system_message.lower().count("coverage") >= 1
+    assert system_message.count("coverage-report") >= 1
 
 
 @pytest.mark.asyncio
@@ -516,3 +519,33 @@ async def test_sets_pr_number_in_base_args(
 
     call_kwargs = mock_agent.call_args.kwargs
     assert call_kwargs["base_args"]["pr_number"] == 1
+
+
+def test_agent_result_concurrent_push_field_defaults_false_setup():
+    """AgentResult.concurrent_push_detected is a new optional field used by the
+    webhook handlers to bail cleanly on a racing push. Verify it exists and
+    defaults to False so existing AgentResult(...) construction stays valid."""
+    result = AgentResult(
+        messages=[],
+        token_input=0,
+        token_output=0,
+        is_completed=False,
+        completion_reason="",
+        p=0,
+        is_planned=False,
+        cost_usd=0.0,
+    )
+    assert result.concurrent_push_detected is False
+
+    raced = AgentResult(
+        messages=[],
+        token_input=0,
+        token_output=0,
+        is_completed=False,
+        completion_reason="",
+        p=0,
+        is_planned=False,
+        cost_usd=0.0,
+        concurrent_push_detected=True,
+    )
+    assert raced.concurrent_push_detected is True

@@ -351,9 +351,9 @@ async def test_handle_check_suite_race_condition_prevention(
     assert kwargs["is_completed"] is True
     assert kwargs["pr_number"] == 1
     assert isinstance(kwargs["total_seconds"], int)  # Should be small integer
-    assert "retry_error_hashes" in kwargs
-    assert "original_error_log" in kwargs
-    assert "minimized_error_log" in kwargs
+    assert {"retry_error_hashes", "original_error_log", "minimized_error_log"}.issubset(
+        set(kwargs.keys())
+    )
 
     # Verify notification was sent
     mock_slack_notify.assert_called()
@@ -487,11 +487,9 @@ async def test_handle_check_suite_full_workflow(
 
     # Verify execution call has system_message and baseline_tsc_errors
     execution_call = mock_chat_agent.call_args_list[0]
-    assert "system_message" in execution_call.kwargs
-    assert isinstance(execution_call.kwargs["system_message"], str)
+    assert isinstance(execution_call.kwargs.get("system_message"), str)
     base_args = execution_call.kwargs["base_args"]
-    assert "baseline_tsc_errors" in base_args
-    assert isinstance(base_args["baseline_tsc_errors"], set)
+    assert isinstance(base_args.get("baseline_tsc_errors"), set)
 
 
 @pytest.mark.asyncio
@@ -1248,7 +1246,10 @@ async def test_handle_check_suite_skips_duplicate_older_request(
         mock_slack_notify.call_count == 3
     )  # Start notification + duplicate notification + completion notification
     duplicate_call = mock_slack_notify.call_args_list[1]
-    assert "older active test failure request found" in duplicate_call[0][0]
+    assert (
+        duplicate_call[0][0]
+        == "Stopped - older active test failure request found for PR #1. Avoiding race condition. in `gitautoai/gitauto`"
+    )
     assert duplicate_call[0][1] == "thread-123"  # Uses thread_ts
 
 
@@ -1732,7 +1733,10 @@ async def test_handle_check_suite_skips_same_error_hash_across_workflow_ids(
 
     # Verify the skip message mentions the error was already tried
     slack_calls = [call[0][0] for call in mock_slack_notify.call_args_list]
-    assert any("already tried to fix this error" in msg for msg in slack_calls)
+    match_count = sum(
+        msg.count("already tried to fix this error") for msg in slack_calls
+    )
+    assert match_count >= 1
 
 
 def test_patch_truncation_in_changed_files():
@@ -1759,5 +1763,36 @@ def test_patch_truncation_in_changed_files():
 
     serialized = json.dumps(changed_files)
     assert len(serialized) < 2000
-    assert "truncated" in serialized
-    assert "5,000" in serialized
+    assert serialized.count("truncated") == 1
+    assert serialized.count("5,000 chars total") == 1
+
+
+def test_agent_result_concurrent_push_field_defaults_false():
+    """check_suite_handler breaks its agent loop and skips the final empty commit
+    when AgentResult.concurrent_push_detected is True. Verify the new field
+    exists and defaults to False so existing tests that construct AgentResult
+    without it keep passing."""
+    result = AgentResult(
+        messages=[],
+        token_input=0,
+        token_output=0,
+        is_completed=False,
+        completion_reason="",
+        p=0,
+        is_planned=False,
+        cost_usd=0.0,
+    )
+    assert result.concurrent_push_detected is False
+
+    raced = AgentResult(
+        messages=[],
+        token_input=0,
+        token_output=0,
+        is_completed=False,
+        completion_reason="",
+        p=0,
+        is_planned=False,
+        cost_usd=0.0,
+        concurrent_push_detected=True,
+    )
+    assert raced.concurrent_push_detected is True

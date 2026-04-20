@@ -66,6 +66,9 @@ def write_and_commit_file(
 
     # Check if path is a directory
     if os.path.isdir(local_path):
+        logger.warning(
+            "write_and_commit_file: %s is a directory, not a file; aborting", file_path
+        )
         return FileWriteResult(
             success=False,
             message=f"'{file_path}' is a directory, not a file.",
@@ -79,10 +82,19 @@ def write_and_commit_file(
 
     existing_content = read_local_file(file_path, clone_dir)
     if existing_content is not None:
+        logger.info(
+            "write_and_commit_file: %s exists; normalizing line endings before compare",
+            file_path,
+        )
 
         # Claude's JSON output always uses LF. Convert to match the original line endings.
         original_line_break = detect_line_break(text=existing_content)
         if original_line_break != "\n":
+            logger.info(
+                "write_and_commit_file: converting new content from LF to %r to match existing file %s",
+                original_line_break,
+                file_path,
+            )
             file_content = file_content.replace("\n", original_line_break)
 
         if existing_content == file_content:
@@ -97,6 +109,10 @@ def write_and_commit_file(
     # Compute unified diff to include in the tool result so the agent sees its changes
     diff_text = ""
     if existing_content is not None:
+        logger.info(
+            "write_and_commit_file: computing unified diff for %s to return with tool result",
+            file_path,
+        )
         diff_text = compute_unified_diff(existing_content, file_content, file_path)
 
     # Write file to local clone (newline="" preserves CRLF if present)
@@ -107,8 +123,32 @@ def write_and_commit_file(
 
     # Commit and push (mirrors original GitHub Contents API behavior: 1 commit per file edit)
     message = commit_message if commit_message else default_message
-    git_commit_and_push(base_args=base_args, message=message, files=[file_path])
+    commit_result = git_commit_and_push(
+        base_args=base_args, message=message, files=[file_path]
+    )
+    if not commit_result.success:
+        logger.warning(
+            "write_and_commit_file: push on %s failed (concurrent_push_detected=%s on branch %s). Returning success=False so chat_with_agent can break the loop.",
+            file_path,
+            commit_result.concurrent_push_detected,
+            base_args["new_branch"],
+        )
+        return FileWriteResult(
+            success=False,
+            message=(
+                f"Concurrent push detected on `{base_args['new_branch']}` while committing {file_path}. Another commit landed on the branch; aborting this edit."
+                if commit_result.concurrent_push_detected
+                else f"Failed to commit/push {file_path}."
+            ),
+            file_path=file_path,
+            content="",
+            concurrent_push_detected=commit_result.concurrent_push_detected,
+        )
 
+    logger.info(
+        "write_and_commit_file succeeded on %s; returning FileWriteResult(success=True)",
+        file_path,
+    )
     return FileWriteResult(
         success=True,
         message=f"{'Updated' if file_exists else 'Created'} {file_path}.",

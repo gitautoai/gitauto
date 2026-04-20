@@ -52,6 +52,10 @@ def move_file(
 ):
     """Move a file in the local clone, then commit and push to the PR branch."""
     if old_file_path == new_file_path:
+        logger.warning(
+            "move_file: refusing no-op move (old and new path are both %s)",
+            old_file_path,
+        )
         return FileMoveResult(
             success=False,
             message=f"Source and destination cannot be the same: '{old_file_path}'.",
@@ -65,6 +69,9 @@ def move_file(
 
     # Check source file exists
     if not os.path.exists(old_local_path):
+        logger.warning(
+            "move_file: source %s not found in clone_dir; aborting", old_file_path
+        )
         return FileMoveResult(
             success=False,
             message=f"File '{old_file_path}' not found.",
@@ -74,6 +81,9 @@ def move_file(
 
     # Check target doesn't already exist
     if os.path.exists(new_local_path):
+        logger.warning(
+            "move_file: target %s already exists; refusing to overwrite", new_file_path
+        )
         return FileMoveResult(
             success=False,
             message=f"Target file '{new_file_path}' already exists.",
@@ -87,12 +97,34 @@ def move_file(
     logger.info("Moved local: %s -> %s", old_local_path, new_local_path)
 
     # Stage both old (deleted) and new (added) paths
-    git_commit_and_push(
+    commit_result = git_commit_and_push(
         base_args=base_args,
         message=f"Move {old_file_path} to {new_file_path}",
         files=[old_file_path, new_file_path],
     )
+    if not commit_result.success:
+        logger.warning(
+            "move_file: push for %s->%s failed (concurrent_push_detected=%s on %s)",
+            old_file_path,
+            new_file_path,
+            commit_result.concurrent_push_detected,
+            base_args["new_branch"],
+        )
+        return FileMoveResult(
+            success=False,
+            message=(
+                f"Concurrent push detected on `{base_args['new_branch']}` while moving {old_file_path} to {new_file_path}. Another commit landed; aborting."
+                if commit_result.concurrent_push_detected
+                else f"Failed to commit/push move of {old_file_path} to {new_file_path}."
+            ),
+            old_file_path=old_file_path,
+            new_file_path=new_file_path,
+            concurrent_push_detected=commit_result.concurrent_push_detected,
+        )
 
+    logger.info(
+        "move_file: %s -> %s committed and pushed", old_file_path, new_file_path
+    )
     return FileMoveResult(
         success=True,
         message=f"Moved {old_file_path} to {new_file_path}.",

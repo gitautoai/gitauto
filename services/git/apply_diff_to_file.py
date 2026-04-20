@@ -56,6 +56,9 @@ def apply_diff_to_file(
 
     # Check if path is a directory
     if os.path.isdir(local_path):
+        logger.warning(
+            "apply_diff_to_file: %s is a directory, not a file; aborting", file_path
+        )
         return FileWriteResult(
             success=False,
             message=f"'{file_path}' is a directory, not a file.",
@@ -66,6 +69,10 @@ def apply_diff_to_file(
     original_text = read_local_file(file_path, clone_dir)
     file_exists = original_text is not None
     if not original_text:
+        logger.info(
+            "apply_diff_to_file: %s has no existing content; treating as new file",
+            file_path,
+        )
         original_text = ""
 
     # Apply the diff locally
@@ -77,6 +84,11 @@ def apply_diff_to_file(
     )
 
     if result.error:
+        logger.warning(
+            "apply_diff_to_file: apply_patch returned error for %s: %s",
+            file_path,
+            result.error,
+        )
         return FileWriteResult(
             success=False,
             message=result.error,
@@ -86,12 +98,39 @@ def apply_diff_to_file(
 
     # Handle file deletion
     if result.content == "" and "+++ /dev/null" in diff:
+        logger.info(
+            "apply_diff_to_file: diff is a deletion for %s; removing local file",
+            file_path,
+        )
         if os.path.exists(local_path):
+            logger.info(
+                "apply_diff_to_file: %s exists on disk; calling os.remove", local_path
+            )
             os.remove(local_path)
             logger.info("Deleted local: %s", local_path)
-        git_commit_and_push(
+        del_result = git_commit_and_push(
             base_args=base_args, message=f"Delete {file_path}", files=[file_path]
         )
+        if not del_result.success:
+            logger.warning(
+                "apply_diff_to_file: delete-commit for %s failed (concurrent_push_detected=%s on %s)",
+                file_path,
+                del_result.concurrent_push_detected,
+                base_args["new_branch"],
+            )
+            return FileWriteResult(
+                success=False,
+                message=(
+                    f"Concurrent push detected on `{base_args['new_branch']}` while deleting {file_path}. Another commit landed; aborting."
+                    if del_result.concurrent_push_detected
+                    else f"Failed to commit deletion of {file_path}."
+                ),
+                file_path=file_path,
+                content="",
+                concurrent_push_detected=del_result.concurrent_push_detected,
+            )
+
+        logger.info("apply_diff_to_file: %s deletion committed and pushed", file_path)
         return FileWriteResult(
             success=True,
             message=f"Deleted {file_path}.",
@@ -115,12 +154,31 @@ def apply_diff_to_file(
         f.write(result.content)
     logger.info("%s: %s", "Updated" if file_exists else "Created", local_path)
 
-    git_commit_and_push(
+    commit_result = git_commit_and_push(
         base_args=base_args,
         message=f"{'Update' if file_exists else 'Create'} {file_path}",
         files=[file_path],
     )
+    if not commit_result.success:
+        logger.warning(
+            "apply_diff_to_file: push for %s failed (concurrent_push_detected=%s on %s)",
+            file_path,
+            commit_result.concurrent_push_detected,
+            base_args["new_branch"],
+        )
+        return FileWriteResult(
+            success=False,
+            message=(
+                f"Concurrent push detected on `{base_args['new_branch']}` while committing {file_path}. Another commit landed; aborting this edit."
+                if commit_result.concurrent_push_detected
+                else f"Failed to commit/push {file_path}."
+            ),
+            file_path=file_path,
+            content="",
+            concurrent_push_detected=commit_result.concurrent_push_detected,
+        )
 
+    logger.info("apply_diff_to_file: %s patch committed and pushed", file_path)
     return FileWriteResult(
         success=True,
         message=f"{'Updated' if file_exists else 'Created'} {file_path}.",
