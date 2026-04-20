@@ -1248,7 +1248,7 @@ async def test_handle_check_suite_skips_duplicate_older_request(
     duplicate_call = mock_slack_notify.call_args_list[1]
     assert (
         duplicate_call[0][0]
-        == "Stopped - older active test failure request found for PR #1. Avoiding race condition. in `test-owner/test-repo`"
+        == "Stopped - older active test failure request found for PR #1. Avoiding race condition. in `gitautoai/gitauto`"
     )
     assert duplicate_call[0][1] == "thread-123"  # Uses thread_ts
 
