@@ -7,6 +7,10 @@
 
 ## Development Commands
 
+### Shell Environment (Claude already inherits it)
+
+The user starts this session with `source .env && source .venv/bin/activate && claude`, so `.env` vars and the `.venv` are already on PATH for every Bash tool call. Do not prepend `source .env` or `source .venv/bin/activate` to commands. Use `pytest`, `python`, `ruff`, etc. directly. For pytest specifically, use `python -m pytest ...` (not `pytest ...` or `uv run pytest ...`) so cwd is added to `sys.path` and top-level imports like `from constants.models ...` resolve without setting `PYTHONPATH`.
+
 ### Running Locally
 
 ```bash

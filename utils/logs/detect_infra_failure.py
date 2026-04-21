@@ -1,6 +1,7 @@
 # Local imports
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
+from utils.logs.strip_jest_noise import strip_jest_noise
 
 # Patterns for transient infrastructure failures (not code bugs). Add more as we encounter them.
 INFRA_FAILURE_PATTERNS = [
@@ -33,10 +34,13 @@ INFRA_FAILURE_PATTERNS = [
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def detect_infra_failure(error_log: str):
+    # Strip console.warn/log blocks and AWS SSM-fallback warnings before scanning so app-level noise (e.g. "AccessDeniedException" from a console.warn that fell back to a default) can't false-positive this classifier.
+    error_log = strip_jest_noise(error_log)
     lower_log = error_log.lower()
     for pattern in INFRA_FAILURE_PATTERNS:
         if pattern.lower() in lower_log:
             logger.info("Infrastructure failure detected: '%s'", pattern)
             return pattern
 
+    logger.info("No infrastructure failure pattern matched")
     return None
