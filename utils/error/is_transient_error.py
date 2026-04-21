@@ -25,6 +25,11 @@ def is_transient_error(err: Exception):
         logger.info("is_transient_error: matched via is_server_error")
         return True
 
+    # Google GenAI returns 499 CANCELLED when its own backend closes the stream, observed during free-tier overload windows (sibling symptom of 429 RESOURCE_EXHAUSTED, but without a Retry-After hint). Retry like any 5xx via the caller's linear backoff.
+    if getattr(err, "code", None) == 499:
+        logger.info("is_transient_error: matched via code=499 CANCELLED")
+        return True
+
     err_text = str(err)
     matched = any(marker in err_text for marker in TRANSIENT_MARKERS)
     logger.info("is_transient_error: marker match=%s", matched)
