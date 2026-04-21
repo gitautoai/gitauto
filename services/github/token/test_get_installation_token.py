@@ -124,6 +124,9 @@ def test_get_installation_access_token_403_without_suspension_message(
     mock_response.status_code = 403
     mock_response.text = "Forbidden - different reason"
     mock_response.reason = "Forbidden"
+    # Explicit empty headers — otherwise MagicMock's auto-attributes make the
+    # rate-limit extractor see a phantom Retry-After (MagicMock.__float__ returns 1.0).
+    mock_response.headers = {}
     mock_error = requests.exceptions.HTTPError(response=mock_response)
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
@@ -146,6 +149,7 @@ def test_get_installation_access_token_other_http_error(
     mock_response.status_code = 500
     mock_response.text = "Internal Server Error"
     mock_response.reason = "Internal Server Error"
+    mock_response.headers = {}
     mock_error = requests.exceptions.HTTPError(response=mock_response)
     mock_error.response = mock_response
     mock_requests_post.return_value.raise_for_status.side_effect = mock_error
