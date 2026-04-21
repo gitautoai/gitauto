@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from anthropic.types import MessageParam, ToolUnionParam
+from google.genai import errors as google_errors
 
 from constants.models import GoogleModelId
 from services.google_ai.chat_with_google import chat_with_google
@@ -345,8 +346,6 @@ def test_429_is_not_retried_locally_bubbles_to_handle_exceptions(
     the SDK should propagate unchanged — the decorator picks it up, sleeps the
     retry-after hint, and re-invokes the wrapper. Verify chat_with_google itself
     does not swallow or loop on 429."""
-    from google.genai import errors as google_errors
-
     err = google_errors.ClientError(
         code=429,
         response_json={

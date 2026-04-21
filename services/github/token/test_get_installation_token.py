@@ -426,8 +426,7 @@ def test_get_installation_access_token_timeout_parameter(
 
     # Assert
     call_args = mock_requests_post.call_args
-    assert "timeout" in call_args[1]
-    assert call_args[1]["timeout"] == TIMEOUT
+    assert call_args[1].get("timeout") == TIMEOUT
 
 
 def test_get_installation_access_token_uses_github_api_url_constant(
@@ -587,7 +586,7 @@ def test_get_installation_access_token_cast_behavior(
 
     # Assert
     assert result == 123456  # cast() should handle the conversion
-    assert isinstance(result, int)  # cast() preserves the original type in this case
+    assert isinstance(result, int)  # cast() preserves the original type
     mock_requests_post.assert_called_once()
 
 

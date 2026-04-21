@@ -37,10 +37,11 @@ scripts/supabase/query.sh --prd "SELECT ..."                  # Run against prod
 ### Sentry CLI
 
 ```bash
-source .env && sentry-cli issues list --org gitauto-ai --project agent --query "search terms"
+sentry-cli issues list --org gitauto-ai --project agent --query "search terms"
 python3 scripts/sentry/get_issue.py AGENT-20N
-cat /tmp/sentry_agent-20n.json | python -m json.tool | grep -A 10 -B 5 "error_keyword"
 ```
+
+Then **just `Read` `/tmp/sentry_agent-20n.json`** — it's small. Don't pipe through `python -m json.tool`, `jq`, or inline `python3 -c`; those fail on quoting and waste retries.
 
 ### AWS CLI
 
