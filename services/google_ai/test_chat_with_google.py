@@ -333,3 +333,45 @@ def test_integration_tool_call_with_real_tools(mock_insert):
     for tc in result.tool_calls:
         assert tc.id
         assert tc.name
+
+
+@patch("services.google_ai.chat_with_google.insert_llm_request")
+@patch("services.google_ai.chat_with_google.get_google_ai_client")
+def test_429_is_not_retried_locally_bubbles_to_handle_exceptions(
+    mock_get_client, mock_insert
+):
+    """Rate-limit retry is handled at the handle_exceptions layer (via
+    get_rate_limit_retry_after), not inside chat_with_google. A single 429 from
+    the SDK should propagate unchanged — the decorator picks it up, sleeps the
+    retry-after hint, and re-invokes the wrapper. Verify chat_with_google itself
+    does not swallow or loop on 429."""
+    from google.genai import errors as google_errors
+
+    err = google_errors.ClientError(
+        code=429,
+        response_json={
+            "error": {
+                "code": 429,
+                "message": "quota exceeded. Please retry in 5s.",
+                "status": "RESOURCE_EXHAUSTED",
+            }
+        },
+    )
+    client = Mock()
+    client.models.generate_content.side_effect = err
+    mock_get_client.return_value = client
+
+    with patch("utils.error.handle_exceptions.time.sleep"):
+        with pytest.raises(google_errors.ClientError):
+            chat_with_google(
+                messages=cast(list[MessageParam], [{"role": "user", "content": "hi"}]),
+                system_content="sys",
+                tools=[],
+                model_id=GoogleModelId.GEMMA_4_31B,
+                usage_id=1,
+                created_by="1:t",
+            )
+    # handle_exceptions retries up to TRANSIENT_MAX_ATTEMPTS=3 times before giving up,
+    # so the SDK gets called 3 times (honoring the 5s hint between each).
+    assert client.models.generate_content.call_count == 3
+    mock_insert.assert_not_called()

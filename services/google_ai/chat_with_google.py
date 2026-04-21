@@ -58,12 +58,28 @@ def chat_with_google(
     content_list = []
 
     if response.candidates:
+        logger.info(
+            "chat_with_google: response has %d candidate(s); parsing first",
+            len(response.candidates),
+        )
         candidate = response.candidates[0]
         if candidate.content and candidate.content.parts:
+            logger.info(
+                "chat_with_google: candidate has %d part(s); iterating",
+                len(candidate.content.parts),
+            )
             for part in candidate.content.parts:
                 if part.text:
+                    logger.info(
+                        "chat_with_google: part is text (%d chars); appending to content_text",
+                        len(part.text),
+                    )
                     content_text += part.text
                 elif part.function_call:
+                    logger.info(
+                        "chat_with_google: part is function_call=%s; building ToolCall",
+                        part.function_call.name,
+                    )
                     fc = part.function_call
                     # Generate a tool_use ID matching Anthropic format
                     tool_id = fc.id or f"toolu_{uuid.uuid4().hex[:24]}"
@@ -77,6 +93,10 @@ def chat_with_google(
 
     # Build content list in Anthropic format
     if content_text:
+        logger.info(
+            "chat_with_google: assembling content_list with text block (%d chars)",
+            len(content_text),
+        )
         content_list.append({"type": "text", "text": content_text})
 
     for tc in tool_calls:

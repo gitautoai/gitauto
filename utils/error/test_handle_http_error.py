@@ -73,15 +73,20 @@ def test_server_error_returns_default_without_sentry():
     mock_sentry.capture_exception.assert_not_called()
 
 
-def test_github_rate_limit_is_delegated_and_retries():
+def test_github_rate_limit_passes_through_to_generic_handling():
+    """Rate-limit retry now lives in handle_exceptions via get_rate_limit_retry_after.
+    By the time a 403 with X-RateLimit headers reaches handle_http_error, the retry
+    budget is already exhausted — treat it like any other client error: capture to
+    Sentry and return the default. retry_callback is kept in the signature but is
+    not invoked."""
     err = _http_error(403, body="rate limit exceeded", reason="Forbidden")
     err.response.headers["X-RateLimit-Limit"] = "5000"
     err.response.headers["X-RateLimit-Remaining"] = "0"
     err.response.headers["X-RateLimit-Used"] = "5000"
     err.response.headers["X-RateLimit-Reset"] = "0"
-    retry_callback = Mock(return_value="RETRIED")
+    retry_callback = Mock()
 
-    with patch("utils.error.handle_github_rate_limit.time.sleep"):
+    with patch("utils.error.handle_http_error.sentry_sdk") as mock_sentry:
         result = handle_http_error(
             err,
             func_name="test",
@@ -93,8 +98,9 @@ def test_github_rate_limit_is_delegated_and_retries():
             retry_callback=retry_callback,
         )
 
-    assert result == ("RETRIED", True)
-    retry_callback.assert_called_once_with()
+    assert result == ("DEFAULT", False)
+    retry_callback.assert_not_called()
+    mock_sentry.capture_exception.assert_called_once_with(err)
 
 
 def test_other_http_error_captures_sentry_and_returns_default():

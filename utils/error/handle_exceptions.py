@@ -11,6 +11,7 @@ from typing import Any, Callable, Literal, ParamSpec, TypeVar, cast, overload
 # Third party imports
 import requests
 
+from utils.error.get_rate_limit_retry_after import get_rate_limit_retry_after
 from utils.error.handle_generic_error import handle_generic_error
 from utils.error.handle_http_error import handle_http_error
 from utils.error.handle_json_error import handle_json_error
@@ -92,6 +93,27 @@ def handle_exceptions(
                         logger.info("%s invoking attempt %d", func.__name__, attempt)
                         return await func(*args, **kwargs)
                     except requests.HTTPError as err:
+                        rate_limit_delay = get_rate_limit_retry_after(err)
+                        if (
+                            rate_limit_delay is not None
+                            and remaining_transient_retries > 0
+                        ):
+                            logger.warning(
+                                "%s rate-limited via HTTPError on attempt %d, sleeping %.2fs",
+                                func.__name__,
+                                attempt,
+                                rate_limit_delay,
+                            )
+                            remaining_transient_retries -= 1
+                            await asyncio.sleep(rate_limit_delay)
+                            logger.info(
+                                "%s retrying after rate-limit sleep", func.__name__
+                            )
+                            continue
+                        logger.info(
+                            "%s HTTPError not rate-limited or retries exhausted; handing off",
+                            func.__name__,
+                        )
                         result, retried = handle_http_error(
                             err,
                             func.__name__,
@@ -136,6 +158,23 @@ def handle_exceptions(
                         )
                         return cast(R, error_return)
                     except Exception as err:
+                        rate_limit_delay = get_rate_limit_retry_after(err)
+                        if (
+                            rate_limit_delay is not None
+                            and remaining_transient_retries > 0
+                        ):
+                            logger.warning(
+                                "%s rate-limited on attempt %d, sleeping %.2fs",
+                                func.__name__,
+                                attempt,
+                                rate_limit_delay,
+                            )
+                            remaining_transient_retries -= 1
+                            await asyncio.sleep(rate_limit_delay)
+                            logger.info(
+                                "%s retrying after rate-limit sleep", func.__name__
+                            )
+                            continue
                         if remaining_transient_retries > 0 and is_transient_error(err):
                             logger.info(
                                 "%s transient-error branch taken", func.__name__
@@ -191,6 +230,22 @@ def handle_exceptions(
                     logger.info("%s invoking attempt %d", func.__name__, attempt)
                     return func(*args, **kwargs)
                 except requests.HTTPError as err:
+                    rate_limit_delay = get_rate_limit_retry_after(err)
+                    if rate_limit_delay is not None and remaining_transient_retries > 0:
+                        logger.warning(
+                            "%s rate-limited via HTTPError on attempt %d, sleeping %.2fs",
+                            func.__name__,
+                            attempt,
+                            rate_limit_delay,
+                        )
+                        remaining_transient_retries -= 1
+                        time.sleep(rate_limit_delay)
+                        logger.info("%s retrying after rate-limit sleep", func.__name__)
+                        continue
+                    logger.info(
+                        "%s HTTPError not rate-limited or retries exhausted; handing off",
+                        func.__name__,
+                    )
                     result, retried = handle_http_error(
                         err,
                         func.__name__,
@@ -220,6 +275,18 @@ def handle_exceptions(
                         ),
                     )
                 except Exception as err:
+                    rate_limit_delay = get_rate_limit_retry_after(err)
+                    if rate_limit_delay is not None and remaining_transient_retries > 0:
+                        logger.warning(
+                            "%s rate-limited on attempt %d, sleeping %.2fs",
+                            func.__name__,
+                            attempt,
+                            rate_limit_delay,
+                        )
+                        remaining_transient_retries -= 1
+                        time.sleep(rate_limit_delay)
+                        logger.info("%s retrying after rate-limit sleep", func.__name__)
+                        continue
                     if remaining_transient_retries > 0 and is_transient_error(err):
                         logger.info("%s transient-error branch taken", func.__name__)
                         backoff = TRANSIENT_BACKOFF_SECONDS * attempt

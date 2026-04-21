@@ -724,3 +724,27 @@ def test_decorator_does_not_retry_non_transient_error():
     with patch("utils.error.handle_exceptions.time.sleep"):
         assert real_bug() == "DEFAULT"
     assert attempts["count"] == 1
+
+
+def test_decorator_honors_rate_limit_retry_after_hint():
+    """When a decorated function raises a rate-limit error carrying a retry-after hint, the decorator sleeps that long and retries under the existing TRANSIENT_MAX_ATTEMPTS budget (see get_rate_limit_retry_after)."""
+    attempts = {"count": 0}
+
+    def build_429():
+        response = MagicMock()
+        response.status_code = 429
+        response.headers = {"Retry-After": "7"}
+        return requests.HTTPError(response=response)
+
+    @handle_exceptions(default_return_value="DEFAULT", raise_on_error=False)
+    def rate_limited_then_ok():
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise build_429()
+        return "OK"
+
+    slept = []
+    with patch("utils.error.handle_exceptions.time.sleep", side_effect=slept.append):
+        assert rate_limited_then_ok() == "OK"
+    assert attempts["count"] == 2
+    assert slept == [7.0]
