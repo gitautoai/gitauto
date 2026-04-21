@@ -105,7 +105,7 @@ async def test_run_pytest_test_with_failures(
     )
     assert result.success is False
     assert len(result.errors) > 0
-    assert "tests/test_utils.py" in result.error_files
+    assert result.error_files == {"tests/test_utils.py"}
 
 
 @pytest.mark.asyncio
@@ -148,3 +148,31 @@ async def test_run_pytest_test_filters_non_python_files(create_test_base_args):
     )
     assert result.success is True
     assert result.errors == []
+
+
+@pytest.mark.asyncio
+@patch("services.pytest.run_pytest_test.subprocess.run")
+@patch("services.pytest.run_pytest_test.os.path.exists")
+async def test_run_pytest_test_passes_importlib_mode(
+    mock_exists, mock_subprocess, create_test_base_args
+):
+    """pytest must be invoked with --import-mode=importlib so duplicate test
+    filenames across directories in the customer's repo (common in monorepos
+    without __init__.py) don't trigger 'import file mismatch' collection
+    errors. Regression guard for the same conflict we hit locally with
+    services/claude/test_count_tokens.py vs services/google_ai/test_count_tokens.py."""
+    mock_exists.return_value = True
+    mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
+    )
+    await run_pytest_test(
+        base_args=base_args,
+        test_file_paths=["tests/test_utils.py"],
+    )
+
+    cmd = mock_subprocess.call_args.args[0]
+    assert cmd.count("--import-mode=importlib") == 1

@@ -1,5 +1,5 @@
 # pylint: disable=import-outside-toplevel
-from services.claude.message_to_dict import message_to_dict
+from services.messages.message_to_dict import message_to_dict
 
 
 def create_mock_message(**kwargs):

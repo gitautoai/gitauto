@@ -39,10 +39,12 @@ async def run_pytest_test(
     for venv_dir in ("venv", ".venv"):
         candidate = os.path.join(clone_dir, venv_dir, "bin", "pytest")
         if os.path.exists(candidate):
-            pytest_bin = candidate
             logger.info("pytest: Found binary at %s", candidate)
+            pytest_bin = candidate
+            logger.info("pytest: breaking venv scan")
             break
     if not pytest_bin:
+        logger.info("pytest: No venv binary, falling back to system pytest")
         pytest_bin = shutil.which("pytest")
         if pytest_bin:
             logger.info("pytest: Found system binary at %s", pytest_bin)
@@ -51,7 +53,17 @@ async def run_pytest_test(
         return PytestResult()
 
     # --tb=short: shorter tracebacks, --no-header: skip version/plugin info, -q: minimal output
-    cmd = [pytest_bin] + py_test_files + ["--tb=short", "--no-header", "-q"]
+    # --import-mode=importlib: let duplicate test filenames across directories coexist without the "import file mismatch" collection error (pytest's default prepend mode imports by module name and collides on same-named files when the repo has no __init__.py).
+    cmd = (
+        [pytest_bin]
+        + py_test_files
+        + [
+            "--tb=short",
+            "--no-header",
+            "-q",
+            "--import-mode=importlib",
+        ]
+    )
     logger.info("pytest: Running %s...", ", ".join(py_test_files))
 
     result = subprocess.run(
@@ -78,14 +90,17 @@ async def run_pytest_test(
     # Parse "FAILED test_file.py::test_name" lines
     for line in output.splitlines():
         if line.startswith("FAILED "):
+            logger.info("pytest: parsing FAILED line")
             # Format: "FAILED path/test_file.py::test_name - reason"
             failed_part = line[len("FAILED ") :]
             file_part = failed_part.split("::")[0].strip()
             for test_file in py_test_files:
                 if test_file == file_part or test_file.endswith("/" + file_part):
+                    logger.info("pytest: matched FAILED to %s", test_file)
                     error_files.add(test_file)
 
     if not error_files:
+        logger.info("pytest: no FAILED lines parsed, falling back to all test files")
         error_files.update(py_test_files)
 
     cleaned_output = remove_pytest_sections(output.strip())

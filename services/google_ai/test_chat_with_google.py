@@ -69,6 +69,7 @@ def test_text_response(mock_get_client, mock_insert):
     mock_client.models.generate_content.return_value = _mock_text_response(
         "Hello! How can I help?", prompt_tokens=20, candidates_tokens=15
     )
+    mock_client.models.count_tokens.return_value = Mock(total_tokens=1)
     mock_get_client.return_value = mock_client
 
     messages = cast(list[MessageParam], [{"role": "user", "content": "Hello"}])
@@ -115,6 +116,7 @@ def test_tool_call_response(mock_get_client, mock_insert):
         prompt_tokens=30,
         candidates_tokens=25,
     )
+    mock_client.models.count_tokens.return_value = Mock(total_tokens=1)
     mock_get_client.return_value = mock_client
 
     messages = cast(list[MessageParam], [{"role": "user", "content": "Read README.md"}])
@@ -167,6 +169,7 @@ def test_no_usage_metadata(mock_get_client, mock_insert):
     response.usage_metadata = None
     mock_client = Mock()
     mock_client.models.generate_content.return_value = response
+    mock_client.models.count_tokens.return_value = Mock(total_tokens=1)
     mock_get_client.return_value = mock_client
 
     result = chat_with_google(
@@ -192,6 +195,7 @@ def test_empty_candidates(mock_get_client, mock_insert):
     response.usage_metadata = Mock(prompt_token_count=10, candidates_token_count=0)
     mock_client = Mock()
     mock_client.models.generate_content.return_value = response
+    mock_client.models.count_tokens.return_value = Mock(total_tokens=1)
     mock_get_client.return_value = mock_client
 
     result = chat_with_google(
@@ -229,6 +233,7 @@ def test_function_call_without_id_generates_one(mock_get_client, mock_insert):
 
     mock_client = Mock()
     mock_client.models.generate_content.return_value = response
+    mock_client.models.count_tokens.return_value = Mock(total_tokens=1)
     mock_get_client.return_value = mock_client
 
     result = chat_with_google(
@@ -358,6 +363,7 @@ def test_429_is_not_retried_locally_bubbles_to_handle_exceptions(
     )
     client = Mock()
     client.models.generate_content.side_effect = err
+    client.models.count_tokens.return_value = Mock(total_tokens=1)
     mock_get_client.return_value = client
 
     with patch("utils.error.handle_exceptions.time.sleep"):
