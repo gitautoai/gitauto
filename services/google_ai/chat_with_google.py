@@ -1,17 +1,21 @@
 # Standard imports
 import time
 import uuid
+from functools import partial
 
 # Third-party imports
 from anthropic.types import MessageParam, ToolUnionParam
 from google.genai import types
 
 # Local imports
+from constants.google_ai import CONTEXT_WINDOW, MAX_OUTPUT_TOKENS
 from constants.models import GoogleModelId
 from services.google_ai.client import get_google_ai_client
 from services.google_ai.convert_messages import convert_messages_to_google
 from services.google_ai.convert_tools import convert_tools_to_google
+from services.google_ai.count_tokens import count_tokens_google
 from services.llm_result import LlmResult, ToolCall
+from services.messages.trim_messages import trim_messages_to_token_limit
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -26,6 +30,19 @@ def chat_with_google(
     usage_id: int,
     created_by: str,
 ):
+    client = get_google_ai_client()
+
+    # Trim messages to stay under the model's context window. Gemma-4-31B caps at 262144 input tokens; without this guard, a bursty test_failure payload can produce a 400 INVALID_ARGUMENT cascade (AGENT-3JR/3JS/3JT/3JV, 2026-04-20 gitautoai/website).
+    buffer = 4096
+    context_window = CONTEXT_WINDOW.get(model_id, 262_144)
+    max_output = MAX_OUTPUT_TOKENS.get(model_id, 8_192)
+    max_input = context_window - max_output - buffer
+    messages, _pretrim_tokens = trim_messages_to_token_limit(
+        messages=messages,
+        max_input=max_input,
+        count_tokens_fn=partial(count_tokens_google, client=client, model=model_id),
+    )
+
     # Convert Anthropic-format messages and tools to Google format
     google_contents = convert_messages_to_google(messages)
     google_tools = convert_tools_to_google(tools)
@@ -37,8 +54,6 @@ def chat_with_google(
         # chat_with_agent manages the tool-call loop, so disable the SDK's auto-execution
         automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
     )
-
-    client = get_google_ai_client()
     start_time = time.time()
     response = client.models.generate_content(
         model=model_id,

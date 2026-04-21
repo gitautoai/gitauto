@@ -1,4 +1,5 @@
 import time
+from functools import partial
 
 from anthropic import AuthenticationError
 from anthropic._exceptions import OverloadedError
@@ -7,12 +8,13 @@ from anthropic.types import MessageParam, ToolUnionParam, ToolUseBlock
 from constants.claude import CONTEXT_WINDOW, MAX_OUTPUT_TOKENS
 from constants.models import ClaudeModelId
 from services.claude.client import claude
+from services.claude.count_tokens import count_tokens_claude
 from services.claude.exceptions import (
     ClaudeAuthenticationError,
     ClaudeOverloadedError,
 )
-from services.claude.trim_messages import trim_messages_to_token_limit
 from services.llm_result import LlmResult, ToolCall
+from services.messages.trim_messages import trim_messages_to_token_limit
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -33,7 +35,9 @@ def chat_with_claude(
     max_output = MAX_OUTPUT_TOKENS.get(model_id, 64_000)
     max_input = min(context_window - max_output - buffer, 200_000)
     messages, token_input = trim_messages_to_token_limit(
-        messages=messages, client=claude, model=model_id, max_input=max_input
+        messages=messages,
+        max_input=max_input,
+        count_tokens_fn=partial(count_tokens_claude, client=claude, model=model_id),
     )
 
     # https://docs.anthropic.com/en/api/messages
