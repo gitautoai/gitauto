@@ -1,20 +1,22 @@
 /**
  * Extracts social media posts from PR body.
- * Supports both new format (separate GitAuto/Wes sections) and legacy single section.
+ * Matrix of author × platform: GitAuto/Wes × X/LinkedIn, plus an optional HN title.
  *
  * @param {string} body - PR body text
- * @returns {{ gitauto: string, wes: string }} Extracted posts (empty string if not found)
+ * @returns {{ gitautoX: string, gitautoLinkedIn: string, wesX: string, wesLinkedIn: string, hnTitle: string }}
  */
 function extractSocialPosts(body) {
-  const gitautoMatch = body.match(/## Social Media Post \(GitAuto\)\s*\n([\s\S]*?)(?=\n## |\n$|$)/i);
-  const wesMatch = body.match(/## Social Media Post \(Wes\)\s*\n([\s\S]*?)(?=\n## |\n$|$)/i);
-
-  // Fall back to single "## Social Media Post" for backward compatibility
-  const fallbackMatch = body.match(/## Social Media Post\s*\n([\s\S]*?)(?=\n##|\n$|$)/i);
+  const section = (label) => {
+    const pattern = new RegExp(`## Social Media Post \\(${label}\\)\\s*\\n([\\s\\S]*?)(?=\\n## |\\n$|$)`, "i");
+    return body.match(pattern)?.[1]?.trim() || "";
+  };
 
   return {
-    gitauto: (gitautoMatch?.[1] || fallbackMatch?.[1] || "").trim(),
-    wes: (wesMatch?.[1] || fallbackMatch?.[1] || "").trim(),
+    gitautoX: section("GitAuto on X"),
+    gitautoLinkedIn: section("GitAuto on LinkedIn"),
+    wesX: section("Wes on X"),
+    wesLinkedIn: section("Wes on LinkedIn"),
+    hnTitle: section("HN Title"),
   };
 }
 

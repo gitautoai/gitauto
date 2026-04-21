@@ -4,7 +4,7 @@ const { TwitterApi } = require("twitter-api-v2");
 /**
  * @see https://developer.x.com/en/docs/x-api/tweets/manage-tweets/api-reference/post-tweets
  */
-async function postTwitter({ context }) {
+async function postX({ context }) {
   // Company account: https://console.x.com/accounts/1868157094207295489/apps
   const clientCompany = new TwitterApi({
     appKey: process.env.X_OAUTH1_CONSUMER_KEY_GITAUTO,
@@ -22,12 +22,11 @@ async function postTwitter({ context }) {
   });
 
   const description = context.payload.pull_request.body || "";
-  const { gitauto: gitautoTweet, wes: wesTweet } = extractSocialPosts(description);
+  const { gitautoX: gitautoPost, wesX: wesPost } = extractSocialPosts(description);
 
-  if (!gitautoTweet && !wesTweet) {
-    console.log("No Social Media Post section found in PR body, skipping Twitter post");
-    return;
-  }
+  if (!gitautoPost) console.log("No 'GitAuto on X' section, skipping GitAuto tweet");
+  if (!wesPost) console.log("No 'Wes on X' section, skipping Wes tweet");
+  if (!gitautoPost && !wesPost) return;
 
   // Senders have to be in the community
   // https://x.com/hnishio0105/communities
@@ -39,9 +38,9 @@ async function postTwitter({ context }) {
     "1498737511241158657", // Startup founders & friends
   ];
 
-  // Post tweets and get their IDs
+  // GitAuto is on X free tier (280 char hard limit). Wes has X Premium so long-form is allowed.
   // https://github.com/PLhery/node-twitter-api-v2/blob/master/doc/v2.md#create-a-tweet
-  const postTweet = async (client, text) => {
+  const postFree = async (client, text) => {
     try {
       return await client.v2.tweet(text);
     } catch (error) {
@@ -53,16 +52,13 @@ async function postTwitter({ context }) {
     }
   };
 
-  const companyTweetResult = gitautoTweet ? await postTweet(clientCompany, gitautoTweet) : null;
-  const wesTweetResult = wesTweet ? await postTweet(clientWes, wesTweet) : null;
+  const postPremium = async (client, text) => client.v2.tweet(text);
 
-  if (!companyTweetResult && !wesTweetResult) {
-    console.log("Both posts are empty, skipping");
-    return;
-  }
+  const companyResult = gitautoPost ? await postFree(clientCompany, gitautoPost) : null;
+  const wesResult = wesPost ? await postPremium(clientWes, wesPost) : null;
 
   // https://docs.x.com/x-api/posts/creation-of-a-post
-  // const communityTweets = await Promise.all(
+  // const communityPosts = await Promise.all(
   //   communityIds.map(async (communityId) => {
   //     const response = await fetch("https://api.x.com/2/tweets", {
   //       method: "POST",
@@ -70,7 +66,7 @@ async function postTwitter({ context }) {
   //         Authorization: `Bearer ${process.env.TWITTER_BEARER_TOKEN_WES}`,
   //         "Content-Type": "application/json",
   //       },
-  //       body: JSON.stringify({ text: tweet, community_id: communityId }),
+  //       body: JSON.stringify({ text: post, community_id: communityId }),
   //     });
 
   //     if (!response.ok) {
@@ -87,24 +83,24 @@ async function postTwitter({ context }) {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   await sleep(getRandomDelay());
 
-  // Like each other's tweets (requires paid X API access)
+  // Like each other's posts (only when both were posted, requires paid X API access)
   // https://github.com/PLhery/node-twitter-api-v2/blob/master/doc/v2.md#like-a-tweet
-  if (companyTweetResult && wesTweetResult) {
+  if (companyResult && wesResult) {
     try {
       const userCompany = await clientCompany.v2.me();
-      await clientCompany.v2.like(userCompany.data.id, wesTweetResult.data.id);
+      await clientCompany.v2.like(userCompany.data.id, wesResult.data.id);
       const userWes = await clientWes.v2.me();
-      await clientWes.v2.like(userWes.data.id, companyTweetResult.data.id);
+      await clientWes.v2.like(userWes.data.id, companyResult.data.id);
     } catch (error) {
-      console.log("Failed to like tweets (free tier):", error.message);
+      console.log("Failed to like posts (free tier):", error.message);
     }
   }
 
   // Send to Slack
   if (process.env.SLACK_BOT_TOKEN) {
     const links = [
-      companyTweetResult ? `https://x.com/gitautoai/status/${companyTweetResult.data.id}` : null,
-      wesTweetResult ? `https://x.com/hiroshinishio/status/${wesTweetResult.data.id}` : null,
+      companyResult ? `https://x.com/gitautoai/status/${companyResult.data.id}` : null,
+      wesResult ? `https://x.com/hiroshinishio/status/${wesResult.data.id}` : null,
     ].filter(Boolean).join(" and ");
     await fetch("https://slack.com/api/chat.postMessage", {
       method: "POST",
@@ -117,4 +113,4 @@ async function postTwitter({ context }) {
 
 }
 
-module.exports = postTwitter;
+module.exports = postX;

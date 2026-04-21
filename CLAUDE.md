@@ -142,11 +142,13 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
 6. Check recent posts: `scripts/git/recent_social_posts.sh`
 7. `gh pr edit <number> --body "..."` — add summary and social posts after checking recent posts
     - Technical, descriptive title. **No `## Test plan`**.
-    - **Two posts** (last section, customer-facing only): GitAuto (changelog) + Wes (personal voice, don't emphasize "GitAuto")
-    - Format: `## Social Media Post (GitAuto)` and `## Social Media Post (Wes)` headers (parsed by `extract-social-posts.js`)
-    - **GitAuto post**: Changelog format — one-liner headline + customer-facing feature bullets (no test/internal changes). Each feature on one line. Include items mentioned in the PR title.
-    - **Wes post**: Honest stories. Vary openers — check recent posts first.
-    - Guidelines: No em dashes (—). Under 280 chars. No marketing keywords. No negative framing. No internal names. No small numbers — use relative language.
+    - **Five posts** (last section, customer-facing only) — four author × platform cells plus an HN title. See `## Social Media Rules` below for the voice, length, and style rules for each. Headers (parsed by `extract-social-posts.js`):
+      - `## Social Media Post (GitAuto on X)`
+      - `## Social Media Post (GitAuto on LinkedIn)`
+      - `## Social Media Post (Wes on X)`
+      - `## Social Media Post (Wes on LinkedIn)`
+      - `## Social Media Post (HN Title)`
+    - **Each section is independent.** If a section exists, that post fires; if it's missing, only that post is skipped. No all-or-nothing coupling.
 8. If Sentry issue: `python3 scripts/sentry/get_issue.py AGENT-XXX` then `python3 scripts/sentry/resolve_issue.py AGENT-XXX ...`
 9. **Blog post** in `../website/app/blog/posts/`:
     - `YYYY-MM-DD-kebab-case-title.mdx`. Universal dev lesson, not GitAuto internals (exception: deep technical content).
@@ -179,6 +181,59 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
       - Convert to PNG: `sips -s format png downloaded.jpg --out ../website/public/og/blog/{slug}.png`
       - Dev.to crops to 1000x420 — keep important content centered.
 10. **Docs page** in `../website/app/docs/`: Create new or update existing. Browse for best-fit category. New pages: 3 files (`page.tsx`, `layout.tsx`, `jsonld.ts`).
+
+## Social Media Rules
+
+Five posts per PR — four cells of {GitAuto, Wes} × {X, LinkedIn}, plus one HN title. Don't copy text across platforms — each reader and format is different. Before writing, run `scripts/git/recent_social_posts.sh` and vary openers.
+
+**Shared rules (apply to all five):**
+
+- No em dashes (—). No marketing keywords. No negative framing. No internal names.
+- No small absolute numbers — use relative language ("30% faster", not "2s faster").
+- Honest, technical tone. Specify model names (e.g., "Claude Opus 4.6").
+- Customer-facing only — skip test/internal changes.
+- **URLs are optional.** Most posts should be pure text. Include a URL only when the post genuinely points somewhere (blog post, docs page, demo). When included, put it inline in the text — X and LinkedIn both auto-expand naked URLs into preview cards from the destination's OG tags.
+
+### GitAuto on X
+
+- **Reader**: devs scrolling fast. First line decides everything.
+- **Voice**: product changelog. Terse, factual.
+- **Length**: **hard limit 280 chars** (free tier, truncated at 277 + `...` if over).
+- **Format**: one-liner headline + tight feature bullets. Each feature on one line. Include items from the PR title.
+- **Avoid**: hashtag stuffing, 🧵 threads, self-promotion beyond the changelog fact.
+
+### GitAuto on LinkedIn
+
+- **Reader**: engineering managers, founders, buyers. Slower scroll, will click "see more".
+- **Voice**: product credibility. "We shipped X because customers hit Y."
+- **Length**: **400-800 chars**. Line breaks between sentences for scannability.
+- **Format**: lead with the user-facing outcome, then the technical specifics, then the link. Concrete lessons from real incidents land well.
+- **Avoid**: hashtag spam, emoji walls, tweet-style copy without line breaks, thought-leadership platitudes.
+
+### Wes on X
+
+- **Reader**: devs following a build-in-public founder. Looking for signal, humor, and real stories.
+- **Voice**: personal. First person. Don't emphasize "GitAuto" — the post is about what you built or broke, not the product.
+- **Length**: Wes has **X Premium** so long-form is allowed (up to 25k chars). Use **first 280 chars as a hook** (this is what shows above "Show more"). Expand below the fold with the full story if the lesson deserves it.
+- **Format**: hot takes, counterintuitive findings, specific before/after snippets, self-deprecating failure stories work best.
+- **Avoid**: corporate voice, LinkedIn-style "I learned that…" openers, generic advice, starting with the same opener as recent posts.
+
+### Wes on LinkedIn
+
+- **Reader**: professional network. Engineering leaders who know Wes as a technical founder.
+- **Voice**: personal, narrative. Don't emphasize "GitAuto".
+- **Length**: **600-1200 chars**. Line breaks between thoughts.
+- **Format**: problem → discovery → fix arc. Honest stories of what broke and what you learned.
+- **Avoid**: hashtags, selling, tweet-style copy, overly polished "lesson learned" framing.
+
+### Hacker News
+
+- **Reader**: senior engineers, skeptical, allergic to marketing. Title is ~90% of the click.
+- **Header**: `## Social Media Post (HN Title)` — one line, no body. If missing, the HN job skips.
+- **Length**: **≤80 chars**, hard cap (truncated in `post-hackernews.js`).
+- **Voice**: technical and specific. Postmortem framing ("Why X broke and the 4-line fix") or "Show HN:" for tools. Never changelog-style, never promotional.
+- **Avoid**: product names as the subject, marketing adjectives ("revolutionary", "powerful", "simple"), vague claims. The HN crowd downvotes anything that smells like content marketing.
+- **Why separate from GitAuto X**: changelog voice (280 char) trims poorly to 80, and HN's audience wants a different framing than a product announcement.
 
 ## CRITICAL: Fixing Foxquilt PRs
 
