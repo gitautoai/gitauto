@@ -12,13 +12,11 @@ async function postLinkedIn({ context }) {
   const accessToken = process.env.LINKEDIN_ACCESS_TOKEN;
 
   const description = context.payload.pull_request.body || "";
-  const url = "https://gitauto.ai?utm_source=linkedin&utm_medium=referral"
-  const { gitauto: gitautoText, wes: wesText } = extractSocialPosts(description);
+  const { gitautoLinkedIn: gitautoText, wesLinkedIn: wesText } = extractSocialPosts(description);
 
-  if (!gitautoText && !wesText) {
-    console.log("No Social Media Post section found in PR body, skipping LinkedIn post");
-    return;
-  }
+  if (!gitautoText) console.log("No 'GitAuto on LinkedIn' section, skipping GitAuto post");
+  if (!wesText) console.log("No 'Wes on LinkedIn' section, skipping Wes post");
+  if (!gitautoText && !wesText) return;
 
   // Helper function for random delay between 5-15 seconds
   const getRandomDelay = () => Math.floor(Math.random() * 10000 + 5000);
@@ -36,15 +34,6 @@ async function postLinkedIn({ context }) {
           feedDistribution: "MAIN_FEED",
           targetEntities: [],
           thirdPartyDistributionChannels: [],
-        },
-
-        // https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads/advertising-targeting/version/article-ads-integrations?view=li-lms-2024-11&tabs=http#workflow
-        content: {
-          article: {
-            source: url,
-            title: text,
-            description: description || `Check out our latest release!`,
-          },
         },
         lifecycleState: "PUBLISHED",
         isReshareDisabledByAuthor: false,
@@ -64,18 +53,13 @@ async function postLinkedIn({ context }) {
     });
   };
 
-  // Post from both accounts
+  // Post each account independently based on which sections exist
   const companyPost = gitautoText ? await createPost(gitautoUrn, gitautoText) : null;
   const companyPostUrn = companyPost?.headers["x-restli-id"];
   const wesPost = wesText ? await createPost(wesUrn, wesText) : null;
   const wesPostUrn = wesPost?.headers["x-restli-id"];
 
-  if (!companyPostUrn && !wesPostUrn) {
-    console.log("Both posts are empty, skipping");
-    return;
-  }
-
-  // Wait and like each other's posts
+  // Wait and like each other's posts only when both were posted
   if (companyPostUrn && wesPostUrn) {
     await sleep(getRandomDelay());
     await likePost(gitautoUrn, wesPostUrn); // Company likes Wes's post

@@ -8,7 +8,7 @@
 .github/scripts/extract-social-posts.js
 .github/scripts/post-hackernews.js
 .github/scripts/post-linkedin.js
-.github/scripts/post-twitter.js
+.github/scripts/post-x.js
 .github/scripts/vacuum_table.sh
 .github/workflows/check-database-size.yml
 .github/workflows/claude.yml

@@ -28,10 +28,15 @@ async function postHackerNews({ context }) {
 
     // Extract social media post from PR body if present
     const description = context.payload.pull_request.body || "";
-    const { gitauto: socialPost } = extractSocialPosts(description);
+    const { hnTitle } = extractSocialPosts(description);
 
-    // Use GitAuto post if available, otherwise PR title
-    const title = (socialPost || context.payload.pull_request.title).substring(0, 80);
+    if (!hnTitle) {
+      console.log("No HN Title section found in PR body, skipping HN post");
+      await browser.close();
+      return;
+    }
+
+    const title = hnTitle.substring(0, 80);
     const url = "https://gitauto.ai?utm_source=hackernews&utm_medium=referral"
     await page.fill('input[name="title"]', title);
     await page.fill('input[name="url"]', url);

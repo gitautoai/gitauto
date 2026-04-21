@@ -52,8 +52,8 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const postTwitter = require('.github/scripts/post-twitter.js');
-            await postTwitter({ context });
+            const postX = require('.github/scripts/post-x.js');
+            await postX({ context });
         env:
           X_OAUTH1_CONSUMER_KEY_GITAUTO: ${{ secrets.X_OAUTH1_CONSUMER_KEY_GITAUTO }}
           X_OAUTH1_CONSUMER_KEY_SECRET_GITAUTO: ${{ secrets.X_OAUTH1_CONSUMER_KEY_SECRET_GITAUTO }}
@@ -90,7 +90,8 @@ jobs:
           LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
 
   post-hackernews:
-    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'sns')
+    needs: check-python-changes
+    if: needs.check-python-changes.outputs.has_python_changes == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
