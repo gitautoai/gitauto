@@ -41,7 +41,11 @@ sentry-cli issues list --org gitauto-ai --project agent --query "search terms"
 python3 scripts/sentry/get_issue.py AGENT-20N
 ```
 
+Don't pass `--max-rows`. The CLI defaults already return the full list; capping it means you miss issues that should be resolved but sit below the cap.
+
 Then **just `Read` `/tmp/sentry_agent-20n.json`** — it's small. Don't pipe through `python -m json.tool`, `jq`, or inline `python3 -c`; those fail on quoting and waste retries.
+
+Don't pipe `resolve_issue.py` output through `tail` — each issue prints one line and any failure gets hidden if the truncation window is wrong.
 
 ### AWS CLI
 
