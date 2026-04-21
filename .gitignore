@@ -1,4 +1,5 @@
 *.pem
+.claude/scheduled_tasks.lock
 .coverage*
 .env*
 .history

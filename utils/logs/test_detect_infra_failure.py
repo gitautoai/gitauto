@@ -10,6 +10,15 @@ from utils.logs.detect_infra_failure import detect_infra_failure
 # Real CI log from SpiderPlus PR 13615 (segfault during PHPUnit)
 SEGFAULT_LOG_PATH = Path("payloads/github/check_suite/segfault_phpunit_log.txt")
 
+# Real CircleCI `test` job log from Foxquilt/foxden-rating-quoting-backend PR 714.
+# App-level console.warn at the top contains "AccessDeniedException" (SSM fetch fell back to defaults — harmless).
+# Jest ran to completion and reported `Tests: 2 failed, 35 skipped, 4500 passed` from real assertion bugs in the PR.
+# detect_infra_failure used to match "AccessDeniedException" and send the PR down the infra-retry branch, burning 3 empty-commit retries without ever invoking the LLM fix path.
+# Must now classify as None (code bug).
+PR714_FOXDEN_RATING_QUOTING_LOG_PATH = Path(
+    "utils/logs/fixtures/foxden_rating_quoting_pr714_circleci_log.txt"
+)
+
 NORMAL_TEST_FAILURE_LOG = """\
 PHPUnit 9.6.27 by Sebastian Bergmann and contributors.
 
@@ -123,3 +132,11 @@ def test_detect_infra_failure_matches(error_log, expected):
 def test_detect_infra_failure_no_match(error_log, expected):
     result = detect_infra_failure(error_log)
     assert result == expected
+
+
+def test_strip_jest_noise_removes_app_level_access_denied_warn():
+    # Real PR 714 CircleCI log: app-level console.warn at the top prints "AccessDeniedException" from an SSM fetch that fell back to a default.
+    # strip_jest_noise removes that console block inside detect_infra_failure, so the spurious match no longer routes the PR to the infra-retry path.
+    # Jest still ran and reported real assertion failures further down; classifier must return None so the LLM fix path handles them.
+    real_log = PR714_FOXDEN_RATING_QUOTING_LOG_PATH.read_text(encoding="utf-8")
+    assert detect_infra_failure(real_log) is None
