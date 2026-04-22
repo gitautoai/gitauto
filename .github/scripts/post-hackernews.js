@@ -28,10 +28,10 @@ async function postHackerNews({ context }) {
 
     // Extract social media post from PR body if present
     const description = context.payload.pull_request.body || "";
-    const { hnTitle } = extractSocialPosts(description);
+    const { hnTitle, hnBody } = extractSocialPosts(description);
 
-    if (!hnTitle) {
-      console.log("No HN Title section found in PR body, skipping HN post");
+    if (!hnTitle || !hnBody) {
+      console.log("HN Title or HN Body section missing from PR body, skipping HN post");
       await browser.close();
       return;
     }
@@ -40,9 +40,7 @@ async function postHackerNews({ context }) {
     const url = "https://gitauto.ai?utm_source=hackernews&utm_medium=referral"
     await page.fill('input[name="title"]', title);
     await page.fill('input[name="url"]', url);
-
-    // If there's a description, submit as a "text" post with both URL and description
-    if (description) await page.fill('textarea[name="text"]', description);
+    await page.fill('textarea[name="text"]', hnBody);
 
     await page.click('input[type="submit"]');
     await page.waitForLoadState("networkidle");
