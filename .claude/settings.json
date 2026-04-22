@@ -32,6 +32,11 @@
             "type": "command",
             "command": "/Users/rwest/Repositories/gitauto/.claude/hooks/check-logger-coverage.sh",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/check-comment-line-breaks.sh",
+            "timeout": 10
           }
         ]
       }

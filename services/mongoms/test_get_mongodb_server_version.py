@@ -45,3 +45,72 @@ def test_no_package_json(_mock_read):
     """No package.json found."""
     _mock_read.return_value = None
     assert get_mongodb_server_version("/tmp/clone") is None
+
+
+@patch("services.mongoms.get_mongodb_server_version.read_local_file")
+def test_foxden_version_controller_version_from_jest_mongodb_config(_mock_read):
+    """foxden-version-controller: version lives in jest-mongodb-config.js.
+
+    This is the real customer repo that caused Foxquilt PR #203 to fail:
+    GA's detection defaulted to 6.0.9 (amazon2 distro) because it never
+    looked at jest-mongodb-config.js, where `binary.version: 'v8.0-latest'`
+    is actually declared.
+    """
+    package_json = _load_fixture("foxcom-forms-package.json")
+    jest_config = _load_fixture("foxden-version-controller-jest-mongodb-config.js")
+
+    def _read_side_effect(path, _):
+        if path == "package.json":
+            return package_json
+        if path == "jest-mongodb-config.js":
+            return jest_config
+        return None
+
+    _mock_read.side_effect = _read_side_effect
+    assert get_mongodb_server_version("/tmp/clone") == "v8.0-latest"
+
+
+@patch("services.mongoms.get_mongodb_server_version.read_local_file")
+def test_jest_mongodb_config_cjs_is_checked(_mock_read):
+    """`.cjs` variant is checked too (same precedence as the upstream library)."""
+    package_json = _load_fixture("foxcom-forms-package.json")
+    cjs_content = (
+        "module.exports = {\n"
+        "  mongodbMemoryServerOptions: {\n"
+        '    binary: { version: "v7.0.14" },\n'
+        "  },\n"
+        "};\n"
+    )
+
+    def _read_side_effect(path, _):
+        if path == "package.json":
+            return package_json
+        if path == "jest-mongodb-config.cjs":
+            return cjs_content
+        return None
+
+    _mock_read.side_effect = _read_side_effect
+    assert get_mongodb_server_version("/tmp/clone") == "v7.0.14"
+
+
+@patch("services.mongoms.get_mongodb_server_version.read_local_file")
+def test_jest_mongodb_config_without_binary_version(_mock_read):
+    """jest-mongodb-config.js present but without a binary.version key → still None."""
+    package_json = _load_fixture("foxcom-forms-package.json")
+    jest_config_no_version = (
+        "module.exports = {\n"
+        "  mongodbMemoryServerOptions: {\n"
+        "    instance: { dbName: 'jest' },\n"
+        "  },\n"
+        "};\n"
+    )
+
+    def _read_side_effect(path, _):
+        if path == "package.json":
+            return package_json
+        if path == "jest-mongodb-config.js":
+            return jest_config_no_version
+        return None
+
+    _mock_read.side_effect = _read_side_effect
+    assert get_mongodb_server_version("/tmp/clone") is None

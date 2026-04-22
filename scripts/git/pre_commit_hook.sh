@@ -117,6 +117,17 @@ echo "--- cast usage check ---"
 scripts/lint/check_cast_usage.sh
 if [ $? -ne 0 ]; then exit 1; fi
 
+# Comment line-break check (don't hard-wrap single sentences across # lines)
+echo "--- comment line-break check ---"
+if [ -n "$STAGED_PY_FILES" ]; then
+    # shellcheck disable=SC2086
+    python3 scripts/lint/check_comment_line_breaks.py $STAGED_PY_FILES
+    if [ $? -ne 0 ]; then
+        echo "FAILED: Rewrite hard-wrapped comments as one line per sentence."
+        exit 1
+    fi
+fi
+
 # Concurrent heavy checks (pylint, pyright, pytest)
 echo "--- pylint + pyright + pytest (concurrent) ---"
 scripts/lint/pre_commit_parallel_checks.sh
