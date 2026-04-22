@@ -1,9 +1,9 @@
 /**
  * Extracts social media posts from PR body.
- * Matrix of author × platform: GitAuto/Wes × X/LinkedIn, plus an optional HN title.
+ * Matrix of author × platform: GitAuto/Wes × X/LinkedIn, plus an optional HN title + body.
  *
  * @param {string} body - PR body text
- * @returns {{ gitautoX: string, gitautoLinkedIn: string, wesX: string, wesLinkedIn: string, hnTitle: string }}
+ * @returns {{ gitautoX: string, gitautoLinkedIn: string, wesX: string, wesLinkedIn: string, hnTitle: string, hnBody: string }}
  */
 function extractSocialPosts(body) {
   const section = (label) => {
@@ -17,6 +17,7 @@ function extractSocialPosts(body) {
     wesX: section("Wes on X"),
     wesLinkedIn: section("Wes on LinkedIn"),
     hnTitle: section("HN Title"),
+    hnBody: section("HN Body"),
   };
 }
 

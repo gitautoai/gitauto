@@ -140,15 +140,16 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
 4. `git push`
 5. `gh pr create --title "PR title" --body "" --assignee @me` — create PR immediately, no body
 6. Check recent posts: `scripts/git/recent_social_posts.sh`
-7. `gh pr edit <number> --body "..."` — add summary and social posts after checking recent posts
-    - Technical, descriptive title. **No `## Test plan`**.
-    - **Five posts** (last section, customer-facing only) — four author × platform cells plus an HN title. See `## Social Media Rules` below for the voice, length, and style rules for each. Headers (parsed by `extract-social-posts.js`):
+7. `gh pr edit <number> --body "..."` — add social posts after checking recent posts
+    - Technical, descriptive title. **No `## Summary` and no `## Test plan`** — the commit message and diff already explain what changed; don't restate it. Body is just the social-post sections below.
+    - **Six sections** (customer-facing only) — four author × platform cells plus HN title and body. See `## Social Media Rules` below for the voice, length, and style rules for each. Headers (parsed by `extract-social-posts.js`):
       - `## Social Media Post (GitAuto on X)`
       - `## Social Media Post (GitAuto on LinkedIn)`
       - `## Social Media Post (Wes on X)`
       - `## Social Media Post (Wes on LinkedIn)`
       - `## Social Media Post (HN Title)`
-    - **Each section is independent.** If a section exists, that post fires; if it's missing, only that post is skipped. No all-or-nothing coupling.
+      - `## Social Media Post (HN Body)`
+    - **Each section is independent.** If a section exists, that post fires; if it's missing, only that post is skipped. No all-or-nothing coupling. HN is the one exception: both `HN Title` and `HN Body` must be present for the HN job to fire.
 8. If Sentry issue: `python3 scripts/sentry/get_issue.py AGENT-XXX` then `python3 scripts/sentry/resolve_issue.py AGENT-XXX ...`
 9. **Blog post** in `../website/app/blog/posts/`:
     - `YYYY-MM-DD-kebab-case-title.mdx`. Universal dev lesson, not GitAuto internals (exception: deep technical content).
@@ -184,14 +185,29 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
 
 ## Social Media Rules
 
-Five posts per PR — four cells of {GitAuto, Wes} × {X, LinkedIn}, plus one HN title. Don't copy text across platforms — each reader and format is different. Before writing, run `scripts/git/recent_social_posts.sh` and vary openers.
+Six sections per PR — four cells of {GitAuto, Wes} × {X, LinkedIn}, plus HN title and body. Don't copy text across platforms — each reader and format is different. Before writing, run `scripts/git/recent_social_posts.sh` and vary openers.
 
-**Shared rules (apply to all five):**
+**Shared rules (apply to all sections):**
 
 - No em dashes (—). No marketing keywords. No negative framing. No internal names.
 - No small absolute numbers — use relative language ("30% faster", not "2s faster").
 - Honest, technical tone. Specify model names (e.g., "Claude Opus 4.6").
 - Customer-facing only — skip test/internal changes.
+- **Banned openers** (do not start any post with these or close variants):
+  - "Spent the morning [verb-ing]…" and close variants ("Spent the day…", "Spent the weekend…", "Spent N hours…").
+  Open with the concrete finding, the before/after, or the user-facing outcome. Never chronological autobiography.
+- **No "we broke X and fixed it" framing.** Every PR is a fix of something, so postmortem-style posts on every PR turn the feed into a wall of failures and debrand the product — even when each story is individually true. Frame posts as **capability, outcome, or design decision**, not as confession:
+  - Capability: "GitAuto now X" / "X now handles Y case".
+  - Outcome: "30% faster PR review" / "200 PRs auto-merged last week".
+  - Design decision: "Why we chose X over Y" / "How X works under the hood".
+  Confession framing ("we broke X", "we had a bug where…", "we used to do X wrong") is reserved for rare cases where the lesson is genuinely novel and the bug affected customers visibly — and even then, lead with the principle, not the embarrassment. If the only angle is "we fixed our own bug," skip the post.
+- **Every post needs business meaning, not just mechanism.** Technical detail without a "so what" reads as inside-baseball and loses non-engineers. Each post must tie the change to one of these outcomes for the reader's business:
+  - **Time**: dev hours saved, review latency cut, onboarding faster.
+  - **Money**: infra cost down, headcount load lighter, fewer paid incidents.
+  - **Risk**: fewer regressions in prod, fewer security holes, fewer compliance gaps.
+  - **Throughput**: more PRs shipped, more features out, faster release cadence.
+  - **Quality**: higher test coverage, cleaner diffs, fewer review cycles.
+  Don't stop at "we refactored the quality gate" — say what an engineering team gets from it (e.g., "your PRs now pass review in one round instead of three"). The mechanism is the evidence; the business outcome is the point.
 - **URLs are optional.** Most posts should be pure text. Include a URL only when the post genuinely points somewhere (blog post, docs page, demo). When included, put it inline in the text — X and LinkedIn both auto-expand naked URLs into preview cards from the destination's OG tags.
 
 ### GitAuto on X
@@ -204,36 +220,42 @@ Five posts per PR — four cells of {GitAuto, Wes} × {X, LinkedIn}, plus one HN
 
 ### GitAuto on LinkedIn
 
-- **Reader**: engineering managers, founders, buyers. Slower scroll, will click "see more".
-- **Voice**: product credibility. "We shipped X because customers hit Y."
+- **Reader**: engineering managers, founders, buyers. They care about team throughput, dev time, cost, risk — not about our internal mechanisms. Slower scroll, will click "see more".
+- **Voice**: business outcome for the customer. "Your team gets X" / "Engineering leaders can now Y". Not a technical write-up.
 - **Length**: **400-800 chars**. Line breaks between sentences for scannability.
-- **Format**: lead with the user-facing outcome, then the technical specifics, then the link. Concrete lessons from real incidents land well.
-- **Avoid**: hashtag spam, emoji walls, tweet-style copy without line breaks, thought-leadership platitudes.
+- **Format**: lead with the outcome for their team (hours saved, PRs shipped, regressions avoided, cost cut). Keep any mechanism to a single clause, only if it's the evidence that the outcome is real. Skip code, skip internal terminology, skip model names unless the reader would recognize them.
+- **Avoid**: technical deep-dives, mechanism-first framing, hashtag spam, emoji walls, tweet-style copy without line breaks, thought-leadership platitudes, postmortems of our own bugs.
 
 ### Wes on X
 
 - **Reader**: devs following a build-in-public founder. Looking for signal, humor, and real stories.
-- **Voice**: personal. First person. Don't emphasize "GitAuto" — the post is about what you built or broke, not the product.
+- **Voice**: personal. First person. Don't emphasize "GitAuto" — the post is about what you built, not the product.
 - **Length**: Wes has **X Premium** so long-form is allowed (up to 25k chars). Use **first 280 chars as a hook** (this is what shows above "Show more"). Expand below the fold with the full story if the lesson deserves it.
-- **Format**: hot takes, counterintuitive findings, specific before/after snippets, self-deprecating failure stories work best.
-- **Avoid**: corporate voice, LinkedIn-style "I learned that…" openers, generic advice, starting with the same opener as recent posts.
+- **Format**: counterintuitive findings, specific before/after snippets, design-decision takes. Frame as "here's a thing I figured out" rather than "here's a bug I had".
+- **Avoid**: corporate voice, LinkedIn-style "I learned that…" openers, generic advice, starting with the same opener as recent posts, confession-style "I broke X" framing.
 
 ### Wes on LinkedIn
 
-- **Reader**: professional network. Engineering leaders who know Wes as a technical founder.
-- **Voice**: personal, narrative. Don't emphasize "GitAuto".
+- **Reader**: professional network. Engineering leaders, founders, and operators. They want perspective on how to run a product, a team, or a technical business — not a code walkthrough.
+- **Voice**: personal, narrative, founder-operator. Don't emphasize "GitAuto". Don't emphasize code.
 - **Length**: **600-1200 chars**. Line breaks between thoughts.
-- **Format**: problem → discovery → fix arc. Honest stories of what broke and what you learned.
-- **Avoid**: hashtags, selling, tweet-style copy, overly polished "lesson learned" framing.
+- **Format**: observation → implication for how you run engineering/product/business. A decision, a tradeoff, or a principle framed at the team/org/company level, not at the code level.
+- **Avoid**: technical deep-dives, code snippets, mechanism-first framing, hashtags, selling, tweet-style copy, overly polished "lesson learned" framing, confession-style "I broke X" framing.
 
 ### Hacker News
 
-- **Reader**: senior engineers, skeptical, allergic to marketing. Title is ~90% of the click.
-- **Header**: `## Social Media Post (HN Title)` — one line, no body. If missing, the HN job skips.
-- **Length**: **≤80 chars**, hard cap (truncated in `post-hackernews.js`).
-- **Voice**: technical and specific. Postmortem framing ("Why X broke and the 4-line fix") or "Show HN:" for tools. Never changelog-style, never promotional.
-- **Avoid**: product names as the subject, marketing adjectives ("revolutionary", "powerful", "simple"), vague claims. The HN crowd downvotes anything that smells like content marketing.
-- **Why separate from GitAuto X**: changelog voice (280 char) trims poorly to 80, and HN's audience wants a different framing than a product announcement.
+- **Reader**: senior engineers, skeptical, allergic to marketing. Title is ~90% of the click, but a thin body gets flagged as an ad.
+- **Format**: submitted with title + URL + body text. `post-hackernews.js` hardcodes the URL to `https://gitauto.ai?utm_source=hackernews&utm_medium=referral`, so the author only writes title and body. Both sections must be present or the HN job skips.
+- **`## Social Media Post (HN Title)`**:
+  - **Length**: **≤80 chars**, hard cap (truncated in `post-hackernews.js`).
+  - **Voice**: technical and specific. Design-decision framing ("Why X uses Y instead of Z"), mechanism framing ("How X handles Y"), or "Show HN:" for tools. Never changelog-style, never promotional. Postmortem framing about our own bugs is reserved for when the bug was externally visible and the lesson is genuinely novel — don't default to it.
+  - **Avoid**: product names as the subject, marketing adjectives ("revolutionary", "powerful", "simple"), vague claims.
+- **`## Social Media Post (HN Body)`**:
+  - **Length**: **600-2000 chars**. Appears as the top comment on the submission (HN's behavior when both URL and text are provided), so it should stand on its own as a short engineering write-up.
+  - **Voice**: engineering write-up. Lead with the concrete problem space, explain the tradeoff or mechanism, show the approach. First person singular or plural is fine.
+  - **Format**: prose with short paragraphs. Inline code fences are OK for short snippets. No lists of bullet points dressed up as a post.
+  - **Avoid**: restating the title, cross-posting X/LinkedIn copy, extra links back to `gitauto.ai` (URL is already set), emoji, hashtags, confession-framing about our own bugs.
+- **Why separate from GitAuto X**: changelog voice (280 char) trims poorly to 80, and HN's audience wants a design/mechanism write-up rather than a product announcement.
 
 ## CRITICAL: Fixing Foxquilt PRs
 

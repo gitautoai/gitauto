@@ -1,31 +1,39 @@
 #!/bin/bash
-# Usage: ./recent_social_posts.sh [gitauto|wes]
-# Shows recent social media posts from merged PRs.
-# Without argument: shows both GitAuto and Wes posts.
-# With "gitauto": shows only GitAuto posts.
-# With "wes": shows only Wes posts.
+# Usage: ./recent_social_posts.sh [section-key]
+# Shows recent social media posts from merged PRs, grouped by section.
+#
+# Section keys: gitauto-x, gitauto-linkedin, wes-x, wes-linkedin, hn
+# Without argument: shows all five sections sequentially.
 
 FILTER="${1:-}"
 
-# No argument: run both and exit
-if [ -z "$FILTER" ]; then
-    "$0" gitauto
-    echo ""
-    echo "==="
-    echo ""
-    "$0" wes
-    exit 0
-fi
+case "$FILTER" in
+    "")
+        "$0" gitauto-x
+        echo ""; echo "==="; echo ""
+        "$0" gitauto-linkedin
+        echo ""; echo "==="; echo ""
+        "$0" wes-x
+        echo ""; echo "==="; echo ""
+        "$0" wes-linkedin
+        echo ""; echo "==="; echo ""
+        "$0" hn
+        exit 0
+        ;;
+    gitauto-x)       SECTION="## Social Media Post (GitAuto on X)" ;;
+    gitauto-linkedin) SECTION="## Social Media Post (GitAuto on LinkedIn)" ;;
+    wes-x)           SECTION="## Social Media Post (Wes on X)" ;;
+    wes-linkedin)    SECTION="## Social Media Post (Wes on LinkedIn)" ;;
+    hn)              SECTION="## Social Media Post (HN Title)" ;;
+    *)
+        echo "Unknown section key: $FILTER" >&2
+        echo "Valid keys: gitauto-x, gitauto-linkedin, wes-x, wes-linkedin, hn" >&2
+        exit 1
+        ;;
+esac
 
-if [ "$FILTER" = "gitauto" ]; then
-    SECTION="## Social Media Post (GitAuto)"
-elif [ "$FILTER" = "wes" ]; then
-    SECTION="## Social Media Post (Wes)"
-else
-    SECTION="## Social Media Post"
-fi
+echo "[$FILTER]"
 
-# Fetch PR bodies as JSON array, then extract posts with separators using Python
 export SECTION
 gh pr list --state merged --limit 10 --json body --jq '.[].body' \
     | python3 -c '
