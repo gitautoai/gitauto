@@ -1,0 +1,16 @@
+```CircleCI Build Log: Validate Codecov Uploader
+gpg: directory '/home/circleci/.gnupg' created
+gpg: keybox '/home/circleci/.gnupg/trustedkeys.kbx' created
+gpg: /home/circleci/.gnupg/trustdb.gpg: trustdb created
+gpg: key 806BB28AED779869: public key "Codecov Uploader (Codecov Uploader Verification Key) <security@codecov.io>" imported
+gpg: Total number processed: 1
+gpg:               imported: 1
+Downloading https://cli.codecov.io/latest/linux/codecov.SHA256SUM
+gpgv: can't allocate lock for '/home/circleci/.gnupg/trustedkeys.kbx'
+gpgv: Signature made Tue 21 Apr 2026 07:28:03 PM UTC
+gpgv:                using RSA key 27034E7FDB850E0BBC2C62FF806BB28AED779869
+gpgv: BAD signature from "Codecov Uploader (Codecov Uploader Verification Key) <security@codecov.io>"
+
+Exited with code exit status 1
+
+```
