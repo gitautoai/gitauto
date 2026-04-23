@@ -78,6 +78,7 @@ from utils.logging.add_log_message import add_log_message
 from utils.logging.logging_config import logger, set_pr_number
 from utils.logs.clean_logs import clean_logs
 from utils.logs.detect_infra_failure import detect_infra_failure
+from utils.logs.label_log_source import label_log_source
 from utils.logs.normalize_log_for_hashing import normalize_log_for_hashing
 from utils.logs.save_ci_log_to_file import (
     CI_LOG_PATH,
@@ -116,8 +117,8 @@ async def handle_check_suite(
         logger.info("Duplicate check_suite_id=%s ignored", check_suite_id)
         return
 
-    # Check if this is a GitAuto PR by branch name (early return)
-    # head_branch can be None when:
+    # Check if this is a GitAuto PR by branch name. Return early when it is not.
+    # `head_branch` can be None when:
     # - Check suite runs on a tag push (tags don't have branches)
     # - Check suite runs on a deleted branch
     # - Check suite runs on a direct commit without PR
@@ -478,14 +479,21 @@ async def handle_check_suite(
             len(validation_result.errors),
         )
         pre_existing_errors = "\n".join(validation_result.errors)
+        pre_existing_errors = label_log_source(
+            pre_existing_errors,
+            "ours",
+            "GitAuto validation (AWS Lambda, Amazon Linux 2023)",
+        )
         logger.warning("Remaining errors:\n%s", pre_existing_errors)
     fixes_applied = validation_result.fixes_applied
 
-    # Get the error log from the workflow run
+    # Get the error log from the workflow run.
+    ci_log_source = ""
     if is_circleci:
         logger.info(
             "check_suite using CircleCI path for workflow %s", circleci_workflow_id
         )
+        ci_log_source = f"CircleCI for {owner_name}/{repo_name}"
         circleci_token = get_circleci_token(owner_id)
 
         if not circleci_token:
@@ -547,6 +555,7 @@ async def handle_check_suite(
         )
     elif is_codecov:
         logger.info("check_suite using Codecov path for check_run=%s", check_run_name)
+        ci_log_source = f"Codecov coverage report for {owner_name}/{repo_name}"  # still "theirs" — coverage for the customer's repo
         # See payloads/github/check_run/codecov_check_run_output.json
         output = check_run.get("output", {})
         title = output.get("title", "")
@@ -609,6 +618,7 @@ async def handle_check_suite(
         logger.info(
             "check_suite using GitHub Actions path for run_id=%s", github_run_id
         )
+        ci_log_source = f"GitHub Actions for {owner_name}/{repo_name}"
         # GitHub Actions log retrieval (existing logic)
         error_log = get_workflow_run_logs(
             owner=owner_name, repo=repo_name, run_id=github_run_id, token=token
@@ -860,6 +870,9 @@ async def handle_check_suite(
         )
         ci_log_value = minimized_log
 
+    # Tag the customer CI log with its source so the agent doesn't confuse it with errors produced inside our own Lambda.
+    ci_log_value = label_log_source(ci_log_value, "theirs", ci_log_source)
+
     # Truncate patch — it sits in the first message and repeats in every LLM call
     max_patch_chars = 1000
     for f in changed_files:
@@ -1054,10 +1067,9 @@ async def handle_check_suite(
         update_comment(body=comment_body, base_args=base_args)
         pushed = create_empty_commit(base_args=base_args)
 
-        # Update final comment. Do NOT include CHECK_RUN_FAILED_MESSAGE here — that marker
-        # is a concurrency lock set at line 317 when processing starts. Clearing it here
-        # releases the lock so the next check_suite webhook can proceed. The error hash
-        # dedup at line 557 prevents re-attempting the same error.
+        # Update final comment. Do NOT include CHECK_RUN_FAILED_MESSAGE here — that marker is a concurrency lock set at line 317 when processing starts.
+        # Clearing it here releases the lock so the next check_suite webhook can proceed.
+        # The error hash dedup at line 557 prevents re-attempting the same error.
         if not pushed:
             logger.warning(
                 "Final empty commit skipped on %s: concurrent push detected; posting respect-the-push message",

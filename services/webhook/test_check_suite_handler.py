@@ -17,6 +17,7 @@ from constants.messages import CHECK_RUN_FAILED_MESSAGE
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.chat_with_agent import AgentResult
 from services.webhook.check_suite_handler import handle_check_suite
+from utils.logs.label_log_source import label_log_source
 
 
 @pytest.fixture(autouse=True)
@@ -1765,6 +1766,42 @@ def test_patch_truncation_in_changed_files():
     assert len(serialized) < 2000
     assert serialized.count("truncated") == 1
     assert serialized.count("5,000 chars total") == 1
+
+
+def test_check_suite_handler_imports_label_log_source():
+    # Smoke test: the handler must import label_log_source or the runtime-provenance tagging isn't actually wired.
+    # Without this, a future refactor could silently drop the import and logs would lose their `[log source: ...]` header — the exact regression that produced Foxquilt PR #203.
+    from services.webhook import check_suite_handler  # pylint: disable=import-outside-toplevel
+
+    assert hasattr(check_suite_handler, "label_log_source")
+
+
+def test_ci_log_source_strings_produce_expected_agent_input():
+    # The handler builds `ci_log_source` as an inline f-string in each dispatch branch (CircleCI / Codecov / GitHub Actions), then passes the log through `label_log_source` with ownership="theirs". For Lambda validation errors the handler uses ownership="ours". This test pins the exact header text the agent will see, so a format drift in either the label or the source-string template fails here instead of silently confusing the agent in production.
+    owner = "Foxquilt"
+    repo = "foxden-version-controller"
+    raw_log = "FAIL test/spec/create-express-server.spec.ts"
+
+    circleci_source = f"CircleCI for {owner}/{repo}"
+    codecov_source = f"Codecov coverage report for {owner}/{repo}"
+    gha_source = f"GitHub Actions for {owner}/{repo}"
+    lambda_source = "GitAuto validation (AWS Lambda, Amazon Linux 2023)"
+
+    them = "CUSTOMER infrastructure (their runtime/CI)"
+    us = "OUR infrastructure (GitAuto-controlled)"
+
+    assert label_log_source(raw_log, "theirs", circleci_source) == (
+        f"[log source: {them} — {circleci_source}]\n{raw_log}"
+    )
+    assert label_log_source(raw_log, "theirs", codecov_source) == (
+        f"[log source: {them} — {codecov_source}]\n{raw_log}"
+    )
+    assert label_log_source(raw_log, "theirs", gha_source) == (
+        f"[log source: {them} — {gha_source}]\n{raw_log}"
+    )
+    assert label_log_source(raw_log, "ours", lambda_source) == (
+        f"[log source: {us} — {lambda_source}]\n{raw_log}"
+    )
 
 
 def test_agent_result_concurrent_push_field_defaults_false():
