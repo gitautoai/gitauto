@@ -16,6 +16,7 @@ from config import GITHUB_APP_USER_NAME, PRODUCT_ID, UTF8
 from constants.messages import CHECK_RUN_FAILED_MESSAGE
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.chat_with_agent import AgentResult
+from services.webhook import check_suite_handler
 from services.webhook.check_suite_handler import handle_check_suite
 from utils.logs.label_log_source import label_log_source
 
@@ -796,6 +797,14 @@ async def test_handle_check_suite_with_existing_retry_pair(
 
 
 @pytest.mark.asyncio
+@patch(
+    "services.webhook.check_suite_handler.get_local_head_sha",
+    return_value="abc123",
+)
+@patch(
+    "services.webhook.check_suite_handler.get_total_cost_for_pr",
+    return_value=999.99,
+)
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
@@ -828,7 +837,7 @@ async def test_handle_check_suite_with_closed_pr(
     _mock_ensure_php,
     _mock_start_async,
     _mock_update_usage,
-    _mock_create_empty_commit,
+    mock_create_empty_commit,
     mock_should_bail,
     _mock_update_retry_hashes,
     mock_get_retry_hashes,
@@ -844,6 +853,8 @@ async def test_handle_check_suite_with_closed_pr(
     mock_get_repo,
     mock_get_token,
     mock_get_failed_runs,
+    _mock_get_total_cost_for_pr,
+    _mock_get_local_head_sha,
     mock_check_run_payload,
 ):
     """Test handling when the PR is closed during processing."""
@@ -897,8 +908,20 @@ async def test_handle_check_suite_with_closed_pr(
     # Verify comment was updated (post-loop update)
     mock_update_comment.assert_called()
 
+    # Regression: cost cap reached (mocked $999.99 >= cap) with no change commits (HEAD == initial SHA) must skip the final empty commit.
+    # Otherwise CI would be retriggered → re-enter this handler → bail on cost cap again → loop forever.
+    mock_create_empty_commit.assert_not_called()
+
 
 @pytest.mark.asyncio
+@patch(
+    "services.webhook.check_suite_handler.get_local_head_sha",
+    return_value="abc123",
+)
+@patch(
+    "services.webhook.check_suite_handler.get_total_cost_for_pr",
+    return_value=999.99,
+)
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
@@ -931,7 +954,7 @@ async def test_handle_check_suite_with_deleted_branch(
     _mock_ensure_php,
     _mock_start_async,
     _mock_update_usage,
-    _mock_create_empty_commit,
+    mock_create_empty_commit,
     mock_should_bail,
     _mock_update_retry_hashes,
     mock_get_retry_hashes,
@@ -947,6 +970,8 @@ async def test_handle_check_suite_with_deleted_branch(
     mock_get_repo,
     mock_get_token,
     mock_get_failed_runs,
+    _mock_get_total_cost_for_pr,
+    _mock_get_local_head_sha,
     mock_check_run_payload,
 ):
     """Test handling when the branch is deleted during processing."""
@@ -999,6 +1024,113 @@ async def test_handle_check_suite_with_deleted_branch(
 
     # Verify comment was updated (post-loop update)
     mock_update_comment.assert_called()
+
+    # Regression: cost cap reached (mocked $999.99 >= cap) with no change commits (HEAD == initial SHA) must skip the final empty commit.
+    # Otherwise CI would be retriggered → re-enter this handler → bail on cost cap again → loop forever.
+    mock_create_empty_commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch(
+    "services.webhook.check_suite_handler.get_local_head_sha",
+    return_value="different_head_sha",
+)
+@patch(
+    "services.webhook.check_suite_handler.get_total_cost_for_pr",
+    return_value=999.99,
+)
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.get_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.update_retry_error_hashes")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
+async def test_cost_cap_with_change_commits_still_retriggers_ci(
+    _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
+    _mock_ensure_php,
+    _mock_start_async,
+    _mock_update_usage,
+    mock_create_empty_commit,
+    _mock_should_bail,
+    _mock_update_retry_hashes,
+    mock_get_retry_hashes,
+    _mock_update_comment,
+    mock_get_logs,
+    mock_get_changes,
+    mock_get_pr,
+    _mock_cancel_workflow_runs,
+    mock_create_user_request,
+    mock_create_comment,
+    mock_get_pr_comments,
+    _mock_slack_notify,
+    mock_get_repo,
+    mock_get_token,
+    mock_get_failed_runs,
+    _mock_get_total_cost_for_pr,
+    _mock_get_local_head_sha,
+    mock_check_run_payload,
+):
+    """Cost cap reached but HEAD moved (agent pushed change commits this run) →
+    create the final empty commit to retrigger CI. The pushed fixes might pass CI."""
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
+    mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr_comments.return_value = []
+    mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = "usage-id-123"
+    mock_get_pr.return_value = {
+        "title": "Low Test Coverage: src/main.py",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+        "base": {"ref": "main"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
+    mock_get_logs.return_value = "Test failure log content"
+    mock_get_retry_hashes.return_value = []
+
+    await handle_check_suite(payload)
+
+    # HEAD "different_head_sha" != initial "abc123" → has_change_commits=True.
+    # Even with cost cap reached, we must still retrigger CI because the commits pushed during this run might fix the failure. Skipping would lose that signal.
+    mock_create_empty_commit.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -1771,8 +1903,6 @@ def test_patch_truncation_in_changed_files():
 def test_check_suite_handler_imports_label_log_source():
     # Smoke test: the handler must import label_log_source or the runtime-provenance tagging isn't actually wired.
     # Without this, a future refactor could silently drop the import and logs would lose their `[log source: ...]` header — the exact regression that produced Foxquilt PR #203.
-    from services.webhook import check_suite_handler  # pylint: disable=import-outside-toplevel
-
     assert hasattr(check_suite_handler, "label_log_source")
 
 
