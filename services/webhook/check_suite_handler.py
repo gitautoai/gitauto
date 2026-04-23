@@ -24,6 +24,7 @@ from services.codecov.get_commit_coverage import get_codecov_commit_coverage
 from services.git.create_empty_commit import create_empty_commit
 from services.git.get_clone_dir import get_clone_dir
 from services.git.get_clone_url import get_clone_url
+from services.git.get_local_head_sha import get_local_head_sha
 from services.git.clone_repo_and_install_dependencies import (
     clone_repo_and_install_dependencies,
 )
@@ -60,6 +61,7 @@ from services.supabase.credits.get_credit_price import get_credit_price
 from services.supabase.circleci_tokens.get_circleci_token import get_circleci_token
 from services.supabase.codecov_tokens.get_codecov_token import get_codecov_token
 from services.supabase.create_user_request import create_user_request
+from services.supabase.llm_requests.get_total_cost_for_pr import get_total_cost_for_pr
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.check_older_active_test_failure import (
     check_older_active_test_failure_request,
@@ -928,6 +930,7 @@ async def handle_check_suite(
     )
 
     cost_cap_usd = get_credit_price(model_id) * COST_CAP_RATIO
+    initial_head_sha = base_args["latest_commit_sha"]
     concurrent_push_detected = False
 
     for iteration in range(MAX_ITERATIONS):
@@ -1041,6 +1044,26 @@ async def handle_check_suite(
         final_result = await verify_task_is_complete(base_args=base_args)
         is_completed = final_result.success
 
+    # Decide whether to create the retrigger empty commit.
+    # If the agent made no code changes on this run AND we're at/over the PR's cost cap, creating an empty commit would retrigger CI on the same failing code, fire this handler again, re-bail on cost cap (cost is PR-cumulative), commit again, loop forever.
+    # When commits were pushed this run, retrigger CI — those changes might fix it.
+    final_head_sha = get_local_head_sha(clone_dir=clone_dir)
+    has_change_commits = bool(final_head_sha) and final_head_sha != initial_head_sha
+    total_cost_usd = get_total_cost_for_pr(
+        owner_name=owner_name, repo_name=repo_name, pr_number=pr_number
+    )
+    cost_cap_reached = total_cost_usd >= cost_cap_usd
+    logger.info(
+        "Retrigger decision on PR #%s: initial_head=%s final_head=%s has_change_commits=%s total_cost=$%.4f cost_cap=$%.4f cost_cap_reached=%s",
+        pr_number,
+        initial_head_sha,
+        final_head_sha,
+        has_change_commits,
+        total_cost_usd,
+        cost_cap_usd,
+        cost_cap_reached,
+    )
+
     # Concurrent push bail: skip final empty commit (racer's push already triggers CI), post accurate message
     if concurrent_push_detected:
         logger.info(
@@ -1049,6 +1072,11 @@ async def handle_check_suite(
         )
         bail_msg = f"Another commit landed on `{head_branch}` while I was working on `{check_run_name}`. Their push triggers CI on its own, so I'm stopping here — your push stands."
         update_comment(body=bail_msg, base_args=base_args)
+    elif cost_cap_reached and not has_change_commits:
+        logger.info(
+            "check_suite: cost cap reached with no change commits on PR #%s; skipping final empty commit to prevent infinite retry loop",
+            pr_number,
+        )
     # If stopped due to trigger being disabled, post reason and skip empty commit
     elif completion_reason:
         logger.info(
