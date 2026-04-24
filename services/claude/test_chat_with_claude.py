@@ -46,10 +46,9 @@ def test_chat_with_claude_success(mock_claude, mock_insert_llm_request):
     assert call_args["provider"] == "claude"
     assert call_args["input_tokens"] == 20
     assert call_args["output_tokens"] == 15
+    assert call_args["system_prompt"] == system_content
 
-    # Verify the trim path uses the shared count_tokens_claude function: when
-    # count_tokens is invoked on the Anthropic client, we should see the messages
-    # and model relayed through.
+    # Verify the trim path uses the shared count_tokens_claude function: when count_tokens is invoked on the Anthropic client, we should see the messages and model relayed through.
     mock_claude.messages.count_tokens.assert_called_with(
         messages=messages, model=ClaudeModelId.SONNET_4_6
     )

@@ -76,15 +76,10 @@ async def setup_handler(
 
     installation = get_installation_by_owner(owner_name)
     if not installation:
-        logger.warning("No installation found for %s", owner_name)
+        logger.warning("setup_handler: no installation for %s; skipping", owner_name)
         slack_notify(
             f"Setup skipped for {owner_name}/{repo_name}: no installation found",
             thread_ts=thread_ts,
-        )
-        logger.info(
-            "Exiting setup_handler: no installation record for %s/%s, cannot run setup",
-            owner_name,
-            repo_name,
         )
         return
     installation_id = installation["installation_id"]
@@ -94,31 +89,16 @@ async def setup_handler(
     repository = get_repository_by_name(owner_id, repo_name)
     repo_id = repository["repo_id"] if repository else 0
     if repository and repository.get("target_branch"):
-        logger.info(
-            "Dashboard-configured target_branch present for %s/%s; using it",
-            owner_name,
-            repo_name,
-        )
         target_branch = repository["target_branch"]
-        logger.info("Using target_branch: %s", target_branch)
+        logger.info("Using dashboard-configured target_branch: %s", target_branch)
     else:
-        logger.info(
-            "No dashboard target_branch for %s/%s; falling back to remote default branch",
-            owner_name,
-            repo_name,
-        )
         clone_url = get_clone_url(owner_name, repo_name, token)
         target_branch = get_default_branch(clone_url=clone_url)
         if not target_branch:
-            logger.info("Repository %s/%s is empty, skipping", owner_name, repo_name)
+            logger.info("Repository is empty; skipping setup")
             slack_notify(
                 f"Setup skipped for {owner_name}/{repo_name}: repository is empty",
                 thread_ts=thread_ts,
-            )
-            logger.info(
-                "Exiting setup_handler: %s/%s has no default branch (empty repo)",
-                owner_name,
-                repo_name,
             )
             return
         logger.info("Using default branch as target: %s", target_branch)
@@ -176,6 +156,7 @@ async def setup_handler(
         "verify_consecutive_failures": 0,
         "model_id": model_id,
         "quality_gate_fail_count": 0,
+        "usage_id": 0,  # Setup flow does not record LLM usage
     }
 
     sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
@@ -309,12 +290,10 @@ async def setup_handler(
         completion_reason = result.completion_reason
 
         if result.is_completed:
-            logger.info("Setup agent completed successfully")
-            is_completed = True
             logger.info(
-                "Breaking setup agent loop on iteration %d: verify_task_is_complete reported success",
-                iteration + 1,
+                "Setup agent completed on iteration %d; breaking loop", iteration + 1
             )
+            is_completed = True
             break
 
     logger.info(

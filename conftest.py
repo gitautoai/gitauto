@@ -75,6 +75,7 @@ def create_test_base_args():
             "model_id": selected,
             "verify_consecutive_failures": 0,
             "quality_gate_fail_count": 0,
+            "usage_id": 0,
         }
 
         # Apply any overrides

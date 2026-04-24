@@ -9,6 +9,12 @@ from constants.models import ClaudeModelId, GoogleModelId
 from services.claude.evaluate_quality_checks import evaluate_quality_checks
 
 
+@pytest.fixture(autouse=True)
+def mock_insert_llm_request():
+    with patch("services.claude.evaluate_quality_checks.insert_llm_request") as mock:
+        yield mock
+
+
 def _mock_claude_call(mock_claude, model: ClaudeModelId):
     mock_content = MagicMock()
     mock_content.text = '{"business_logic": {}}'
@@ -19,6 +25,8 @@ def _mock_claude_call(mock_claude, model: ClaudeModelId):
         source_path="src/foo.ts",
         test_files=[("test/foo.spec.ts", "it('works', () => {})")],
         model=model,
+        usage_id=1,
+        created_by="tester",
     )
 
     return mock_claude.messages.create.call_args.kwargs
@@ -82,6 +90,8 @@ def test_gemma_returns_case_coverage_for_real_file_pair():
         source_path=src_path,
         test_files=[(test_path, test_content)],
         model=GoogleModelId.GEMMA_4_31B,
+        usage_id=None,
+        created_by="integration-test",
     )
 
     assert result is not None
@@ -157,12 +167,16 @@ def test_gemma_discriminates_weak_vs_strong_case_coverage():
         source_path="src/discount.py",
         test_files=[("tests/test_discount.py", _WEAK_TEST)],
         model=GoogleModelId.GEMMA_4_31B,
+        usage_id=None,
+        created_by="integration-test",
     )
     strong_result = evaluate_quality_checks(
         source_content=_DISCOUNT_SRC,
         source_path="src/discount.py",
         test_files=[("tests/test_discount.py", _STRONG_TEST)],
         model=GoogleModelId.GEMMA_4_31B,
+        usage_id=None,
+        created_by="integration-test",
     )
 
     assert weak_result is not None and strong_result is not None

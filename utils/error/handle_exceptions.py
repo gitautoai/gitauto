@@ -71,7 +71,6 @@ def handle_exceptions(
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
         if inspect.iscoroutinefunction(func):
-            logger.info("handle_exceptions: wrapping async %s", func.__name__)
 
             @wraps(wrapped=func)
             async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -99,16 +98,13 @@ def handle_exceptions(
                             and remaining_transient_retries > 0
                         ):
                             logger.warning(
-                                "%s rate-limited via HTTPError on attempt %d, sleeping %.2fs",
+                                "%s rate-limited via HTTPError on attempt %d; sleeping %.2fs then retrying",
                                 func.__name__,
                                 attempt,
                                 rate_limit_delay,
                             )
                             remaining_transient_retries -= 1
                             await asyncio.sleep(rate_limit_delay)
-                            logger.info(
-                                "%s retrying after rate-limit sleep", func.__name__
-                            )
                             continue
                         logger.info(
                             "%s HTTPError not rate-limited or retries exhausted; handing off",
@@ -164,24 +160,18 @@ def handle_exceptions(
                             and remaining_transient_retries > 0
                         ):
                             logger.warning(
-                                "%s rate-limited on attempt %d, sleeping %.2fs",
+                                "%s rate-limited on attempt %d; sleeping %.2fs then retrying",
                                 func.__name__,
                                 attempt,
                                 rate_limit_delay,
                             )
                             remaining_transient_retries -= 1
                             await asyncio.sleep(rate_limit_delay)
-                            logger.info(
-                                "%s retrying after rate-limit sleep", func.__name__
-                            )
                             continue
                         if remaining_transient_retries > 0 and is_transient_error(err):
-                            logger.info(
-                                "%s transient-error branch taken", func.__name__
-                            )
                             backoff = TRANSIENT_BACKOFF_SECONDS * attempt
                             logger.warning(
-                                "%s transient failure on attempt %d, retrying in %ds: %s",
+                                "%s transient failure on attempt %d; retrying in %ds: %s",
                                 func.__name__,
                                 attempt,
                                 backoff,
@@ -189,7 +179,6 @@ def handle_exceptions(
                             )
                             remaining_transient_retries -= 1
                             await asyncio.sleep(backoff)
-                            logger.info("%s retrying after backoff", func.__name__)
                             continue
                         logger.info(
                             "%s generic error (non-retry), handing off", func.__name__
@@ -206,11 +195,8 @@ def handle_exceptions(
                             ),
                         )
 
-            logger.info(
-                "handle_exceptions: returning async wrapper for %s", func.__name__
-            )
+            logger.info("handle_exceptions: wrapped async %s", func.__name__)
             return cast(Callable[P, R], async_wrapper)
-        logger.info("handle_exceptions: wrapping sync %s", func.__name__)
 
         @wraps(wrapped=func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -233,14 +219,13 @@ def handle_exceptions(
                     rate_limit_delay = get_rate_limit_retry_after(err)
                     if rate_limit_delay is not None and remaining_transient_retries > 0:
                         logger.warning(
-                            "%s rate-limited via HTTPError on attempt %d, sleeping %.2fs",
+                            "%s rate-limited via HTTPError on attempt %d; sleeping %.2fs then retrying",
                             func.__name__,
                             attempt,
                             rate_limit_delay,
                         )
                         remaining_transient_retries -= 1
                         time.sleep(rate_limit_delay)
-                        logger.info("%s retrying after rate-limit sleep", func.__name__)
                         continue
                     logger.info(
                         "%s HTTPError not rate-limited or retries exhausted; handing off",
@@ -278,20 +263,18 @@ def handle_exceptions(
                     rate_limit_delay = get_rate_limit_retry_after(err)
                     if rate_limit_delay is not None and remaining_transient_retries > 0:
                         logger.warning(
-                            "%s rate-limited on attempt %d, sleeping %.2fs",
+                            "%s rate-limited on attempt %d; sleeping %.2fs then retrying",
                             func.__name__,
                             attempt,
                             rate_limit_delay,
                         )
                         remaining_transient_retries -= 1
                         time.sleep(rate_limit_delay)
-                        logger.info("%s retrying after rate-limit sleep", func.__name__)
                         continue
                     if remaining_transient_retries > 0 and is_transient_error(err):
-                        logger.info("%s transient-error branch taken", func.__name__)
                         backoff = TRANSIENT_BACKOFF_SECONDS * attempt
                         logger.warning(
-                            "%s transient failure on attempt %d, retrying in %ds: %s",
+                            "%s transient failure on attempt %d; retrying in %ds: %s",
                             func.__name__,
                             attempt,
                             backoff,
@@ -299,7 +282,6 @@ def handle_exceptions(
                         )
                         remaining_transient_retries -= 1
                         time.sleep(backoff)
-                        logger.info("%s retrying after backoff", func.__name__)
                         continue
                     logger.info(
                         "%s generic error (non-retry), handing off", func.__name__

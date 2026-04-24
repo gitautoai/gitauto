@@ -100,6 +100,7 @@ def test_text_response(mock_get_client, mock_insert):
     assert call_kwargs["model_id"] == "gemma-4-31b-it"
     assert call_kwargs["input_tokens"] == 20
     assert call_kwargs["output_tokens"] == 15
+    assert call_kwargs["system_prompt"] == "You are a helpful assistant."
 
 
 @patch("services.google_ai.chat_with_google.insert_llm_request")
@@ -376,7 +377,6 @@ def test_429_is_not_retried_locally_bubbles_to_handle_exceptions(
                 usage_id=1,
                 created_by="1:t",
             )
-    # handle_exceptions retries up to TRANSIENT_MAX_ATTEMPTS=3 times before giving up,
-    # so the SDK gets called 3 times (honoring the 5s hint between each).
+    # handle_exceptions retries up to TRANSIENT_MAX_ATTEMPTS=3 times before giving up, so the SDK gets called 3 times (honoring the 5s hint between each).
     assert client.models.generate_content.call_count == 3
     mock_insert.assert_not_called()

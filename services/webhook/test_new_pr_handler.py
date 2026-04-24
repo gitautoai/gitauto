@@ -265,6 +265,14 @@ async def test_image_urls_processing(
     mock_extract_image_urls.assert_called()
     mock_get_base64.assert_called()
     mock_describe_image.assert_called()
+    # describe_image must receive the created usage_id and id:name created_by so the OpenAI vision call is recorded against the PR usage row.
+    describe_kwargs = mock_describe_image.call_args.kwargs
+    assert describe_kwargs["usage_id"] == mock_create_user_request.return_value
+    base_args = _get_base_args()
+    assert (
+        describe_kwargs["created_by"]
+        == f"{base_args['sender_id']}:{base_args['sender_name']}"
+    )
 
 
 @pytest.mark.asyncio

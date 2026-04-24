@@ -93,12 +93,6 @@ async def chat_with_agent(
         except ClaudeOverloadedError:
             overload_retries += 1
             if overload_retries <= max_overload_retries:
-                logger.info(
-                    "chat_with_agent: ClaudeOverloadedError attempt %d/%d on %s; backing off before retry",
-                    overload_retries,
-                    max_overload_retries,
-                    current_model,
-                )
                 delay = overload_retries * 5
                 logger.warning(
                     "Overloaded (529), retrying %s in %ds (attempt %d/%d)",
@@ -108,9 +102,6 @@ async def chat_with_agent(
                     max_overload_retries,
                 )
                 await asyncio.sleep(delay)
-                logger.info(
-                    "chat_with_agent: continuing retry loop after backoff sleep"
-                )
                 continue
 
             overload_retries = 0
@@ -143,11 +134,11 @@ async def chat_with_agent(
 
     # Return if no tool calls (agent returned text without calling a tool)
     if not llm_result.tool_calls:
-        logger.info("No tools were called. Response: %s", llm_result.assistant_message)
-        messages.append(llm_result.assistant_message)
         logger.info(
-            "chat_with_agent: returning early AgentResult with no tool calls for this turn"
+            "No tools called; returning early. Response: %s",
+            llm_result.assistant_message,
         )
+        messages.append(llm_result.assistant_message)
         return AgentResult(
             messages=messages,
             token_input=llm_result.token_input,
@@ -710,8 +701,7 @@ async def chat_with_agent(
             base_args=base_args,
         )
 
-    # Append all tool results as a single user message
-    # https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview
+    # Append all tool results as a single user message. https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview
     tool_result_msg: MessageParam = {
         "role": "user",
         "content": tool_result_blocks,

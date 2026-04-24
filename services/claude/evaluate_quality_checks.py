@@ -1,5 +1,7 @@
 import json
+import time
 
+from anthropic.types import MessageParam
 from google.genai import types
 
 from constants.claude import MAX_OUTPUT_TOKENS
@@ -12,6 +14,7 @@ from constants.models import (
 )
 from services.claude.client import claude
 from services.google_ai.client import get_google_ai_client
+from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 from utils.prompts.quality_check import QUALITY_CHECK_SYSTEM_PROMPT
@@ -28,6 +31,8 @@ def evaluate_quality_checks(
     source_path: str,
     test_files: list[tuple[str, str]],
     model: ModelId,
+    usage_id: int,
+    created_by: str,
 ):
     """test_files: list of (path, content) tuples for all test files covering this source."""
     if not source_content:
@@ -44,21 +49,46 @@ def evaluate_quality_checks(
         user_message += "\n\n## Test file: No test file exists for this source file."
 
     provider = MODEL_REGISTRY[model]["provider"]
+    user_msg: MessageParam = {"role": "user", "content": user_message}
     if provider == ModelProvider.CLAUDE:
         logger.info("evaluate_quality_checks: using Claude provider with %s", model)
         assert isinstance(model, ClaudeModelId)
         # Opus 4.7 deprecated the temperature parameter; omit it to stay compatible across models.
+        start = time.time()
         response = claude.messages.create(
             model=model,
             max_tokens=MAX_OUTPUT_TOKENS[model],
             system=SYSTEM,
-            messages=[{"role": "user", "content": user_message}],
+            messages=[user_msg],
         )
+        response_time_ms = int((time.time() - start) * 1000)
         text_attr = getattr(response.content[0], "text", "")
         if not isinstance(text_attr, str):
             logger.error("Expected str but got %s: %s", type(text_attr), text_attr)
+            text = ""
+        else:
+            logger.info(
+                "evaluate_quality_checks: Claude text received (%d chars)",
+                len(text_attr),
+            )
+            text = text_attr
+        insert_llm_request(
+            usage_id=usage_id,
+            provider="claude",
+            model_id=model,
+            input_messages=[user_msg],
+            input_tokens=response.usage.input_tokens if response.usage else 0,
+            output_message={"role": "assistant", "content": text},
+            output_tokens=response.usage.output_tokens if response.usage else 0,
+            system_prompt=SYSTEM,
+            response_time_ms=response_time_ms,
+            created_by=created_by,
+        )
+        if not text:
+            logger.info(
+                "evaluate_quality_checks: returning None for invalid Claude response"
+            )
             return None
-        text = text_attr
     elif provider == ModelProvider.GOOGLE:
         logger.info("evaluate_quality_checks: using Google provider with %s", model)
         assert isinstance(model, GoogleModelId)
@@ -67,12 +97,27 @@ def evaluate_quality_checks(
             system_instruction=SYSTEM,
             temperature=0.0,
         )
+        start = time.time()
         response = client.models.generate_content(
             model=model,
             contents=user_message,
             config=config,
         )
+        response_time_ms = int((time.time() - start) * 1000)
         text = response.text or ""
+        usage = response.usage_metadata
+        insert_llm_request(
+            usage_id=usage_id,
+            provider="google",
+            model_id=model,
+            input_messages=[user_msg],
+            input_tokens=(usage.prompt_token_count or 0) if usage else 0,
+            output_message={"role": "assistant", "content": text},
+            output_tokens=(usage.candidates_token_count or 0) if usage else 0,
+            system_prompt=SYSTEM,
+            response_time_ms=response_time_ms,
+            created_by=created_by,
+        )
     else:
         logger.error("Unknown provider %s for model %s", provider, model)
         return None

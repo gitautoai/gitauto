@@ -16,7 +16,7 @@ def test_describe_image_integration():
     # Simple 1x1 red pixel image (just base64 string, not data URL)
     base64_image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
 
-    response = describe_image(base64_image)
+    response = describe_image(base64_image, usage_id=0, created_by="integration-test")
 
     assert isinstance(response, str)
     assert len(response) > 0
@@ -30,7 +30,12 @@ def test_describe_image_with_context():
     """Test describe_image with context parameter"""
     base64_image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
 
-    response = describe_image(base64_image, "This is a test image")
+    response = describe_image(
+        base64_image,
+        usage_id=0,
+        created_by="integration-test",
+        context="This is a test image",
+    )
 
     assert isinstance(response, str)
     assert len(response) > 0

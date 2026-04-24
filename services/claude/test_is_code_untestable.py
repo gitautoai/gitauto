@@ -28,10 +28,16 @@ def mock_claude():
         yield mock
 
 
+@pytest.fixture(autouse=True)
+def mock_insert_llm_request():
+    with patch("services.claude.is_code_untestable.insert_llm_request") as mock:
+        yield mock
+
+
 def _set_mock_response(mock_claude, result: bool, category: str, reason: str):
     """Configure the mock Claude client to return a CodeAnalysisResult."""
 
-    mock_claude.beta.messages.create.return_value.content = [
+    mock_claude.messages.create.return_value.content = [
         type(
             "TextBlock",
             (),
@@ -50,11 +56,32 @@ def test_uses_opus_47_model(mock_claude):
     is_code_untestable(
         file_path="src/app.tsx",
         file_content="const x = 1;",
+        usage_id=1,
+        created_by="tester",
         uncovered_lines="1",
     )
 
-    call_args = mock_claude.beta.messages.create.call_args
+    call_args = mock_claude.messages.create.call_args
     assert call_args.kwargs["model"] == "claude-opus-4-7"
+
+
+def test_records_llm_request(mock_claude, mock_insert_llm_request):
+    _set_mock_response(mock_claude, False, "testable", "testable")
+
+    is_code_untestable(
+        file_path="src/app.tsx",
+        file_content="const x = 1;",
+        usage_id=77,
+        created_by="tester",
+        uncovered_lines="1",
+    )
+
+    mock_insert_llm_request.assert_called_once()
+    call_kwargs = mock_insert_llm_request.call_args.kwargs
+    assert call_kwargs["usage_id"] == 77
+    assert call_kwargs["created_by"] == "tester"
+    assert call_kwargs["provider"] == "claude"
+    assert call_kwargs["model_id"] == "claude-opus-4-7"
 
 
 def test_call_kwargs_do_not_include_temperature(mock_claude):
@@ -65,30 +92,34 @@ def test_call_kwargs_do_not_include_temperature(mock_claude):
     is_code_untestable(
         file_path="src/app.tsx",
         file_content="const x = 1;",
+        usage_id=1,
+        created_by="tester",
         uncovered_lines="1",
     )
 
-    call_args = mock_claude.beta.messages.create.call_args
+    call_args = mock_claude.messages.create.call_args
     assert set(call_args.kwargs.keys()) == {
         "model",
         "max_tokens",
         "system",
         "messages",
-        "betas",
         "output_config",
     }
 
 
-def test_returns_testable_when_no_uncovered_code(mock_claude):
+def test_returns_testable_when_no_uncovered_code(mock_claude, mock_insert_llm_request):
     result = is_code_untestable(
         file_path="src/app.tsx",
         file_content="const x = 1;",
+        usage_id=1,
+        created_by="tester",
     )
     assert result is not None
     assert result.result is False
     assert result.category == "testable"
     assert result.reason == "No uncovered code provided"
-    mock_claude.beta.messages.create.assert_not_called()
+    mock_claude.messages.create.assert_not_called()
+    mock_insert_llm_request.assert_not_called()
 
 
 def test_extracts_uncovered_lines_from_file_content(mock_claude):
@@ -101,10 +132,12 @@ line 4"""
     is_code_untestable(
         file_path="src/app.tsx",
         file_content=file_content,
+        usage_id=1,
+        created_by="tester",
         uncovered_lines="3",
     )
 
-    call_args = mock_claude.beta.messages.create.call_args
+    call_args = mock_claude.messages.create.call_args
     content = call_args.kwargs["messages"][0]["content"]
     assert content == _build_expected_content(
         parts=["Uncovered lines:\n```\n3: throw new Error('test');\n```"],
@@ -120,10 +153,12 @@ def test_handles_multiple_uncovered_lines(mock_claude):
     is_code_untestable(
         file_path="src/app.tsx",
         file_content=file_content,
+        usage_id=1,
+        created_by="tester",
         uncovered_lines="2, 4",
     )
 
-    call_args = mock_claude.beta.messages.create.call_args
+    call_args = mock_claude.messages.create.call_args
     content = call_args.kwargs["messages"][0]["content"]
     assert content == _build_expected_content(
         parts=["Uncovered lines:\n```\n2: line2\n4: line4\n```"],
@@ -139,10 +174,12 @@ def test_includes_uncovered_functions(mock_claude):
     is_code_untestable(
         file_path="src/app.py",
         file_content=file_content,
+        usage_id=1,
+        created_by="tester",
         uncovered_functions="handleClick, onSubmit",
     )
 
-    call_args = mock_claude.beta.messages.create.call_args
+    call_args = mock_claude.messages.create.call_args
     content = call_args.kwargs["messages"][0]["content"]
     assert content == _build_expected_content(
         parts=["Uncovered functions: handleClick, onSubmit"],
@@ -158,10 +195,12 @@ def test_includes_uncovered_branches(mock_claude):
     is_code_untestable(
         file_path="src/app.go",
         file_content=file_content,
+        usage_id=1,
+        created_by="tester",
         uncovered_branches="if@10, else@15",
     )
 
-    call_args = mock_claude.beta.messages.create.call_args
+    call_args = mock_claude.messages.create.call_args
     content = call_args.kwargs["messages"][0]["content"]
     assert content == _build_expected_content(
         parts=["Uncovered branches: if@10, else@15"],
@@ -177,12 +216,14 @@ def test_includes_all_uncovered_types(mock_claude):
     is_code_untestable(
         file_path="src/component.tsx",
         file_content=file_content,
+        usage_id=1,
+        created_by="tester",
         uncovered_lines="2",
         uncovered_functions="handleError",
         uncovered_branches="catch@5",
     )
 
-    call_args = mock_claude.beta.messages.create.call_args
+    call_args = mock_claude.messages.create.call_args
     content = call_args.kwargs["messages"][0]["content"]
     assert content == _build_expected_content(
         parts=[
@@ -206,6 +247,8 @@ def test_returns_dead_code_result(mock_claude):
     result = is_code_untestable(
         file_path="src/app.tsx",
         file_content="const handleClick = async () => {}",
+        usage_id=1,
+        created_by="tester",
         uncovered_functions="handleClick",
     )
 
@@ -222,6 +265,8 @@ def test_returns_untestable_result(mock_claude):
     result = is_code_untestable(
         file_path="src/app.tsx",
         file_content="const handleClick = async () => {}",
+        usage_id=1,
+        created_by="tester",
         uncovered_functions="handleClick",
     )
 
@@ -238,10 +283,12 @@ def test_skips_invalid_line_numbers(mock_claude):
     is_code_untestable(
         file_path="src/app.tsx",
         file_content=file_content,
+        usage_id=1,
+        created_by="tester",
         uncovered_lines="1, 999",  # 999 is out of range
     )
 
-    call_args = mock_claude.beta.messages.create.call_args
+    call_args = mock_claude.messages.create.call_args
     content = call_args.kwargs["messages"][0]["content"]
     assert content == _build_expected_content(
         parts=["Uncovered lines:\n```\n1: line1\n```"],
@@ -256,10 +303,12 @@ def test_schema_includes_category_enum(mock_claude):
     is_code_untestable(
         file_path="src/app.tsx",
         file_content="code",
+        usage_id=1,
+        created_by="tester",
         uncovered_lines="1",
     )
 
-    call_args = mock_claude.beta.messages.create.call_args
+    call_args = mock_claude.messages.create.call_args
     schema = call_args.kwargs["output_config"]["format"]["schema"]
     assert schema["properties"]["category"] == {
         "type": "string",
@@ -325,6 +374,8 @@ export class AgencyAuthorizationHandler implements AuthorizationHandler {
     result = is_code_untestable(
         file_path="src/authorization/authorizers/agencyAuthorizationHandler.handler.ts",
         file_content=file_content,
+        usage_id=0,
+        created_by="integration-test",
         uncovered_lines="38",
     )
 
@@ -352,6 +403,8 @@ def test_detects_logic_based_dead_code_simple():
     result = is_code_untestable(
         file_path="src/utils.ts",
         file_content=file_content,
+        usage_id=0,
+        created_by="integration-test",
         uncovered_lines="3",
     )
 

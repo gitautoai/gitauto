@@ -109,6 +109,7 @@ async def test_verify_task_is_complete_success_with_changes(
     assert result.success is True
     assert result.message == "Task completed."
     assert result.fixes_applied == []
+    assert base_args["usage_id"] == 0
     mock_get_files.assert_called_once_with(
         owner=base_args["owner"],
         repo=base_args["repo"],
@@ -148,9 +149,11 @@ async def test_verify_partial_fix_with_remaining_errors(
     result = await verify_task_is_complete(base_args)
 
     assert result.success is False
-    assert "NOT complete" in result.message
-    assert "unused" in result.message
-    assert "src/index.ts" in result.error_files
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n"
+        "- src/index.ts: ESLint: Line 2: 'unused' is defined but never used (no-unused-vars)"
+    )
+    assert result.error_files == {"src/index.ts"}
 
 
 @pytest.mark.asyncio
@@ -165,7 +168,7 @@ async def test_verify_task_is_complete_failure_no_changes(
     result = await verify_task_is_complete(base_args)
 
     assert result.success is True
-    assert "No changes were needed" in result.message
+    assert result.message == "Task completed. No changes were needed."
 
 
 @pytest.mark.asyncio
@@ -174,8 +177,7 @@ async def test_schedule_pr_no_changes_always_fails(
     mock_get_files, create_test_base_args, tmp_path
 ):
     base_args = create_test_base_args(clone_dir=str(tmp_path))
-    # Schedule/dashboard PR with 0 changes always fails without LLM call --
-    # the schedule_handler already determined quality is bad when it created the PR
+    # Schedule/dashboard PR with 0 changes always fails without LLM call — the schedule_handler already determined quality is bad when it created the PR.
     mock_get_files.return_value = []
     base_args["trigger"] = "schedule"
     base_args["impl_file_to_collect_coverage_from"] = "src/resolvers/foo.ts"
@@ -183,7 +185,10 @@ async def test_schedule_pr_no_changes_always_fails(
     result = await verify_task_is_complete(base_args)
 
     assert result.success is False
-    assert "0 changes" in result.message
+    assert result.message == (
+        "Task NOT complete. You made 0 changes to the test file for src/resolvers/foo.ts."
+        " Evaluate and improve test quality per coding standards."
+    )
 
 
 @pytest.mark.asyncio
@@ -196,7 +201,7 @@ async def test_verify_task_is_complete_no_pr_number_returns_default(
     result = await verify_task_is_complete(args)
 
     assert result.success is False
-    assert "error" in result.message.lower()
+    assert result.message == "Verification failed due to an unexpected error."
     mock_get_files.assert_not_called()
 
 
@@ -211,7 +216,7 @@ async def test_verify_task_is_complete_api_error_returns_default(
     result = await verify_task_is_complete(base_args)
 
     assert result.success is False
-    assert "error" in result.message.lower()
+    assert result.message == "Verification failed due to an unexpected error."
 
 
 @pytest.mark.asyncio
@@ -544,9 +549,12 @@ async def test_verify_fails_when_jest_tests_fail(
     result = await verify_task_is_complete(base_args)
 
     assert result.success is False
-    assert "NOT complete" in result.message
-    assert "jest:" in result.message
-    assert "src/index.test.js" in result.error_files
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n"
+        "- jest: FAIL src/index.test.js\n"
+        "- jest: Expected true to be false"
+    )
+    assert result.error_files == {"src/index.test.js"}
 
 
 @pytest.mark.asyncio
@@ -592,8 +600,7 @@ async def test_verify_error_files_collected_from_eslint_and_jest(
     result = await verify_task_is_complete(base_args)
 
     assert result.success is False
-    assert "src/index.ts" in result.error_files
-    assert "src/index.test.js" in result.error_files
+    assert result.error_files == {"src/index.ts", "src/index.test.js"}
 
 
 @pytest.mark.asyncio
@@ -636,8 +643,9 @@ async def test_baseline_tsc_errors_filtered(
 
     # Pre-existing error filtered, new error reported
     assert result.success is False
-    assert "TS2322" in result.message
-    assert "TS2339" not in result.message
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n" f"- tsc: {new_error}"
+    )
 
     # create_tsc_issue called with the pre-existing error
     mock_create_tsc_issue.assert_called_once()
@@ -730,7 +738,9 @@ async def test_baseline_tsc_errors_in_pr_files_still_reported(
 
     # Error is in baseline BUT also in PR files -> must be reported
     assert result.success is False
-    assert "TS2339" in result.message
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n" f"- tsc: {pr_file_error}"
+    )
     mock_create_tsc_issue.assert_not_called()
 
 
@@ -776,11 +786,13 @@ async def test_verify_commits_updated_snapshots(
     call_kwargs = mock_upload.call_args.kwargs
     assert call_kwargs["file_path"] == "src/__snapshots__/index.test.js.snap"
     assert call_kwargs["file_content"] == "// snapshot content"
-    assert "snapshot" in call_kwargs["commit_message"]
     assert (
-        "- src/__snapshots__/index.test.js.snap: Snapshot updated"
-        in result.fixes_applied
+        call_kwargs["commit_message"]
+        == "Update snapshot src/__snapshots__/index.test.js.snap"
     )
+    assert result.fixes_applied == [
+        "- src/__snapshots__/index.test.js.snap: Snapshot updated"
+    ]
 
 
 # ============================================================
@@ -833,7 +845,9 @@ async def test_new_pr_handler_error_in_pr_file_reported(
     result = await verify_task_is_complete(args)
 
     assert result.success is False
-    assert "TS2322" in result.message
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n" f"- tsc: {pr_file_error}"
+    )
     mock_create_tsc_issue.assert_not_called()
 
 
@@ -916,7 +930,9 @@ async def test_new_pr_handler_new_non_pr_file_error_reported(
     result = await verify_task_is_complete(args)
 
     assert result.success is False
-    assert "TS2345" in result.message
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n" f"- tsc: {new_error}"
+    )
     mock_create_tsc_issue.assert_not_called()
 
 
@@ -971,7 +987,9 @@ async def test_check_suite_error_in_pr_file_in_baseline_reported(
     result = await verify_task_is_complete(args)
 
     assert result.success is False
-    assert "TS2339" in result.message
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n" f"- tsc: {pr_file_error}"
+    )
     mock_create_tsc_issue.assert_not_called()
 
 
@@ -1066,7 +1084,9 @@ async def test_check_suite_new_non_pr_file_error_reported(
     result = await verify_task_is_complete(args)
 
     assert result.success is False
-    assert "TS2345" in result.message
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n" f"- tsc: {new_error}"
+    )
     mock_create_tsc_issue.assert_not_called()
 
 
@@ -1113,7 +1133,9 @@ async def test_review_run_error_in_pr_file_in_baseline_reported(
     result = await verify_task_is_complete(args)
 
     assert result.success is False
-    assert "TS2322" in result.message
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n" f"- tsc: {pr_file_error}"
+    )
     mock_create_tsc_issue.assert_not_called()
 
 
@@ -1194,7 +1216,9 @@ async def test_review_run_new_non_pr_file_error_reported(
     result = await verify_task_is_complete(args)
 
     assert result.success is False
-    assert "TS2345" in result.message
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n" f"- tsc: {new_error}"
+    )
     mock_create_tsc_issue.assert_not_called()
 
 
@@ -1292,9 +1316,12 @@ async def test_coverage_error_no_unnecessary_condition_blocks_completion(
     result = await verify_task_is_complete(base_args)
 
     assert result.success is False
-    assert "NOT complete" in result.message
-    assert "no-unnecessary-condition" in result.message
-    assert "src/PaymentForm.tsx" in result.error_files
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n"
+        "- src/PaymentForm.tsx: ESLint: Line 1: Unnecessary conditional, "
+        "expected expression to always be truthy (@typescript-eslint/no-unnecessary-condition)"
+    )
+    assert result.error_files == {"src/PaymentForm.tsx"}
 
 
 @pytest.mark.asyncio
@@ -1330,8 +1357,11 @@ async def test_lint_only_errors_still_block_completion(
     result = await verify_task_is_complete(base_args)
 
     assert result.success is False
-    assert "no-explicit-any" in result.message
-    assert "src/utils.ts" in result.error_files
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n"
+        "- src/utils.ts: ESLint: Line 1: Unexpected any (@typescript-eslint/no-explicit-any)"
+    )
+    assert result.error_files == {"src/utils.ts"}
 
 
 # --- Quality gate escape hatch tests ---
@@ -1351,7 +1381,10 @@ async def test_quality_gate_0_changes_first_attempt_rejects(
     result = await verify_task_is_complete(base_args)
 
     assert result.success is False
-    assert "0 changes" in result.message
+    assert result.message == (
+        "Task NOT complete. You made 0 changes to the test file for src/foo.ts."
+        " Evaluate and improve test quality per coding standards."
+    )
     assert base_args["quality_gate_fail_count"] == 1
 
 
@@ -1402,11 +1435,12 @@ async def test_quality_gate_skipped_after_3_failures(
 
     mock_quality_gate.assert_not_called()
     mock_slack.assert_called_once()
-    assert (
-        f"{base_args['owner']}/{base_args['repo']}#{base_args['pr_number']}"
-        in mock_slack.call_args[0][0]
+    slack_message = mock_slack.call_args[0][0]
+    assert slack_message == (
+        f"Quality gate skipped for {base_args['owner']}/{base_args['repo']}#"
+        f"{base_args['pr_number']} (src/foo.ts): failed 3 times, accepting "
+        "current quality"
     )
-    assert "src/foo.ts" in mock_slack.call_args[0][0]
     assert mock_slack.call_args[0][1] == "ts_abc123"
     assert result.success is True
 
@@ -1438,7 +1472,11 @@ async def test_quality_gate_runs_when_fail_count_below_3(
 
     mock_quality_gate.assert_called_once()
     assert result.success is False
-    assert "adversarial.null_inputs" in result.message
+    assert result.message == (
+        "Task NOT complete. Fix these errors:\n"
+        "- Quality gate failed for src/foo.ts:\n"
+        "adversarial.null_inputs: No null tests"
+    )
     assert base_args["quality_gate_fail_count"] == 2
 
 

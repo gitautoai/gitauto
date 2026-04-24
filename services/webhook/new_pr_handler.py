@@ -206,27 +206,11 @@ async def handle_new_pr(
     # Notify the user if access is denied and early return
     if not can_proceed:
         logger.warning(
-            "Availability check denied access for owner_id=%s on PR #%s; aborting handler",
-            owner_id,
-            pr_number,
+            "Availability check denied on PR #%s: %s", pr_number, user_message
         )
-        body = user_message
-        update_comment(body=body, base_args=base_args)
-        logger.info(body)
-
-        # Send email notification if user is a credit user and has zero credits
-        # Disabled: This would send emails every time schedule trigger runs, annoying users
-        # if is_credit_user and sender_id:
-        #     user = get_user(user_id=sender_id)
-        #     if user and user.get("email"):
-        #         subject, text = get_no_credits_email_text(sender_name)
-        #         send_email(to=user["email"], subject=subject, text=text)
-
-        # Early return notification
+        update_comment(body=user_message, base_args=base_args)
+        # Email notification on zero credits is disabled to avoid spamming the user on every schedule tick.
         slack_notify(availability_status["log_message"], thread_ts)
-        logger.info(
-            "Exiting new_pr_handler: availability check denied on PR #%s", pr_number
-        )
         return
 
     # Create a usage record
@@ -317,7 +301,12 @@ async def handle_new_pr(
             continue
 
         context = f"## PR Title:\n{pr_title}\n\n## PR Body:\n{pr_body}\n\n## PR Comments:\n{'\n'.join(pr_comments)}"
-        description = describe_image(base64_image=base64_image, context=context)
+        description = describe_image(
+            base64_image=base64_image,
+            usage_id=usage_id,
+            created_by=f"{sender_id}:{sender_name}",
+            context=context,
+        )
         description = f"## {url['alt']}\n\n{description}"
         pr_comments.append(description)
         create_comment(body=description, base_args=base_args)
@@ -425,22 +414,19 @@ async def handle_new_pr(
         base_args=base_args,
     )
     if should_skip_test(impl_file_path, impl_file_content):
-        logger.info(
-            "should_skip_test returned True for %s; closing PR #%s without attempting test generation",
-            impl_file_path,
-            pr_number,
-        )
         msg = f"Closing PR: `{impl_file_path}` has no testable code (only docstrings, imports, constants, or type definitions)."
-        logger.info(msg)
+        logger.info(
+            "Closing PR #%s: should_skip_test for %s — %s",
+            pr_number,
+            impl_file_path,
+            msg,
+        )
         add_log_message(msg, log_messages)
         update_comment(
             body=create_progress_bar(p=100, msg="\n".join(log_messages)),
             base_args=base_args,
         )
         close_pull_request(pr_number=base_args["pr_number"], base_args=base_args)
-        logger.info(
-            "Exiting new_pr_handler after closing untestable-code PR #%s", pr_number
-        )
         return
 
     # Check if uncovered code is dead or untestable (for schedule-triggered coverage issues)
@@ -457,21 +443,17 @@ async def handle_new_pr(
         uncovered_functions = coverage_data.get("uncovered_functions")
         uncovered_branches = coverage_data.get("uncovered_branches")
         if uncovered_lines or uncovered_functions or uncovered_branches:
-            logger.info(
-                "Uncovered regions found in %s; running is_code_untestable heuristic",
-                impl_file_path,
-            )
             untestable_code_info = is_code_untestable(
                 file_path=impl_file_path,
                 file_content=impl_file_content,
+                usage_id=usage_id,
+                created_by=f"{sender_id}:{sender_name}",
                 uncovered_lines=uncovered_lines,
                 uncovered_functions=uncovered_functions,
                 uncovered_branches=uncovered_branches,
             )
             logger.info(
-                "Dead/untestable code check for %s: %s",
-                impl_file_path,
-                untestable_code_info,
+                "is_code_untestable for %s: %s", impl_file_path, untestable_code_info
             )
             if untestable_code_info and untestable_code_info.result:
                 logger.info(
@@ -613,12 +595,8 @@ async def handle_new_pr(
     # Always auto-detect from the actual repo. Dashboard testFileLocation default ("Co-located with source") was overriding auto-detection for repos whose tests are actually in separate directories (e.g. test/specs/).
     test_location = detect_test_location_convention(clone_dir)
     if test_location:
-        logger.info(
-            "Attaching auto-detected test_location_convention=%s to agent input",
-            test_location,
-        )
+        logger.info("Auto-detected test_location_convention=%s", test_location)
         user_input_obj["test_location_convention"] = test_location
-        logger.info("Auto-detected test location convention: %s", test_location)
 
     user_input = dumps(user_input_obj)
     messages: list[MessageParam] = [{"role": "user", "content": user_input}]
@@ -655,46 +633,38 @@ async def handle_new_pr(
     base_args["baseline_tsc_errors"] = set(validation_result.tsc_errors)
     pre_existing_errors = ""
     if validation_result.errors:
+        pre_existing_errors = "\n".join(validation_result.errors)
         logger.warning(
-            "Pre-existing validation errors on PR #%s before edits begin: %d errors",
+            "Pre-existing validation errors on PR #%s before edits begin (%d):\n%s",
             pr_number,
             len(validation_result.errors),
+            pre_existing_errors,
         )
-        pre_existing_errors = "\n".join(validation_result.errors)
-        logger.warning("Remaining errors:\n%s", pre_existing_errors)
     fixes_applied = validation_result.fixes_applied
 
     # If uncovered code is dead or untestable, notify agent with category-specific action
     if untestable_code_info and untestable_code_info.result:
         logger.info(
-            "Injecting untestable-code directive into agent messages (category=%s) for %s",
+            "Injecting %s directive for %s",
             untestable_code_info.category,
             impl_file_path,
         )
-        if untestable_code_info.category == "dead_code":
-            logger.info(
-                "dead_code branch: instructing agent to DELETE unreachable code in %s",
-                impl_file_path,
-            )
-            untestable_msg = (
-                f"DEAD CODE detected in `{impl_file_path}`: {untestable_code_info.reason}\n\n"
-                "ACTION REQUIRED: REMOVE this dead/unreachable code entirely (e.g., use optional chaining, remove redundant guards). "
-                "Do NOT use istanbul ignore or coverage exclusion comments. Dead code must be deleted, not excluded."
-            )
-        else:
-            logger.info(
-                "untestable-but-reachable branch: allowing coverage-ignore comments in %s",
-                impl_file_path,
-            )
-            untestable_msg = (
-                f"Genuinely untestable code detected in `{impl_file_path}`: {untestable_code_info.reason}\n\n"
-                "This code is reachable at runtime but untestable due to framework limitations. "
-                "You may use coverage exclusion comments (istanbul ignore / pragma: no cover) with a reason explaining why."
-            )
-        messages.append({"role": "user", "content": untestable_msg})
-        logger.info(
-            "Added %s message for %s", untestable_code_info.category, impl_file_path
+        dead_code_msg = (
+            f"DEAD CODE detected in `{impl_file_path}`: {untestable_code_info.reason}\n\n"
+            "ACTION REQUIRED: REMOVE this dead/unreachable code entirely (e.g., use optional chaining, remove redundant guards). "
+            "Do NOT use istanbul ignore or coverage exclusion comments. Dead code must be deleted, not excluded."
         )
+        untestable_msg = (
+            f"Genuinely untestable code detected in `{impl_file_path}`: {untestable_code_info.reason}\n\n"
+            "This code is reachable at runtime but untestable due to framework limitations. "
+            "You may use coverage exclusion comments (istanbul ignore / pragma: no cover) with a reason explaining why."
+        )
+        content = (
+            dead_code_msg
+            if untestable_code_info.category == "dead_code"
+            else untestable_msg
+        )
+        messages.append({"role": "user", "content": content})
 
     if fixes_applied or pre_existing_errors:
         logger.info(
@@ -771,14 +741,10 @@ async def handle_new_pr(
 
         if result.concurrent_push_detected:
             logger.warning(
-                "new_pr: chat_with_agent reported concurrent_push_detected on PR #%s; breaking agent loop to bail cleanly",
+                "new_pr: concurrent push on PR #%s; breaking agent loop",
                 pr_number,
             )
             completion_reason = f"Another commit landed on `{base_args['new_branch']}` while I was working. Their push triggers CI on its own, so I'm stopping here — your push stands."
-            logger.info(
-                "new_pr: breaking agent loop on PR #%s due to concurrent push",
-                pr_number,
-            )
             break
 
         if is_completed:

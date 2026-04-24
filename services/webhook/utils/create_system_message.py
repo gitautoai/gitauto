@@ -1,5 +1,4 @@
 import json
-from typing import Any, cast
 
 # Third party imports
 from schemas.supabase.types import Repositories
@@ -24,18 +23,19 @@ def create_system_message(
 
     # Add repo's preferred language (first, so it's a high-priority instruction)
     if repo_settings:
+        logger.info("Repo settings provided, evaluating language preference")
         preferred_language = repo_settings.get("preferred_language")
         if preferred_language and preferred_language != "en":
+            logger.info("Language preference: %s", preferred_language)
             content_parts.append(
                 f"<user_language_preference>\nWrite all GitHub comments and code comments in {preferred_language} (ISO 639 language code).\n</user_language_preference>"
             )
-            logger.info("Language preference: %s", preferred_language)
 
     # Add trigger instruction
     trigger_content = get_trigger_prompt(trigger)
     if trigger_content:
-        content_parts.append(trigger_content)
         logger.info("Trigger prompt: %s", trigger_content)
+        content_parts.append(trigger_content)
 
     # Add coding standards
     content_parts.append(read_xml_file("utils/prompts/coding_standards.xml"))
@@ -49,33 +49,37 @@ def create_system_message(
 
     # Repository rules
     if repo_settings:
-        structured_rules = cast(dict[str, Any], repo_settings.get("structured_rules"))
+        logger.info("Evaluating repository rules from repo_settings")
+        structured_rules = repo_settings.get("structured_rules")
         if structured_rules:
+            logger.info("Structured rules present, formatting")
             structured_content = "\n".join(
                 f"{k}: {v}" for k, v in structured_rules.items()
             )
+            logger.info("Structured rules: %s", structured_content)
             content_parts.append(
                 f"<structured_repository_rules>\n{structured_content}\n</structured_repository_rules>"
             )
-            logger.info("Structured rules: %s", structured_content)
 
-        free_rules = cast(str | None, repo_settings.get("repo_rules"))
+        free_rules = repo_settings.get("repo_rules")
         if free_rules and free_rules.strip():
+            logger.info("Freeform rules: %s", free_rules.strip())
             content_parts.append(
                 f"<freeform_repository_rules>\n{free_rules.strip()}\n</freeform_repository_rules>"
             )
-            logger.info("Freeform rules: %s", free_rules.strip())
 
     # GITAUTO.md rules (highest priority - repo-specific learnings from feedback)
     if clone_dir:
+        logger.info("Clone dir provided, loading GITAUTO.md if present")
         gitauto_md_content = read_local_file(file_path="GITAUTO.md", base_dir=clone_dir)
         if gitauto_md_content and gitauto_md_content.strip():
-            content_parts.append(
-                f"<gitauto_md_rules>\n{gitauto_md_content.strip()}\n</gitauto_md_rules>"
-            )
             logger.info(
                 "GITAUTO.md rules loaded (%d chars)", len(gitauto_md_content.strip())
             )
+            content_parts.append(
+                f"<gitauto_md_rules>\n{gitauto_md_content.strip()}\n</gitauto_md_rules>"
+            )
 
     combined_content = "\n\n".join(content_parts) if content_parts else ""
+    logger.info("create_system_message returning %d chars", len(combined_content))
     return combined_content

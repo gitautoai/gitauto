@@ -64,6 +64,38 @@ def mock_get_trigger_prompt():
     ) as mock:
         yield mock
 
+_CHECKLIST_BLOCK = (
+    "<quality_checklist>\n"
+    "When writing tests, ensure coverage of these quality categories where applicable to the file:\n"
+    '{\n  "case_coverage": {\n    "matrix": "every cell"\n  }\n}\n'
+    "</quality_checklist>"
+)
+
+
+def _build_expected(
+    *,
+    language_block: str | None = None,
+    trigger_block: str | None = None,
+    coding_standards: str = "<rules>Rules</rules>",
+    structured_block: str | None = None,
+    freeform_block: str | None = None,
+    gitauto_md_block: str | None = None,
+) -> str:
+    parts: list[str] = []
+    if language_block is not None:
+        parts.append(language_block)
+    if trigger_block is not None:
+        parts.append(trigger_block)
+    parts.append(coding_standards)
+    parts.append(_CHECKLIST_BLOCK)
+    if structured_block is not None:
+        parts.append(structured_block)
+    if freeform_block is not None:
+        parts.append(freeform_block)
+    if gitauto_md_block is not None:
+        parts.append(gitauto_md_block)
+    return "\n\n".join(parts)
+
 
 def test_minimal_call_no_repo_settings(mock_read_xml_file, mock_get_trigger_prompt):
     mock_read_xml_file.return_value = "<rules>Rules</rules>"
@@ -73,7 +105,9 @@ def test_minimal_call_no_repo_settings(mock_read_xml_file, mock_get_trigger_prom
 
     result = create_system_message("dashboard")
 
-    assert "<trigger_instruction>Issue trigger</trigger_instruction>" in result
+    assert result == _build_expected(
+        trigger_block="<trigger_instruction>Issue trigger</trigger_instruction>"
+    )
     mock_get_trigger_prompt.assert_called_once_with("dashboard")
     # read_xml_file is called for coding_standards.xml
     assert mock_read_xml_file.call_count == 1
@@ -90,9 +124,10 @@ def test_all_trigger_types(mock_read_xml_file, mock_get_trigger_prompt):
         "schedule",
     ]
 
+    expected = _build_expected(trigger_block="<trigger>Content</trigger>")
     for trigger in triggers:
         result = create_system_message(trigger)
-        assert result
+        assert result == expected
         mock_get_trigger_prompt.assert_called_with(trigger)
 
 
@@ -109,11 +144,16 @@ def test_with_structured_rules_only(mock_read_xml_file, mock_get_trigger_prompt)
 
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<structured_repository_rules>" in result
-    assert "codePatternStrategy: Best practices first" in result
-    assert "enableCommentsInGeneratedTestCode: False" in result
-    assert "enforceComponentIsolationInTests: True" in result
-    assert "</structured_repository_rules>" in result
+    assert result == _build_expected(
+        trigger_block="<trigger>Trigger</trigger>",
+        structured_block=(
+            "<structured_repository_rules>\n"
+            "codePatternStrategy: Best practices first\n"
+            "enableCommentsInGeneratedTestCode: False\n"
+            "enforceComponentIsolationInTests: True\n"
+            "</structured_repository_rules>"
+        ),
+    )
 
 
 def test_with_repo_rules_only(mock_read_xml_file, mock_get_trigger_prompt):
@@ -125,12 +165,14 @@ def test_with_repo_rules_only(mock_read_xml_file, mock_get_trigger_prompt):
 
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<freeform_repository_rules>" in result
-    assert "Always use TypeScript" in result
-    assert "Prefer functional components" in result
-    assert "Use ESLint" in result
-    assert "</freeform_repository_rules>" in result
-    assert "<structured_repository_rules>" not in result
+    assert result == _build_expected(
+        trigger_block="<trigger>Trigger</trigger>",
+        freeform_block=(
+            "<freeform_repository_rules>\n"
+            "Always use TypeScript\nPrefer functional components\nUse ESLint\n"
+            "</freeform_repository_rules>"
+        ),
+    )
 
 
 def test_with_both_structured_and_repo_rules(
@@ -150,14 +192,20 @@ def test_with_both_structured_and_repo_rules(
 
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<structured_repository_rules>" in result
-    assert "testFramework: Jest" in result
-    assert "enableMocking: True" in result
-    assert "</structured_repository_rules>" in result
-    assert "<freeform_repository_rules>" in result
-    assert "Use strict mode" in result
-    assert "Document all functions" in result
-    assert "</freeform_repository_rules>" in result
+    assert result == _build_expected(
+        trigger_block="<trigger>Trigger</trigger>",
+        structured_block=(
+            "<structured_repository_rules>\n"
+            "testFramework: Jest\n"
+            "enableMocking: True\n"
+            "</structured_repository_rules>"
+        ),
+        freeform_block=(
+            "<freeform_repository_rules>\n"
+            "Use strict mode\nDocument all functions\n"
+            "</freeform_repository_rules>"
+        ),
+    )
 
 
 def test_with_empty_structured_rules(mock_read_xml_file, mock_get_trigger_prompt):
@@ -168,8 +216,7 @@ def test_with_empty_structured_rules(mock_read_xml_file, mock_get_trigger_prompt
 
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<structured_repository_rules>" not in result
-    assert "<freeform_repository_rules>" not in result
+    assert result == _build_expected(trigger_block="<trigger>Trigger</trigger>")
 
 
 def test_with_empty_repo_rules(mock_read_xml_file, mock_get_trigger_prompt):
@@ -180,7 +227,7 @@ def test_with_empty_repo_rules(mock_read_xml_file, mock_get_trigger_prompt):
 
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<freeform_repository_rules>" not in result
+    assert result == _build_expected(trigger_block="<trigger>Trigger</trigger>")
 
 
 def test_with_whitespace_only_repo_rules(mock_read_xml_file, mock_get_trigger_prompt):
@@ -191,7 +238,7 @@ def test_with_whitespace_only_repo_rules(mock_read_xml_file, mock_get_trigger_pr
 
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<freeform_repository_rules>" not in result
+    assert result == _build_expected(trigger_block="<trigger>Trigger</trigger>")
 
 
 def test_with_none_structured_rules(mock_read_xml_file, mock_get_trigger_prompt):
@@ -202,7 +249,7 @@ def test_with_none_structured_rules(mock_read_xml_file, mock_get_trigger_prompt)
 
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<structured_repository_rules>" not in result
+    assert result == _build_expected(trigger_block="<trigger>Trigger</trigger>")
 
 
 def test_with_none_repo_rules(mock_read_xml_file, mock_get_trigger_prompt):
@@ -213,7 +260,7 @@ def test_with_none_repo_rules(mock_read_xml_file, mock_get_trigger_prompt):
 
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<freeform_repository_rules>" not in result
+    assert result == _build_expected(trigger_block="<trigger>Trigger</trigger>")
 
 
 def test_trigger_prompt_returns_none(mock_read_xml_file, mock_get_trigger_prompt):
@@ -222,8 +269,8 @@ def test_trigger_prompt_returns_none(mock_read_xml_file, mock_get_trigger_prompt
 
     result = create_system_message("dashboard")
 
-    assert result
-    assert "<rules>Rules</rules>" in result
+    # No trigger block is emitted when get_trigger_prompt returns None.
+    assert result == _build_expected()
 
 
 def test_structured_rules_with_various_data_types(
@@ -245,13 +292,20 @@ def test_structured_rules_with_various_data_types(
 
     result = create_system_message("dashboard", repo_settings)
 
-    assert "stringValue: test string" in result
-    assert "intValue: 42" in result
-    assert "floatValue: 3.14" in result
-    assert "boolValue: True" in result
-    assert "listValue: ['item1', 'item2']" in result
-    assert "dictValue: {'nested': 'value'}" in result
-    assert "noneValue: None" in result
+    assert result == _build_expected(
+        trigger_block="<trigger>Trigger</trigger>",
+        structured_block=(
+            "<structured_repository_rules>\n"
+            "stringValue: test string\n"
+            "intValue: 42\n"
+            "floatValue: 3.14\n"
+            "boolValue: True\n"
+            "listValue: ['item1', 'item2']\n"
+            "dictValue: {'nested': 'value'}\n"
+            "noneValue: None\n"
+            "</structured_repository_rules>"
+        ),
+    )
 
 
 def test_repo_rules_with_leading_trailing_whitespace(
@@ -265,10 +319,15 @@ def test_repo_rules_with_leading_trailing_whitespace(
 
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<freeform_repository_rules>" in result
-    assert "Use clean code principles" in result
-    assert "</freeform_repository_rules>" in result
-    assert "  \n  Use clean code principles  \n  " not in result
+    # Whitespace trims on both ends; content stays.
+    assert result == _build_expected(
+        trigger_block="<trigger>Trigger</trigger>",
+        freeform_block=(
+            "<freeform_repository_rules>\n"
+            "Use clean code principles\n"
+            "</freeform_repository_rules>"
+        ),
+    )
 
 
 def test_integration_without_mocks():
@@ -336,9 +395,14 @@ def test_with_gitauto_md_content(
 
     result = create_system_message("dashboard", clone_dir="/tmp/repo")
 
-    assert "<gitauto_md_rules>" in result
-    assert "Use factories instead of mocks" in result
-    assert "</gitauto_md_rules>" in result
+    assert result == _build_expected(
+        trigger_block="<trigger>Trigger</trigger>",
+        gitauto_md_block=(
+            "<gitauto_md_rules>\n"
+            "## Testing\n- Use factories instead of mocks\n"
+            "</gitauto_md_rules>"
+        ),
+    )
     mock_read_local.assert_called_once_with(
         file_path="GITAUTO.md", base_dir="/tmp/repo"
     )
@@ -350,7 +414,7 @@ def test_gitauto_md_no_clone_dir(mock_read_xml_file, mock_get_trigger_prompt):
 
     result = create_system_message("dashboard", clone_dir=None)
 
-    assert "<gitauto_md_rules>" not in result
+    assert result == _build_expected(trigger_block="<trigger>Trigger</trigger>")
 
 
 @patch("services.webhook.utils.create_system_message.read_local_file")
@@ -363,7 +427,7 @@ def test_gitauto_md_file_not_found(
 
     result = create_system_message("dashboard", clone_dir="/tmp/repo")
 
-    assert "<gitauto_md_rules>" not in result
+    assert result == _build_expected(trigger_block="<trigger>Trigger</trigger>")
 
 
 @patch("services.webhook.utils.create_system_message.read_local_file")
@@ -376,7 +440,7 @@ def test_gitauto_md_content_empty(
 
     result = create_system_message("dashboard", clone_dir="/tmp/repo")
 
-    assert "<gitauto_md_rules>" not in result
+    assert result == _build_expected(trigger_block="<trigger>Trigger</trigger>")
 
 
 @patch("services.webhook.utils.create_system_message.read_local_file")
@@ -390,9 +454,20 @@ def test_gitauto_md_comes_after_repo_rules(
     repo_settings = create_repositories_data(repo_rules="Use TypeScript")
     result = create_system_message("dashboard", repo_settings, clone_dir="/tmp/repo")
 
-    freeform_pos = result.index("<freeform_repository_rules>")
-    gitauto_pos = result.index("<gitauto_md_rules>")
-    assert gitauto_pos > freeform_pos
+    # _build_expected emits freeform before gitauto_md, encoding the ordering contract.
+    assert result == _build_expected(
+        trigger_block="<trigger>Trigger</trigger>",
+        freeform_block=(
+            "<freeform_repository_rules>\n"
+            "Use TypeScript\n"
+            "</freeform_repository_rules>"
+        ),
+        gitauto_md_block=(
+            "<gitauto_md_rules>\n"
+            "## Testing\n- Use factories\n"
+            "</gitauto_md_rules>"
+        ),
+    )
 
 
 def test_with_preferred_language_japanese(mock_read_xml_file, mock_get_trigger_prompt):
@@ -402,9 +477,14 @@ def test_with_preferred_language_japanese(mock_read_xml_file, mock_get_trigger_p
     repo_settings = create_repositories_data(preferred_language="ja")
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<user_language_preference>" in result
-    assert "ja" in result
-    assert "</user_language_preference>" in result
+    assert result == _build_expected(
+        language_block=(
+            "<user_language_preference>\n"
+            "Write all GitHub comments and code comments in ja (ISO 639 language code).\n"
+            "</user_language_preference>"
+        ),
+        trigger_block="<trigger>Trigger</trigger>",
+    )
 
 
 def test_with_no_preferred_language(mock_read_xml_file, mock_get_trigger_prompt):
@@ -414,7 +494,7 @@ def test_with_no_preferred_language(mock_read_xml_file, mock_get_trigger_prompt)
     repo_settings = create_repositories_data(preferred_language=None)
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<user_language_preference>" not in result
+    assert result == _build_expected(trigger_block="<trigger>Trigger</trigger>")
 
 
 def test_with_preferred_language_english(mock_read_xml_file, mock_get_trigger_prompt):
@@ -424,7 +504,7 @@ def test_with_preferred_language_english(mock_read_xml_file, mock_get_trigger_pr
     repo_settings = create_repositories_data(preferred_language="en")
     result = create_system_message("dashboard", repo_settings)
 
-    assert "<user_language_preference>" not in result
+    assert result == _build_expected(trigger_block="<trigger>Trigger</trigger>")
 
 
 def test_preferred_language_appears_first(mock_read_xml_file, mock_get_trigger_prompt):

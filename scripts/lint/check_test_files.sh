@@ -38,7 +38,7 @@ if [ -n "$STAGED_IMPL_NEW" ]; then
 fi
 
 # Check 2: Changed impl files with existing test files must have test also staged
-# Skip if the staged diff is comment-only (lines starting with # after +/-)
+# Skip if the staged diff is comment-only (lines starting with # after +/-) or logger-only.
 if [ -n "$STAGED_IMPL_MODIFIED" ]; then
     for file in $STAGED_IMPL_MODIFIED; do
         # Skip comment-only diffs (all added/removed lines are comments or blank)
@@ -46,6 +46,10 @@ if [ -n "$STAGED_IMPL_MODIFIED" ]; then
             | grep -vE '^[+-]\s*#' | grep -vE '^[+-]\s*$' | grep -q .; then
             : # Has non-comment changes
         else
+            continue
+        fi
+        # Skip logger-only diffs (statements that survive logger stripping are identical between HEAD and index).
+        if python3 "$(dirname "$0")/is_logger_only_diff.py" "$file"; then
             continue
         fi
         dir=$(dirname "$file")

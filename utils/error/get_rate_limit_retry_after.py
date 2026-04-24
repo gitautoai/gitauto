@@ -18,7 +18,6 @@ def get_rate_limit_retry_after(err: Exception):
     """
     # requests.HTTPError (GitHub, generic 429 APIs)
     if isinstance(err, requests.HTTPError):
-        logger.info("get_rate_limit_retry_after: dispatching requests.HTTPError branch")
         response = getattr(err, "response", None)
         status_code = getattr(response, "status_code", None)
         if status_code not in (403, 429):
@@ -29,9 +28,7 @@ def get_rate_limit_retry_after(err: Exception):
             return None
         headers = getattr(response, "headers", None) if response is not None else None
         if headers and "X-RateLimit-Remaining" in headers:
-            logger.info(
-                "get_rate_limit_retry_after: detected github rate-limit headers"
-            )
+            logger.info("get_rate_limit_retry_after: using github rate-limit headers")
             return parse_github_rate_limit_headers(response)
         logger.info(
             "get_rate_limit_retry_after: no github-specific headers; using Retry-After path"
@@ -42,13 +39,10 @@ def get_rate_limit_retry_after(err: Exception):
     status_code = getattr(err, "status_code", None)
     if isinstance(status_code, int) and status_code == 429:
         logger.info(
-            "get_rate_limit_retry_after: dispatching anthropic status_code=429 branch"
+            "get_rate_limit_retry_after: anthropic status_code=429; delegating to parse_retry_after_header"
         )
         response = getattr(err, "response", None)
         headers = getattr(response, "headers", None) if response is not None else None
-        logger.info(
-            "get_rate_limit_retry_after: delegating anthropic delay extraction to parse_retry_after_header"
-        )
         return parse_retry_after_header(headers)
 
     # Google GenAI ClientError with code=429 (message body carries the hint)

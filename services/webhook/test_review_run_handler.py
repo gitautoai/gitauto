@@ -191,6 +191,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     # Verify baseline_tsc_errors is set on base_args
     base_args = execution_call_kwargs["base_args"]
     assert isinstance(base_args.get("baseline_tsc_errors"), set)
+    assert base_args["usage_id"] == 777
 
     # CRITICAL: Verify update_usage was called with accumulated tokens
     mock_update_usage.assert_called_once()

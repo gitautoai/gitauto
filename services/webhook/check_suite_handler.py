@@ -283,6 +283,7 @@ async def handle_check_suite(
         "model_id": model_id,
         "verify_consecutive_failures": 0,
         "quality_gate_fail_count": 0,
+        "usage_id": 0,  # Placeholder — set after create_user_request
         "workflow_id": circleci_workflow_id if is_circleci else github_run_id,
         "check_run_name": check_run_name,
         "trigger": trigger,
@@ -362,15 +363,13 @@ async def handle_check_suite(
         )
         latest_failed = gitauto_failed_comments[-1]
         if "Re-triggering CI" not in latest_failed.get("body", ""):
-            logger.info(
-                "Latest failed comment is terminal (not an infra retry); skipping this check_suite"
-            )
             msg = f"Skipped - CI-failed comment exists for PR #{pr_number}"
-            logger.info(msg)
-            slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
             logger.info(
-                "Returning without processing check_suite_id=%s", check_suite["id"]
+                "%s (check_suite_id=%s terminal, not infra retry)",
+                msg,
+                check_suite["id"],
             )
+            slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
             return
 
     # Check if permission denied comment exists (reuse comments already fetched above)
@@ -381,15 +380,9 @@ async def handle_check_suite(
         and PERMISSION_DENIED_MESSAGE in c.get("body", "")
     )
     if has_permission_denied:
-        logger.info(
-            "Permission request is still pending on this PR; skipping check_suite"
-        )
         msg = f"Skipped - permission request pending for PR #{pr_number}"
         logger.error(msg)
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
-        logger.info(
-            "Exiting check_suite early: permission pending on PR #%s", pr_number
-        )
         return
 
     # Check if there are too many GitAuto commits (prevent infinite retry loops)
@@ -404,18 +397,11 @@ async def handle_check_suite(
     )
 
     if gitauto_commit_count >= MAX_GITAUTO_COMMITS_PER_PR:
-        logger.info(
-            "GitAuto commit budget exhausted on PR #%s; stopping to avoid infinite retry loop",
-            pr_number,
-        )
         comment_msg = f"I've made {gitauto_commit_count} commits trying to fix this, but the tests keep failing with slightly different errors. I'm going to stop here to avoid an infinite loop. Could you take a look?"
         msg = f"Stopped after {gitauto_commit_count} commits in PR #{pr_number} - preventing infinite loop"
         logger.info(msg)
         create_comment(body=comment_msg, base_args=base_args)
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
-        logger.info(
-            "Exiting check_suite early: commit budget exhausted on PR #%s", pr_number
-        )
         return
 
     # Create the first comment
@@ -475,42 +461,36 @@ async def handle_check_suite(
     base_args["baseline_tsc_errors"] = set(validation_result.tsc_errors)
     pre_existing_errors = ""
     if validation_result.errors:
-        logger.warning(
-            "Pre-existing validation errors on PR #%s before edits begin: %d errors",
-            pr_number,
-            len(validation_result.errors),
-        )
         pre_existing_errors = "\n".join(validation_result.errors)
         pre_existing_errors = label_log_source(
             pre_existing_errors,
             "ours",
             "GitAuto validation (AWS Lambda, Amazon Linux 2023)",
         )
-        logger.warning("Remaining errors:\n%s", pre_existing_errors)
+        logger.warning(
+            "Pre-existing validation errors on PR #%s before edits begin (%d):\n%s",
+            pr_number,
+            len(validation_result.errors),
+            pre_existing_errors,
+        )
     fixes_applied = validation_result.fixes_applied
 
     # Get the error log from the workflow run.
     ci_log_source = ""
     if is_circleci:
-        logger.info(
-            "check_suite using CircleCI path for workflow %s", circleci_workflow_id
-        )
         ci_log_source = f"CircleCI for {owner_name}/{repo_name}"
         circleci_token = get_circleci_token(owner_id)
 
         if not circleci_token:
             logger.warning(
-                "CircleCI token not configured for owner_id=%s; asking user to set it and aborting",
+                "CircleCI token missing for owner_id=%s (workflow=%s); aborting",
                 owner_id,
+                circleci_workflow_id,
             )
             comment_body = "CircleCI token not configured. Please add your CircleCI token in GitAuto repository settings to enable automatic test failure fixes."
             update_comment(body=comment_body, base_args=base_args)
             slack_notify(
                 f"CircleCI token not configured for {owner_name}/{repo_name}", thread_ts
-            )
-            logger.info(
-                "Exiting check_suite: CircleCI token missing for owner_id=%s, cannot read build logs",
-                owner_id,
             )
             return
 
@@ -627,10 +607,6 @@ async def handle_check_suite(
         )
 
     if error_log == 404:
-        logger.warning(
-            "CI log fetch returned 404 for workflow_id=%s: installation lacks permission to read logs",
-            circleci_workflow_id if is_circleci else github_run_id,
-        )
         permission_url = create_permission_url(
             owner_type=owner_type,
             owner_name=owner_name,
@@ -647,27 +623,22 @@ async def handle_check_suite(
         msg = f"Skipped - permission denied for workflow run id `{circleci_workflow_id if is_circleci else github_run_id}` - Permissions: `{permissions}`"
         logger.error(msg)
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
-        logger.info(
-            "Exiting check_suite: cannot read CI logs without workflow-read permission"
-        )
         return
 
     if error_log is None or not isinstance(error_log, str):
-        logger.warning(
-            "Error log is None or non-string (type=%s); cannot feed it to the LLM, aborting",
-            type(error_log).__name__,
-        )
         comment_body = f"I couldn't find the error log. Contact {EMAIL_LINK} if the issue persists."
         add_log_message(comment_body, log_messages)
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
         # Early return notification
         msg = "Skipped - error log not found"
-        logger.warning(msg)
-        slack_notify(f"{msg} for `{owner_name}/{repo_name}`", thread_ts)
-        logger.info(
-            "returning early because error_log is None or not isinstance(error_log, str)"
+        logger.warning(
+            "%s for PR #%s (error_log type=%s)",
+            msg,
+            pr_number,
+            type(error_log).__name__,
         )
+        slack_notify(f"{msg} for `{owner_name}/{repo_name}`", thread_ts)
         return
 
     # Detect infrastructure failures (segfaults, OOM, etc.) - skip LLM and retry CI
@@ -696,8 +667,7 @@ async def handle_check_suite(
             update_comment(body="\n".join(log_messages), base_args=base_args)
             if usage_id:
                 logger.info(
-                    "Updating usage_id=%s to is_completed after infra-retry ceiling hit",
-                    usage_id,
+                    "Finalizing usage_id=%s after infra-retry ceiling hit", usage_id
                 )
                 update_usage(
                     usage_id=usage_id,
@@ -734,9 +704,7 @@ async def handle_check_suite(
 
         if usage_id:
             logger.info(
-                "Updating usage_id=%s to is_completed after infra-retry empty commit on PR #%s",
-                usage_id,
-                pr_number,
+                "Finalizing usage_id=%s after infra-retry empty commit", usage_id
             )
             update_usage(
                 usage_id=usage_id,
@@ -748,19 +716,16 @@ async def handle_check_suite(
                 original_error_log=error_log,
                 minimized_error_log=clean_logs(error_log),
             )
-        logger.info(msg)
+        logger.info("Infra-retry empty commit on PR #%s: %s", pr_number, msg)
         slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
-        logger.info(
-            "Exiting check_suite after infra-retry empty commit on PR #%s", pr_number
-        )
         return
 
     # Hash the normalized error log to detect duplicate errors across CI runs (raw logs contain commit SHAs that change with each empty commit)
     normalized_log = normalize_log_for_hashing(error_log)
     error_log_hash = hashlib.sha256(normalized_log.encode(encoding=UTF8)).hexdigest()
-    logger.info("Error log hash: %s", error_log_hash)
-    logger.info("Error log content for PR #%s:", pr_number)
-    logger.info(error_log)
+    logger.info(
+        "Error log for PR #%s hash=%s:\n%s", pr_number, error_log_hash, error_log
+    )
 
     # Clean logs using the complete pipeline
     minimized_log = clean_logs(error_log)
@@ -770,22 +735,13 @@ async def handle_check_suite(
         owner_id=owner_id, repo_id=repo_id, pr_number=pr_number
     )
     if error_log_hash in existing_hashes:
-        logger.info(
-            "Duplicate error hash=%s already attempted for PR #%s; skipping to avoid retry loop",
-            error_log_hash,
-            pr_number,
-        )
         msg = f"Skipping `{check_run_name}` because GitAuto has already tried to fix this error before."
         add_log_message(msg, log_messages)
         update_comment(body="\n".join(log_messages), base_args=base_args)
 
         # Update usage record for skipped duplicate
         if usage_id:
-            logger.info(
-                "Updating usage_id=%s to is_completed on duplicate-error skip for PR #%s",
-                usage_id,
-                pr_number,
-            )
+            logger.info("Finalizing usage_id=%s on duplicate-error skip", usage_id)
             update_usage(
                 usage_id=usage_id,
                 token_input=0,
@@ -798,12 +754,10 @@ async def handle_check_suite(
                 minimized_error_log=minimized_log,
             )
 
-        # Early return notification
-        logger.info(msg)
-        slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         logger.info(
-            "Exiting check_suite after duplicate-error skip on PR #%s", pr_number
+            "Duplicate error hash=%s on PR #%s: %s", error_log_hash, pr_number, msg
         )
+        slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
         return
 
     # Save the error hash to avoid retrying the same error
@@ -846,14 +800,9 @@ async def handle_check_suite(
 
     # For large logs, save to file and reference it instead of embedding in the message
     if len(minimized_log) > MAX_INLINE_LOG_CHARS:
-        logger.info(
-            "Minimized CI log %d chars exceeds inline cap %d; writing to sidecar file",
-            len(minimized_log),
-            MAX_INLINE_LOG_CHARS,
-        )
         save_ci_log_to_file(clone_dir, minimized_log)
         logger.info(
-            "CI log too large (%d chars > %d), saved to %s",
+            "CI log too large (%d chars > %d); saved to %s",
             len(minimized_log),
             MAX_INLINE_LOG_CHARS,
             CI_LOG_PATH,
@@ -957,12 +906,11 @@ async def handle_check_suite(
         if not refreshed_settings or not refreshed_settings.get(
             "trigger_on_test_failure"
         ):
-            logger.info(
-                "if not refreshed_settings or not refreshed_settings.get('trigger_on_test_failure')"
-            )
             is_completed = True
             completion_reason = "Stopped because the test failure trigger was disabled during execution."
-            logger.info(completion_reason)
+            logger.info(
+                "trigger_on_test_failure disabled mid-execution: %s", completion_reason
+            )
             break
 
         # Safety check: Stop if older active request exists (race condition prevention)
@@ -977,24 +925,17 @@ async def handle_check_suite(
             else None
         )
         if older_active_request:
+            body = f"Stopped - older active test failure request found for PR #{pr_number}. Avoiding race condition."
             logger.info(
-                "Older active test-failure request found for PR #%s (usage_id=%s); bailing to avoid racing against the prior invocation",
+                "Older active test-failure request wins on PR #%s (usage_id=%s): %s",
                 pr_number,
                 usage_id,
+                body,
             )
-            body = f"Stopped - older active test failure request found for PR #{pr_number}. Avoiding race condition."
-            logger.info(body)
             if comment_url:
-                logger.info(
-                    "Updating existing comment_url with race-condition stop message on PR #%s",
-                    pr_number,
-                )
+                logger.info("Updating existing comment with race-condition stop")
                 update_comment(body=body, base_args=base_args)
             slack_notify(f"{body} in `{owner_name}/{repo_name}`", thread_ts)
-            logger.info(
-                "Breaking agent loop: older active test-failure request wins on PR #%s",
-                pr_number,
-            )
             break
 
         # Call the agent to explore the codebase and commit changes
@@ -1016,14 +957,10 @@ async def handle_check_suite(
 
         if result.concurrent_push_detected:
             logger.warning(
-                "check_suite: chat_with_agent reported concurrent_push_detected on PR #%s; breaking agent loop to bail cleanly",
+                "check_suite: concurrent push on PR #%s; breaking agent loop",
                 pr_number,
             )
             concurrent_push_detected = True
-            logger.info(
-                "check_suite: breaking agent loop on PR #%s due to concurrent push",
-                pr_number,
-            )
             break
 
         if is_completed:

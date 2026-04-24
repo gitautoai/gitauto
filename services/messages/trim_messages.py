@@ -49,34 +49,32 @@ def trim_messages_to_token_limit(
 
             tool_use_id = None
             if role == "assistant" and i + 1 < len(messages):
-                logger.info("trim: msg[%d] assistant, inspecting content", i)
+                logger.info("trim: msg[%d] inspecting assistant content", i)
                 content = safe_get_attribute(msg_dict, "content", [])
                 if not isinstance(content, list):
-                    logger.info("trim: msg[%d] non-list content, removing single", i)
+                    logger.info(
+                        "trim: msg[%d] assistant non-list content; removing single", i
+                    )
                     del messages[i]
-                    logger.info("trim: msg[%d] deleted, breaking scan", i)
                     break
 
                 for block in content:
                     if isinstance(block, dict) and block.get("type") == "tool_use":
                         logger.info("trim: msg[%d] found tool_use block", i)
                         tool_use_id = block.get("id")
-                        logger.info("trim: msg[%d] tool_use_id=%s", i, tool_use_id)
                         break
 
             if not tool_use_id or i + 1 >= len(messages):
-                logger.info("trim: msg[%d] no tool pair, removing single", i)
+                logger.info("trim: msg[%d] no tool pair; removing single", i)
                 del messages[i]
-                logger.info("trim: msg[%d] deleted, breaking scan", i)
                 break
 
             next_msg = message_to_dict(messages[i + 1])
             next_content = safe_get_attribute(next_msg, "content", [])
 
             if not isinstance(next_content, list):
-                logger.info("trim: msg[%d] next content non-list, removing single", i)
+                logger.info("trim: msg[%d] next content non-list; removing single", i)
                 del messages[i]
-                logger.info("trim: msg[%d] deleted, breaking scan", i)
                 break
 
             has_matching_tool_result = False
@@ -88,16 +86,14 @@ def trim_messages_to_token_limit(
                 ):
                     logger.info("trim: msg[%d] matching tool_result found", i)
                     has_matching_tool_result = True
-                    logger.info("trim: msg[%d] breaking tool_result scan", i)
                     break
 
             if has_matching_tool_result:
                 logger.info("trim: msg[%d] removing tool_use/result pair", i)
                 del messages[i : i + 2]
             else:
-                logger.info("trim: msg[%d] no matching result, removing single", i)
+                logger.info("trim: msg[%d] no matching result; removing single", i)
                 del messages[i]
-            logger.info("trim: msg[%d] removal complete, breaking scan", i)
             break
 
         token_input = count_tokens_fn(messages)

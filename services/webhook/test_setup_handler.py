@@ -519,6 +519,8 @@ async def test_sets_pr_number_in_base_args(
 
     call_kwargs = mock_agent.call_args.kwargs
     assert call_kwargs["base_args"]["pr_number"] == 1
+    # Setup flow does not record LLM usage: usage_id stays at the construction-time placeholder.
+    assert call_kwargs["base_args"]["usage_id"] == 0
 
 
 def test_agent_result_concurrent_push_field_defaults_false_setup():

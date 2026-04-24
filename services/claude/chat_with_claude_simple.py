@@ -2,6 +2,7 @@ import time
 
 from constants.models import ClaudeModelId
 from services.claude.client import claude
+from services.claude.count_tokens import count_tokens_claude
 from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -14,6 +15,9 @@ def chat_with_claude_simple(
     usage_id: int,
     model_id: ClaudeModelId = ClaudeModelId.SONNET_4_6,
 ):
+    input_tokens = count_tokens_claude(
+        messages=probe_messages, client=claude, model=model_id
+    )
     start = time.time()
     # Opus 4.7 deprecated the temperature parameter; omit it to stay compatible across models.
     response = claude.messages.create(
@@ -42,6 +46,7 @@ def chat_with_claude_simple(
         input_tokens=input_tokens,
         output_message={"role": "assistant", "content": text},
         output_tokens=output_tokens,
+        system_prompt=system_input,
         response_time_ms=response_time_ms,
         created_by="chat_with_claude_simple",
     )

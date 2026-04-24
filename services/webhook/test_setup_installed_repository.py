@@ -497,3 +497,6 @@ def test_process_repositories_typescript_creates_pr(
     mock_create_remote_branch.assert_called_once()
     mock_delete_remote_branch.assert_not_called()
     mock_create_pull_request.assert_called_once()
+    # Setup flow does not record LLM usage: base_args keeps the placeholder usage_id=0.
+    base_args = mock_create_pull_request.call_args.kwargs["base_args"]
+    assert base_args["usage_id"] == 0
