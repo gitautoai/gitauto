@@ -64,10 +64,79 @@ def mock_get_trigger_prompt():
     ) as mock:
         yield mock
 
+
 _CHECKLIST_BLOCK = (
     "<quality_checklist>\n"
     "When writing tests, ensure coverage of these quality categories where applicable to the file:\n"
-    '{\n  "case_coverage": {\n    "matrix": "every cell"\n  }\n}\n'
+    "{\n"
+    '  "case_coverage": [\n'
+    '    "dimension_enumeration",\n'
+    '    "combinatorial_matrix",\n'
+    '    "explicit_expected_per_cell"\n'
+    "  ],\n"
+    '  "integration": [\n'
+    '    "db_operations_use_real_test_db",\n'
+    '    "api_calls_tested_end_to_end",\n'
+    '    "env_var_guards_for_secrets"\n'
+    "  ],\n"
+    '  "business_logic": [\n'
+    '    "domain_rules",\n'
+    '    "state_transitions",\n'
+    '    "calculation_accuracy",\n'
+    '    "data_integrity",\n'
+    '    "workflow_correctness"\n'
+    "  ],\n"
+    '  "adversarial": [\n'
+    '    "null_undefined_inputs",\n'
+    '    "empty_strings_arrays",\n'
+    '    "boundary_values",\n'
+    '    "type_coercion",\n'
+    '    "large_inputs",\n'
+    '    "race_conditions",\n'
+    '    "unicode_special_chars"\n'
+    "  ],\n"
+    '  "security": [\n'
+    '    "xss",\n'
+    '    "sql_injection",\n'
+    '    "command_injection",\n'
+    '    "code_injection",\n'
+    '    "csrf",\n'
+    '    "auth_bypass",\n'
+    '    "sensitive_data_exposure",\n'
+    '    "untrusted_input_sanitization",\n'
+    '    "open_redirects",\n'
+    '    "path_traversal"\n'
+    "  ],\n"
+    '  "performance": [\n'
+    '    "quadratic_algorithms",\n'
+    '    "heavy_sync_operations",\n'
+    '    "n_plus_1_queries",\n'
+    '    "large_imports",\n'
+    '    "redundant_computation"\n'
+    "  ],\n"
+    '  "memory": [\n'
+    '    "event_listener_cleanup",\n'
+    '    "subscription_timer_cleanup",\n'
+    '    "circular_references",\n'
+    '    "closure_retention"\n'
+    "  ],\n"
+    '  "error_handling": [\n'
+    '    "graceful_degradation",\n'
+    '    "user_error_messages"\n'
+    "  ],\n"
+    '  "accessibility": [\n'
+    '    "aria_attributes",\n'
+    '    "keyboard_navigation",\n'
+    '    "screen_reader",\n'
+    '    "focus_management"\n'
+    "  ],\n"
+    '  "seo": [\n'
+    '    "meta_tags",\n'
+    '    "semantic_html",\n'
+    '    "heading_hierarchy",\n'
+    '    "alt_text"\n'
+    "  ]\n"
+    "}\n"
     "</quality_checklist>"
 )
 
@@ -463,9 +532,7 @@ def test_gitauto_md_comes_after_repo_rules(
             "</freeform_repository_rules>"
         ),
         gitauto_md_block=(
-            "<gitauto_md_rules>\n"
-            "## Testing\n- Use factories\n"
-            "</gitauto_md_rules>"
+            "<gitauto_md_rules>\n" "## Testing\n- Use factories\n" "</gitauto_md_rules>"
         ),
     )
 
