@@ -1,5 +1,9 @@
 <!-- markdownlint-disable MD029 MD032 MD036 -->
-# CLAUDE.md
+# AGENTS.md
+
+## CRITICAL: Prefix gitauto code execution commands
+
+When running code in `gitauto`, prepend `source .env && source .venv/bin/activate &&` to the command.
 
 ## CRITICAL: Never Guess - Always Verify
 
@@ -19,7 +23,7 @@ Do not use "unrelated failures" as a stopping point. Investigate every blocking 
 
 ### Shell Environment
 
-The Claude Code shell already has the project `.venv` activated and `.env` loaded — run commands directly without prepending `source .env && source .venv/bin/activate &&`. For pytest specifically, use `python -m pytest ...` (not `pytest ...` or `uv run pytest ...`) so cwd is added to `sys.path` and top-level imports like `from constants.models ...` resolve without setting `PYTHONPATH`.
+When running code in `gitauto`, prepend `source .env && source .venv/bin/activate &&` to the command. For pytest specifically, use `python -m pytest ...` (not `pytest ...` or `uv run pytest ...`) so cwd is added to `sys.path` and top-level imports like `from constants.models ...` resolve without setting `PYTHONPATH`.
 
 ### Running Locally
 
@@ -90,7 +94,7 @@ python3 scripts/aws/filter_log_events_across_streams.py --hours 12 --owner Foxqu
 ## Coding Standards
 
 - **No DOCSTRINGS**: Don't add unless told. Don't delete existing unless outdated.
-- **COMMENTS**: Don't delete unless outdated. Preserve URLs. One line when possible. **Don't hard-wrap sentences mid-thought** — if a comment is two sentences, two lines is fine; but don't break one sentence across multiple lines because it makes the comment unreadable when scanned. Let the editor wrap it visually. Decorative divider bars (e.g. `# =====`, `# -----`) are fine next to prose — they're visual separators, not wrapped sentences.
+- **COMMENTS**: Don't delete unless outdated. Preserve URLs. One line when possible. **Don't hard-wrap sentences mid-thought** — if a comment is two sentences, two lines is fine; but don't break one sentence across multiple lines because it makes the comment unreadable when scanned. Let the editor wrap it visually.
 - **LOGGERS**: Every `continue`, `break`, `return` inside a function MUST have a preceding `logger.info(...)` (or warning/error). Also log at every conditional branch to show which path was taken.
 - **`set_xxx` EARLIEST**: Call `set_trigger`, `set_owner_repo`, `set_pr_number` etc. at the earliest point in each handler, right after the value is known.
 - **Don't repeat structured log context**: `set_owner_repo` in `main.py` already adds `owner_repo` to every log entry. Don't repeat owner/repo in individual logger messages.
@@ -166,7 +170,7 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
     - `YYYY-MM-DD-kebab-case-title.mdx`. Universal dev lesson, not GitAuto internals (exception: deep technical content).
     - **Skip if lesson is thin** — argue back if no real insight.
     - `metadata.title`: **34-44 chars** (layout appends `- GitAuto Blog` for 50-60 total). Verify no duplicate slug.
-    - No customer names. Honest, technical tone. Specify model names (e.g., "Claude Opus 4.6").
+    - No customer names. Honest, technical tone. Specify model names (e.g., "Codex Opus 4.6").
     - MDX header:
 
       ```javascript
@@ -202,7 +206,7 @@ Six sections per PR — four cells of {GitAuto, Wes} × {X, LinkedIn}, plus HN t
 
 - No em dashes (—). No marketing keywords. No negative framing. No internal names.
 - No small absolute numbers — use relative language ("30% faster", not "2s faster").
-- Honest, technical tone. Specify model names (e.g., "Claude Opus 4.6").
+- Honest, technical tone. Specify model names (e.g., "Codex Opus 4.6").
 - Customer-facing only — skip test/internal changes.
 - **Banned openers** (do not start any post with these or close variants):
   - "Spent the morning [verb-ing]…" and close variants ("Spent the day…", "Spent the weekend…", "Spent N hours…").

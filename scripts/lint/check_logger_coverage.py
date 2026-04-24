@@ -37,10 +37,26 @@ def is_docstring(node):
     )
 
 
+def statement_guarantees_logger(stmt):
+    # Direct logger.* expression statement.
+    if is_logger_call(stmt):
+        return True
+    # If/elif/else where every branch's first non-docstring statement is a logger call. This matches how Rule B is enforced below and means every taken path logs something before reaching a subsequent return/break/continue.
+    if isinstance(stmt, ast.If):
+        then_body = [s for s in stmt.body if not is_docstring(s)]
+        else_body = [s for s in stmt.orelse if not is_docstring(s)]
+        if not then_body or not else_body:
+            return False
+        then_logs = any(statement_guarantees_logger(s) for s in then_body)
+        else_logs = any(statement_guarantees_logger(s) for s in else_body)
+        return then_logs and else_logs
+    return False
+
+
 def check_block_exits(block, path, violations):
     for i, stmt in enumerate(block):
         if isinstance(stmt, (ast.Return, ast.Continue, ast.Break)):
-            if i == 0 or not is_logger_call(block[i - 1]):
+            if not any(statement_guarantees_logger(earlier) for earlier in block[:i]):
                 kind = type(stmt).__name__.lower()
                 violations.append(
                     f"{path}:{stmt.lineno}: {kind} without preceding logger call"
@@ -48,18 +64,25 @@ def check_block_exits(block, path, violations):
 
 
 def check_if_branches(node, path, violations):
-    first_body = next((s for s in node.body if not is_docstring(s)), None)
-    if first_body is not None and not is_logger_call(first_body):
+    # Every if/elif/else branch must contain at least one logger call somewhere in its body so every taken branch is explainable in logs.
+    # Accepting any position (not just the first statement) lets a single logger satisfy both this rule and the return-exit rule.
+    # Nested if/else blocks where every branch logs also count (via statement_guarantees_logger), so an outer branch is satisfied when it only contains an inner if/elif/else whose branches each log.
+    if_body_non_docstring = [s for s in node.body if not is_docstring(s)]
+    if if_body_non_docstring and not any(
+        statement_guarantees_logger(s) for s in if_body_non_docstring
+    ):
         violations.append(
-            f"{path}:{first_body.lineno}: if/elif body does not start with logger call"
+            f"{path}:{if_body_non_docstring[0].lineno}: if/elif body has no logger call"
         )
     if node.orelse and not (
         len(node.orelse) == 1 and isinstance(node.orelse[0], ast.If)
     ):
-        first_else = next((s for s in node.orelse if not is_docstring(s)), None)
-        if first_else is not None and not is_logger_call(first_else):
+        else_body_non_docstring = [s for s in node.orelse if not is_docstring(s)]
+        if else_body_non_docstring and not any(
+            statement_guarantees_logger(s) for s in else_body_non_docstring
+        ):
             violations.append(
-                f"{path}:{first_else.lineno}: else body does not start with logger call"
+                f"{path}:{else_body_non_docstring[0].lineno}: else body has no logger call"
             )
 
 
