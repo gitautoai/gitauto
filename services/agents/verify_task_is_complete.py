@@ -91,6 +91,7 @@ async def verify_task_is_complete(
     token = base_args.get("token", "")
 
     if not pr_number:
+        logger.error("pr_number missing for verify_task_is_complete: %s", pr_number)
         raise ValueError(
             f"pr_number is required for verify_task_is_complete but got: {pr_number}"
         )
@@ -105,13 +106,23 @@ async def verify_task_is_complete(
     quality_gate_fail_count = base_args["quality_gate_fail_count"]
 
     if not pr_files:
+        logger.info("pr_files empty; evaluating whether to short-circuit")
         # 0 changes on a schedule/dashboard PR: fail immediately without LLM call.
         # The schedule_handler already evaluated quality and found issues (that's why it created the PR). The LLM quality gate only runs after the agent makes changes (bottom of this function) to avoid paying for the same evaluation twice.
         if trigger in ("schedule", "dashboard") and impl_file:
+            logger.info(
+                "Schedule/dashboard PR with 0 changes for %s; checking retry count",
+                impl_file,
+            )
             # First 0-change attempt: reject to nudge agent to try.
             # Second 0-change attempt: agent genuinely can't improve, let it pass.
             if quality_gate_fail_count < 1:
+                logger.info(
+                    "First 0-change attempt; rejecting to nudge agent (count=%d)",
+                    quality_gate_fail_count,
+                )
                 base_args["quality_gate_fail_count"] = quality_gate_fail_count + 1
+                logger.info("Returning NOT complete for 0-change first attempt")
                 return VerifyTaskIsCompleteResult(
                     success=False,
                     message=f"Task NOT complete. You made 0 changes to the test file for {impl_file}. {QUALITY_GATE_MESSAGE}",
@@ -138,9 +149,11 @@ async def verify_task_is_complete(
     ]
 
     if js_test_files:
+        logger.info("Found %d JS/TS test files to process", len(js_test_files))
         # Switch Node.js to the version the repo requires (no-op if already matching default)
         detected_node = detect_node_version(clone_dir)
         if detected_node != FALLBACK_NODE_VERSION:
+            logger.info("Switching Node to detected version %s", detected_node)
             switch_node_version(version=detected_node, base_args=base_args)
 
         root_files = [
@@ -153,11 +166,13 @@ async def verify_task_is_complete(
             f for f in js_test_files if f.endswith(TS_TEST_FILE_EXTENSIONS)
         ]
         if ts_test_files:
+            logger.info("Preparing tsconfig for %d TS test files", len(ts_test_files))
             tsconfig_path, _ = ensure_tsconfig_relaxed_for_tests(
                 root_files=root_files,
                 base_args=base_args,
             )
             if tsconfig_path:
+                logger.info("Linking jest to tsconfig %s", tsconfig_path)
                 ensure_jest_uses_tsconfig_for_tests(
                     root_files=root_files,
                     base_args=base_args,
@@ -166,6 +181,7 @@ async def verify_task_is_complete(
 
         eslint_config = get_eslint_config(base_args)
         if eslint_config:
+            logger.info("Relaxing ESLint config for tests")
             ensure_eslint_relaxed_for_tests(
                 eslint_config=eslint_config, base_args=base_args
             )
@@ -173,11 +189,13 @@ async def verify_task_is_complete(
             root_files=root_files, base_args=base_args
         )
         if jest_config:
+            logger.info("Jest config modified: %s", jest_config)
             modified_files.add(jest_config)
         vitest_config = ensure_vitest_timeout_for_ci(
             root_files=root_files, base_args=base_args
         )
         if vitest_config:
+            logger.info("Vitest config modified: %s", vitest_config)
             modified_files.add(vitest_config)
 
     non_removed_files = [f["filename"] for f in pr_files if f["status"] != "removed"]
@@ -186,6 +204,7 @@ async def verify_task_is_complete(
     for file_path in js_ts_files:
         content = read_local_file(file_path=file_path, base_dir=clone_dir)
         if not content:
+            logger.info("Skipping %s: empty or unreadable", file_path)
             continue
 
         prettier_result = await run_prettier_fix(
@@ -194,6 +213,7 @@ async def verify_task_is_complete(
             file_content=content,
         )
         if prettier_result.content and prettier_result.content != content:
+            logger.info("Prettier changed %s; committing", file_path)
             write_and_commit_file(
                 file_content=prettier_result.content,
                 file_path=file_path,
@@ -203,6 +223,7 @@ async def verify_task_is_complete(
             content = prettier_result.content
             formatting_applied.append(f"- {file_path}: Prettier")
         if prettier_result.error:
+            logger.warning("Prettier error on %s: %s", file_path, prettier_result.error)
             remaining_errors.append(f"- {file_path}: Prettier: {prettier_result.error}")
             error_files.add(file_path)
 
@@ -212,6 +233,7 @@ async def verify_task_is_complete(
             file_content=content,
         )
         if eslint_result.content and eslint_result.content != content:
+            logger.info("ESLint changed %s; committing", file_path)
             write_and_commit_file(
                 file_content=eslint_result.content,
                 file_path=file_path,
@@ -223,6 +245,7 @@ async def verify_task_is_complete(
             e for e in [eslint_result.lint_errors, eslint_result.coverage_errors] if e
         ]
         if eslint_all:
+            logger.warning("ESLint errors on %s: %s", file_path, eslint_all)
             remaining_errors.append(f"- {file_path}: ESLint: {'; '.join(eslint_all)}")
             error_files.add(file_path)
 
@@ -232,6 +255,7 @@ async def verify_task_is_complete(
     # Run tsc type check on all non-removed files
     tsc_result = await run_tsc_check(base_args=base_args, file_paths=non_removed_files)
     if tsc_result.errors:
+        logger.info("tsc produced %d errors; classifying", len(tsc_result.errors))
         baseline = base_args.get("baseline_tsc_errors", set())
         pr_file_set = {f["filename"] for f in pr_files}
         unrelated_tsc_errors: list[str] = []
@@ -239,13 +263,16 @@ async def verify_task_is_complete(
             # Extract file path from tsc error format "file(line,col): error ..."
             err_file = err.split("(")[0] if "(" in err else ""
             if err_file in pr_file_set:
+                logger.info("tsc error in PR file %s: %s", err_file, err)
                 # Always report errors in PR files (agent must fix these)
                 remaining_errors.append(f"- tsc: {err}")
                 error_files.add(err_file)
             elif err in baseline:
+                logger.info("tsc baseline error, skipping: %s", err)
                 # Pre-existing error in non-PR file, skip
                 unrelated_tsc_errors.append(err)
             else:
+                logger.info("tsc new non-PR error reported: %s", err)
                 # New error in non-PR file, might be caused by PR changes
                 remaining_errors.append(f"- tsc: {err}")
         if unrelated_tsc_errors:
@@ -269,6 +296,9 @@ async def verify_task_is_complete(
         impl_file_to_collect_coverage_from=impl_file_to_collect_coverage_from,
     )
     if jest_result.errors:
+        logger.info(
+            "Jest reported %d errors; checking infra failure", len(jest_result.errors)
+        )
         combined_errors = "\n".join(jest_result.errors)
         infra_failure = detect_infra_failure(combined_errors)
         if infra_failure:
@@ -276,6 +306,9 @@ async def verify_task_is_complete(
                 "Jest infra failure detected (%s), skipping errors", infra_failure
             )
         else:
+            logger.info(
+                "Jest errors are not infra; recording %d", len(jest_result.errors)
+            )
             for err in jest_result.errors:
                 remaining_errors.append(f"- {jest_result.runner_name}: {err}")
             error_files.update(jest_result.error_files)
@@ -283,10 +316,12 @@ async def verify_task_is_complete(
     # Check for incomplete coverage (comment is posted only after all gates pass)
     coverage_comment_body = ""
     if jest_result.coverage and not jest_result.errors:
+        logger.info("Evaluating jest coverage result")
         cov = jest_result.coverage
         if cov.error:
             logger.warning("coverage: %s (not fixable by agent, skipping)", cov.error)
         else:
+            logger.info("Coverage parsed successfully; formatting comment")
             coverage_comment_body = format_coverage_comment(
                 cov, impl_file_to_collect_coverage_from
             )
@@ -297,6 +332,7 @@ async def verify_task_is_complete(
                 or cov.line_pct < 100
             )
             if has_incomplete_coverage:
+                logger.info("Incomplete coverage detected; adding to remaining errors")
                 remaining_errors.append(f"- coverage:\n{coverage_comment_body}")
                 error_files.update(js_test_files)
 
@@ -304,6 +340,7 @@ async def verify_task_is_complete(
     for snap_path in jest_result.updated_snapshots:
         snap_content = read_local_file(file_path=snap_path, base_dir=clone_dir)
         if not snap_content:
+            logger.info("Skipping snapshot %s: empty", snap_path)
             continue
         write_and_commit_file(
             file_content=snap_content,
@@ -314,6 +351,7 @@ async def verify_task_is_complete(
         formatting_applied.append(f"- {snap_path}: Snapshot updated")
 
     if run_phpunit:
+        logger.info("Running phpunit for PR PHP test files")
         php_test_files = [
             f["filename"]
             for f in pr_files
@@ -325,6 +363,7 @@ async def verify_task_is_complete(
             test_file_paths=php_test_files,
         )
         if phpunit_result.errors:
+            logger.warning("phpunit reported %d errors", len(phpunit_result.errors))
             for err in phpunit_result.errors:
                 remaining_errors.append(f"- phpunit: {err}")
             error_files.update(phpunit_result.error_files)
@@ -339,6 +378,7 @@ async def verify_task_is_complete(
         test_file_paths=py_test_files,
     )
     if pytest_result.errors:
+        logger.warning("pytest reported %d errors", len(pytest_result.errors))
         for err in pytest_result.errors:
             remaining_errors.append(f"- pytest: {err}")
         error_files.update(pytest_result.error_files)
@@ -347,6 +387,7 @@ async def verify_task_is_complete(
     # Runs last to avoid paying for LLM call when lint/test errors will force a retry anyway.
     # Escape hatch: skip after 3 consecutive failures to prevent infinite loops.
     if trigger in ("schedule", "dashboard") and impl_file and not remaining_errors:
+        logger.info("Entering quality gate stage for %s", impl_file)
         if quality_gate_fail_count >= 3:
             logger.info(
                 "Quality gate skipped for %s: failed %d times, accepting current quality",
@@ -363,9 +404,11 @@ async def verify_task_is_complete(
             # Post that we're giving up with the reason
             last_error = base_args.get("last_quality_error", "")
             if last_error:
+                logger.info("Parsing last quality error for self-review")
                 reasons = []
                 for line in last_error.split("\n")[1:]:
                     if ": " in line:
+                        logger.debug("Collecting reason from line: %s", line)
                         reasons.append(f"- {line.split(': ', 1)[1]}")
                 if reasons:
                     logger.info(
@@ -385,6 +428,7 @@ async def verify_task_is_complete(
                     "No last quality error stored, skipping self-review comment"
                 )
         else:
+            logger.info("Running quality gate (fail count=%d)", quality_gate_fail_count)
             gate_result = run_quality_gate(
                 clone_dir=clone_dir, impl_file=impl_file, base_args=base_args
             )
@@ -397,8 +441,10 @@ async def verify_task_is_complete(
                 reasons = []
                 for line in gate_result.error.split("\n")[1:]:
                     if ": " in line:
+                        logger.debug("Collecting gate reason from line: %s", line)
                         reasons.append(f"- {line.split(': ', 1)[1]}")
                 if reasons:
+                    logger.info("Posting self-review with %d reasons", len(reasons))
                     note = "## Self-Review\n\n" + "\n".join(reasons)
                     create_comment(body=note, base_args=base_args)
             elif gate_result.passed_count:
@@ -410,6 +456,7 @@ async def verify_task_is_complete(
                 )
 
     if remaining_errors:
+        logger.info("remaining_errors non-empty; assembling failure message")
         error_msg = "\n".join(remaining_errors)
         logger.warning("Remaining errors after fixes:\n%s", error_msg)
         return VerifyTaskIsCompleteResult(
@@ -427,6 +474,7 @@ async def verify_task_is_complete(
     else:
         logger.info("No coverage comment to post")
 
+    logger.info("verify_task_is_complete returning success")
     return VerifyTaskIsCompleteResult(
         success=True,
         message="Task completed.",

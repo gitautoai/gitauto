@@ -492,6 +492,7 @@ async def test_handle_check_suite_full_workflow(
     assert isinstance(execution_call.kwargs.get("system_message"), str)
     base_args = execution_call.kwargs["base_args"]
     assert isinstance(base_args.get("baseline_tsc_errors"), set)
+    assert base_args["usage_id"] == "usage-id-123"
 
 
 @pytest.mark.asyncio
@@ -1907,7 +1908,7 @@ def test_check_suite_handler_imports_label_log_source():
 
 
 def test_ci_log_source_strings_produce_expected_agent_input():
-    # The handler builds `ci_log_source` as an inline f-string in each dispatch branch (CircleCI / Codecov / GitHub Actions), then passes the log through `label_log_source` with ownership="theirs". For Lambda validation errors the handler uses ownership="ours". This test pins the exact header text the agent will see, so a format drift in either the label or the source-string template fails here instead of silently confusing the agent in production.
+    # The handler builds `ci_log_source` as an inline f-string in each customer-side dispatch branch (CircleCI / Codecov / GitHub Actions) and passes the log through `label_log_source` with ownership="theirs". For GitAuto-internal validation errors the handler uses ownership="ours" with NO source detail — exposing our runtime specifics would tempt the agent to invent customer-side workarounds. This test pins the exact header text the agent will see so a format drift fails here instead of silently confusing the agent in production.
     owner = "Foxquilt"
     repo = "foxden-version-controller"
     raw_log = "FAIL test/spec/create-express-server.spec.ts"

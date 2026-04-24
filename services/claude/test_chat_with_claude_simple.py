@@ -11,6 +11,8 @@ def test_returns_text_and_inserts_llm_request(mock_claude, mock_insert):
     mock_response.content = [Mock(type="text", text="Summary of changes")]
     mock_response.usage = Mock(input_tokens=200, output_tokens=50)
     mock_claude.messages.create.return_value = mock_response
+    # count_tokens returns a Mock with .input_tokens — mock to int so the trim guard's `input_tokens > max_input_tokens` comparison works.
+    mock_claude.messages.count_tokens.return_value = Mock(input_tokens=100)
 
     result = chat_with_claude_simple(
         system_input="You are a summarizer.",
@@ -52,6 +54,8 @@ def test_returns_empty_string_when_no_text_blocks(mock_claude, mock_insert):
     mock_response.content = [Mock(type="tool_use", text="ignored")]
     mock_response.usage = Mock(input_tokens=100, output_tokens=0)
     mock_claude.messages.create.return_value = mock_response
+    # count_tokens returns a Mock with .input_tokens — mock to int so the trim guard's `input_tokens > max_input_tokens` comparison works.
+    mock_claude.messages.count_tokens.return_value = Mock(input_tokens=100)
 
     result = chat_with_claude_simple(
         system_input="system", user_input="input", usage_id=1
@@ -71,6 +75,8 @@ def test_concatenates_multiple_text_blocks(mock_claude, _mock_insert):
     ]
     mock_response.usage = Mock(input_tokens=50, output_tokens=30)
     mock_claude.messages.create.return_value = mock_response
+    # count_tokens returns a Mock with .input_tokens — mock to int so the trim guard's `input_tokens > max_input_tokens` comparison works.
+    mock_claude.messages.count_tokens.return_value = Mock(input_tokens=100)
 
     result = chat_with_claude_simple(
         system_input="system", user_input="input", usage_id=1

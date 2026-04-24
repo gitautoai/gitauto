@@ -173,6 +173,7 @@ def setup_installed_repository(
         "model_id": DEFAULT_FREE_MODEL,
         "verify_consecutive_failures": 0,
         "quality_gate_fail_count": 0,
+        "usage_id": 0,  # Setup flow does not record LLM usage
     }
 
     sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
@@ -190,19 +191,22 @@ def setup_installed_repository(
         base_args=base_args,
     )
     if tsconfig_status:
+        logger.info("tsconfig change detected: %s %s", tsconfig_status, tsconfig_path)
         changes.append(f"{tsconfig_status.capitalize()} {tsconfig_path}")
 
     if tsconfig_path:
+        logger.info("Running jest-tsconfig alignment for %s", tsconfig_path)
         jest_path, jest_status = ensure_jest_uses_tsconfig_for_tests(
             root_files=root_files,
             base_args=base_args,
             tsconfig_path=tsconfig_path,
         )
         if jest_status:
+            logger.info("jest change detected: %s %s", jest_status, jest_path)
             changes.append(f"{jest_status.capitalize()} {jest_path}")
 
     if not changes:
-        logger.info("No setup changes needed, deleting branch")
+        logger.info("No setup changes needed; deleting branch and exiting")
         delete_remote_branch(base_args=base_args)
         return
 

@@ -300,7 +300,7 @@ def test_returns_true_on_cost_cap(
 @patch(MOCK_COST, return_value=7.00)
 @patch(MOCK_OOM_OK, return_value=(False, 500.0))
 @patch(MOCK_TIMEOUT, return_value=(False, 60.0))
-def test_cost_cap_skips_slack(
+def test_cost_cap_notifies_slack_with_thread(
     _mock_timeout,
     _mock_oom,
     _mock_cost,
@@ -316,8 +316,40 @@ def test_cost_cap_skips_slack(
         slack_thread_ts="ts123",
         cost_cap_usd=6.40,
     )
-    # Cost cap bails silently — no slack notification
-    mock_slack.assert_not_called()
+    # Cost cap still bails silently to the customer (no PR comment) but we want the channel notified so operators can see it.
+    mock_slack.assert_called_once_with(
+        "Cost cap reached: $7.00 >= $6.40 cap. Stopped execution for "
+        "`test-owner/test-repo#42`.",
+        "ts123",
+    )
+
+
+@patch("services.webhook.utils.should_bail.slack_notify")
+@patch("services.webhook.utils.should_bail.update_comment")
+@patch(MOCK_COST, return_value=7.00)
+@patch(MOCK_OOM_OK, return_value=(False, 500.0))
+@patch(MOCK_TIMEOUT, return_value=(False, 60.0))
+def test_cost_cap_notifies_slack_without_thread(
+    _mock_timeout,
+    _mock_oom,
+    _mock_cost,
+    _mock_update,
+    mock_slack,
+    create_test_base_args,
+):
+    base_args = create_test_base_args(pr_number=42, new_branch="feature-branch")
+    should_bail(
+        current_time=1000.0,
+        phase="execution",
+        base_args=base_args,
+        slack_thread_ts=None,
+        cost_cap_usd=6.40,
+    )
+    mock_slack.assert_called_once_with(
+        "Cost cap reached: $7.00 >= $6.40 cap. Stopped execution for "
+        "`test-owner/test-repo#42`.",
+        None,
+    )
 
 
 @patch("services.webhook.utils.should_bail.check_branch_exists")

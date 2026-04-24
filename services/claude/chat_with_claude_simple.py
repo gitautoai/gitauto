@@ -42,6 +42,7 @@ def chat_with_claude_simple(
         input_tokens=input_tokens,
         output_message={"role": "assistant", "content": text},
         output_tokens=output_tokens,
+        system_prompt=system_input,
         response_time_ms=response_time_ms,
         created_by="chat_with_claude_simple",
     )

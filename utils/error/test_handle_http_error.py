@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+import pytest
 import requests
 
 from utils.error.handle_http_error import handle_http_error
@@ -70,6 +71,26 @@ def test_server_error_returns_default_without_sentry():
         )
 
     assert result == ("DEFAULT", False)
+    mock_sentry.capture_exception.assert_not_called()
+
+
+def test_server_error_raises_when_raise_on_error_true():
+    """Server errors propagate when raise_on_error=True so the outer handler can decide what to do. Sentry stays silent because server errors are upstream failures, not code bugs."""
+    err = _http_error(502, body="bad gateway", reason="Bad Gateway")
+
+    with patch("utils.error.handle_http_error.sentry_sdk") as mock_sentry:
+        with pytest.raises(requests.HTTPError):
+            handle_http_error(
+                err,
+                func_name="test",
+                log_args=[],
+                log_kwargs={},
+                api_type="github",
+                raise_on_error=True,
+                error_return="DEFAULT",
+                retry_callback=Mock(),
+            )
+
     mock_sentry.capture_exception.assert_not_called()
 
 

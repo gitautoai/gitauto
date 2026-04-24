@@ -11,7 +11,7 @@ fi
 FILES=()
 for f in "$@"; do
     case "$f" in
-        */test_*.py|*/conftest.py|scripts/*|*/scripts/*|schemas/*|*/schemas/*|.venv/*|*/.venv/*|venv/*|*/venv/*)
+        */test_*.py|test_*.py|*/conftest.py|conftest.py|scripts/*|*/scripts/*|schemas/*|*/schemas/*|.venv/*|*/.venv/*|venv/*|*/venv/*)
             continue
             ;;
         *.py)

@@ -131,9 +131,11 @@ class TestHandler:
         self, mock_slack_notify, mock_schedule_handler, mock_event_bridge_event
     ):
         """Test handler function with a successful schedule event."""
-        # Setup
+        # Setup — schedule_handler now returns the PR url on success, None on skip.
         mock_slack_notify.return_value = "thread-123"
-        mock_schedule_handler.return_value = {"status": "success"}
+        mock_schedule_handler.return_value = (
+            "https://github.com/test-owner/test-repo/pull/1"
+        )
 
         # Execute
         result = handler(event=mock_event_bridge_event, context={})
@@ -143,7 +145,10 @@ class TestHandler:
         mock_slack_notify.assert_has_calls(
             [
                 call("Event Scheduler started for test-owner/test-repo"),
-                call("Completed", "thread-123"),
+                call(
+                    "Completed: https://github.com/test-owner/test-repo/pull/1",
+                    "thread-123",
+                ),
             ]
         )
         assert mock_slack_notify.call_count == 2
@@ -154,26 +159,19 @@ class TestHandler:
     def test_handler_schedule_event_failure(
         self, mock_slack_notify, mock_schedule_handler, mock_event_bridge_event
     ):
-        """Test handler function with a failed schedule event."""
-        # Setup
+        """Test handler function with a schedule event that skips (returns None)."""
+        # Setup — schedule_handler returns None on any skip/failure path.
         mock_slack_notify.return_value = "thread-123"
-        mock_schedule_handler.return_value = {
-            "status": "error",
-            "message": "Something went wrong",
-        }
+        mock_schedule_handler.return_value = None
 
         # Execute
         result = handler(event=mock_event_bridge_event, context={})
 
-        # Verify
+        # Verify — only the "started" slack notify fires; no completion follow-up on skip.
         mock_schedule_handler.assert_called_with(event=mock_event_bridge_event)
-        mock_slack_notify.assert_has_calls(
-            [
-                call("Event Scheduler started for test-owner/test-repo"),
-                call("<!channel> Failed: Something went wrong", "thread-123"),
-            ]
+        mock_slack_notify.assert_called_once_with(
+            "Event Scheduler started for test-owner/test-repo"
         )
-        assert mock_slack_notify.call_count == 2
         assert result is None
 
     @patch("main.schedule_handler")
@@ -187,7 +185,7 @@ class TestHandler:
         """Test handler function with schedule event missing owner/repo names."""
         # Setup
         mock_slack_notify.return_value = "thread-456"
-        mock_schedule_handler.return_value = {"status": "success"}
+        mock_schedule_handler.return_value = "https://github.com/x/y/pull/2"
 
         # Execute
         result = handler(event=mock_event_bridge_event_missing_names, context={})
@@ -199,7 +197,7 @@ class TestHandler:
         mock_slack_notify.assert_has_calls(
             [
                 call("Event Scheduler started for /"),  # Empty owner/repo names
-                call("Completed", "thread-456"),
+                call("Completed: https://github.com/x/y/pull/2", "thread-456"),
             ]
         )
         assert mock_slack_notify.call_count == 2
@@ -272,18 +270,12 @@ class TestHandleWebhook:
         call_args = mock_handle_webhook_event.call_args
         assert call_args.kwargs["event_name"] == "push"
         assert call_args.kwargs["payload"] == {"key": "value"}
-        assert (
-            call_args.kwargs["lambda_info"]["log_group"] == "/aws/lambda/pr-agent-prod"
-        )
-        assert (
-            call_args.kwargs["lambda_info"]["log_stream"]
-            == "2025/09/04/pr-agent-prod[$LATEST]841315c5"
-        )
-        assert (
-            call_args.kwargs["lambda_info"]["request_id"]
-            == "17921070-5cb6-43ee-8d2e-b5161ae89729"
-        )
-        assert "delivery_id" in call_args.kwargs["lambda_info"]
+        assert call_args.kwargs["lambda_info"] == {
+            "log_group": "/aws/lambda/pr-agent-prod",
+            "log_stream": "2025/09/04/pr-agent-prod[$LATEST]841315c5",
+            "request_id": "17921070-5cb6-43ee-8d2e-b5161ae89729",
+            "delivery_id": mock_github_request.headers["X-GitHub-Delivery"],
+        }
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -316,7 +308,11 @@ class TestHandleWebhook:
         call_args = mock_handle_webhook_event.call_args
         assert call_args.kwargs["event_name"] == "Event not specified"
         assert call_args.kwargs["payload"] == {"key": "value"}
-        assert "delivery_id" in call_args.kwargs["lambda_info"]
+        assert call_args.kwargs["lambda_info"] == {
+            "delivery_id": mock_github_request_no_event_header.headers[
+                "X-GitHub-Delivery"
+            ],
+        }
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -347,7 +343,9 @@ class TestHandleWebhook:
         call_args = mock_handle_webhook_event.call_args
         assert call_args.kwargs["event_name"] == "push"
         assert call_args.kwargs["payload"] == {}
-        assert "delivery_id" in call_args.kwargs["lambda_info"]
+        assert call_args.kwargs["lambda_info"] == {
+            "delivery_id": mock_github_request.headers["X-GitHub-Delivery"],
+        }
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -378,7 +376,9 @@ class TestHandleWebhook:
         call_args = mock_handle_webhook_event.call_args
         assert call_args.kwargs["event_name"] == "push"
         assert call_args.kwargs["payload"] == {}
-        assert "delivery_id" in call_args.kwargs["lambda_info"]
+        assert call_args.kwargs["lambda_info"] == {
+            "delivery_id": mock_github_request.headers["X-GitHub-Delivery"],
+        }
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -414,8 +414,12 @@ class TestHandleWebhook:
         call_args = mock_handle_webhook_event.call_args
         assert call_args.kwargs["event_name"] == "push"
         assert call_args.kwargs["payload"] == {"key": "value"}
-        assert call_args.kwargs["lambda_info"]["log_group"] == "test-group"
-        assert "delivery_id" in call_args.kwargs["lambda_info"]
+        assert call_args.kwargs["lambda_info"] == {
+            "log_group": "test-group",
+            "delivery_id": mock_github_request_with_url_encoded_body.headers[
+                "X-GitHub-Delivery"
+            ],
+        }
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -451,7 +455,11 @@ class TestHandleWebhook:
         call_args = mock_handle_webhook_event.call_args
         assert call_args.kwargs["event_name"] == "push"
         assert call_args.kwargs["payload"] == {}
-        assert "delivery_id" in call_args.kwargs["lambda_info"]
+        assert call_args.kwargs["lambda_info"] == {
+            "delivery_id": mock_github_request_with_malformed_url_encoded_body.headers[
+                "X-GitHub-Delivery"
+            ],
+        }
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -487,7 +495,11 @@ class TestHandleWebhook:
         call_args = mock_handle_webhook_event.call_args
         assert call_args.kwargs["event_name"] == "push"
         assert call_args.kwargs["payload"] == {}
-        assert "delivery_id" in call_args.kwargs["lambda_info"]
+        assert call_args.kwargs["lambda_info"] == {
+            "delivery_id": mock_github_request_with_invalid_json_in_url_encoded.headers[
+                "X-GitHub-Delivery"
+            ],
+        }
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.insert_webhook_delivery")
@@ -523,7 +535,9 @@ class TestHandleWebhook:
         call_args = mock_handle_webhook_event.call_args
         assert call_args.kwargs["event_name"] == "push"
         assert call_args.kwargs["payload"] == {}
-        assert "delivery_id" in call_args.kwargs["lambda_info"]
+        assert call_args.kwargs["lambda_info"] == {
+            "delivery_id": mock_github_request.headers["X-GitHub-Delivery"],
+        }
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.extract_lambda_info")
@@ -558,8 +572,10 @@ class TestHandleWebhook:
         call_args = mock_handle_webhook_event.call_args
         assert call_args.kwargs["event_name"] == "issue_comment"
         assert call_args.kwargs["payload"] == {"key": "value"}
-        assert call_args.kwargs["lambda_info"]["request_id"] == "test-request-123"
-        assert "delivery_id" in call_args.kwargs["lambda_info"]
+        assert call_args.kwargs["lambda_info"] == {
+            "request_id": "test-request-123",
+            "delivery_id": mock_github_request.headers["X-GitHub-Delivery"],
+        }
         assert response == {"message": "Webhook processed successfully"}
 
 
@@ -598,9 +614,17 @@ class TestAppConfiguration:
             getattr(route, "path") for route in app.routes if hasattr(route, "path")
         ]
 
-        # Check that expected routes exist
-        assert "/" in route_paths
-        assert "/webhook" in route_paths
+        assert route_paths == [
+            "/openapi.json",
+            "/docs",
+            "/docs/oauth2-redirect",
+            "/redoc",
+            "/webhook",
+            "/",
+            "/api/{owner}/{repo}/sync_files_from_github_to_coverage",
+            "/api/{owner}/{repo}/retarget_pr",
+            "/api/{owner}/{repo}/setup_coverage_workflow",
+        ]
 
 
 class TestEdgeCases:
@@ -638,7 +662,9 @@ class TestEdgeCases:
         call_args = mock_handle_webhook_event.call_args
         assert call_args.kwargs["event_name"] == "ping"
         assert call_args.kwargs["payload"] == {}
-        assert "delivery_id" in call_args.kwargs["lambda_info"]
+        assert call_args.kwargs["lambda_info"] == {
+            "delivery_id": mock_req.headers["X-GitHub-Delivery"],
+        }
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.schedule_handler")
@@ -646,26 +672,19 @@ class TestEdgeCases:
     def test_handler_schedule_event_with_none_result_status(
         self, mock_slack_notify, mock_schedule_handler, mock_event_bridge_event
     ):
-        """Test handler function when schedule_handler returns None status."""
+        """Test handler function when schedule_handler returns None (skip path)."""
         # Setup
         mock_slack_notify.return_value = "thread-789"
-        mock_schedule_handler.return_value = {
-            "status": None,
-            "message": "Unknown status",
-        }
+        mock_schedule_handler.return_value = None
 
         # Execute
         result = handler(event=mock_event_bridge_event, context={})
 
-        # Verify
+        # Verify — only the "started" notify fires; no follow-up on skip.
         mock_schedule_handler.assert_called_with(event=mock_event_bridge_event)
-        mock_slack_notify.assert_has_calls(
-            [
-                call("Event Scheduler started for test-owner/test-repo"),
-                call("<!channel> Failed: Unknown status", "thread-789"),
-            ]
+        mock_slack_notify.assert_called_once_with(
+            "Event Scheduler started for test-owner/test-repo"
         )
-        assert mock_slack_notify.call_count == 2
         assert result is None
 
     @patch("main.extract_lambda_info")
@@ -706,7 +725,9 @@ class TestEdgeCases:
             "title": "测试 Unicode 内容",
             "body": "🚀 Emoji test",
         }
-        assert "delivery_id" in call_args.kwargs["lambda_info"]
+        assert call_args.kwargs["lambda_info"] == {
+            "delivery_id": mock_req.headers["X-GitHub-Delivery"],
+        }
         assert response == {"message": "Webhook processed successfully"}
 
     @patch("main.schedule_handler")
@@ -714,25 +735,19 @@ class TestEdgeCases:
     def test_handler_schedule_event_with_missing_message_in_result(
         self, mock_slack_notify, mock_schedule_handler, mock_event_bridge_event
     ):
-        """Test handler function when schedule_handler returns error status without message."""
-        # Setup
+        """Test handler function when schedule_handler's return value is not a truthy pr_url."""
+        # Setup — falsy returns (empty string in this case) should behave like the skip path.
         mock_slack_notify.return_value = "thread-999"
-        mock_schedule_handler.return_value = {
-            "status": "error"
-        }  # Missing 'message' key
+        mock_schedule_handler.return_value = ""
 
         # Execute
         result = handler(event=mock_event_bridge_event, context={})
 
-        # Verify
+        # Verify — empty-string pr_url is falsy, so the completion notify does not fire.
         mock_schedule_handler.assert_called_with(event=mock_event_bridge_event)
-        mock_slack_notify.assert_has_calls(
-            [
-                call("Event Scheduler started for test-owner/test-repo"),
-                call("<!channel> Failed: Unknown error", "thread-999"),
-            ]
+        mock_slack_notify.assert_called_once_with(
+            "Event Scheduler started for test-owner/test-repo"
         )
-        assert mock_slack_notify.call_count == 2
         assert result is None
 
 
@@ -747,16 +762,24 @@ class TestLogStatements:
         mock_logger,
         mock_event_bridge_event,
     ):
-        """Test that handler function logs the correct message for schedule events."""
+        """Test that handler function logs the correct messages for schedule events."""
         # Setup
         mock_slack_notify.return_value = "thread-123"
-        mock_schedule_handler.return_value = {"status": "success"}
+        mock_schedule_handler.return_value = (
+            "https://github.com/test-owner/test-repo/pull/1"
+        )
 
         # Execute
         handler(event=mock_event_bridge_event, context={})
 
-        # Verify
-        mock_logger.info.assert_called_once_with("EventBridge Scheduler invoked")
+        # Verify the "invoked" announcement fires, followed by the pr-url log once schedule_handler returns.
+        assert mock_logger.info.call_args_list == [
+            call("EventBridge Scheduler invoked"),
+            call(
+                "schedule_handler created PR %s",
+                "https://github.com/test-owner/test-repo/pull/1",
+            ),
+        ]
 
     @patch("main.logger")
     @patch("main.extract_lambda_info")

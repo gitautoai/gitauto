@@ -5,9 +5,16 @@ from utils.logs.strip_jest_noise import strip_jest_noise
 
 # Patterns for transient infrastructure failures (not code bugs). Add more as we encounter them.
 INFRA_FAILURE_PATTERNS = [
+    # Codecov uploader validation failures
+    "Validate Codecov Uploader",
+    "computed checksum did NOT match",
+    "BAD signature from \"Codecov Uploader",
     # Segfaults
     "Segmentation fault",
     "exit code 139",
+    # Terraform / AWS backend misconfiguration
+    "BucketRegionError",
+    "incorrect region, the bucket is not in",
     # Package registry failures
     'Request failed "502 Bad Gateway"',
     'Request failed "503 Service Unavailable"',

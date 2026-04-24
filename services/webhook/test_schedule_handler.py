@@ -32,9 +32,7 @@ def mock_event():
 def test_schedule_handler_no_token(mock_get_token, mock_event):
     mock_get_token.return_value = None
     result = schedule_handler(mock_event)
-    assert result["status"] == "skipped"
-    assert "Installation" in result["message"]
-    assert "no longer exists" in result["message"]
+    assert result is None
 
 
 @patch("services.webhook.schedule_handler.get_installation_access_token")
@@ -49,8 +47,7 @@ def test_schedule_handler_trigger_disabled(
         "trigger_on_schedule": False,
     }
     result = schedule_handler(mock_event)
-    assert result["status"] == "skipped"
-    assert "trigger_on_schedule is not enabled" in result["message"]
+    assert result is None
 
 
 @patch("services.webhook.schedule_handler.get_schedule_pause")
@@ -69,8 +66,7 @@ def test_schedule_handler_paused(
         pause_start="2026-03-01T00:00:00Z", pause_end="2026-04-01T00:00:00Z"
     )
     result = schedule_handler(mock_event)
-    assert result["status"] == "skipped"
-    assert "schedule is paused from" in result["message"]
+    assert result is None
 
 
 @patch("services.webhook.schedule_handler.get_schedule_pause")
@@ -99,8 +95,7 @@ def test_schedule_handler_access_denied(
         "log_message": "Insufficient credits for test-org/test-repo",
     }
     result = schedule_handler(mock_event)
-    assert result["status"] == "skipped"
-    assert "Insufficient credits" in result["message"]
+    assert result is None
 
 
 @patch("services.webhook.schedule_handler.get_all_coverages")
@@ -248,8 +243,11 @@ def test_schedule_handler_skips_export_only_files(
     )
     mock_create_pr.assert_called_once()
     call_kwargs = mock_create_pr.call_args.kwargs
-    assert "src/utils/helper.ts" in call_kwargs["title"]
-    assert result["status"] == "success"
+    assert (
+        call_kwargs["title"]
+        == "Schedule: Add unit and integration tests to `src/utils/helper.ts`"
+    )
+    assert result is not None
 
 
 @patch("services.webhook.schedule_handler.add_labels")
@@ -344,8 +342,11 @@ def test_schedule_handler_skips_empty_files(
 
     mock_create_pr.assert_called_once()
     call_kwargs = mock_create_pr.call_args.kwargs
-    assert "src/app.ts" in call_kwargs["title"]
-    assert result["status"] == "success"
+    assert (
+        call_kwargs["title"]
+        == "Schedule: Add unit and integration tests to `src/app.ts`"
+    )
+    assert result is not None
 
 
 @patch("services.webhook.schedule_handler.add_labels")
@@ -488,11 +489,13 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
     with patch("services.webhook.schedule_handler.insert_coverages") as mock_insert:
         result = schedule_handler(mock_event)
 
-        assert result["status"] == "success"
+        assert result is not None
         mock_create_pr.assert_called_once()
         call_kwargs = mock_create_pr.call_args.kwargs
-        assert "src/new_file.py" in call_kwargs["title"]
-        assert "Add unit and integration tests to" in call_kwargs["title"]
+        assert (
+            call_kwargs["title"]
+            == "Schedule: Add unit and integration tests to `src/new_file.py`"
+        )
 
         mock_insert.assert_called_once()
         coverage_record = mock_insert.call_args[0][0]
@@ -517,9 +520,10 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
         assert coverage_record["uncovered_lines"] is None
         assert coverage_record["uncovered_functions"] is None
         assert coverage_record["uncovered_branches"] is None
-        assert "id" not in coverage_record
-        assert "created_at" not in coverage_record
-        assert "updated_at" not in coverage_record
+        # CoveragesInsert must not carry DB-managed columns
+        assert set(coverage_record.keys()).isdisjoint(
+            {"id", "created_at", "updated_at"}
+        )
 
 
 @patch("services.webhook.schedule_handler.add_labels")
@@ -640,10 +644,13 @@ def test_schedule_handler_skips_ai_eval_when_tests_exist(
     with patch("services.webhook.schedule_handler.update_issue_url"):
         result = schedule_handler(mock_event)
 
-    assert result["status"] == "success"
+    assert result is not None
     mock_create_pr.assert_called_once()
     call_kwargs = mock_create_pr.call_args.kwargs
-    assert "src/services/getPolicyInfo.ts" in call_kwargs["title"]
+    assert (
+        call_kwargs["title"]
+        == "Schedule: Achieve 100% test coverage for `src/services/getPolicyInfo.ts`"
+    )
     # AI evaluation should NOT have been called - existing tests prove testability
     mock_evaluate_condition.assert_not_called()
 
@@ -738,8 +745,7 @@ def test_schedule_handler_skips_file_with_open_pr_on_different_branch(
 
     result = schedule_handler(mock_event)
 
-    assert result["status"] == "skipped"
-    assert "No suitable file found after checking" in result["message"]
+    assert result is None
 
 
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
@@ -834,8 +840,7 @@ def test_schedule_handler_skips_file_with_open_pr_different_title_format(
 
     result = schedule_handler(mock_event)
 
-    assert result["status"] == "skipped"
-    assert "No suitable file found after checking" in result["message"]
+    assert result is None
 
 
 @patch("services.webhook.schedule_handler.get_open_pull_requests")
@@ -934,7 +939,7 @@ def test_schedule_handler_skips_none_coverage_as_fully_covered(
     result = schedule_handler(mock_event)
 
     # All files skipped (100% coverage + quality already checked), no PR created
-    assert result["status"] == "skipped"
+    assert result is None
 
 
 @patch("services.webhook.schedule_handler.add_labels")
@@ -1045,18 +1050,28 @@ def test_schedule_handler_all_none_coverage_treated_as_candidate(
         result = schedule_handler(mock_event)
 
     # File with all-None coverage should become a candidate and get a PR created
-    assert result["status"] == "success"
+    assert result is not None
     mock_create_pr.assert_called_once()
     call_kwargs = mock_create_pr.call_args.kwargs
     # No existing test file in file tree → "Add unit and integration tests to" (not "Achieve 100%")
-    assert "Add unit and integration tests to" in call_kwargs["title"]
-    assert "web/pickup/finishp.php" in call_kwargs["title"]
-    # Body should not have metric bullet points for all-None coverage
-    assert "Create tests for happy paths" in call_kwargs["body"]
-    assert "Line Coverage:" not in call_kwargs["body"]
-    assert "Statement Coverage:" not in call_kwargs["body"]
-    assert "Function Coverage:" not in call_kwargs["body"]
-    assert "Branch Coverage:" not in call_kwargs["body"]
+    assert (
+        call_kwargs["title"]
+        == "Schedule: Add unit and integration tests to `web/pickup/finishp.php`"
+    )
+    # Body should include the happy-path test guidance and exclude metric bullets for all-None coverage.
+    body = call_kwargs["body"]
+    has_metric_rows = any(
+        metric in body
+        for metric in (
+            "Line Coverage:",
+            "Statement Coverage:",
+            "Function Coverage:",
+            "Branch Coverage:",
+        )
+    )
+    assert not has_metric_rows
+    happy_start = body.find("Create tests for happy paths")
+    assert happy_start >= 0
 
 
 @patch("services.webhook.schedule_handler.add_labels")
@@ -1177,17 +1192,20 @@ def test_schedule_handler_partial_none_coverage_omits_none_metric(
     with patch("services.webhook.schedule_handler.update_issue_url"):
         result = schedule_handler(mock_event)
 
-    assert result["status"] == "success"
+    assert result is not None
     mock_create_pr.assert_called_once()
     call_kwargs = mock_create_pr.call_args.kwargs
     # Existing test file found → "Achieve 100% test coverage for"
-    assert "Achieve 100% test coverage for" in call_kwargs["title"]
-    assert "src/services/payment.php" in call_kwargs["title"]
-    # Body should show line/statement/function metrics but NOT branch (None = not measured)
-    assert "Line Coverage: 50%" in call_kwargs["body"]
-    assert "Statement Coverage: 50%" in call_kwargs["body"]
-    assert "Function Coverage: 50%" in call_kwargs["body"]
-    assert "Branch Coverage:" not in call_kwargs["body"]
+    assert (
+        call_kwargs["title"]
+        == "Schedule: Achieve 100% test coverage for `src/services/payment.php`"
+    )
+    # Body shows line/statement/function metrics (50% each) but NOT branch (None = not measured)
+    body = call_kwargs["body"]
+    assert body.find("Line Coverage: 50%") >= 0
+    assert body.find("Statement Coverage: 50%") >= 0
+    assert body.find("Function Coverage: 50%") >= 0
+    assert body.find("Branch Coverage:") == -1
 
 
 @patch("services.webhook.schedule_handler.get_all_coverages")
@@ -1245,10 +1263,9 @@ def test_get_file_tree_reads_from_clone_dir(
     ]
     mock_get_all_coverages.return_value = []
 
-    result = schedule_handler(mock_event)
+    schedule_handler(mock_event)
 
     # get_file_tree should be called with clone_dir (/tmp)
     mock_get_file_tree.assert_called_once_with(
         clone_dir="/tmp/test-org/test-repo", ref="master"
     )
-    assert result["message"] != "Schedule: No files found"

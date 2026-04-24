@@ -1,11 +1,15 @@
 import json
+import time
 from dataclasses import dataclass
 from typing import Literal
+
+from anthropic.types import MessageParam
 
 from constants.claude import MAX_OUTPUT_TOKENS
 from constants.models import ClaudeModelId
 from services.claude.client import claude
 from services.claude.evaluate_condition import OutputFormat
+from services.supabase.llm_requests.insert_llm_request import insert_llm_request
 from utils.error.handle_exceptions import handle_exceptions
 from utils.formatting.format_with_line_numbers import format_content_with_line_numbers
 from utils.logging.logging_config import logger
@@ -69,6 +73,8 @@ class CodeAnalysisResult:
 def is_code_untestable(
     file_path: str,
     file_content: str,
+    usage_id: int,
+    created_by: str,
     uncovered_lines: str | None = None,
     uncovered_functions: str | None = None,
     uncovered_branches: str | None = None,
@@ -121,19 +127,44 @@ def is_code_untestable(
 
 Is this code dead (unreachable/redundant) or genuinely untestable (reachable at runtime but impossible to test)?"""
 
+    model_id = ClaudeModelId.OPUS_4_7
+    user_msg: MessageParam = {"role": "user", "content": content}
+
     # Opus 4.7 deprecated the temperature parameter; passing it raises 400.
-    response = claude.beta.messages.create(
-        model=ClaudeModelId.OPUS_4_7,
-        max_tokens=MAX_OUTPUT_TOKENS[ClaudeModelId.OPUS_4_7],
+    start = time.time()
+    response = claude.messages.create(
+        model=model_id,
+        max_tokens=MAX_OUTPUT_TOKENS[model_id],
         system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": content}],
-        betas=["structured-outputs-2025-11-13"],
+        messages=[user_msg],
         output_config={"format": RESPONSE_SCHEMA},
     )
+    response_time_ms = int((time.time() - start) * 1000)
 
     text_attr = getattr(response.content[0], "text", "")
     if not isinstance(text_attr, str):
         logger.error("Expected str but got %s: %s", type(text_attr), text_attr)
+        output_message: MessageParam = {"role": "assistant", "content": ""}
+    else:
+        logger.info(
+            "is_code_untestable: received text response (%d chars)", len(text_attr)
+        )
+        output_message = {"role": "assistant", "content": text_attr}
+    insert_llm_request(
+        usage_id=usage_id,
+        provider="claude",
+        model_id=model_id,
+        input_messages=[user_msg],
+        input_tokens=response.usage.input_tokens if response.usage else 0,
+        output_message=output_message,
+        output_tokens=response.usage.output_tokens if response.usage else 0,
+        system_prompt=SYSTEM_PROMPT,
+        response_time_ms=response_time_ms,
+        created_by=created_by,
+    )
+
+    if not isinstance(text_attr, str):
+        logger.info("is_code_untestable returning None due to invalid response format")
         return None
 
     logger.info("is_code_untestable returning parsed result")

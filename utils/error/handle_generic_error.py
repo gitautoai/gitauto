@@ -19,15 +19,16 @@ def handle_generic_error(
     err_msg = f"{func_name} encountered an {type(err).__name__}: {err}\n\nArgs: {json.dumps(log_args, indent=2, default=str)}\n\nKwargs: {json.dumps(log_kwargs, indent=2, default=str)}"
 
     if is_server_error(err):
-        logger.warning("%s received server error, not reporting to Sentry", func_name)
-        logger.warning(err_msg)
+        logger.warning(
+            "%s server error (not reported to Sentry):\n%s", func_name, err_msg
+        )
     elif is_billing_error(err):
-        logger.warning("%s received billing error, not reporting to Sentry", func_name)
-        logger.warning(err_msg)
+        logger.warning(
+            "%s billing error (not reported to Sentry):\n%s", func_name, err_msg
+        )
     else:
-        logger.info("%s reporting generic error to Sentry", func_name)
         sentry_sdk.capture_exception(err)
-        logger.error(err_msg)
+        logger.error("%s generic error reported to Sentry:\n%s", func_name, err_msg)
 
     if raise_on_error:
         logger.error("%s generic error re-raising", func_name)

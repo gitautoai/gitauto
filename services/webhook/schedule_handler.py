@@ -42,8 +42,10 @@ from services.supabase.coverages.get_all_coverages import get_all_coverages
 from services.supabase.coverages.insert_coverages import insert_coverages
 from services.supabase.coverages.update_issue_url import update_issue_url
 from services.supabase.coverages.update_quality_checks import update_quality_checks
+from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.schedule_pauses.get_schedule_pause import get_schedule_pause
+from services.supabase.usage.update_usage import update_usage
 from services.stripe.check_availability import check_availability
 from services.supabase.credits.check_purchase_exists import check_purchase_exists
 from services.types.base_args import BaseArgs
@@ -72,10 +74,13 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     set_trigger("schedule")
     # Extract details from the event payload
     owner_id = event["ownerId"]
+    owner_type = event["ownerType"]
     owner_name = event["ownerName"]
     repo_id = event["repoId"]
     repo_name = event["repoName"]
+    user_id = event["userId"]
     user_name = event["userName"]
+    created_by = f"{user_id}:{user_name}"
     installation_id = event["installationId"]
 
     # Get installation access token - simplified since we already have installation_id
@@ -84,23 +89,27 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         # Delete scheduler since installation is invalid
         schedule_name = f"gitauto-repo-{owner_id}-{repo_id}"
         delete_scheduler(schedule_name)
-        msg = f"Installation {installation_id} no longer exists. Cleaned up scheduler."
-        logger.info(msg)
-        return {"status": "skipped", "message": msg}
+        logger.info(
+            "Installation %s no longer exists. Cleaned up scheduler.", installation_id
+        )
+        return None
 
     # Get repository settings - check if trigger_on_schedule is enabled
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
     if not repo_settings or not repo_settings.get("trigger_on_schedule"):
-        msg = f"Skipping repo_id: {repo_id} - trigger_on_schedule is not enabled"
-        logger.info(msg)
-        return {"status": "skipped", "message": msg}
+        logger.info("Repo %s trigger_on_schedule disabled; skipping", repo_id)
+        return None
 
     # Check if schedule is paused for this repo
     pause_info = get_schedule_pause(owner_id=owner_id, repo_id=repo_id)
     if pause_info:
-        msg = f"Skipping repo_id: {repo_id} - schedule is paused from {pause_info.pause_start} to {pause_info.pause_end}"
-        logger.info(msg)
-        return {"status": "skipped", "message": msg}
+        logger.info(
+            "Repo %s schedule paused from %s to %s; skipping",
+            repo_id,
+            pause_info.pause_start,
+            pause_info.pause_end,
+        )
+        return None
 
     # Check availability
     availability_status = check_availability(
@@ -111,7 +120,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     )
 
     if not availability_status["can_proceed"]:
-        return {"status": "skipped", "message": availability_status["log_message"]}
+        logger.info("Availability check denied: %s", availability_status["log_message"])
+        return None
 
     has_purchased = check_purchase_exists(owner_id=owner_id)
     model_id = get_preferred_model(
@@ -119,15 +129,43 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         is_paid=has_purchased,
     )
 
+    # Resolve sender email/display_name before create_user_request so the usage row is fully populated. Public-profile email is optional on GitHub so fall back to the most recent commit email.
+    sender_info = get_user_public_info(username=user_name, token=token)
+    sender_email = sender_info.email
+    if not sender_email:
+        logger.info("No public email for %s; falling back to commits", user_name)
+        sender_email = get_email_from_commits(
+            owner=owner_name, repo=repo_name, username=user_name, token=token
+        )
+    sender_display_name = sender_info.display_name or user_name
+
+    # Create the usage row up front so pre-selection LLM calls (evaluate_condition, evaluate_quality_checks) have a real usage_id to attribute cost to. pr_number=0 is a placeholder; it gets updated with the real number below once create_pull_request succeeds.
+    usage_id = create_user_request(
+        user_id=user_id,
+        user_name=user_name,
+        installation_id=installation_id,
+        owner_id=owner_id,
+        owner_type=owner_type,
+        owner_name=owner_name,
+        repo_id=repo_id,
+        repo_name=repo_name,
+        pr_number=0,
+        source="schedule",
+        trigger="schedule",
+        email=sender_email,
+        display_name=sender_display_name,
+    )
+    logger.info("schedule_handler: created usage_id=%s for pre-selection", usage_id)
+
     # Get repository files and coverage data
     clone_url = get_clone_url(owner_name, repo_name, token)
     target_branch = repo_settings.get("target_branch")
     if not target_branch:
+        logger.info("No configured target_branch; querying default branch")
         target_branch = get_default_branch(clone_url=clone_url)
         if not target_branch:
-            msg = f"Repository {owner_name}/{repo_name} is empty"
-            logger.info(msg)
-            return {"status": "skipped", "message": msg}
+            logger.info("Repository is empty; skipping")
+            return None
 
     # Clone directly to /tmp
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number=None)
@@ -156,9 +194,11 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             (c for c in all_coverages if c["full_path"] == file_path), None
         )
         if coverages:
+            logger.debug("Enriching existing coverage row for %s", file_path)
             coverages["file_size"] = file_size
             enriched_all_files.append(coverages)
         else:
+            logger.debug("Creating new coverage placeholder for %s", file_path)
             new_coverage: Coverages = {
                 "id": 0,
                 "full_path": file_path,
@@ -191,9 +231,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             enriched_all_files.append(new_coverage)
 
     if not enriched_all_files:
-        msg = "Schedule: No files found"
-        logger.warning(msg)
-        return {"status": "skipped", "message": msg}
+        logger.warning("Schedule: no files found")
+        return None
 
     # Separate files into coverage candidates (<100%) and quality-only candidates (100%)
     files_needing_coverage: list[Coverages] = []
@@ -426,6 +465,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         eval_result = evaluate_condition(
             content=f"File path: {item_path}\n\nContent:\n{content}",
             system_prompt=SHOULD_TEST_FILE_PROMPT,
+            usage_id=usage_id,
+            created_by=created_by,
         )
         should_test, reason = eval_result.result, eval_result.reason
         if not should_test:
@@ -463,6 +504,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
             # Skip non-code and test files (but NOT excluded files - quality checks still apply)
             if not is_code_file(item_path) or is_test_file(item_path):
+                logger.info(
+                    "Skipping non-code/test file %s for quality loop", item_path
+                )
                 continue
 
             # Skip files with open PRs
@@ -499,6 +543,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                 current_test_sha=current_test_sha,
                 current_checklist_hash=checklist_hash,
             ):
+                logger.info("Quality re-eval not needed for %s", item_path)
                 continue
 
             # Fetch source and test content
@@ -512,6 +557,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             for tp in test_file_paths:
                 content = read_local_file(file_path=tp, base_dir=clone_dir)
                 if content and content.strip():
+                    logger.debug("Quality loop: including test file %s", tp)
                     test_files.append((tp, content))
 
             logger.info("Evaluating quality checks for %s", item_path)
@@ -520,6 +566,8 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                 source_path=item_path,
                 test_files=test_files,
                 model=model_id,
+                usage_id=usage_id,
+                created_by=created_by,
             )
             if quality_results is None:
                 logger.warning(
@@ -563,16 +611,16 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             break
 
     if target_item is None:
-        logger.info("No target file found from either coverage or quality loops")
         checked_files = [f["full_path"] for f in files_needing_coverage]
         quality_files = [f["full_path"] for f in files_at_full_coverage]
-        msg = (
-            f"No suitable file found after checking"
-            f" {len(checked_files)} coverage files: {checked_files},"
-            f" {len(quality_files)} quality files: {quality_files}"
+        logger.warning(
+            "No suitable file found after checking %d coverage files: %s, %d quality files: %s",
+            len(checked_files),
+            checked_files,
+            len(quality_files),
+            quality_files,
         )
-        logger.warning(msg)
-        return {"status": "skipped", "message": msg}
+        return None
 
     logger.info(
         "Target file: %s (quality_only=%s)", target_item["full_path"], quality_only
@@ -604,18 +652,10 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         quality_checks=quality_results,
     )
 
-    # --- Create PR (shared for both coverage and quality) ---
-    sender_info = get_user_public_info(username=user_name, token=token)
-    sender_email = sender_info.email
-    if not sender_email:
-        sender_email = get_email_from_commits(
-            owner=owner_name, repo=repo_name, username=user_name, token=token
-        )
-
     # Create a PR
     new_branch = generate_branch_name(trigger="schedule")
     base_args: BaseArgs = {
-        "owner_type": event["ownerType"],
+        "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
         "repo_id": repo_id,
@@ -626,10 +666,10 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         "new_branch": new_branch,
         "installation_id": installation_id,
         "token": token,
-        "sender_id": event["userId"],
+        "sender_id": user_id,
         "sender_name": user_name,
         "sender_email": sender_email,
-        "sender_display_name": sender_info.display_name,
+        "sender_display_name": sender_display_name,
         "reviewers": [user_name],
         "github_urls": [],
         "other_urls": [],
@@ -642,6 +682,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         "model_id": model_id,
         "verify_consecutive_failures": 0,
         "quality_gate_fail_count": 0,
+        "usage_id": usage_id,
     }
     latest_sha = get_latest_remote_commit_sha(clone_url=clone_url, base_args=base_args)
     create_remote_branch(sha=latest_sha, base_args=base_args)
@@ -659,6 +700,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     base_args["pr_number"] = pr_number
     base_args["pr_title"] = title
     base_args["pr_body"] = pr_body
+    update_usage(usage_id=usage_id, pr_number=pr_number, issue_number=pr_number)
 
     # Add gitauto label to trigger issues.labeled webhook, which runs the agent
     add_labels(
@@ -671,6 +713,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     # --- Update DB records ---
     if quality_only and quality_results:
+        logger.info("Updating DB: quality-only PR branch")
         # Update quality check results
         update_quality_checks(
             owner_id=owner_id,
@@ -691,6 +734,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             updated_by=user_name,
         )
     elif target_item["id"] == 0:
+        logger.info("Updating DB: new coverage record for %s", target_path)
         coverage_record: CoveragesInsert = {
             "full_path": target_item["full_path"],
             "owner_id": target_item["owner_id"],
@@ -720,6 +764,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         }
         insert_coverages(coverage_record)
     else:
+        logger.info("Updating DB: issue URL for existing coverage row %s", target_path)
         update_issue_url(
             owner_id=owner_id,
             repo_id=repo_id,
@@ -728,6 +773,5 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             updated_by=user_name,
         )
 
-    msg = f"created PR for {target_path}: {pr_url}"
-    logger.info(msg)
-    return {"status": "success", "message": msg}
+    logger.info("created PR for %s: %s", target_path, pr_url)
+    return pr_url

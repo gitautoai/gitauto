@@ -18,6 +18,12 @@ SEGFAULT_LOG_PATH = Path("payloads/github/check_suite/segfault_phpunit_log.txt")
 PR714_FOXDEN_RATING_QUOTING_LOG_PATH = Path(
     "utils/logs/fixtures/foxden_rating_quoting_pr714_circleci_log.txt"
 )
+PR1157_FOXCOM_FORMS_CODECOV_CHECKSUM_LOG_PATH = Path(
+    "utils/logs/fixtures/foxcom_forms_pr1157_codecov_checksum_circleci_log.txt"
+)
+PR1158_FOXCOM_FORMS_CODECOV_BAD_SIGNATURE_LOG_PATH = Path(
+    "utils/logs/fixtures/foxcom_forms_pr1158_codecov_bad_signature_circleci_log.txt"
+)
 
 NORMAL_TEST_FAILURE_LOG = """\
 PHPUnit 9.6.27 by Sebastian Bergmann and contributors.
@@ -31,6 +37,17 @@ Tests: 18, Assertions: 25, Failures: 2
 Failed asserting that 1 is identical to '1'.
 """
 
+TERRAFORM_BUCKET_REGION_ERROR_LOG = """\
+CircleCI Build Log: terraform init
+
+Initializing the backend...
+
+Successfully configured the backend "s3"! Terraform will automatically
+use this backend unless the backend configuration changes.
+Error refreshing state: BucketRegionError: incorrect region, the bucket is not in 'us-west-1' region at endpoint '', bucket is in 'eu-west-3' region
+status code: 301
+"""
+
 
 def test_detect_infra_failure_real_segfault_log():
     real_log = SEGFAULT_LOG_PATH.read_text(encoding="utf-8")
@@ -42,6 +59,10 @@ def test_detect_infra_failure_real_segfault_log():
     "error_log, expected",
     [
         # Package registry failures
+        (
+            TERRAFORM_BUCKET_REGION_ERROR_LOG,
+            "BucketRegionError",
+        ),
         (
             'error An unexpected error occurred: "https://registry.yarnpkg.com/...: '
             'Request failed "502 Bad Gateway""\n',
@@ -98,6 +119,7 @@ def test_detect_infra_failure_real_segfault_log():
         ),
     ],
     ids=[
+        "terraform_bucket_region_error",
         "yarn_502",
         "503_service_unavailable",
         "429_too_many_requests",
@@ -140,3 +162,17 @@ def test_strip_jest_noise_removes_app_level_access_denied_warn():
     # Jest still ran and reported real assertion failures further down; classifier must return None so the LLM fix path handles them.
     real_log = PR714_FOXDEN_RATING_QUOTING_LOG_PATH.read_text(encoding="utf-8")
     assert detect_infra_failure(real_log) is None
+
+
+def test_detect_infra_failure_real_codecov_checksum_mismatch_log():
+    real_log = PR1157_FOXCOM_FORMS_CODECOV_CHECKSUM_LOG_PATH.read_text(
+        encoding="utf-8"
+    )
+    assert detect_infra_failure(real_log) == "Validate Codecov Uploader"
+
+
+def test_detect_infra_failure_real_codecov_bad_signature_log():
+    real_log = PR1158_FOXCOM_FORMS_CODECOV_BAD_SIGNATURE_LOG_PATH.read_text(
+        encoding="utf-8"
+    )
+    assert detect_infra_failure(real_log) == "Validate Codecov Uploader"

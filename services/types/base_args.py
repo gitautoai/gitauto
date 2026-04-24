@@ -36,6 +36,7 @@ class BaseArgs(TypedDict):
     model_id: ModelId
     verify_consecutive_failures: int
     quality_gate_fail_count: int
+    usage_id: int
 
     # Optional fields
     check_run_name: NotRequired[str]
@@ -50,7 +51,6 @@ class BaseArgs(TypedDict):
     skip_ci: NotRequired[bool]
     last_quality_error: NotRequired[str]
     slack_thread_ts: NotRequired[str | None]
-    usage_id: NotRequired[int]
 
 
 class ReviewBaseArgs(BaseArgs):

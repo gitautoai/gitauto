@@ -71,7 +71,7 @@ def handler(event, context):
         owner_name = event["owner_name"]
         repo_name = event["repo_name"]
         set_owner_repo(owner_name, repo_name)
-        logger.info("Processing single repo %s/%s", owner_name, repo_name)
+        logger.info("handler: dispatching setup_installed_repository event")
         setup_installed_repository(
             owner_id=event["owner_id"],
             owner_name=owner_name,
@@ -97,16 +97,10 @@ def handler(event, context):
             f"Event Scheduler started for {owner_name}/{repo_name}"
         )
 
-        result = schedule_handler(event=event)
-        if result and result["status"] == "success":
-            slack_notify("Completed", thread_ts)
-        elif result and result["status"] == "skipped":
-            slack_notify(f"Skipped: {result.get('message', '')}", thread_ts)
-        elif result:
-            slack_notify(
-                f"<!channel> Failed: {result.get('message', 'Unknown error')}",
-                thread_ts,
-            )
+        pr_url = schedule_handler(event=event)
+        if pr_url:
+            logger.info("schedule_handler created PR %s", pr_url)
+            slack_notify(f"Completed: {pr_url}", thread_ts)
         return None
 
     # Python 3.14 removed implicit event loop creation in asyncio.get_event_loop(), which Mangum's HTTPCycle.__call__ still uses. Ensure one exists before each request.
@@ -117,6 +111,7 @@ def handler(event, context):
         asyncio.set_event_loop(asyncio.new_event_loop())
 
     # mangum_handler converts requests from API Gateway to FastAPI routing system
+    logger.info("handler: delegating to mangum_handler")
     return mangum_handler(event=event, context=context)
 
 
@@ -157,6 +152,7 @@ async def handle_webhook(request: Request) -> dict[str, str]:
             qs=request_body.decode(encoding=UTF8)
         )
         if "payload" in decoded_body:
+            logger.info("handle_webhook: URL-encoded payload wrapper detected")
             try:
                 payload = json.loads(s=decoded_body["payload"][0])
             except json.JSONDecodeError:
@@ -167,12 +163,14 @@ async def handle_webhook(request: Request) -> dict[str, str]:
 
     # Add delivery_id to lambda_info for debugging
     if lambda_info is None:
+        logger.info("handle_webhook: lambda_info absent; initializing")
         lambda_info = {}
     lambda_info["delivery_id"] = delivery_id
 
     # Set logging context for owner/repo (most webhook payloads have repository field)
     repository = payload.get("repository", {})
     if repository:
+        logger.info("handle_webhook: setting owner/repo context from payload")
         set_owner_repo(
             repository.get("owner", {}).get("login", ""), repository.get("name", "")
         )
@@ -180,11 +178,13 @@ async def handle_webhook(request: Request) -> dict[str, str]:
     await handle_webhook_event(
         event_name=event_name, payload=payload, lambda_info=lambda_info
     )
+    logger.info("handle_webhook: delivery_id=%s processed", delivery_id)
     return {"message": "Webhook processed successfully"}
 
 
 @app.get(path="/")
 async def root() -> dict[str, str]:
+    logger.info("root: returning product name")
     return {"message": PRODUCT_NAME}
 
 
@@ -214,6 +214,7 @@ async def api_sync_files_from_github_to_coverage(
         user_name=body.user_name,
         api_key=api_key,
     )
+    logger.info("api_sync_files_from_github_to_coverage: queued")
     return {"status": "syncing"}
 
 
@@ -248,6 +249,7 @@ async def api_retarget_pr(
         pr_number=body.pr_number,
         installation_id=body.installation_id,
     )
+    logger.info("api_retarget_pr: queued PR #%s", body.pr_number)
     return {"status": "processing"}
 
 
@@ -262,6 +264,7 @@ async def setup_coverage_workflow(
     source: str = Header("", alias="X-Source"),
 ):
     verify_api_key(api_key)
+    logger.info("setup_coverage_workflow: invoking setup_handler")
     return await setup_handler(
         owner_name=owner,
         repo_name=repo,

@@ -177,7 +177,6 @@ async def handle_review_run(
     # Batch: when a reviewer (e.g. Devin) submits a review with N inline comments, GitHub fires N webhooks. Without dedup, each triggers a separate Lambda that races to push, wasting tokens. Only one invocation wins the lock; it sleeps, fetches all comments, and handles them in one session.
     review_inline_comments: list[ReviewComment] = []
     if pull_request_review_id and trigger == "pr_file_review":
-        logger.info("Attempting batch dedup for review_id=%d", pull_request_review_id)
         dedup_key = f"review-dedup-{repo_id}-{pr_number}-{pull_request_review_id}"
         inserted = insert_webhook_delivery(
             delivery_id=dedup_key, event_name="pr_file_review_dedup"
@@ -191,7 +190,6 @@ async def handle_review_run(
             return
 
         # Real data: Devin review_id 4117870568 on SpiderPlus PR #13871 (2026-04-16) had 4 inline comments created 01:57:24–01:57:32 UTC but submitted together at 01:57:33 — GitHub webhooks fire at submission (~1s apart). 10s gives ample headroom including Lambda cold starts.
-        logger.info("Won batch lock, sleeping 10s for sibling webhooks")
         time.sleep(10)
         review_inline_comments = (
             get_review_inline_comments(
@@ -204,9 +202,9 @@ async def handle_review_run(
             or []
         )
         logger.info(
-            "Fetched %d inline comments from review %d",
-            len(review_inline_comments),
+            "Won batch dedup lock for review_id=%d; fetched %d inline comments after 10s sibling wait",
             pull_request_review_id,
+            len(review_inline_comments),
         )
 
     # Get list of changed files in the PR (used for bot relevance check and later for file processing)
@@ -320,6 +318,24 @@ async def handle_review_run(
         display_name = sender_info.display_name or sender_name
         slack_notify(f"<!channel> {display_name}: {review_body}", thread_ts)
 
+    # Create the usage row up front so base_args carries a real usage_id and every downstream LLM call attributes cost correctly.
+    usage_id = create_user_request(
+        user_id=sender_id,
+        user_name=sender_name,
+        installation_id=installation_id,
+        owner_id=owner_id,
+        owner_type=owner_type,
+        owner_name=owner_name,
+        repo_id=repo_id,
+        repo_name=repo_name,
+        pr_number=pr_number,
+        source="github",
+        trigger=trigger,
+        email=sender_info.email,
+        display_name=sender_info.display_name,
+        lambda_info=lambda_info,
+    )
+
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args: ReviewBaseArgs = {
         # Required fields
@@ -370,6 +386,7 @@ async def handle_review_run(
         "model_id": model_id,
         "verify_consecutive_failures": 0,
         "quality_gate_fail_count": 0,
+        "usage_id": usage_id,
         "trigger": trigger,
         "skip_ci": True,
         "slack_thread_ts": thread_ts,
@@ -429,25 +446,6 @@ async def handle_review_run(
         repo_name=repo_name,
     )
     logger.info("php: ready=%s", php_ready)
-
-    # Create a usage record
-    usage_id = create_user_request(
-        user_id=sender_id,
-        user_name=sender_name,
-        installation_id=installation_id,
-        owner_id=owner_id,
-        owner_type=owner_type,
-        owner_name=owner_name,
-        repo_id=repo_id,
-        repo_name=repo_name,
-        pr_number=pr_number,
-        source="github",
-        trigger=trigger,
-        email=sender_info.email,
-        display_name=sender_info.display_name,
-        lambda_info=lambda_info,
-    )
-    base_args["usage_id"] = usage_id
 
     # Greeting and progress tracking (skip for bots to avoid triggering bot-to-bot noise)
     p = 0
@@ -553,13 +551,13 @@ async def handle_review_run(
     base_args["baseline_tsc_errors"] = set(validation_result.tsc_errors)
     pre_existing_errors = ""
     if validation_result.errors:
+        pre_existing_errors = "\n".join(validation_result.errors)
         logger.warning(
-            "Pre-existing validation errors on PR #%s before edits begin: %d errors",
+            "Pre-existing validation errors on PR #%s before edits begin (%d):\n%s",
             pr_number,
             len(validation_result.errors),
+            pre_existing_errors,
         )
-        pre_existing_errors = "\n".join(validation_result.errors)
-        logger.warning("Remaining errors:\n%s", pre_existing_errors)
     fixes_applied = validation_result.fixes_applied
 
     # Get repository settings
@@ -657,12 +655,11 @@ async def handle_review_run(
             "trigger_on_review_comment"
         ):
             logger.info(
-                "Review-comment trigger was disabled mid-execution on PR #%s; breaking loop",
+                "Review-comment trigger disabled mid-execution on PR #%s; breaking",
                 pr_number,
             )
             is_completed = True
             completion_reason = "Stopped because the review comment trigger was disabled during execution."
-            logger.info(completion_reason)
             break
 
         # Check if the review thread was resolved while we were working
@@ -702,15 +699,11 @@ async def handle_review_run(
 
         if result.concurrent_push_detected:
             logger.warning(
-                "review_run: chat_with_agent reported concurrent_push_detected on PR #%s; breaking agent loop to bail cleanly",
+                "review_run: concurrent push on PR #%s; breaking agent loop",
                 pr_number,
             )
             concurrent_push_detected = True
             completion_reason = f"Another commit landed on `{base_args['new_branch']}` while I was handling your review. Their push triggers CI on its own, so I'm stopping here — your push stands."
-            logger.info(
-                "review_run: breaking agent loop on PR #%s due to concurrent push",
-                pr_number,
-            )
             break
 
         if is_completed:
@@ -774,15 +767,13 @@ async def handle_review_run(
 
     # Use the agent's own explanation as the final reply, or a fallback if empty
     if not completion_reason:
-        logger.warning(
-            "Agent returned empty completion_reason for PR #%s; filling in fallback reply",
-            pr_number,
-        )
         completion_reason = (
             "Done." if is_completed else "I was unable to complete this task."
         )
         logger.warning(
-            "completion_reason was empty, using fallback: %s", completion_reason
+            "Agent returned empty completion_reason for PR #%s; using fallback: %s",
+            pr_number,
+            completion_reason,
         )
     if not review_path:
         logger.info(

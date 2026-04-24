@@ -100,3 +100,62 @@ def test_insert_llm_request_database_error(mock_supabase):
     )
 
     assert result is None
+
+
+@patch("services.supabase.llm_requests.insert_llm_request.supabase")
+@patch("services.supabase.llm_requests.insert_llm_request.calculate_costs")
+def test_insert_llm_request_prepends_system_prompt(mock_calculate_costs, mock_supabase):
+    mock_calculate_costs.return_value = (0.001, 0.005)
+    mock_result = Mock()
+    mock_result.data = [MOCK_DB_ROW]
+    mock_supabase.table.return_value.insert.return_value.execute.return_value = (
+        mock_result
+    )
+
+    user_msg: MessageParam = {"role": "user", "content": "hi"}
+    result = insert_llm_request(
+        usage_id=1,
+        provider="claude",
+        model_id=ClaudeModelId.SONNET_4_6,
+        input_messages=[user_msg],
+        input_tokens=10,
+        output_message={"role": "assistant", "content": "ok"},
+        output_tokens=5,
+        created_by="test",
+        system_prompt="You are a helpful assistant.",
+    )
+
+    assert result is not None
+    inserted = mock_supabase.table.return_value.insert.call_args[0][0]
+    stored_messages = json.loads(inserted["input_content"])
+    assert stored_messages == [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "hi"},
+    ]
+
+
+@patch("services.supabase.llm_requests.insert_llm_request.supabase")
+@patch("services.supabase.llm_requests.insert_llm_request.calculate_costs")
+def test_insert_llm_request_no_system_prompt(mock_calculate_costs, mock_supabase):
+    mock_calculate_costs.return_value = (0.001, 0.005)
+    mock_result = Mock()
+    mock_result.data = [MOCK_DB_ROW]
+    mock_supabase.table.return_value.insert.return_value.execute.return_value = (
+        mock_result
+    )
+
+    user_msg: MessageParam = {"role": "user", "content": "hi"}
+    insert_llm_request(
+        usage_id=1,
+        provider="claude",
+        model_id=ClaudeModelId.SONNET_4_6,
+        input_messages=[user_msg],
+        input_tokens=10,
+        output_message={"role": "assistant", "content": "ok"},
+        output_tokens=5,
+        created_by="test",
+    )
+
+    inserted = mock_supabase.table.return_value.insert.call_args[0][0]
+    stored_messages = json.loads(inserted["input_content"])
+    assert stored_messages == [{"role": "user", "content": "hi"}]

@@ -40,6 +40,7 @@ def git_diff(
     # HEAD    = current commit on the PR branch
     cmd = ["git", "diff", f"origin/{base_branch}...HEAD"]
     if file_path:
+        logger.info("git_diff: scoping to file_path=%s", file_path)
         cmd.extend(["--", file_path.strip("/")])
 
     result = run_subprocess(args=cmd, cwd=clone_dir)

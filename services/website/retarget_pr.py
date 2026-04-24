@@ -64,6 +64,7 @@ def retarget_pr(
         verify_consecutive_failures=0,
         quality_gate_fail_count=0,
         model_id=DEFAULT_FREE_MODEL,
+        usage_id=0,
     )
     logger.info("Retargeting PR #%d to %s", pr_number, new_base_branch)
     reset_pr_branch_to_new_base(base_args=base_args, new_base_branch=new_base_branch)

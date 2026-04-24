@@ -107,17 +107,15 @@ def chat_with_claude(
         else 0
     )
 
-    # Combine system message with user messages for logging
-    system_msg: MessageParam = {"role": "user", "content": system_content}
-    full_messages = [system_msg, *messages]
     llm_record = insert_llm_request(
         usage_id=usage_id,
         provider="claude",
         model_id=model_id,
-        input_messages=full_messages,
+        input_messages=messages,
         input_tokens=token_input,
         output_message=assistant_message,
         output_tokens=token_output,
+        system_prompt=system_content,
         response_time_ms=response_time_ms,
         created_by=created_by,
     )

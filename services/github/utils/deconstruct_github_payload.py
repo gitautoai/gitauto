@@ -1,6 +1,3 @@
-# Standard library imports
-from typing import cast
-
 # Local imports
 from constants.models import DEFAULT_FREE_MODEL
 from services.git.check_branch_exists import check_branch_exists
@@ -49,16 +46,14 @@ def deconstruct_github_payload(
 
     # Get repository rules from Supabase
     repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
-    target_branch = (
-        cast(str | None, repo_settings["target_branch"]) if repo_settings else None
-    )
+    target_branch = repo_settings["target_branch"] if repo_settings else None
 
     # If target branch is set and exists in the repository, use it, otherwise use default branch
     if target_branch and check_branch_exists(
         clone_url=clone_url, branch_name=target_branch
     ):
-        base_branch_name = target_branch
         logger.info("Using target branch: %s", target_branch)
+        base_branch_name = target_branch
 
     # Extract sender related variables
     sender_id = payload["sender"]["id"]
@@ -75,6 +70,7 @@ def deconstruct_github_payload(
     sender_info = get_user_public_info(username=sender_name, token=token)
     sender_email = sender_info.email
     if not sender_email:
+        logger.info("No public email for %s; falling back to commits", sender_name)
         sender_email = get_email_from_commits(
             owner=owner_name, repo=repo_name, username=sender_name, token=token
         )
@@ -108,6 +104,8 @@ def deconstruct_github_payload(
         "model_id": DEFAULT_FREE_MODEL,  # Placeholder — caller overrides after billing check
         "verify_consecutive_failures": 0,
         "quality_gate_fail_count": 0,
+        "usage_id": 0,  # Placeholder — caller sets after create_user_request
     }
 
+    logger.info("deconstruct_github_payload: returning base_args for PR #%s", pr_number)
     return base_args, repo_settings

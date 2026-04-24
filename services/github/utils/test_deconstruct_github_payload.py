@@ -125,6 +125,8 @@ def test_deconstruct_github_payload_basic_functionality(
     assert base_args["reviewers"] == []
     assert base_args["github_urls"] == ["https://github.com"]
     assert base_args["other_urls"] == ["https://example.com"]
+    # Placeholder populated by create_user_request downstream; deconstruct emits 0.
+    assert base_args["usage_id"] == 0
     # Verify _
     assert _ == {"target_branch": None}
 
@@ -148,7 +150,7 @@ def test_deconstruct_github_payload_no_token_raises_error(
     # Call the function and expect ValueError to propagate
     with pytest.raises(ValueError) as excinfo:
         deconstruct_github_payload(payload)
-    assert "Installation 67890 suspended or deleted" in str(excinfo.value)
+    assert str(excinfo.value) == "Installation 67890 suspended or deleted"
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_clone_url")

@@ -21,27 +21,28 @@ def handle_http_error(
     # Rate-limit retry (github primary/secondary, generic Retry-After) is handled at the outer handle_exceptions level via get_rate_limit_retry_after. By the time we get here, a rate-limited HTTPError means the retry budget was already exhausted — treat it like any other HTTPError.
     _ = retry_callback  # kept in signature for backward-compat with handle_exceptions
     if err.response is None:
-        logger.info("%s HTTPError has no response object", func_name)
         if raise_on_error:
-            logger.error("%s HTTPError with no response, re-raising", func_name)
+            logger.error("%s HTTPError with no response; re-raising", func_name)
             raise err
-
-        logger.info("%s HTTPError with no response, returning default", func_name)
+        logger.info("%s HTTPError with no response; returning default", func_name)
         return error_return, False
 
     status_code: int = err.response.status_code
 
     if is_server_error(err):
+        if raise_on_error:
+            logger.error(
+                "%s server error %s; re-raising (not reported to Sentry)",
+                func_name,
+                status_code,
+            )
+            raise err
+
         logger.warning(
-            "%s received server error %s, not reporting to Sentry",
+            "%s server error %s; returning default (not reported to Sentry)",
             func_name,
             status_code,
         )
-        if raise_on_error:
-            logger.error("%s re-raising server error %s", func_name, status_code)
-            raise err
-
-        logger.info("%s returning default for server error %s", func_name, status_code)
         return error_return, False
 
     reason: str | Any = (
@@ -53,10 +54,11 @@ def handle_http_error(
     logger.error("reason: %s, text: %s, status_code: %s", reason, text, status_code)
 
     if api_type == "web_search" and status_code == 429:
-        logger.info("%s web_search hit 429, raising", func_name)
-        err_msg = f"Web Search Rate Limit in {func_name}()"
-        logger.error(err_msg)
-        logger.error("err.response.headers: %s", err.response.headers)
+        logger.error(
+            "%s web_search hit 429: Web Search Rate Limit; headers=%s; raising",
+            func_name,
+            err.response.headers,
+        )
         raise err
 
     logger.info("%s reporting HTTPError to Sentry", func_name)
