@@ -428,7 +428,8 @@ async def verify_task_is_complete(
                     "No last quality error stored, skipping self-review comment"
                 )
         else:
-            logger.info("Running programmatic quality gate first (cheap filter)")
+            logger.info("Running quality gate (fail count=%d)", quality_gate_fail_count)
+            gate_result = run_quality_gate(
                 clone_dir=clone_dir, impl_file=impl_file, base_args=base_args
             )
             if gate_result.error:

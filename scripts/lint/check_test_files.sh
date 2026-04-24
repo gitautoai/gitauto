@@ -23,6 +23,13 @@ STAGED_IMPL_MODIFIED=$(git diff --cached --name-only --diff-filter=M -- '*.py' \
 STAGED_ALL=$(git diff --cached --name-only || true)
 FAIL=0
 
+# Resolve the PR base. origin/main is the default target branch for this repo.
+# If the branch hasn't been pushed or origin/main isn't present (fresh clone), fall back gracefully.
+PR_BASE="origin/main"
+if ! git rev-parse --verify --quiet "$PR_BASE" >/dev/null 2>&1; then
+    PR_BASE=""
+fi
+
 # Check 1: New impl files must have a test file (staged or already existing)
 if [ -n "$STAGED_IMPL_NEW" ]; then
     for file in $STAGED_IMPL_NEW; do
@@ -59,9 +66,14 @@ if [ -n "$STAGED_IMPL_MODIFIED" ]; then
             if ! echo "$STAGED_ALL" | grep -qF "$test_file"; then
                 if ! git diff --quiet "$test_file" 2>/dev/null; then
                     echo "TEST NOT STAGED: $test_file has changes, stage it"
-                else
-                    echo "TEST NOT UPDATED: $file changed but $test_file has no changes, update it"
+                    FAIL=1
+                    continue
                 fi
+                # PR-level check: if the current branch has already modified this test file in earlier commits (vs the PR base), the PR as a whole has a test update. Don't demand a fresh test change on every follow-up commit — revert/fix-up commits would fail spuriously.
+                if [ -n "$PR_BASE" ] && ! git diff --quiet "$PR_BASE"..HEAD -- "$test_file" 2>/dev/null; then
+                    continue
+                fi
+                echo "TEST NOT UPDATED: $file changed but $test_file has no changes, update it"
                 FAIL=1
             fi
         fi
