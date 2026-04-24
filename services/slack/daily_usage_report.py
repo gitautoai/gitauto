@@ -29,7 +29,8 @@ PT = ZoneInfo("America/Los_Angeles")
 def generate_daily_usage_report():
     """Query last 24h usage/credits/llm_requests, format by scheduled repos, post to Slack."""
     now = datetime.now(tz=timezone.utc)
-    twenty_four_hours_ago = (now - timedelta(hours=24)).isoformat()
+    window_start = now - timedelta(hours=24)
+    twenty_four_hours_ago = window_start.isoformat()
     logger.info("Daily usage report window starts at %s", twenty_four_hours_ago)
 
     # Base: enabled AWS EventBridge schedules
@@ -44,8 +45,64 @@ def generate_daily_usage_report():
         .execute()
     )
     usage_rows = usage_result.data or []
-    usage_ids = [row["id"] for row in usage_rows]
     logger.debug("Loaded %d usage rows", len(usage_rows))
+
+    # A PR counts only if its first-ever usage row (== when GitAuto first touched it) falls inside the 24h window. Runs on PRs that first appeared earlier are dropped entirely so yesterday's PRs don't leak into today's report.
+    pr_tuples = sorted(
+        {
+            (row["owner_name"], row["repo_name"], row["pr_number"])
+            for row in usage_rows
+            if row["pr_number"] and row["pr_number"] > 0
+        }
+    )
+    eligible_pr_tuples: set[tuple[str, str, int]] = set()
+    for owner, repo, pr_num in pr_tuples:
+        first_row = (
+            supabase.table("usage")
+            .select("created_at")
+            .eq("owner_name", owner)
+            .eq("repo_name", repo)
+            .eq("pr_number", pr_num)
+            .order("created_at")
+            .limit(1)
+            .execute()
+        )
+        data = first_row.data or []
+        if not data:
+            logger.warning(
+                "No usage rows found for %s/%s#%s; excluding", owner, repo, pr_num
+            )
+            continue
+        first_created_at = datetime.fromisoformat(
+            data[0]["created_at"].replace("Z", "+00:00")
+        )
+        if first_created_at >= window_start:
+            logger.info(
+                "Keeping %s/%s#%s (first usage %s)",
+                owner,
+                repo,
+                pr_num,
+                first_created_at.isoformat(),
+            )
+            eligible_pr_tuples.add((owner, repo, pr_num))
+        else:
+            logger.info(
+                "Excluding %s/%s#%s (first usage %s, before window start)",
+                owner,
+                repo,
+                pr_num,
+                first_created_at.isoformat(),
+            )
+
+    usage_rows = [
+        row
+        for row in usage_rows
+        if not row["pr_number"]
+        or row["pr_number"] <= 0
+        or (row["owner_name"], row["repo_name"], row["pr_number"]) in eligible_pr_tuples
+    ]
+    usage_ids = [row["id"] for row in usage_rows]
+    logger.info("After PR-creation filter: %d usage rows remain", len(usage_rows))
 
     # Revenue: paid inflows in window (purchases + auto_reload top-ups)
     revenue_result = (
