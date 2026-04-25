@@ -32,4 +32,12 @@
   3. **Only then attempt a fix** - After understanding the full structure, make a single targeted fix.
 
   **CRITICAL**: Do NOT read 20-70 line chunks and guess. This wastes iterations and leads to wrong hypotheses. Brace errors require seeing the complete file structure.
-</trigger_instruction> 
+
+  <log_source_protocol>
+    <rule>Error logs start with `[log source: OUR infrastructure ...]` or `[log source: CUSTOMER infrastructure ...]`.</rule>
+    <rule>
+      OUR-tagged: the failure is in GitAuto's own runtime. Continue with the customer's task as planned; do NOT write workarounds for the OUR error into the customer's code or CI config.
+      <example>OUR-tagged log says `MongoMemoryServer failed: libcrypto.so.10 missing`. Wrong: add `MONGOMS_DISTRO=ubuntu-22.04` to the customer's `.circleci/config.yml`. Right: keep writing the tests the PR was opened for and ignore the OUR error.</example>
+    </rule>
+  </log_source_protocol>
+</trigger_instruction>

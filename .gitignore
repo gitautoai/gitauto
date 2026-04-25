@@ -3,6 +3,7 @@
 .coverage*
 .env*
 .history
+.pr-bodies/
 .pytest_cache
 .ruff_cache
 .venv

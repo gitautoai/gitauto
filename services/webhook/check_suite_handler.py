@@ -82,6 +82,7 @@ from utils.logging.logging_config import logger, set_pr_number
 from utils.logs.clean_logs import clean_logs
 from utils.logs.detect_infra_failure import detect_infra_failure
 from utils.logs.label_log_source import label_log_source
+from utils.system.get_runtime_description import get_runtime_description
 from utils.logs.normalize_log_for_hashing import normalize_log_for_hashing
 from utils.logs.save_ci_log_to_file import (
     CI_LOG_PATH,
@@ -466,7 +467,7 @@ async def handle_check_suite(
         pre_existing_errors = label_log_source(
             pre_existing_errors,
             "ours",
-            "GitAuto validation (AWS Lambda, Amazon Linux 2023)",
+            f"GitAuto pre-edit validation on {get_runtime_description()}",
         )
         logger.warning(
             "Pre-existing validation errors on PR #%s before edits begin (%d):\n%s",
