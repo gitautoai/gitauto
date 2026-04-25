@@ -310,6 +310,48 @@ def test_integration_text_response(mock_insert):
 )
 @pytest.mark.integration
 @patch("services.google_ai.chat_with_google.insert_llm_request")
+def test_integration_consecutive_same_role_contents(mock_insert):
+    """Verifies whether Gemma accepts two consecutive assistant ('model') turns.
+
+    After remove_tool_pairs strips an outdated tool_use, an assistant message
+    can be left with only text and the matching user tool_result is popped, so
+    two assistant messages can end up adjacent. Anthropic auto-merges; Google
+    docs are silent on this. This test calls the real API with such a payload
+    and asserts no error.
+
+    If this ever starts failing with a 400 INVALID_ARGUMENT, the
+    merge_consecutive_same_role step in remove_outdated_messages is the only
+    thing protecting us — keep it.
+    """
+    messages = cast(
+        list[MessageParam],
+        [
+            {"role": "user", "content": "Hi."},
+            {"role": "assistant", "content": "Plan: I will say pong when asked."},
+            {"role": "assistant", "content": "Ready to proceed."},
+            {"role": "user", "content": "Now reply with exactly: PONG"},
+        ],
+    )
+
+    result = chat_with_google(
+        messages=messages,
+        system_content="You are a helpful assistant. Follow instructions exactly.",
+        tools=[],
+        model_id=GoogleModelId.GEMMA_4_31B,
+        usage_id=9003,
+        created_by="4:integration-test",
+    )
+
+    assert result.assistant_message["role"] == "assistant"
+    assert result.token_input > 0
+    assert result.token_output > 0
+
+
+@pytest.mark.skip(
+    reason="Real LLM call — run manually with pytest --no-header -rN -k integration"
+)
+@pytest.mark.integration
+@patch("services.google_ai.chat_with_google.insert_llm_request")
 def test_integration_tool_call_with_real_tools(mock_insert):
     """Real API call with 18 real tool definitions triggers a function call."""
     real_tools = cast(list[ToolUnionParam], _load_real_tools())

@@ -16,9 +16,9 @@ _OWNERSHIP_HEADERS: dict[LogOwnership, str] = {
 
 @handle_exceptions(default_return_value="", raise_on_error=False)
 def label_log_source(log: str, ownership: LogOwnership, source: str):
-    """Prepend a single-line runtime-provenance header to a log so the agent can't confuse our environment with a customer's.
-    Real incident: Foxquilt/foxden-version-controller PR #203 — an unlabelled Lambda error got misread as a CircleCI problem, and the agent pushed `MONGOMS_DISTRO=ubuntu-22.04` into the customer's `.circleci/config.yml`.
-    Saying just "CircleCI" or "Lambda" isn't enough — the agent can still flip the mapping. Every log must say outright whether it came from OUR or CUSTOMER infrastructure.
+    """Prepend a `[log source: ...]` header so the agent can't confuse our infrastructure with a customer's.
+    Stops GitAuto from committing runtime-specific fixes to customer repos (Foxquilt PR #203 incident).
+    For ownership="ours", pass `get_runtime_description()` as `source` so the runtime label doesn't rot on upgrades.
     """
     if not log:
         logger.info("label_log_source: empty log, returning empty string")

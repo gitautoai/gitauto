@@ -1913,7 +1913,7 @@ def test_check_suite_handler_imports_label_log_source():
 
 
 def test_ci_log_source_strings_produce_expected_agent_input():
-    # The handler builds `ci_log_source` as an inline f-string in each customer-side dispatch branch (CircleCI / Codecov / GitHub Actions) and passes the log through `label_log_source` with ownership="theirs". For GitAuto-internal validation errors the handler uses ownership="ours" with NO source detail — exposing our runtime specifics would tempt the agent to invent customer-side workarounds. This test pins the exact header text the agent will see so a format drift fails here instead of silently confusing the agent in production.
+    # The handler builds `ci_log_source` as an inline f-string in each customer-side dispatch branch (CircleCI / Codecov / GitHub Actions) and passes the log through `label_log_source` with ownership="theirs". For GitAuto-internal validation errors it uses ownership="ours" with the runtime detected by `get_runtime_description`. This test pins the exact header text the agent will see so a format drift fails here instead of silently confusing the agent in production.
     owner = "Foxquilt"
     repo = "foxden-version-controller"
     raw_log = "FAIL test/spec/create-express-server.spec.ts"
@@ -1921,7 +1921,7 @@ def test_ci_log_source_strings_produce_expected_agent_input():
     circleci_source = f"CircleCI for {owner}/{repo}"
     codecov_source = f"Codecov coverage report for {owner}/{repo}"
     gha_source = f"GitHub Actions for {owner}/{repo}"
-    lambda_source = "GitAuto validation (AWS Lambda, Amazon Linux 2023)"
+    ours_source = "GitAuto pre-edit validation on AWS Lambda, Amazon Linux 2023"
 
     them = "CUSTOMER infrastructure (their runtime/CI)"
     us = "OUR infrastructure (GitAuto-controlled)"
@@ -1935,8 +1935,8 @@ def test_ci_log_source_strings_produce_expected_agent_input():
     assert label_log_source(raw_log, "theirs", gha_source) == (
         f"[log source: {them} — {gha_source}]\n{raw_log}"
     )
-    assert label_log_source(raw_log, "ours", lambda_source) == (
-        f"[log source: {us} — {lambda_source}]\n{raw_log}"
+    assert label_log_source(raw_log, "ours", ours_source) == (
+        f"[log source: {us} — {ours_source}]\n{raw_log}"
     )
 
 

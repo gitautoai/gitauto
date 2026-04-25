@@ -150,8 +150,8 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
 3. Check for existing PR: `gh pr list --head $(git branch --show-current) --state open` — if exists, **STOP and ask**
 4. `git push`
 5. `gh pr create --title "PR title" --body "" --assignee @me` — create PR immediately, no body
-6. Check recent posts: `scripts/git/recent_social_posts.sh`
-7. `gh pr edit <number> --body "..."` — add social posts after checking recent posts
+6. Check recent posts to vary openers: scan `.pr-bodies/` (e.g. `ls -t .pr-bodies/ | head -5` then read the most recent files).
+7. Write the body to `.pr-bodies/<pr#>.md` (gitignored), then `gh pr edit <number> --body-file .pr-bodies/<pr#>.md`. Re-read the local file when iterating instead of `gh pr view`/fetching from GitHub — the local copy is the source of truth and avoids round-tripping through the API for every edit.
     - Technical, descriptive title. **No `## Summary` and no `## Test plan`** — the commit message and diff already explain what changed; don't restate it. Body is just the social-post sections below.
     - **Six sections** (customer-facing only) — four author × platform cells plus HN title and body. See `## Social Media Rules` below for the voice, length, and style rules for each. Headers (parsed by `extract-social-posts.js`):
       - `## Social Media Post (GitAuto on X)`
@@ -196,11 +196,13 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
 
 ## Social Media Rules
 
-Six sections per PR — four cells of {GitAuto, Wes} × {X, LinkedIn}, plus HN title and body. Don't copy text across platforms — each reader and format is different. Before writing, run `scripts/git/recent_social_posts.sh` and vary openers.
+Six sections per PR — four cells of {GitAuto, Wes} × {X, LinkedIn}, plus HN title and body. Don't copy text across platforms — each reader and format is different. Before writing, scan recent files in `.pr-bodies/` to see what openers and angles have been used and vary yours.
 
 **Shared rules (apply to all sections):**
 
-- No em dashes (—). No marketing keywords. No negative framing. No internal names.
+- No em dashes (—). No marketing keywords. No negative framing.
+- **No internal identifiers**: don't expose internal tool names, function names, variable names, file paths, or class names. Reword in plain language (e.g., "the tool that reads files" not "get_local_file_content"; "the agent loop" not "chat_with_agent"). Public API terms from documented specs (e.g., Anthropic's `tool_use` / `tool_result` block types) are fine.
+- **Banned words**: "harness" (sounds like marketing). Use "agent loop", "agent runner", or "the code around the model" instead.
 - No small absolute numbers — use relative language ("30% faster", not "2s faster").
 - Honest, technical tone. Specify model names (e.g., "Claude Opus 4.6").
 - Customer-facing only — skip test/internal changes.
