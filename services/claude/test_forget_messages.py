@@ -19,9 +19,9 @@ def load_real_messages():
 def test_forget_single_file_from_real_conversation():
     """Forget .circleci/config.yml from real 86-message conversation.
 
-    General optimization removes 34 messages (18 outdated IDs).
-    config.yml has 1 read at msg[38/39], adding 2 more popped.
-    86 - 34 - 2 = 50.
+    General optimization removes 23 messages (fully-emptied; text-only assistant
+    messages are preserved by the remove_tool_pairs fix). config.yml adds 1
+    more popped pair. 86 - 23 - 1 = 62.
     """
     messages = load_real_messages()
     assert len(messages) == 86
@@ -32,15 +32,15 @@ def test_forget_single_file_from_real_conversation():
         base_args={},
     )
 
-    assert len(messages) == 50
+    assert len(messages) == 62
 
 
 def test_forget_multiple_files_preserves_others():
     """Forget 3 files from real conversation.
 
-    General optimization: 34 popped. Each file has 1 read pair (2 messages):
-    config.yml msg[38/39], package.json msg[12/13], App.test.tsx msg[40/41].
-    None overlap with the general 34. 86 - 34 - 6 = 46.
+    General optimization pops 23 fully-emptied messages. The 3 files add 3 more
+    popped pairs (config.yml, package.json, App.test.tsx — each 1 read pair).
+    86 - 23 - 3 = 60.
     """
     messages = load_real_messages()
     # These non-outdated tool_results should survive
@@ -53,13 +53,13 @@ def test_forget_multiple_files_preserves_others():
         base_args={},
     )
 
-    assert len(messages) == 46
+    assert len(messages) == 60
 
 
 def test_forget_nonexistent_path_still_optimizes():
     """Forgetting a nonexistent path still runs general optimization.
 
-    Same as verify test: 86 - 34 = 52.
+    Same as verify test: 86 - 23 fully-emptied = 63.
     """
     messages = load_real_messages()
     assert len(messages) == 86
@@ -70,17 +70,17 @@ def test_forget_nonexistent_path_still_optimizes():
         base_args={},
     )
 
-    assert len(messages) == 52
+    assert len(messages) == 63
 
 
 def test_forget_empty_list_still_optimizes():
     """Forgetting zero files still runs general optimization.
 
-    Same as verify test: 86 - 34 = 52.
+    Same as verify test: 86 - 23 fully-emptied = 63.
     """
     messages = load_real_messages()
     assert len(messages) == 86
 
     forget_messages(file_paths=[], messages=messages, base_args={})
 
-    assert len(messages) == 52
+    assert len(messages) == 63

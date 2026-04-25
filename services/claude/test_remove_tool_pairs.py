@@ -161,6 +161,49 @@ def test_pops_messages_with_no_remaining_tool_blocks():
     assert messages[1]["content"] == "After."
 
 
+def test_keeps_text_when_tool_use_stripped():
+    """Bug fix: stripping a tool_use must NOT pop the assistant message if it still has text. Losing the agent's plan caused amnesia loops where the same file was re-read 17+ times in a row."""
+    messages: list[MessageParam] = cast(
+        list[MessageParam],
+        [
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Plan: read index.test.ts then append three describe blocks for integration tests.",
+                    },
+                    {
+                        "type": "tool_use",
+                        "id": "toolu_1",
+                        "name": "get_local_file_content",
+                        "input": {"file_path": "src/context/index.test.ts"},
+                    },
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "toolu_1",
+                        "content": "...file content...",
+                    }
+                ],
+            },
+        ],
+    )
+    remove_tool_pairs(messages, {"toolu_1"})
+    assert len(messages) == 1
+    assert messages[0]["role"] == "assistant"
+    assert messages[0]["content"] == [
+        {
+            "type": "text",
+            "text": "Plan: read index.test.ts then append three describe blocks for integration tests.",
+        }
+    ]
+
+
 def test_multiple_ids_removed():
     messages: list[MessageParam] = cast(
         list[MessageParam],

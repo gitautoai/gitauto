@@ -109,6 +109,7 @@ def test_removes_outdated_read_after_edit():
         ],
     )
     remove_outdated_messages(messages, file_paths_to_remove=set())
+    # After strip: the read pair is fully popped. The text-only "I'll edit the file." assistant survives, followed by the edit tool_use assistant and its tool_result. The two adjacent assistants are accepted by both Anthropic (auto-merge) and Gemma (verified empirically).
     assert len(messages) == 3
     assert messages[0] == {"role": "assistant", "content": "I'll edit the file."}
     assert messages[1]["role"] == "assistant"
@@ -156,7 +157,7 @@ def test_removes_outdated_string_user_message():
         ],
     )
     remove_outdated_messages(messages, file_paths_to_remove=set())
-    # String message popped
+    # String user message popped; the "I see v1." assistant survives, followed by the assistant carrying toolu_1 and its tool_result.
     assert len(messages) == 3
     assert messages[0]["content"] == "I see v1."
 
@@ -166,15 +167,16 @@ def test_real_fixture_verify_messages():
 
     18 outdated IDs: 11 verify results (all but latest) + 2 outdated reads
     (craco.config.js, amtrustCoverage.test.tsx) + 5 outdated tool_results.
-    34 messages popped: 23 fully emptied + 11 text-only remaining.
+    23 messages popped (fully emptied). 11 assistant messages keep their
+    text after their tool_use is stripped — the agent's plan is preserved.
     """
     messages = load_fixture("real_verify_messages.json")
     assert len(messages) == 86
 
     remove_outdated_messages(messages, file_paths_to_remove=set())
 
-    # 86 - 34 popped = 52
-    assert len(messages) == 52
+    # 86 - 23 popped = 63
+    assert len(messages) == 63
 
 
 def test_real_fixture_llm_97545():
@@ -206,8 +208,8 @@ def test_real_fixture_llm_97545():
     messages = load_fixture("llm_97545_input_content.json")
     remove_outdated_messages(messages, file_paths_to_remove=set())
 
-    # 60 - 34 popped = 26. 18 fully emptied + 16 with only text remaining (no tool blocks).
-    assert len(messages) == 26
+    # 60 - 18 popped = 42. Only fully-emptied messages are popped; 16 assistant messages keep their text after the outdated tool_use is stripped.
+    assert len(messages) == 42
 
 
 def test_real_fixture_llm_97545_specific_ids():
