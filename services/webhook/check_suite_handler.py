@@ -74,6 +74,7 @@ from services.supabase.usage.update_usage import update_usage
 from services.types.base_args import BaseArgs
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.get_preferred_model import get_preferred_model
+from services.webhook.utils.maybe_switch_to_free_model import maybe_switch_to_free_model
 from services.webhook.utils.should_bail import should_bail
 from utils.files.get_local_file_tree import get_local_file_tree
 from utils.logging.add_log_message import add_log_message
@@ -894,12 +895,23 @@ async def handle_check_suite(
             phase="execution",
             base_args=base_args,
             slack_thread_ts=thread_ts,
-            cost_cap_usd=cost_cap_usd,
         ):
             logger.info(
-                "break loop because should_bail(current_time=current_time, phase='execution', base_args=base_args, slack_thread_ts=thread_ts, cost_cap_usd=cost_cap_usd)"
+                "Agent loop bailed via should_bail on iteration %d/%d on PR #%s",
+                iteration + 1,
+                MAX_ITERATIONS,
+                pr_number,
             )
             break
+
+        model_id = maybe_switch_to_free_model(
+            owner=owner_name,
+            repo=repo_name,
+            pr_number=pr_number,
+            cost_cap_usd=cost_cap_usd,
+            model_id=model_id,
+            slack_thread_ts=thread_ts,
+        )
 
         # Re-check trigger_on_test_failure in case it was disabled during execution
         refreshed_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
@@ -972,12 +984,10 @@ async def handle_check_suite(
         # Force GC between rounds to free temporary objects (messages, diffs) and reduce Lambda OOM risk
         gc_collect_and_log()
 
-    # Log if loop exhausted without completion and force verification (skip when a concurrent push was detected — verifying on stale state would re-trigger the same bail)
+    # Force verification unless concurrent push was detected (verifying on stale state would re-trigger the same bail).
+    # verify_task_is_complete is kept even after a should_bail break because it runs Prettier/ESLint fixes that may produce new commits — those commits then qualify the PR for the CI retrigger path below.
     if not is_completed and not concurrent_push_detected:
-        logger.warning(
-            "Agent loop hit MAX_ITERATIONS (%d) without calling verify_task_is_complete. Forcing verification.",
-            MAX_ITERATIONS,
-        )
+        logger.info("Forcing verify_task_is_complete on PR #%s", pr_number)
         final_result = await verify_task_is_complete(base_args=base_args)
         is_completed = final_result.success
 
