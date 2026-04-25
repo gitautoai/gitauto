@@ -57,6 +57,7 @@ from services.supabase.usage.update_usage import update_usage
 from services.types.base_args import ReviewBaseArgs
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.get_preferred_model import get_preferred_model
+from services.webhook.utils.maybe_switch_to_free_model import maybe_switch_to_free_model
 from services.webhook.utils.should_bail import should_bail
 from utils.files.read_local_file import read_local_file
 from utils.formatting.format_with_line_numbers import format_content_with_line_numbers
@@ -641,13 +642,21 @@ async def handle_review_run(
             phase="execution",
             base_args=base_args,
             slack_thread_ts=thread_ts,
-            cost_cap_usd=cost_cap_usd,
         ):
             logger.info(
-                "Breaking agent loop on PR #%s: should_bail() tripped (timeout or cost cap)",
+                "Breaking agent loop on PR #%s: should_bail() tripped",
                 pr_number,
             )
             break
+
+        model_id = maybe_switch_to_free_model(
+            owner=owner_name,
+            repo=repo_name,
+            pr_number=pr_number,
+            cost_cap_usd=cost_cap_usd,
+            model_id=model_id,
+            slack_thread_ts=thread_ts,
+        )
 
         # Re-check trigger_on_review_comment in case it was disabled during execution
         refreshed_settings = get_repository(owner_id=owner_id, repo_id=repo_id)

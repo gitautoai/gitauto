@@ -3,7 +3,6 @@ from services.git.check_branch_exists import check_branch_exists
 from services.github.comments.update_comment import update_comment
 from services.github.pulls.is_pull_request_open import is_pull_request_open
 from services.slack.slack_notify import slack_notify
-from services.supabase.llm_requests.get_total_cost_for_pr import get_total_cost_for_pr
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -20,7 +19,6 @@ def should_bail(
     phase: str,
     base_args: BaseArgs,
     slack_thread_ts: str | None,
-    cost_cap_usd: float,
 ):
     """Check if the loop should stop. Handles logging, comment updates, and slack."""
     owner = base_args["owner"]
@@ -44,30 +42,6 @@ def should_bail(
                 "Lambda OOM approaching during %s (used=%.1fMB)", phase, used_mb
             )
             msg = get_oom_message(used_mb, phase)
-
-    # Cost cap: bail silently to the user (no PR comment), but notify Slack so we see it.
-    if not msg and pr_number:
-        total_cost = get_total_cost_for_pr(owner, repo, pr_number)
-        logger.debug(
-            "Cost check on PR #%s: $%.2f (cap $%.2f)",
-            pr_number,
-            total_cost,
-            cost_cap_usd,
-        )
-        if total_cost >= cost_cap_usd:
-            logger.warning(
-                "Cost cap reached on PR #%s during %s: $%.2f >= $%.2f; bailing",
-                pr_number,
-                phase,
-                total_cost,
-                cost_cap_usd,
-            )
-            slack_notify(
-                f"Cost cap reached: ${total_cost:.2f} >= ${cost_cap_usd:.2f} cap. "
-                f"Stopped {phase} for `{owner}/{repo}#{pr_number}`.",
-                slack_thread_ts,
-            )
-            return True
 
     if not msg:
         logger.debug("Checking PR/branch liveness for pr_number=%s", pr_number)

@@ -596,6 +596,7 @@ async def test_branch_deleted_breaks_loop(
     return_value="def calculate():\n    return 1 + 2\n",
 )
 @patch("services.webhook.new_pr_handler.MAX_ITERATIONS", 10)
+@patch("services.webhook.new_pr_handler.maybe_switch_to_free_model")
 @patch("services.webhook.new_pr_handler.verify_task_is_complete")
 @patch("services.webhook.new_pr_handler.get_pull_request_files")
 @patch("services.webhook.new_pr_handler.chat_with_agent")
@@ -637,9 +638,11 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
     mock_chat_with_agent,
     mock_get_pr_files,
     mock_verify_task_is_complete,
+    mock_maybe_switch,
     _mock_read_local_file,
     _mock_run_subprocess,
 ):
+    mock_maybe_switch.side_effect = lambda **kwargs: kwargs["model_id"]
     mock_deconstruct.return_value = (_get_base_args(), None)
     mock_render_text.return_value = "Rendered body"
     mock_slack_notify.return_value = "thread_1"
@@ -769,6 +772,11 @@ async def test_retry_loop_exhausted_not_explored_but_committed(
 
     assert mock_chat_with_agent.call_count == 10
     mock_verify_task_is_complete.assert_called_once()
+    # Cost-cap policy: maybe_switch_to_free_model runs once per loop iteration before chat_with_agent.
+    assert mock_maybe_switch.call_count == 10
+    switch_kwargs = mock_maybe_switch.call_args.kwargs
+    assert switch_kwargs["pr_number"] == _get_base_args()["pr_number"]
+    assert switch_kwargs["slack_thread_ts"] == "thread_1"
 
 
 @pytest.mark.asyncio

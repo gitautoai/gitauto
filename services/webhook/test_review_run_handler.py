@@ -212,6 +212,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
 @patch("services.webhook.review_run_handler.slack_notify")
 @patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
 @patch("services.webhook.review_run_handler.set_npm_token_env")
+@patch("services.webhook.review_run_handler.maybe_switch_to_free_model")
 @patch("services.webhook.review_run_handler.verify_task_is_complete")
 @patch("services.webhook.review_run_handler.get_installation_access_token")
 @patch("services.webhook.review_run_handler.get_user_public_info")
@@ -268,6 +269,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
     mock_get_user_public_info,
     mock_get_token,
     mock_verify_task_is_complete,
+    mock_maybe_switch,
     _mock_set_npm_token_env,
     _mock_get_local_file_tree,
     _mock_slack_notify,
@@ -275,6 +277,7 @@ async def test_review_run_handler_max_iterations_forces_verification(
     mock_review_comment_payload,
 ):
     """Test that review run handler forces verify_task_is_complete when MAX_ITERATIONS is reached."""
+    mock_maybe_switch.side_effect = lambda **kwargs: kwargs["model_id"]
 
     mock_get_token.return_value = "ghs_test_token"
     mock_get_user_public_info.return_value = type(
@@ -331,6 +334,8 @@ async def test_review_run_handler_max_iterations_forces_verification(
 
     assert mock_chat_with_agent.call_count == 2
     mock_verify_task_is_complete.assert_called_once()
+    # Cost-cap policy: maybe_switch_to_free_model runs once per loop iteration before chat_with_agent.
+    assert mock_maybe_switch.call_count == 2
 
 
 @pytest.fixture

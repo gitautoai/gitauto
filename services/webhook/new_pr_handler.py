@@ -61,6 +61,7 @@ from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.get_preferred_model import get_preferred_model
+from services.webhook.utils.maybe_switch_to_free_model import maybe_switch_to_free_model
 from services.webhook.utils.should_bail import should_bail
 from utils.command.run_subprocess import run_subprocess
 from utils.files.detect_test_location_convention import detect_test_location_convention
@@ -712,14 +713,22 @@ async def handle_new_pr(
             current_time=current_time,
             phase="pr processing",
             base_args=base_args,
-            slack_thread_ts=None,
-            cost_cap_usd=cost_cap_usd,
+            slack_thread_ts=thread_ts,
         ):
             logger.info(
                 "Breaking agent loop on PR #%s: should_bail() tripped during pr processing phase",
                 pr_number,
             )
             break
+
+        model_id = maybe_switch_to_free_model(
+            owner=owner_name,
+            repo=repo_name,
+            pr_number=pr_number,
+            cost_cap_usd=cost_cap_usd,
+            model_id=model_id,
+            slack_thread_ts=thread_ts,
+        )
 
         # Call the agent to explore the codebase and commit changes
         result = await chat_with_agent(

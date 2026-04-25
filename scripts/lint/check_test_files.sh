@@ -63,17 +63,18 @@ if [ -n "$STAGED_IMPL_MODIFIED" ]; then
         base=$(basename "$file")
         test_file="$dir/test_$base"
         if [ -f "$test_file" ]; then
-            if ! echo "$STAGED_ALL" | grep -qF "$test_file"; then
-                if ! git diff --quiet "$test_file" 2>/dev/null; then
-                    echo "TEST NOT STAGED: $test_file has changes, stage it"
-                    FAIL=1
-                    continue
-                fi
-                # PR-level check: if the current branch has already modified this test file in earlier commits (vs the PR base), the PR as a whole has a test update. Don't demand a fresh test change on every follow-up commit — revert/fix-up commits would fail spuriously.
-                if [ -n "$PR_BASE" ] && ! git diff --quiet "$PR_BASE"..HEAD -- "$test_file" 2>/dev/null; then
-                    continue
-                fi
-                echo "TEST NOT UPDATED: $file changed but $test_file has no changes, update it"
+            if echo "$STAGED_ALL" | grep -qF "$test_file"; then
+                : # test file is staged → OK
+            elif [ -n "$PR_BASE" ] && ! git diff --quiet "$PR_BASE"..HEAD -- "$test_file" 2>/dev/null; then
+                : # test file changed in earlier commits in this PR → OK
+            elif ! git diff --quiet "$test_file" 2>/dev/null; then
+                # Unstaged test changes exist — could be related (Claude wrote tests but didn't stage) or unrelated (other-session WIP). Script can't tell. Prompt Claude to verify and stage if related; do not FAIL automatically.
+                echo "TEST FILE HAS UNSTAGED CHANGES: $test_file"
+                echo "  Check if those unstaged changes are the tests for $file's staged changes."
+                echo "  - If yes (you wrote them): ask the user to stage $test_file."
+                echo "  - If no (unrelated WIP from another session): leave unstaged and add new tests for $file before committing."
+            else
+                echo "TEST NOT UPDATED: $file changed but $test_file has no test coverage for it in this PR"
                 FAIL=1
             fi
         fi

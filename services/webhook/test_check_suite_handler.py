@@ -1645,6 +1645,7 @@ async def test_handle_check_suite_codecov_no_token(
 
 
 @pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.maybe_switch_to_free_model")
 @patch("services.webhook.check_suite_handler.verify_task_is_complete")
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
@@ -1698,9 +1699,11 @@ async def test_handle_check_suite_max_iterations_forces_verification(
     mock_get_token,
     mock_get_failed_runs,
     mock_verify_task_is_complete,
+    mock_maybe_switch,
     mock_check_run_payload,
 ):
     """Test that handler forces verify_task_is_complete when MAX_ITERATIONS is reached."""
+    mock_maybe_switch.side_effect = lambda **kwargs: kwargs["model_id"]
     payload = mock_check_run_payload.copy()
     payload["check_suite"] = payload["check_suite"].copy()
     payload["check_suite"]["id"] = random.randint(1000000, 9999999)
@@ -1765,6 +1768,8 @@ async def test_handle_check_suite_max_iterations_forces_verification(
 
     assert mock_chat_agent.call_count == 2
     mock_verify_task_is_complete.assert_called_once()
+    # Cost-cap policy: maybe_switch_to_free_model runs once per loop iteration before chat_with_agent.
+    assert mock_maybe_switch.call_count == 2
 
 
 @pytest.mark.asyncio
