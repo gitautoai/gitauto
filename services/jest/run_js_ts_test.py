@@ -62,13 +62,16 @@ async def run_js_ts_test(
     # Build base command and determine actual runner name. The test script in package.json may invoke a different runner than the binary (e.g. vitest binary exists but "test" script runs jest). runner_name must match the actual runner because CLI flags differ (--related vs --findRelatedTests).
     test_script_name, test_script_value = get_test_script_name(clone_dir)
     if test_script_name:
+        logger.info("test: using package.json script '%s'", test_script_name)
         pkg_manager, _, _ = detect_package_manager(clone_dir)
         base_cmd = [pkg_manager, "run", test_script_name, "--"]
         runner_name = "vitest" if "vitest" in test_script_value else "jest"
     elif os.path.exists(vitest_bin):
+        logger.info("test: using vitest binary directly")
         runner_name = "vitest"
         base_cmd = [vitest_bin]
     else:
+        logger.info("test: using jest binary directly")
         runner_name = "jest"
         base_cmd = [jest_bin]
 
@@ -85,13 +88,16 @@ async def run_js_ts_test(
     # MONGOMS_ARCHIVE_NAME bypasses OS auto-detection entirely by specifying the full archive filename. Pre-cached by CodeBuild to S3.
     archive_name = get_mongoms_archive_name(clone_dir)
     if archive_name:
+        logger.info("test: MONGOMS_ARCHIVE_NAME=%s", archive_name)
         env["MONGOMS_ARCHIVE_NAME"] = archive_name
         # MONGOMS_DISTRO must match the distro in the archive name. MongoDB 7.0+ uses amazon2023, 6.0.x uses amazon2.
         mongoms_major = get_dependency_major_version(clone_dir, "mongodb-memory-server")
         mongodb_server_version = get_mongodb_server_version(clone_dir)
         if not mongodb_server_version and mongoms_major:
+            logger.info("test: falling back to mongoms_major=%s mapping", mongoms_major)
             mongodb_server_version = MONGOMS_MAJOR_TO_MONGODB_VERSION.get(mongoms_major)
         if mongodb_server_version:
+            logger.info("test: MONGOMS_DISTRO for %s", mongodb_server_version)
             env["MONGOMS_DISTRO"] = get_distro_for_mongodb_server_version(
                 mongodb_server_version
             )
@@ -104,7 +110,8 @@ async def run_js_ts_test(
     # If a previous jest run's globalTeardown didn't fully clean up, the stale mongod causes "namespace already exists, but with different options" errors.
     kill_processes_by_name("mongod")
 
-    # When impl_file_to_collect_coverage_from is set, add coverage flags to measure statement/branch/function/line coverage using Istanbul instead of V8, because V8 inflates branch counts in single-file mode (??, &&, ternary counted differently).
+    # When impl_file_to_collect_coverage_from is set, add coverage flags to measure statement/branch/function/line coverage.
+    # Don't pass --coverageProvider: Jest reads it from jest.config.{js,ts,cjs,mjs} or package.json's jest section, defaulting to 'babel' if unset. Forcing babel here breaks repos that pin minimatch@10 (test-exclude@6 → 'minimatch is not a function').
     use_coverage = bool(impl_file_to_collect_coverage_from)
     coverage_dir = os.path.join(clone_dir, "coverage")
 
@@ -115,16 +122,17 @@ async def run_js_ts_test(
     all_files = test_file_paths + source_file_paths
     cmd = base_cmd + [find_flag] + all_files + ["-u", "--forceExit"]
     if use_coverage and runner_name == "jest":
+        logger.info("test: enabling jest coverage (provider from repo config)")
         cmd.extend(
             [
                 "--coverage",
                 f"--coverageDirectory={coverage_dir}",
-                "--coverageProvider=babel",
                 "--coverageReporters=json",
                 f"--collectCoverageFrom={impl_file_to_collect_coverage_from}",
             ]
         )
     elif use_coverage and runner_name == "vitest":
+        logger.info("test: vitest coverage provider=istanbul")
         cmd.extend(
             [
                 "--coverage.enabled",
@@ -160,9 +168,11 @@ async def run_js_ts_test(
             # Parse which specific files failed from Jest output (e.g. "FAIL src/a.test.ts")
             for test_file in test_file_paths:
                 if f"FAIL {test_file}" in output:
+                    logger.info("test: detected failure in %s", test_file)
                     error_files.add(test_file)
             # If no specific files detected, mark all as failed
             if not error_files:
+                logger.info("test: no specific file detected, marking all as failed")
                 error_files.update(test_file_paths)
             all_errors.append(minimize_jest_test_logs(output.strip()))
             logger.warning("%s: tests failed:\n%s", runner_name, output.strip())
@@ -193,8 +203,10 @@ async def run_js_ts_test(
         cwd=clone_dir,
     )
     if diff_result.returncode == 0:
+        logger.info("test: scanning git diff for updated snapshots")
         for line in diff_result.stdout.strip().splitlines():
             if line.endswith(".snap"):
+                logger.info("test: snapshot updated: %s", line)
                 updated_snapshots.add(line)
     if updated_snapshots:
         logger.info(
