@@ -136,6 +136,64 @@ def test_get_all_coverages_contract():
         assert isinstance(result, list)
 
 
+@patch("services.webhook.schedule_handler.get_clone_url")
+@patch("services.webhook.schedule_handler.get_default_branch")
+@patch("services.webhook.schedule_handler.create_user_request")
+@patch("services.webhook.schedule_handler.get_email_from_commits")
+@patch("services.webhook.schedule_handler.get_user_public_info")
+@patch("services.webhook.schedule_handler.get_preferred_model")
+@patch("services.webhook.schedule_handler.check_purchase_exists")
+@patch("services.webhook.schedule_handler.check_availability")
+@patch("services.webhook.schedule_handler.get_schedule_pause")
+@patch("services.webhook.schedule_handler.get_repository")
+@patch("services.webhook.schedule_handler.get_installation_access_token")
+def test_schedule_handler_creates_usage_row_with_source_github(
+    mock_get_token,
+    mock_get_repository,
+    mock_is_paused,
+    mock_check_availability,
+    mock_check_purchase_exists,
+    mock_get_preferred_model,
+    mock_get_user_public_info,
+    mock_get_email_from_commits,
+    mock_create_user_request,
+    mock_get_default_branch,
+    mock_get_clone_url,
+    mock_event,
+):
+    mock_get_token.return_value = "test-token"
+    mock_is_paused.return_value = False
+    mock_get_repository.return_value = {"trigger_on_schedule": True}
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "credit",
+        "credit_balance_usd": 100,
+        "user_message": "",
+        "log_message": "ok",
+    }
+    mock_check_purchase_exists.return_value = True
+    mock_get_preferred_model.return_value = "claude-opus-4-7"
+    mock_get_user_public_info.return_value = MagicMock(
+        email="user@example.com", display_name="Test User"
+    )
+    mock_get_email_from_commits.return_value = None
+    mock_create_user_request.return_value = 12345
+    mock_get_clone_url.return_value = "https://x-access-token:t@github.com/o/r.git"
+    # Bail at "Repository is empty" right after the usage row is created.
+    mock_get_default_branch.return_value = None
+
+    result = schedule_handler(mock_event)
+
+    assert result is None
+    mock_create_user_request.assert_called_once()
+    call_kwargs = mock_create_user_request.call_args.kwargs
+    assert call_kwargs["source"] == "github"
+    assert call_kwargs["trigger"] == "schedule"
+    assert call_kwargs["user_id"] == 789
+    assert call_kwargs["user_name"] == "test-user"
+    assert call_kwargs["pr_number"] == 0
+
+
 @patch("services.webhook.schedule_handler.add_labels")
 @patch("services.webhook.schedule_handler.create_pull_request")
 @patch("services.webhook.schedule_handler.create_empty_commit")

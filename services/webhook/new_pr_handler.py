@@ -57,6 +57,9 @@ from services.supabase.email_sends.update_email_send import update_email_send
 from services.supabase.owners.get_owner import get_owner
 from services.supabase.owners.get_stripe_customer_id import get_stripe_customer_id
 from services.supabase.owners.update_stripe_customer_id import update_stripe_customer_id
+from services.supabase.usage.get_usage_id_by_pr_and_trigger import (
+    get_usage_id_by_pr_and_trigger,
+)
 from services.supabase.usage.update_usage import update_usage
 from services.supabase.users.get_user import get_user
 from services.webhook.utils.create_system_message import create_system_message
@@ -214,23 +217,53 @@ async def handle_new_pr(
         slack_notify(availability_status["log_message"], thread_ts)
         return
 
-    # Create a usage record
-    usage_id = create_user_request(
-        user_id=sender_id,
-        user_name=sender_name,
-        installation_id=installation_id,
-        owner_id=owner_id,
-        owner_type=owner_type,
-        owner_name=owner_name,
-        repo_id=repo_id,
-        repo_name=repo_name,
-        pr_number=pr_number,
-        source="github",
-        trigger=trigger,
-        email=sender_email,
-        display_name=sender_display_name,
-        lambda_info=lambda_info,
+    # Reuse the usage row created up front by schedule_handler / dashboard_handler so the configurer's user_id stays attached and we don't double-charge.
+    logger.info(
+        "Looking up usage row for PR #%s (trigger=%s)",
+        pr_number,
+        trigger,
     )
+    usage_id = get_usage_id_by_pr_and_trigger(
+        installation_id=installation_id,
+        repo_id=repo_id,
+        pr_number=pr_number,
+        trigger=trigger,
+    )
+
+    if usage_id:
+        logger.info(
+            "Reusing usage_id=%s for PR #%s (trigger=%s); attaching lambda info",
+            usage_id,
+            pr_number,
+            trigger,
+        )
+        update_usage(
+            usage_id=usage_id,
+            lambda_log_group=lambda_info.get("log_group") if lambda_info else None,
+            lambda_log_stream=lambda_info.get("log_stream") if lambda_info else None,
+            lambda_request_id=lambda_info.get("request_id") if lambda_info else None,
+        )
+    else:
+        logger.info(
+            "No existing usage row for PR #%s; inserting a new usage record",
+            pr_number,
+        )
+        usage_id = create_user_request(
+            user_id=sender_id,
+            user_name=sender_name,
+            installation_id=installation_id,
+            owner_id=owner_id,
+            owner_type=owner_type,
+            owner_name=owner_name,
+            repo_id=repo_id,
+            repo_name=repo_name,
+            pr_number=pr_number,
+            source="github",
+            trigger=trigger,
+            email=sender_email,
+            display_name=sender_display_name,
+            lambda_info=lambda_info,
+        )
     base_args["usage_id"] = usage_id
 
     # Insert credit usage immediately (charge regardless of completion)

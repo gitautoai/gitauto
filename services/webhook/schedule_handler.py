@@ -139,7 +139,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         )
     sender_display_name = sender_info.display_name or user_name
 
-    # Create the usage row up front so pre-selection LLM calls (evaluate_condition, evaluate_quality_checks) have a real usage_id to attribute cost to. pr_number=0 is a placeholder; it gets updated with the real number below once create_pull_request succeeds.
+    # Create the usage row up front so LLM calls during evaluate_condition and evaluate_quality_checks have a real usage_id to attribute cost to. pr_number=0 is a placeholder; it gets updated with the real number below once create_pull_request succeeds.
     usage_id = create_user_request(
         user_id=user_id,
         user_name=user_name,
@@ -150,12 +150,12 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         repo_id=repo_id,
         repo_name=repo_name,
         pr_number=0,
-        source="schedule",
+        source="github",
         trigger="schedule",
         email=sender_email,
         display_name=sender_display_name,
     )
-    logger.info("schedule_handler: created usage_id=%s for pre-selection", usage_id)
+    logger.info("schedule_handler: created usage_id=%s", usage_id)
 
     # Get repository files and coverage data
     clone_url = get_clone_url(owner_name, repo_name, token)
@@ -655,6 +655,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     # Create a PR
     new_branch = generate_branch_name(trigger="schedule")
     base_args: BaseArgs = {
+        "provider": "github",
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
