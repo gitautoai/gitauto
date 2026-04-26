@@ -113,7 +113,7 @@ async def test_run_js_ts_test_with_failures(
     )
     assert result.success is False
     assert len(result.errors) > 0
-    assert "src/index.test.ts" in result.error_files
+    assert result.error_files == {"src/index.test.ts"}
 
 
 @pytest.mark.asyncio
@@ -206,7 +206,7 @@ async def test_run_js_ts_test_uses_vitest_when_no_jest(
 
     # First call is the test, last is git diff
     cmd = mock_subprocess.call_args_list[0][0][0]
-    assert "vitest" in cmd[0]
+    assert cmd[0] == "/tmp/clone/node_modules/.bin/vitest"
 
 
 @pytest.mark.asyncio
@@ -260,9 +260,7 @@ async def test_run_js_ts_test_one_of_three_fails(
         impl_file_to_collect_coverage_from="",
     )
     assert result.success is False
-    assert "src/a.test.ts" not in result.error_files
-    assert "src/b.test.ts" in result.error_files
-    assert "src/c.test.ts" not in result.error_files
+    assert result.error_files == {"src/b.test.ts"}
 
 
 @pytest.mark.asyncio
@@ -290,9 +288,7 @@ async def test_run_js_ts_test_two_of_three_fail(
         impl_file_to_collect_coverage_from="",
     )
     assert result.success is False
-    assert "src/a.test.ts" in result.error_files
-    assert "src/b.test.ts" not in result.error_files
-    assert "src/c.test.ts" in result.error_files
+    assert result.error_files == {"src/a.test.ts", "src/c.test.ts"}
 
 
 @pytest.mark.asyncio
@@ -320,9 +316,11 @@ async def test_run_js_ts_test_all_three_fail(
         impl_file_to_collect_coverage_from="",
     )
     assert result.success is False
-    assert "src/a.test.ts" in result.error_files
-    assert "src/b.test.ts" in result.error_files
-    assert "src/c.test.ts" in result.error_files
+    assert result.error_files == {
+        "src/a.test.ts",
+        "src/b.test.ts",
+        "src/c.test.ts",
+    }
 
 
 @pytest.mark.asyncio
@@ -521,6 +519,46 @@ Snapshots:   0 total
 Time:        0.216 s
 Ran all test suites matching /tests\\/js\\/unit\\/annotation\\/print_dialog.kyuden.test.js/i."""
 
+# Same as REAL_JEST_ESM_ERROR but with the node_modules stack frame stripped by minimize_jest_test_logs (see strip_node_modules_from_stacktrace). The leading "FAIL unit ..." line trips up the file-failure parser, so result.errors uses the minimized form below.
+EXPECTED_ESM_ERROR_MINIMIZED = """FAIL unit tests/js/unit/annotation/print_dialog.kyuden.test.js
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    /tmp/spiderplus/SPIDERPLUS-web/pr-13518/tests/js/unit/_globalSetup.mjs:2
+    import {JSDOM} from 'jsdom';
+    ^^^^^^
+
+    SyntaxError: Cannot use import statement outside a module
+
+
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.216 s
+Ran all test suites matching /tests\\/js\\/unit\\/annotation\\/print_dialog.kyuden.test.js/i."""
+
 
 @pytest.mark.asyncio
 @patch("services.jest.run_js_ts_test.get_test_script_name", return_value=(None, ""))
@@ -549,11 +587,12 @@ async def test_run_js_ts_test_captures_full_esm_error(
         impl_file_to_collect_coverage_from="",
     )
     assert result.success is False
-    assert "tests/js/unit/annotation/print_dialog.kyuden.test.js" in result.error_files
-    errors_joined = "\n".join(result.errors)
-    assert "_globalSetup.mjs:2" in errors_joined
-    assert "SyntaxError: Cannot use import statement outside a module" in errors_joined
+    assert result.error_files == {
+        "tests/js/unit/annotation/print_dialog.kyuden.test.js"
+    }
     # Runtime.createScriptFromCode is a node_modules stack frame, correctly stripped by minimize_jest_test_logs
+    errors_joined = "\n".join(result.errors)
+    assert errors_joined == EXPECTED_ESM_ERROR_MINIMIZED
 
 
 @pytest.mark.asyncio
@@ -595,8 +634,16 @@ async def test_run_js_ts_test_uses_test_unit_script(
 
     # First call is the test run, last is git diff
     cmd = mock_subprocess.call_args_list[0][0][0]
-    assert "run" in cmd
-    assert "test:unit" in cmd
+    assert cmd == [
+        "npm",
+        "run",
+        "test:unit",
+        "--",
+        "--findRelatedTests",
+        "tests/js/unit/annotation/print_dialog.kyuden.test.js",
+        "-u",
+        "--forceExit",
+    ]
 
 
 @pytest.mark.asyncio
@@ -691,7 +738,7 @@ async def test_run_js_ts_test_real_fail_in_stderr_treated_as_failure(
     )
     assert result.success is False
     assert len(result.errors) > 0
-    assert "src/fail_test.test.ts" in result.error_files
+    assert result.error_files == {"src/fail_test.test.ts"}
 
 
 @pytest.mark.asyncio
@@ -743,9 +790,15 @@ async def test_run_js_ts_test_includes_force_exit(
         impl_file_to_collect_coverage_from="",
     )
 
-    # First call is the jest run
+    # First call is the test run; both binaries "exist" via mock_exists.return_value=True so vitest wins (checked first)
     jest_cmd = mock_subprocess.call_args_list[0][0][0]
-    assert "--forceExit" in jest_cmd
+    assert jest_cmd == [
+        "/tmp/clone/node_modules/.bin/vitest",
+        "--related",
+        "src/index.test.ts",
+        "-u",
+        "--forceExit",
+    ]
 
 
 @pytest.mark.asyncio
@@ -773,8 +826,14 @@ async def test_run_js_ts_test_find_related_tests_with_only_test_files(
     assert result.success is True
 
     cmd = mock_subprocess.call_args_list[0][0][0]
-    assert "--findRelatedTests" in cmd
-    assert "src/index.test.ts" in cmd
+    assert cmd == [
+        "/tmp/clone/node_modules/.bin/jest",
+        "--findRelatedTests",
+        "src/index.test.ts",
+        "src/index.test.ts",
+        "-u",
+        "--forceExit",
+    ]
 
 
 @pytest.mark.asyncio
@@ -803,9 +862,14 @@ async def test_run_js_ts_test_find_related_tests_with_both(
     assert result.success is True
 
     cmd = mock_subprocess.call_args_list[0][0][0]
-    assert "--findRelatedTests" in cmd
-    assert "src/index.test.ts" in cmd
-    assert "src/utils.ts" in cmd
+    assert cmd == [
+        "/tmp/clone/node_modules/.bin/jest",
+        "--findRelatedTests",
+        "src/index.test.ts",
+        "src/utils.ts",
+        "-u",
+        "--forceExit",
+    ]
 
 
 @pytest.mark.asyncio
@@ -832,8 +896,13 @@ async def test_run_js_ts_test_always_uses_find_related_tests(
     assert result.success is True
 
     cmd = mock_subprocess.call_args_list[0][0][0]
-    assert "--findRelatedTests" in cmd
-    assert "src/index.test.ts" in cmd
+    assert cmd == [
+        "/tmp/clone/node_modules/.bin/jest",
+        "--findRelatedTests",
+        "src/index.test.ts",
+        "-u",
+        "--forceExit",
+    ]
 
 
 @pytest.mark.asyncio
@@ -875,8 +944,16 @@ async def test_run_js_ts_test_vitest_binary_but_jest_script_uses_find_related_te
     assert result.runner_name == "jest"
 
     cmd = mock_subprocess.call_args_list[0][0][0]
-    assert "--findRelatedTests" in cmd
-    assert "--related" not in cmd
+    assert cmd == [
+        "npm",
+        "run",
+        "test",
+        "--",
+        "--findRelatedTests",
+        "src/index.test.ts",
+        "-u",
+        "--forceExit",
+    ]
 
 
 @pytest.mark.asyncio
@@ -916,5 +993,59 @@ async def test_run_js_ts_test_jest_binary_but_vitest_script_uses_related(
     assert result.runner_name == "vitest"
 
     cmd = mock_subprocess.call_args_list[0][0][0]
-    assert "--related" in cmd
-    assert "--findRelatedTests" not in cmd
+    assert cmd == [
+        "npm",
+        "run",
+        "test",
+        "--",
+        "--related",
+        "src/index.test.ts",
+        "-u",
+        "--forceExit",
+    ]
+
+
+def _only_jest_bin_exists(path):
+    return path.endswith("/.bin/jest")
+
+
+@pytest.mark.asyncio
+@patch("services.jest.run_js_ts_test.get_test_script_name")
+@patch("services.jest.run_js_ts_test.subprocess.run")
+@patch("services.jest.run_js_ts_test.os.path.exists")
+async def test_run_js_ts_test_does_not_pass_coverage_provider(
+    mock_exists,
+    mock_subprocess,
+    mock_get_test_script_name,
+    create_test_base_args,
+):
+    """Don't pass --coverageProvider: Jest reads it from jest.config or defaults to babel. Forcing babel here breaks repos that pin minimatch@10 (test-exclude@6 incompatibility); forcing v8 hides single-file branch-count differences from CI."""
+    mock_exists.side_effect = _only_jest_bin_exists
+    mock_subprocess.return_value = MagicMock(returncode=0, stdout="", stderr="")
+    mock_get_test_script_name.return_value = (None, None)
+
+    base_args = create_test_base_args(
+        owner="test",
+        repo="test",
+        clone_dir="/tmp/clone",
+    )
+    result = await run_js_ts_test(
+        base_args=base_args,
+        test_file_paths=["src/a.test.ts"],
+        source_file_paths=[],
+        impl_file_to_collect_coverage_from="src/a.ts",
+    )
+    assert result.success is True
+
+    cmd = mock_subprocess.call_args_list[0][0][0]
+    assert cmd == [
+        "/tmp/clone/node_modules/.bin/jest",
+        "--findRelatedTests",
+        "src/a.test.ts",
+        "-u",
+        "--forceExit",
+        "--coverage",
+        "--coverageDirectory=/tmp/clone/coverage",
+        "--coverageReporters=json",
+        "--collectCoverageFrom=src/a.ts",
+    ]
