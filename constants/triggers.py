@@ -9,7 +9,6 @@ ReviewTrigger = Literal["pr_comment", "pr_file_review", "pr_review"]
 Trigger = Union[
     Literal[
         "check_suite_completed",
-        "cleanup_stale_repos",
         "installation",
         "installation_repositories",
         "pr_merged",
