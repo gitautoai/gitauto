@@ -11,7 +11,7 @@ CONTEXT_WINDOW: dict[ClaudeModelId, int] = {
     ClaudeModelId.OPUS_4_6: 1_000_000,
     ClaudeModelId.SONNET_4_6: 1_000_000,
     ClaudeModelId.OPUS_4_5: 200_000,
-    ClaudeModelId.SONNET_4_5: 200_000,  # 1M available with context-1m-2025-08-07 beta header
+    ClaudeModelId.SONNET_4_5: 200_000,
     ClaudeModelId.HAIKU_4_5: 200_000,
 }
 

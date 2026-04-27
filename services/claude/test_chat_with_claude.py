@@ -171,3 +171,33 @@ def test_strict_tools_passed_through_unchanged(mock_claude, mock_insert_llm_requ
     call_args = mock_claude.messages.create.call_args
     passed_tools = call_args.kwargs["tools"]
     assert passed_tools[0]["strict"] is True
+
+
+@patch("services.claude.chat_with_claude.insert_llm_request")
+@patch("services.claude.chat_with_claude.claude")
+def test_max_input_uses_full_context_window_no_200k_clamp(
+    mock_claude, mock_insert_llm_request
+):
+    """Earlier versions of chat_with_claude clamped max_input to min(context_window - max_output - buffer, 200_000) and used CONTEXT_WINDOW.get(model_id, 200_000) defaults. The 200k cap was a leftover from when 1M context required a beta header that's no longer needed/used. With the clamp dropped and direct subscript replacing .get() defaults, max_tokens passed to messages.create for Sonnet 4.6 (1M context, 64k output) is the model's full output limit and the trim path's max_input budget is 1M - 64k - 4096 = 991840, not the old 200k clamp."""
+    mock_response = Mock()
+    mock_response.content = [Mock(type="text", text="ok")]
+    mock_response.usage = Mock(output_tokens=5)
+    mock_insert_llm_request.return_value = {"total_cost_usd": 0.0}
+    mock_claude.messages.create.return_value = mock_response
+    # 500k tokens — would have been clamped to 200k before the fix and trimmed; now well under 991840 max_input so the messages list survives intact.
+    mock_claude.messages.count_tokens.return_value = Mock(input_tokens=500_000)
+
+    chat_with_claude(
+        messages=cast(list[MessageParam], [{"role": "user", "content": "x"}]),
+        system_content="sys",
+        tools=[],
+        model_id=ClaudeModelId.SONNET_4_6,
+        usage_id=1,
+        created_by="4:test-user",
+    )
+
+    create_kwargs = mock_claude.messages.create.call_args.kwargs
+    # Sonnet 4.6's MAX_OUTPUT_TOKENS is 64_000 per constants/claude.py.
+    assert create_kwargs["max_tokens"] == 64_000
+    # The 500k probe must be passed straight to messages.create (no trim) because the unclamped budget (991840) accommodates it.
+    assert create_kwargs["messages"] == [{"role": "user", "content": "x"}]
