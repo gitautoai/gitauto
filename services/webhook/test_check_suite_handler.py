@@ -194,6 +194,54 @@ async def test_handle_check_suite_resolves_email_from_commits(mock_get_token, mo
         mock_get_email.return_value = "resolved@example.com"
         await handle_check_suite(mock_check_run_payload)
         mock_get_email.assert_called_once()
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.get_head_commit_count_behind_base")
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.check_suite_handler.create_comment", return_value="url")
+@patch("services.webhook.check_suite_handler.create_user_request", return_value=1)
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request_files", return_value=[])
+@patch("services.webhook.check_suite_handler.verify_task_is_ready")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs", return_value=None)
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+async def test_handle_check_suite_merges_when_dirty(
+    mock_should_bail, mock_update_comment, mock_verify_ready, mock_get_files,
+    mock_cancel, mock_create_user, mock_create_comment, mock_get_comments,
+    mock_ensure_php, mock_ensure_node, mock_merge_base, mock_get_behind,
+    mock_clone, mock_get_pr, mock_get_repo, mock_get_token, mock_get_failed_runs,
+    mock_check_run_payload
+):
+    """Verify that base branch is merged into PR when mergeable_state is 'dirty'."""
+    mock_get_token.return_value = "token"
+    mock_get_failed_runs.return_value = [{"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {
+        "title": "title",
+        "body": "body",
+        "user": {"login": "user"},
+        "base": {"ref": "main"},
+        "mergeable_state": "dirty",
+    }
+    mock_get_behind.return_value = 5
+
+    # Mock verify_task_is_ready to return a result object
+    from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
+    mock_verify_ready.return_value = VerifyTaskIsReadyResult(errors=[], fixes_applied=[], tsc_errors=[])
+
+    await handle_check_suite(mock_check_run_payload)
+
+    mock_get_behind.assert_called_once()
+    mock_merge_base.assert_called_once_with(clone_dir=pytest.any, base_branch="main", behind_by=5)
+
 
 
 @pytest.mark.asyncio
