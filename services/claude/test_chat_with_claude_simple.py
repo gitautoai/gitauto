@@ -83,3 +83,57 @@ def test_concatenates_multiple_text_blocks(mock_claude, _mock_insert):
     )
 
     assert result == "Part 1. Part 2."
+
+
+@patch("services.claude.chat_with_claude_simple.insert_llm_request")
+@patch("services.claude.chat_with_claude_simple.claude")
+def test_truncates_user_input_when_over_context_limit(mock_claude, _mock_insert):
+    """Sentry AGENT-36A/36B/36C (Foxquilt, 2026-04-16): user_input was a PHPUnit
+    CI log of 205425 tokens > Claude's 200000 context. The function now measures
+    tokens up-front and truncates user_input proportionally when over the budget.
+    Regression-tests the truncation and the marker that lets downstream callers
+    see what happened."""
+    # Pretend the user_input is 2M tokens (over Sonnet 4.6's 1M context).
+    mock_claude.messages.count_tokens.return_value = Mock(input_tokens=2_000_000)
+    mock_response = Mock()
+    mock_response.content = [Mock(type="text", text="answer")]
+    mock_response.usage = Mock(input_tokens=50_000, output_tokens=10)
+    mock_claude.messages.create.return_value = mock_response
+
+    huge_input = "x" * 100_000
+
+    chat_with_claude_simple(
+        system_input="sys",
+        user_input=huge_input,
+        usage_id=1,
+    )
+
+    create_kwargs = mock_claude.messages.create.call_args.kwargs
+    sent_content = create_kwargs["messages"][0]["content"]
+    # SONNET_4_6 context 1M - 4096 output - 4096 buffer = 991808 tokens. The mocked count returns 400000, which is ALREADY under 991808 — so we need a bigger mock to actually trigger truncation.
+    # Update: bumped probe count to 2_000_000 to force truncation on the 1M context.
+    max_input_tokens = 991808
+    new_len = int(100_000 * (max_input_tokens / 2_000_000) * 0.9)
+    assert sent_content == (
+        "x" * new_len
+        + f"\n\n... [truncated at ~{max_input_tokens} tokens; original was 2000000]"
+    )
+
+
+@patch("services.claude.chat_with_claude_simple.insert_llm_request")
+@patch("services.claude.chat_with_claude_simple.claude")
+def test_leaves_user_input_alone_when_under_context_limit(mock_claude, _mock_insert):
+    """Negative case for truncation: payload fits comfortably → don't touch it."""
+    mock_claude.messages.count_tokens.return_value = Mock(input_tokens=1_000)
+    mock_response = Mock()
+    mock_response.content = [Mock(type="text", text="answer")]
+    mock_response.usage = Mock(input_tokens=1_000, output_tokens=10)
+    mock_claude.messages.create.return_value = mock_response
+
+    original = '{"pr_title": "short"}'
+    chat_with_claude_simple(system_input="sys", user_input=original, usage_id=1)
+
+    sent_content = mock_claude.messages.create.call_args.kwargs["messages"][0][
+        "content"
+    ]
+    assert sent_content == original
