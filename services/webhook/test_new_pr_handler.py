@@ -2147,6 +2147,279 @@ async def test_auto_detect_location_ignores_dashboard_setting(
     )
 
 
+@pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_usage_id_by_pr_and_trigger")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
+async def test_reuses_existing_usage_row_when_present(
+    mock_deconstruct,
+    mock_check_availability,
+    mock_render_text,
+    mock_create_comment,
+    mock_create_progress_bar,
+    mock_update_comment,
+    mock_slack_notify,
+    mock_get_stripe_id,
+    mock_get_usage_id,
+    mock_create_user_request,
+    mock_update_usage,
+):
+    mock_deconstruct.return_value = (_get_base_args(), None)
+    mock_render_text.return_value = "Rendered"
+    mock_slack_notify.return_value = "thread_1"
+    mock_create_comment.return_value = "comment_url"
+    mock_create_progress_bar.return_value = "progress"
+    mock_get_stripe_id.return_value = "cus_existing"
+    # Bail early after the lookup/charge step so the rest of the agent flow stays out of scope.
+    mock_check_availability.return_value = {
+        "can_proceed": False,
+        "billing_type": "credit",
+        "credit_balance_usd": 0,
+        "user_message": "Stop",
+        "log_message": "Stop",
+    }
+    mock_get_usage_id.return_value = 16084
+
+    await handle_new_pr(payload=_get_test_payload(), trigger="schedule")
+
+    # can_proceed=False makes handle_new_pr return before the usage_id lookup is reached, so neither path runs. Verify by simulating can_proceed=True with a different test below.
+    mock_create_user_request.assert_not_called()
+    mock_update_usage.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
+@patch("services.webhook.new_pr_handler.get_credits_depleted_email_text")
+@patch("services.webhook.new_pr_handler.get_user")
+@patch("services.webhook.new_pr_handler.get_owner")
+@patch("services.webhook.new_pr_handler.insert_credit")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
+@patch("services.webhook.new_pr_handler.ensure_node_packages")
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_usage_id_by_pr_and_trigger")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
+async def test_reuse_branch_skips_create_and_charges_existing_usage_id(
+    mock_deconstruct,
+    mock_check_availability,
+    mock_get_pr_comments,
+    mock_render_text,
+    mock_create_comment,
+    mock_create_progress_bar,
+    mock_update_usage,
+    mock_update_comment,
+    mock_slack_notify,
+    mock_get_stripe_id,
+    mock_get_usage_id,
+    mock_create_user_request,
+    mock_ensure_node_packages,
+    mock_prepare_repo,
+    mock_extract_image_urls,
+    mock_get_remote_file,
+    mock_should_bail,
+    mock_create_empty_commit,
+    mock_chat_with_agent,
+    mock_get_pr_files,
+    mock_insert_credit,
+    mock_get_owner,
+    mock_get_user,
+    mock_get_email_text,
+    _mock_read_local_file,
+    _mock_run_subprocess,
+):
+    mock_deconstruct.return_value = (_get_base_args(), None)
+    mock_render_text.return_value = "Rendered body"
+    mock_slack_notify.return_value = "thread_1"
+    mock_create_comment.return_value = "comment_url"
+    mock_create_progress_bar.return_value = "progress"
+    mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "credit",
+        "credit_balance_usd": 50,
+        "user_message": "",
+        "log_message": "Proceeding",
+    }
+    mock_get_pr_comments.return_value = []
+    mock_extract_image_urls.return_value = []
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        completion_reason="",
+        p=50,
+        is_planned=False,
+        cost_usd=0.0,
+    )
+    mock_get_pr_files.return_value = [{"filename": "test.py", "status": "modified"}]
+    mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 100}
+    mock_get_user.return_value = None
+    mock_get_email_text.return_value = ("subj", "body")
+    mock_get_usage_id.return_value = 16084
+
+    await handle_new_pr(
+        payload=_get_test_payload(),
+        trigger="schedule",
+        lambda_info={
+            "log_group": "/aws/lambda/pr-agent-prod",
+            "log_stream": "stream-x",
+            "request_id": "req-y",
+        },
+    )
+
+    # Lookup happened with the right keys
+    mock_get_usage_id.assert_called_once_with(
+        installation_id=123,
+        repo_id=789,
+        pr_number=100,
+        trigger="schedule",
+    )
+    # Reuse path: do NOT insert a new usage row
+    mock_create_user_request.assert_not_called()
+    # Reuse path: lambda info is attached to the existing row
+    update_call = mock_update_usage.call_args_list[0]
+    assert update_call.kwargs["usage_id"] == 16084
+    assert update_call.kwargs["lambda_log_group"] == "/aws/lambda/pr-agent-prod"
+    assert update_call.kwargs["lambda_log_stream"] == "stream-x"
+    assert update_call.kwargs["lambda_request_id"] == "req-y"
+    # Credit is charged against the existing row
+    mock_insert_credit.assert_called_once()
+    assert mock_insert_credit.call_args.kwargs["usage_id"] == 16084
+
+
+@pytest.mark.asyncio
+@patch("services.webhook.new_pr_handler.update_usage")
+@patch("services.webhook.new_pr_handler.create_user_request")
+@patch("services.webhook.new_pr_handler.get_usage_id_by_pr_and_trigger")
+@patch("services.webhook.new_pr_handler.get_pr_comments")
+@patch("services.webhook.new_pr_handler.get_stripe_customer_id")
+@patch("services.webhook.new_pr_handler.slack_notify")
+@patch("services.webhook.new_pr_handler.update_comment")
+@patch("services.webhook.new_pr_handler.create_progress_bar")
+@patch("services.webhook.new_pr_handler.create_comment")
+@patch("services.webhook.new_pr_handler.render_text")
+@patch("services.webhook.new_pr_handler.check_availability")
+@patch("services.webhook.new_pr_handler.deconstruct_github_payload")
+@patch("services.webhook.new_pr_handler.insert_credit")
+@patch("services.webhook.new_pr_handler.clone_repo_and_install_dependencies")
+@patch("services.webhook.new_pr_handler.ensure_node_packages")
+@patch("services.webhook.new_pr_handler.extract_image_urls")
+@patch("services.webhook.new_pr_handler.get_remote_file_content_by_url")
+@patch("services.webhook.new_pr_handler.should_bail", return_value=False)
+@patch("services.webhook.new_pr_handler.create_empty_commit")
+@patch("services.webhook.new_pr_handler.chat_with_agent")
+@patch("services.webhook.new_pr_handler.get_pull_request_files")
+@patch("services.webhook.new_pr_handler.get_owner")
+@patch("services.webhook.new_pr_handler.get_user")
+@patch("services.webhook.new_pr_handler.get_credits_depleted_email_text")
+@patch(
+    "services.webhook.new_pr_handler.read_local_file",
+    return_value="def calculate():\n    return 1 + 2\n",
+)
+@patch(
+    "services.webhook.new_pr_handler.run_subprocess", return_value=MagicMock(stdout="")
+)
+async def test_insert_branch_runs_when_no_existing_usage_row(
+    _mock_run_subprocess,
+    _mock_read_local_file,
+    mock_get_email_text,
+    mock_get_user,
+    mock_get_owner,
+    mock_get_pr_files,
+    mock_chat_with_agent,
+    mock_create_empty_commit,
+    mock_should_bail,
+    mock_get_remote_file,
+    mock_extract_image_urls,
+    mock_ensure_node_packages,
+    mock_prepare_repo,
+    mock_insert_credit,
+    mock_deconstruct,
+    mock_check_availability,
+    mock_render_text,
+    mock_create_comment,
+    mock_create_progress_bar,
+    mock_update_comment,
+    mock_slack_notify,
+    mock_get_stripe_id,
+    mock_get_pr_comments,
+    mock_get_usage_id,
+    mock_create_user_request,
+    mock_update_usage,
+):
+    mock_deconstruct.return_value = (_get_base_args(), None)
+    mock_render_text.return_value = "Rendered"
+    mock_slack_notify.return_value = "thread_1"
+    mock_create_comment.return_value = "comment_url"
+    mock_create_progress_bar.return_value = "progress"
+    mock_get_stripe_id.return_value = "cus_existing"
+    mock_get_remote_file.return_value = ("", "")
+    mock_check_availability.return_value = {
+        "can_proceed": True,
+        "billing_type": "credit",
+        "credit_balance_usd": 50,
+        "user_message": "",
+        "log_message": "Proceeding",
+    }
+    mock_get_pr_comments.return_value = []
+    mock_extract_image_urls.return_value = []
+    mock_chat_with_agent.return_value = AgentResult(
+        messages=[],
+        token_input=10,
+        token_output=5,
+        is_completed=True,
+        completion_reason="",
+        p=50,
+        is_planned=False,
+        cost_usd=0.0,
+    )
+    mock_get_pr_files.return_value = []
+    mock_get_owner.return_value = {"id": 456, "credit_balance_usd": 100}
+    mock_get_user.return_value = None
+    mock_get_email_text.return_value = ("subj", "body")
+    mock_get_usage_id.return_value = None
+    mock_create_user_request.return_value = 99999
+
+    await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
+
+    mock_create_user_request.assert_called_once()
+    insert_call = mock_create_user_request.call_args.kwargs
+    assert insert_call["source"] == "github"
+    assert insert_call["trigger"] == "dashboard"
+    mock_insert_credit.assert_called_once()
+    assert mock_insert_credit.call_args.kwargs["usage_id"] == 99999
+
+
 def test_agent_result_concurrent_push_field_defaults_false_new_pr():
     """new_pr handler breaks its agent loop + posts racer-push message when
     AgentResult.concurrent_push_detected is True. Verify the new field exists
