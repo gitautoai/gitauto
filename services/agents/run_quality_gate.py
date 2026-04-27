@@ -30,6 +30,7 @@ def run_quality_gate(clone_dir: str, impl_file: str, base_args: BaseArgs):
     for tp in test_file_paths:
         content = read_local_file(file_path=tp, base_dir=clone_dir)
         if content and content.strip():
+            logger.info("Loaded test file %s for LLM eval", tp)
             test_files.append((tp, content))
 
     if not test_files:
@@ -41,6 +42,8 @@ def run_quality_gate(clone_dir: str, impl_file: str, base_args: BaseArgs):
         source_path=impl_file,
         test_files=test_files,
         model=base_args["model_id"],
+        usage_id=base_args["usage_id"],
+        created_by=f"{base_args['sender_id']}:{base_args['sender_name']}",
     )
     if quality_results is None:
         logger.warning("Quality evaluation failed for %s, letting it pass", impl_file)
@@ -67,14 +70,14 @@ def run_quality_gate(clone_dir: str, impl_file: str, base_args: BaseArgs):
                 break
 
     if failed_categories:
+        details = "\n".join(failure_details)
+        passed_count = total_checks - len(failed_categories)
         logger.warning(
             "Quality gate failed for %s: %d categories with failures: %s",
             impl_file,
             len(failed_categories),
             ", ".join(failed_categories),
         )
-        details = "\n".join(failure_details)
-        passed_count = total_checks - len(failed_categories)
         return QualityGateResult(
             error=f"Quality gate failed for {impl_file}:\n{details}",
             passed_count=passed_count,

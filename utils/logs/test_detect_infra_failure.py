@@ -52,7 +52,9 @@ status code: 301
 def test_detect_infra_failure_real_segfault_log():
     real_log = SEGFAULT_LOG_PATH.read_text(encoding="utf-8")
     result = detect_infra_failure(real_log)
-    assert result == "Segmentation fault"
+    assert result is not None
+    assert result["pattern"] == "Segmentation fault"
+    assert result["should_retry"] is True
 
 
 @pytest.mark.parametrize(
@@ -140,7 +142,9 @@ def test_detect_infra_failure_real_segfault_log():
 )
 def test_detect_infra_failure_matches(error_log, expected):
     result = detect_infra_failure(error_log)
-    assert result == expected
+    assert result is not None
+    assert result["pattern"] == expected
+    assert result["should_retry"] is True
 
 
 @pytest.mark.parametrize(
@@ -165,14 +169,18 @@ def test_strip_jest_noise_removes_app_level_access_denied_warn():
 
 
 def test_detect_infra_failure_real_codecov_checksum_mismatch_log():
-    real_log = PR1157_FOXCOM_FORMS_CODECOV_CHECKSUM_LOG_PATH.read_text(
-        encoding="utf-8"
-    )
-    assert detect_infra_failure(real_log) == "Validate Codecov Uploader"
+    real_log = PR1157_FOXCOM_FORMS_CODECOV_CHECKSUM_LOG_PATH.read_text(encoding="utf-8")
+    result = detect_infra_failure(real_log)
+    assert result is not None
+    assert result["pattern"] == "Validate Codecov Uploader"
+    assert result["should_retry"] is False
 
 
 def test_detect_infra_failure_real_codecov_bad_signature_log():
     real_log = PR1158_FOXCOM_FORMS_CODECOV_BAD_SIGNATURE_LOG_PATH.read_text(
         encoding="utf-8"
     )
-    assert detect_infra_failure(real_log) == "Validate Codecov Uploader"
+    result = detect_infra_failure(real_log)
+    assert result is not None
+    assert result["pattern"] == "Validate Codecov Uploader"
+    assert result["should_retry"] is False

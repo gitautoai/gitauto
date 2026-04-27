@@ -1145,6 +1145,102 @@ async def test_cost_cap_with_change_commits_still_retriggers_ci(
 @patch("services.webhook.check_suite_handler.cancel_workflow_runs")
 @patch("services.webhook.check_suite_handler.get_pull_request")
 @patch("services.webhook.check_suite_handler.get_pull_request_files")
+@patch("services.webhook.check_suite_handler.get_pull_request_commits")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs")
+@patch("services.webhook.check_suite_handler.detect_infra_failure")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.chat_with_agent")
+@patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
+async def test_handle_check_suite_codecov_validation_does_not_empty_commit_retry(
+    _mock_prepare_repo,
+    _mock_get_behind,
+    _mock_merge_base,
+    _mock_ensure_php,
+    _mock_ensure_node,
+    mock_update_usage,
+    mock_chat_agent,
+    mock_create_empty_commit,
+    mock_update_comment,
+    mock_detect_infra_failure,
+    mock_get_logs,
+    mock_get_pr_commits,
+    mock_get_changes,
+    mock_get_pr,
+    _mock_cancel_workflow_runs,
+    mock_create_user_request,
+    mock_create_comment,
+    mock_get_pr_comments,
+    _mock_slack_notify,
+    mock_get_repo,
+    mock_get_token,
+    mock_get_failed_runs,
+    mock_check_run_payload,
+):
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
+    mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "build_deploy_development_workflow",
+            "head_sha": "abc123",
+        }
+    ]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr_comments.return_value = []
+    mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = "usage-id-123"
+    mock_get_pr.return_value = {
+        "title": "Low Test Coverage: src/main.py",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+        "base": {"ref": "main"},
+    }
+    mock_get_changes.return_value = [
+        {
+            "filename": "src/main.py",
+            "status": "modified",
+            "additions": 10,
+            "deletions": 5,
+        }
+    ]
+    mock_get_pr_commits.return_value = []
+    mock_get_logs.return_value = "CircleCI Build Log: Validate Codecov Uploader"
+    mock_detect_infra_failure.return_value = {
+        "pattern": "Validate Codecov Uploader",
+        "should_retry": False,
+    }
+
+    await handle_check_suite(payload)
+
+    mock_create_empty_commit.assert_not_called()
+    mock_chat_agent.assert_not_called()
+    mock_update_usage.assert_called_once()
+    mock_update_comment.assert_called()
+
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.get_pull_request_files")
 @patch("services.webhook.check_suite_handler.get_workflow_run_logs")
 @patch("services.webhook.check_suite_handler.update_comment")
 @patch("services.webhook.check_suite_handler.get_retry_error_hashes")

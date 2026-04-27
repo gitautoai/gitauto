@@ -11,19 +11,32 @@
     <rule>Never blindly copy expected values from running the function. Running the impl to get output is OK, but you MUST manually trace through the logic to verify the result is correct. Understand WHY the output is what it is. If you can't explain each value, the test is worthless.</rule>
     <rule>Verify test interactions actually trigger the tested code paths - different frameworks may require different event approaches.</rule>
     <rule>Every test function MUST have a short inline comment explaining WHAT it tests and WHY. Example: "# Verify missing 'email' key raises ValidationError, not KeyError"</rule>
+    <rule>Test realistic failure modes (DB errors, network errors, malformed input), not contrived ones (e.g., a response setter throwing that never throws in production). Pick error scenarios that actually occur.</rule>
+    <rule>In catch/except/rescue blocks, assert EVERY side effect: logging calls (with expected message), status transitions, cleanup, retries. Don't just verify the catch was reached.</rule>
+    <rule>Error-path tests MUST assert every affected field. If all properties should be null/default on failure, assert each one — not just the one you remember.</rule>
+    <rule>Layer mocks at architectural boundaries: controller tests mock the service/model layer; service/model tests mock their own dependencies (DB, HTTP, filesystem). Don't reach through multiple layers in one test.</rule>
   </principles>
 
   <mocks>
     <rule>PREFER framework fixtures/setup methods over configuring mocks inside individual tests. Use descriptive names.</rule>
     <rule>For method chaining, mock the entire operation as one unit - avoid mock.obj.method1.return_value.method2.return_value chains.</rule>
     <rule>For complex nested types: (1) reuse existing fixtures, (2) create reusable fixture, (3) use cast/as any, (4) use type suppression.</rule>
-    <rule>NEVER write tautological tests that mock a return value then assert output matches that mock. This always passes regardless of correctness.</rule>
   </mocks>
+
+  <tautology>
+    <rule>NEVER write tests that pass regardless of implementation correctness. Such tests give false coverage confidence, inflate metrics without bug-detection value, and consume maintenance budget while lying about safety. Delete on sight.</rule>
+    <rule>Mock-result tautology: mocking a return value, then asserting the subject's output equals that same value. You're testing the mock, not the subject. If the real collaborator is needed, write a sociable/integration test.</rule>
+    <rule>Constructor-identity tautology: `assertInstanceOf(Foo::class, new Foo())` or `expect(new Foo()).toBeInstanceOf(Foo)`. The assert can only fail if the class literally doesn't exist, which crashes the test before the assert runs.</rule>
+    <rule>Visibility/modifier tautology: asserting a method `isPublic()`, `isStatic()`, or a property exists via reflection. These test the class declaration (enforced by the language), not behavior.</rule>
+    <rule>Self-assigned assertion tautology: `$x = 'y'; assertNotNull($x)` or `$obj->foo = 1; assertSame(1, $obj->foo)`. You're asserting what your setup code just did, not what the subject does.</rule>
+    <rule>Super-class re-test tautology: testing that a subclass inherits parent behavior you didn't override. The parent's tests already cover it; repeating them through the child only breaks when parent changes, and tells you nothing about the child.</rule>
+  </tautology>
 
   <adversarial_testing>
     <rule>Write tests that try to BREAK the code. Every test file should include adversarial cases, not just happy-path inputs.</rule>
     <rule>If a test reveals unhandled exceptions, document with pytest.raises/expect().toThrow(). Do NOT remove the test.</rule>
     <rule>If an adversarial test exposes a real bug, FIX THE IMPLEMENTATION - do NOT weaken or delete the test.</rule>
+    <rule>Always cover missing/absent required parameters. Real callers send malformed input; tests must describe how the impl responds (error, default, exception) for each missing field.</rule>
   </adversarial_testing>
 
   <file_organization>
@@ -43,6 +56,9 @@
     <rule>Do not test constant content unless explicitly requested - tests should not fail when constant values update.</rule>
     <rule>Do not blindly reuse heavy test utilities (DB connections, in-memory servers) when all externals are mocked. Use lightweight inline mocks instead.</rule>
     <rule>NEVER write toy tests with 2-3 synthetic items. Use real-world data from the cloned repo. Real data (31+ files) exposes real bugs that toy tests miss. Mutation testing principle: if changing a key value still passes your tests, they're worthless.</rule>
+    <rule>Do not create separate test methods that exercise the same code path with only different input values. Consolidate via parameterized tests (dataProvider, parametrize, test.each). Separate tests are justified only when code paths differ.</rule>
+    <rule>Do not test branches that do not exist in the implementation (e.g., a "0 rows returned" test when the code has no zero-row branch). Tests exist to verify branches in the impl, not to enumerate possible inputs.</rule>
+    <rule>Do not test language semantics (e.g., "unused parameter accepts null and nothing happens"). Test the impl's behavior, not what the language does with unused arguments.</rule>
   </anti_patterns>
 
   <test_levels>
