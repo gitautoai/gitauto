@@ -43,6 +43,7 @@ def test_upsert_repository_owner_exists_repo_exists(mocks):
     mocks["update_repository"].return_value = mock_update_result
 
     result = upsert_repository(
+        platform="github",
         owner_id=123,
         owner_name="test_owner",
         owner_type="Organization",
@@ -55,9 +56,12 @@ def test_upsert_repository_owner_exists_repo_exists(mocks):
     )
 
     assert result == mock_update_result
-    mocks["get_owner"].assert_called_once_with(123)
-    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
+    mocks["get_owner"].assert_called_once_with(platform="github", owner_id=123)
+    mocks["get_repository"].assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mocks["update_repository"].assert_called_once_with(
+        platform="github",
         owner_id=123,
         repo_id=456,
         updated_by="789:test_user",
@@ -72,6 +76,7 @@ def test_upsert_repository_owner_not_exists_repo_not_exists(mocks):
     mocks["insert_repository"].return_value = {"repo_id": 456, "created": True}
 
     result = upsert_repository(
+        platform="github",
         owner_id=123,
         owner_name="test_owner",
         owner_type="Organization",
@@ -82,7 +87,7 @@ def test_upsert_repository_owner_not_exists_repo_not_exists(mocks):
     )
 
     assert result == {"repo_id": 456, "created": True}
-    mocks["get_owner"].assert_called_once_with(123)
+    mocks["get_owner"].assert_called_once_with(platform="github", owner_id=123)
     mocks["insert_owner"].assert_called_once_with(
         owner_id=123,
         owner_name="test_owner",
@@ -90,9 +95,13 @@ def test_upsert_repository_owner_not_exists_repo_not_exists(mocks):
         user_id=789,
         user_name="test_user",
         stripe_customer_id="",
+        platform="github",
     )
-    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
+    mocks["get_repository"].assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mocks["insert_repository"].assert_called_once_with(
+        platform="github",
         owner_id=123,
         repo_id=456,
         repo_name="test_repo",
@@ -110,6 +119,7 @@ def test_upsert_repository_owner_exists_repo_not_exists(mocks):
     mocks["insert_repository"].return_value = {"repo_id": 456, "created": True}
 
     result = upsert_repository(
+        platform="github",
         owner_id=123,
         owner_name="test_owner",
         owner_type="Organization",
@@ -122,9 +132,12 @@ def test_upsert_repository_owner_exists_repo_not_exists(mocks):
     )
 
     assert result == {"repo_id": 456, "created": True}
-    mocks["get_owner"].assert_called_once_with(123)
-    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
+    mocks["get_owner"].assert_called_once_with(platform="github", owner_id=123)
+    mocks["get_repository"].assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mocks["insert_repository"].assert_called_once_with(
+        platform="github",
         owner_id=123,
         repo_id=456,
         repo_name="test_repo",
@@ -144,6 +157,7 @@ def test_upsert_repository_update_no_data_returned(mocks):
     mocks["update_repository"].return_value = None
 
     result = upsert_repository(
+        platform="github",
         owner_id=123,
         owner_name="test_owner",
         owner_type="Organization",
@@ -154,10 +168,13 @@ def test_upsert_repository_update_no_data_returned(mocks):
     )
 
     assert result is None
-    mocks["get_owner"].assert_called_once_with(123)
-    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
+    mocks["get_owner"].assert_called_once_with(platform="github", owner_id=123)
+    mocks["get_repository"].assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     # When stats are 0, they're not passed to avoid overwriting existing
     mocks["update_repository"].assert_called_once_with(
+        platform="github",
         owner_id=123,
         repo_id=456,
         updated_by="789:test_user",
@@ -172,6 +189,7 @@ def test_upsert_repository_insert_no_data_returned(mocks):
     mocks["insert_repository"].return_value = None
 
     result = upsert_repository(
+        platform="github",
         owner_id=123,
         owner_name="test_owner",
         owner_type="Organization",
@@ -182,9 +200,12 @@ def test_upsert_repository_insert_no_data_returned(mocks):
     )
 
     assert result is None
-    mocks["get_owner"].assert_called_once_with(123)
-    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
+    mocks["get_owner"].assert_called_once_with(platform="github", owner_id=123)
+    mocks["get_repository"].assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mocks["insert_repository"].assert_called_once_with(
+        platform="github",
         owner_id=123,
         repo_id=456,
         repo_name="test_repo",
@@ -204,6 +225,7 @@ def test_upsert_repository_with_default_parameters(mocks):
     mocks["insert_repository"].return_value = mock_insert_result
 
     result = upsert_repository(
+        platform="github",
         owner_id=123,
         owner_name="test_owner",
         owner_type="Organization",
@@ -214,9 +236,12 @@ def test_upsert_repository_with_default_parameters(mocks):
     )
 
     assert result == mock_insert_result
-    mocks["get_owner"].assert_called_once_with(123)
-    mocks["get_repository"].assert_called_once_with(owner_id=123, repo_id=456)
+    mocks["get_owner"].assert_called_once_with(platform="github", owner_id=123)
+    mocks["get_repository"].assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mocks["insert_repository"].assert_called_once_with(
+        platform="github",
         owner_id=123,
         repo_id=456,
         repo_name="test_repo",
@@ -233,6 +258,7 @@ def test_upsert_repository_owner_not_exists_insert_owner_called(mocks):
     mocks["insert_repository"].return_value = {"repo_id": 456, "created": True}
 
     upsert_repository(
+        platform="github",
         owner_id=123,
         owner_name="test_owner",
         owner_type="Organization",
@@ -249,6 +275,7 @@ def test_upsert_repository_owner_not_exists_insert_owner_called(mocks):
         user_id=789,
         user_name="test_user",
         stripe_customer_id="",
+        platform="github",
     )
 
 
@@ -262,6 +289,7 @@ def test_upsert_repository_owner_exists_insert_owner_not_called(mocks):
     mocks["update_repository"].return_value = mock_update_result
 
     upsert_repository(
+        platform="github",
         owner_id=123,
         owner_name="test_owner",
         owner_type="Organization",
@@ -283,6 +311,7 @@ def test_upsert_repository_string_formatting(mocks):
     mocks["insert_repository"].return_value = mock_insert_result
 
     upsert_repository(
+        platform="github",
         owner_id=123,
         owner_name="test_owner",
         owner_type="Organization",
@@ -293,6 +322,7 @@ def test_upsert_repository_string_formatting(mocks):
     )
 
     mocks["insert_repository"].assert_called_once_with(
+        platform="github",
         owner_id=123,
         repo_id=456,
         repo_name="test_repo",

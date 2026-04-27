@@ -163,7 +163,9 @@ async def test_handle_check_suite_skips_when_trigger_disabled(
     mock_get_token.assert_called_once()
     mock_get_failed_runs.assert_called_once()
     mock_get_pr.assert_called_once()
-    mock_get_repo.assert_called_once_with(owner_id=11111, repo_id=98765)
+    mock_get_repo.assert_called_once_with(
+        platform="github", owner_id=11111, repo_id=98765
+    )
 
 
 @pytest.mark.asyncio
@@ -1609,7 +1611,7 @@ async def test_handle_check_suite_codecov_failure(
 
     await handle_check_suite(payload)
 
-    mock_get_codecov_token.assert_called_once_with(11111)
+    mock_get_codecov_token.assert_called_once_with(platform="github", owner_id=11111)
     mock_get_codecov_coverage.assert_called_once_with(
         owner="gitautoai",
         repo="gitauto",
@@ -1736,7 +1738,7 @@ async def test_handle_check_suite_codecov_no_token(
 
     await handle_check_suite(payload)
 
-    mock_get_codecov_token.assert_called_once_with(11111)
+    mock_get_codecov_token.assert_called_once_with(platform="github", owner_id=11111)
     assert mock_chat_agent.call_count == 2
 
 

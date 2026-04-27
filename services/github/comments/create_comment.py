@@ -3,8 +3,9 @@ from anthropic.types import ToolUnionParam
 
 from config import GITHUB_API_URL, TIMEOUT
 from services.github.utils.create_headers import create_headers
-from services.types.base_args import BaseArgs
+from services.types.base_args import CommentArgs
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 # See https://docs.anthropic.com/en/docs/build-with-claude/tool-use#defining-tools
 CREATE_COMMENT: ToolUnionParam = {
@@ -26,7 +27,7 @@ CREATE_COMMENT: ToolUnionParam = {
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def create_comment(body: str, base_args: BaseArgs, **_kwargs):
+def create_comment(body: str, base_args: CommentArgs, **_kwargs):
     # https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment
     # PRs are issues in GitHub's data model, so this works for both issues and PRs.
     owner = base_args["owner"]
@@ -41,5 +42,12 @@ def create_comment(body: str, base_args: BaseArgs, **_kwargs):
         timeout=TIMEOUT,
     )
     response.raise_for_status()
-    url: str = response.json()["url"]
+    url = response.json()["url"]
+    if not isinstance(url, str):
+        logger.warning(
+            "create_comment: response url is not str, got %s", type(url).__name__
+        )
+        return None
+
+    logger.info("create_comment: posted to %s/%s/%s", owner, repo, number)
     return url

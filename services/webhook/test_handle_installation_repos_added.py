@@ -121,7 +121,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -156,7 +158,9 @@ class TestHandleInstallationReposAdded:
 
         # Verify
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
@@ -177,7 +181,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -212,7 +218,9 @@ class TestHandleInstallationReposAdded:
             handle_installation_repos_added(mock_installation_payload)
 
         # Verify - should return early when token retrieval fails
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -233,7 +241,9 @@ class TestHandleInstallationReposAdded:
         with pytest.raises(Exception, match="Database error"):
             handle_installation_repos_added(mock_installation_payload)
 
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
@@ -253,7 +263,9 @@ class TestHandleInstallationReposAdded:
         with pytest.raises(Exception, match="Token error"):
             handle_installation_repos_added(mock_installation_payload)
 
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -276,7 +288,9 @@ class TestHandleInstallationReposAdded:
         with pytest.raises(Exception, match="Processing error"):
             handle_installation_repos_added(mock_installation_payload)
 
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -325,7 +339,9 @@ class TestHandleInstallationReposAdded:
                 cast(InstallationRepositoriesPayload, incomplete_payload)
             )
 
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -395,7 +411,9 @@ class TestHandleInstallationReposAdded:
                 cast(InstallationRepositoriesPayload, incomplete_payload)
             )
 
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -420,7 +438,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -455,7 +475,7 @@ class TestHandleInstallationReposAdded:
 
         # Verify
         mock_is_installation_valid.assert_called_once_with(
-            installation_id=different_installation_id
+            platform="github", installation_id=different_installation_id
         )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=different_installation_id
@@ -492,7 +512,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=0)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=0
+        )
         mock_get_installation_access_token.assert_called_once_with(installation_id=0)
         mock_process_repositories.assert_called_once_with(
             installation_id=0,
@@ -528,7 +550,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=str(67890))
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=str(67890)
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=str(67890)
         )
@@ -584,7 +608,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -618,7 +644,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -710,7 +738,9 @@ class TestHandleInstallationReposAdded:
         with pytest.raises(AttributeError, match="some_attr"):
             handle_installation_repos_added(mock_installation_payload)
 
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -733,7 +763,9 @@ class TestHandleInstallationReposAdded:
         with pytest.raises(KeyError, match="missing_key"):
             handle_installation_repos_added(mock_installation_payload)
 
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -757,7 +789,9 @@ class TestHandleInstallationReposAdded:
         with pytest.raises(json.JSONDecodeError):
             handle_installation_repos_added(mock_installation_payload)
 
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -781,7 +815,9 @@ class TestHandleInstallationReposAdded:
 
         # Verify - function should return None (default_return_value from decorator)
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -805,7 +841,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -838,7 +876,9 @@ class TestHandleInstallationReposAdded:
 
         # Verify
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(installation_id=-1)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=-1
+        )
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()
 
@@ -859,7 +899,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -894,7 +936,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -933,7 +977,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -972,7 +1018,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=max_int)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=max_int
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=max_int
         )
@@ -1008,7 +1056,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=12345.0)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=12345.0
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=12345.0
         )
@@ -1045,7 +1095,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -1080,7 +1132,9 @@ class TestHandleInstallationReposAdded:
         handle_installation_repos_added(mock_installation_payload)
 
         # Verify - should still proceed since "valid" is truthy
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_called_once_with(
             installation_id=67890
         )
@@ -1115,6 +1169,8 @@ class TestHandleInstallationReposAdded:
 
         # Verify - should return early since 0 is falsy
         assert result is None
-        mock_is_installation_valid.assert_called_once_with(installation_id=67890)
+        mock_is_installation_valid.assert_called_once_with(
+            platform="github", installation_id=67890
+        )
         mock_get_installation_access_token.assert_not_called()
         mock_process_repositories.assert_not_called()

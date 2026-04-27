@@ -29,6 +29,7 @@ from services.supabase.coverages.delete_stale_coverages import delete_stale_cove
 from services.supabase.coverages.get_coverages import get_coverages
 from services.supabase.coverages.upsert_coverages import upsert_coverages
 from services.supabase.repo_coverage.upsert_repo_coverage import upsert_repo_coverage
+from services.types.base_args import Platform
 
 # Local imports (Utils)
 from utils.error.handle_exceptions import handle_exceptions
@@ -49,6 +50,7 @@ def handle_coverage_report(
     user_name: str,
     source: str = "github",
 ):
+    platform: Platform = "github"
     # Default to "detached" for builds without branch context (tag builds, API triggers, etc.)
     if head_branch is None:
         head_branch = "detached"
@@ -60,6 +62,12 @@ def handle_coverage_report(
 
     github_token = get_installation_access_token(installation_id=installation_id)
     if not github_token:
+        logger.error(
+            "No token for installation %s (%s/%s)",
+            installation_id,
+            owner_name,
+            repo_name,
+        )
         raise ValueError(
             f"No token for installation {installation_id} ({owner_name}/{repo_name})"
         )
@@ -67,7 +75,9 @@ def handle_coverage_report(
     clone_url = get_clone_url(owner_name, repo_name, github_token)
 
     # Only process coverage for target branch
-    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+    repo_settings = get_repository(
+        platform=platform, owner_id=owner_id, repo_id=repo_id
+    )
     target_branch = repo_settings.get("target_branch") if repo_settings else ""
     if target_branch and not check_branch_exists(
         clone_url=clone_url, branch_name=target_branch
@@ -78,9 +88,14 @@ def handle_coverage_report(
             owner_name,
             repo_name,
         )
-        update_repository(owner_id=owner_id, repo_id=repo_id, target_branch="")
+        update_repository(
+            platform=platform, owner_id=owner_id, repo_id=repo_id, target_branch=""
+        )
         target_branch = ""
     if not target_branch:
+        logger.info(
+            "handle_coverage_report: no target_branch set; falling back to default"
+        )
         target_branch = get_default_branch(clone_url=clone_url)
         if not target_branch:
             logger.warning("Repository %s/%s is empty", owner_name, repo_name)
@@ -108,9 +123,13 @@ def handle_coverage_report(
 
     circle_token = None
     if source == "github":
+        logger.info(
+            "handle_coverage_report: source=github, fetching workflow artifacts"
+        )
         artifacts = get_workflow_artifacts(owner_name, repo_name, run_id, github_token)
     elif source == "circleci":
-        circle_token = get_circleci_token(owner_id=owner_id)
+        logger.info("handle_coverage_report: source=circleci, looking up token")
+        circle_token = get_circleci_token(platform=platform, owner_id=owner_id)
         if not circle_token:
             logger.warning("No CircleCI token found for owner %d", owner_id)
             return None
@@ -137,6 +156,10 @@ def handle_coverage_report(
                     "Found CircleCI job: %s (status: %s)", job["name"], job["status"]
                 )
                 if job["status"] != "success":
+                    logger.info(
+                        "handle_coverage_report: skipping non-success job %s",
+                        job["name"],
+                    )
                     continue
 
                 job_artifacts = get_circleci_job_artifacts(
@@ -146,6 +169,7 @@ def handle_coverage_report(
                 )
                 artifacts.extend(job_artifacts)
     else:
+        logger.warning("handle_coverage_report: unknown source=%s, skipping", source)
         return None
 
     # Clone to /tmp and fetch file tree to normalize absolute paths in lcov files
@@ -163,8 +187,10 @@ def handle_coverage_report(
         # GitHub API returns "name": https://docs.github.com/en/rest/actions/artifacts
         # CircleCI API returns "path" (no name field): https://circleci.com/docs/api/v2/#operation/getJobArtifacts
         if source == "github":
+            logger.info("handle_coverage_report: artifact source=github")
             artifact_name = artifact.get("name", "")
         else:
+            logger.info("handle_coverage_report: artifact source=%s", source)
             artifact_name = artifact.get("path", "")
 
         logger.info("Processing artifact: %s", artifact_name)
@@ -180,6 +206,9 @@ def handle_coverage_report(
             continue
 
         if source == "github":
+            logger.info(
+                "handle_coverage_report: downloading github artifact %s", artifact_name
+            )
             lcov_content = download_artifact(
                 owner=owner_name,
                 repo=repo_name,
@@ -188,6 +217,9 @@ def handle_coverage_report(
             )
         else:
             if not circle_token:
+                logger.info(
+                    "handle_coverage_report: no circle_token, skipping artifact"
+                )
                 continue
             logger.info("Downloading CircleCI artifact from %s", artifact_name)
             lcov_content = download_circleci_artifact(
@@ -219,6 +251,7 @@ def handle_coverage_report(
     logger.info("Total coverage_data items: %d", len(coverage_data))
 
     if not coverage_data:
+        logger.info("handle_coverage_report: no coverage_data, returning")
         return None
 
     # Remove duplicates
@@ -235,18 +268,23 @@ def handle_coverage_report(
 
     # Get existing records
     existing_records = get_coverages(
-        owner_id=owner_id, repo_id=repo_id, filenames=current_paths
+        platform=platform,
+        owner_id=owner_id,
+        repo_id=repo_id,
+        filenames=current_paths,
     )
 
     # Prepare data for upsert (file-level only, not directory or repository aggregates)
     upsert_data = []
     for coverage in seen.values():
         if coverage.get("level") != "file":
+            logger.info("handle_coverage_report: skipping non-file coverage level")
             continue
         try:
             existing_record = existing_records.get(coverage["full_path"]) or {}
             item = {
                 **existing_record,
+                "platform": platform,
                 "owner_id": owner_id,
                 "repo_id": repo_id,
                 "branch_name": head_branch,
@@ -256,6 +294,10 @@ def handle_coverage_report(
             }
 
             if not existing_record:
+                logger.info(
+                    "handle_coverage_report: new coverage row for %s",
+                    coverage["full_path"],
+                )
                 item["created_by"] = user_name
                 item["is_excluded_from_testing"] = False
                 # SHAs not available here: CI coverage reports don't include git tree data
@@ -266,10 +308,19 @@ def handle_coverage_report(
 
             # Set None for 100% coverage fields
             if item.get("line_coverage") == 100:
+                logger.info(
+                    "handle_coverage_report: line_coverage=100, clearing uncovered_lines"
+                )
                 item["uncovered_lines"] = None
             if item.get("function_coverage") == 100:
+                logger.info(
+                    "handle_coverage_report: function_coverage=100, clearing uncovered_functions"
+                )
                 item["uncovered_functions"] = None
             if item.get("branch_coverage") == 100:
+                logger.info(
+                    "handle_coverage_report: branch_coverage=100, clearing uncovered_branches"
+                )
                 item["uncovered_branches"] = None
 
             # Remove fields that cause upsert conflicts or don't exist in coverages table
@@ -302,7 +353,9 @@ def handle_coverage_report(
     logger.info("Looking for repository-level coverage in %d items", len(coverage_data))
 
     if repo_coverage:
+        logger.info("handle_coverage_report: building repo_coverage_data row")
         repo_coverage_data: RepoCoverageInsert = {
+            "platform": platform,
             "owner_id": owner_id,
             "owner_name": owner_name,
             "repo_id": repo_id,
@@ -322,7 +375,7 @@ def handle_coverage_report(
             "created_by": user_name,
         }
 
-        upsert_repo_coverage(repo_coverage_data)
+        upsert_repo_coverage(coverage_data=repo_coverage_data)
 
     # Log files being upserted with their coverage values
     for item in upsert_data:
@@ -335,11 +388,12 @@ def handle_coverage_report(
         )
 
     # Upsert file coverages
-    upsert_result = upsert_coverages(upsert_data)
+    upsert_result = upsert_coverages(coverage_records=upsert_data)
     logger.info("Upserted %d coverage records", len(upsert_data))
 
     # Delete coverage records for files that no longer exist in the repo
     delete_stale_coverages(
+        platform=platform,
         owner_id=owner_id,
         repo_id=repo_id,
         current_files=repo_files,

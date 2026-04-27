@@ -31,6 +31,7 @@ def test_insert_repository_success():
         )
 
         result = insert_repository(
+            platform="github",
             owner_id=789,
             repo_id=123456,
             repo_name="test-repo",
@@ -72,6 +73,7 @@ def test_insert_repository_empty_data():
         )
 
         result = insert_repository(
+            platform="github",
             owner_id=789,
             repo_id=123456,
             repo_name="test-repo",
@@ -99,6 +101,7 @@ def test_insert_repository_none_data():
         )
 
         result = insert_repository(
+            platform="github",
             owner_id=789,
             repo_id=123456,
             repo_name="test-repo",
@@ -118,6 +121,7 @@ def test_insert_repository_exception_handling():
         mock_supabase.table.side_effect = Exception("Database connection error")
 
         result = insert_repository(
+            platform="github",
             owner_id=789,
             repo_id=123456,
             repo_name="test-repo",
@@ -151,6 +155,7 @@ def test_insert_repository_with_zero_values():
         )
 
         result = insert_repository(
+            platform="github",
             owner_id=0,
             repo_id=0,
             repo_name="test-repo",
@@ -175,6 +180,7 @@ def test_insert_repository_structured_rules_error():
         mock_get_rules.side_effect = Exception("Failed to get rules")
 
         result = insert_repository(
+            platform="github",
             owner_id=789,
             repo_id=123456,
             repo_name="test-repo",
@@ -196,6 +202,7 @@ def test_insert_repository_attribute_error():
         )
 
         result = insert_repository(
+            platform="github",
             owner_id=789,
             repo_id=123456,
             repo_name="test-repo",

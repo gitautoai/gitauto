@@ -99,6 +99,9 @@ async def test_not_completed_closes_pr_and_deletes_branch(
     agent_kwargs = mock_agent.call_args.kwargs
     assert agent_kwargs["model_id"] == "claude-opus-4-7"
 
+    # base_args carries platform="github" through to insert_usage
+    assert mock_insert_usage.call_args.kwargs["platform"] == "github"
+
 
 @pytest.mark.asyncio
 @patch(f"{MODULE}.slack_notify")

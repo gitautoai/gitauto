@@ -52,6 +52,7 @@ class TestUpdateIssueUrl:
 
         # Act
         result = update_issue_url(
+            platform="github",
             owner_id=789,
             repo_id=repo_id,
             file_path=file_path,
@@ -79,6 +80,7 @@ class TestUpdateIssueUrl:
 
         # Act
         result = update_issue_url(
+            platform="github",
             owner_id=789,
             repo_id=repo_id,
             file_path=file_path,
@@ -106,6 +108,7 @@ class TestUpdateIssueUrl:
 
         # Act
         result = update_issue_url(
+            platform="github",
             owner_id=789,
             repo_id=repo_id,
             file_path=file_path,
@@ -127,6 +130,7 @@ class TestUpdateIssueUrl:
 
         # Act
         result = update_issue_url(
+            platform="github",
             owner_id=789,
             repo_id=repo_id,
             file_path=file_path,
@@ -148,6 +152,7 @@ class TestUpdateIssueUrl:
 
         # Act
         result = update_issue_url(
+            platform="github",
             owner_id=789,
             repo_id=repo_id,
             file_path=file_path,
@@ -169,6 +174,7 @@ class TestUpdateIssueUrl:
 
         # Act
         result = update_issue_url(
+            platform="github",
             owner_id=789,
             repo_id=repo_id,
             file_path=file_path,
@@ -194,6 +200,7 @@ class TestUpdateIssueUrl:
 
         # Act
         result = update_issue_url(
+            platform="github",
             owner_id=789,
             repo_id=repo_id,
             file_path=file_path,
@@ -217,6 +224,7 @@ class TestUpdateIssueUrl:
 
         # Act
         result = update_issue_url(
+            platform="github",
             owner_id=789,
             repo_id=repo_id,
             file_path=file_path,
@@ -238,6 +246,7 @@ class TestUpdateIssueUrl:
 
         # Act
         result = update_issue_url(
+            platform="github",
             owner_id=789,
             repo_id=repo_id,
             file_path=file_path,
@@ -259,6 +268,7 @@ class TestUpdateIssueUrl:
 
             # Act
             result = update_issue_url(
+                platform="github",
                 owner_id=789,
                 repo_id=123456,
                 file_path="src/main.py",
@@ -276,6 +286,7 @@ class TestUpdateIssueUrl:
 
         # Act
         update_issue_url(
+            platform="github",
             owner_id=789,
             repo_id=123456,
             file_path="src/main.py",

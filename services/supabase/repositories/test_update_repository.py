@@ -22,11 +22,12 @@ class TestUpdateRepository(unittest.TestCase):
         """Test successful repository update"""
         mock_result = MagicMock()
         mock_result.data = [{"id": 1, "repo_id": self.test_repo_id}]
-        mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = (
+        mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.eq.return_value.execute.return_value = (
             mock_result
         )
 
         result = update_repository(
+            platform="github",
             owner_id=self.test_owner_id,
             repo_id=self.test_repo_id,
             updated_by=f"{self.test_user_id}:{self.test_user_name}",
@@ -41,11 +42,12 @@ class TestUpdateRepository(unittest.TestCase):
         """Test repository update with empty result data"""
         mock_result = MagicMock()
         mock_result.data = []
-        mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = (
+        mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.eq.return_value.execute.return_value = (
             mock_result
         )
 
         result = update_repository(
+            platform="github",
             owner_id=self.test_owner_id,
             repo_id=self.test_repo_id,
             updated_by=f"{self.test_user_id}:{self.test_user_name}",
@@ -58,11 +60,12 @@ class TestUpdateRepository(unittest.TestCase):
         """Test repository update with None result data"""
         mock_result = MagicMock()
         mock_result.data = None
-        mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = (
+        mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.eq.return_value.execute.return_value = (
             mock_result
         )
 
         result = update_repository(
+            platform="github",
             owner_id=self.test_owner_id,
             repo_id=self.test_repo_id,
             updated_by=f"{self.test_user_id}:{self.test_user_name}",
@@ -76,6 +79,7 @@ class TestUpdateRepository(unittest.TestCase):
         mock_supabase.table.side_effect = Exception("Database error")
 
         result = update_repository(
+            platform="github",
             owner_id=self.test_owner_id,
             repo_id=self.test_repo_id,
             updated_by=f"{self.test_user_id}:{self.test_user_name}",

@@ -1,3 +1,4 @@
+# pyright: reportUnusedVariable=false
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
 from unittest.mock import MagicMock, patch

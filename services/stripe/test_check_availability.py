@@ -63,6 +63,9 @@ class TestCheckAvailability:
         assert result["credit_balance_usd"] == balance
         assert result["log_message"] == f"Checked credit balance. ${balance} remaining."
         assert result["user_message"] == ""
+        mock_dependencies["get_owner"].assert_called_once_with(
+            platform="github", owner_id=123
+        )
         mock_dependencies["trigger_auto_reload"].assert_not_called()
 
     def test_credit_billing_type_with_insufficient_credits(self, mock_dependencies):
@@ -275,15 +278,13 @@ class TestCheckAvailability:
             sender_name="test_sender",
         )
 
-        required_fields = [
+        assert set(result.keys()) == {
             "can_proceed",
             "billing_type",
             "credit_balance_usd",
             "user_message",
             "log_message",
-        ]
-        for field in required_fields:
-            assert field in result
+        }
 
     def test_credit_billing_with_zero_threshold_and_positive_balance(
         self, mock_dependencies

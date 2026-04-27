@@ -5,6 +5,14 @@ import requests
 from services.supabase.usage.update_usage import update_usage
 
 
+def test_update_usage_skips_when_no_fields_to_update():
+    """When all kwargs are None, update_data is empty and update_usage returns without touching supabase."""
+    with patch("services.supabase.usage.update_usage.supabase") as mock_supabase:
+        result = update_usage(usage_id=123, token_input=None)
+        assert result is None
+        mock_supabase.table.assert_not_called()
+
+
 def test_update_usage_success_with_all_parameters():
     mock_response = Mock()
     mock_response.data = [{"id": 1}]

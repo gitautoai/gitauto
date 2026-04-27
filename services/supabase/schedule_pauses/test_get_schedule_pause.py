@@ -1,5 +1,6 @@
 # Standard imports
 from datetime import datetime, timedelta, timezone
+import re
 from unittest.mock import MagicMock, patch
 
 # Third-party imports
@@ -29,10 +30,10 @@ class TestGetSchedulePause:
             }
         ]
         (
-            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.lte.return_value.gte.return_value.limit.return_value.execute
+            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.lte.return_value.gte.return_value.limit.return_value.execute
         ).return_value = mock_execute
 
-        result = get_schedule_pause(owner_id=123, repo_id=456)
+        result = get_schedule_pause(platform="github", owner_id=123, repo_id=456)
 
         assert result == SchedulePause(
             pause_start="2026-03-01T00:00:00Z", pause_end="2026-04-01T00:00:00Z"
@@ -43,10 +44,10 @@ class TestGetSchedulePause:
         mock_execute = MagicMock()
         mock_execute.data = []
         (
-            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.lte.return_value.gte.return_value.limit.return_value.execute
+            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.lte.return_value.gte.return_value.limit.return_value.execute
         ).return_value = mock_execute
 
-        result = get_schedule_pause(owner_id=123, repo_id=456)
+        result = get_schedule_pause(platform="github", owner_id=123, repo_id=456)
 
         assert result is None
 
@@ -54,10 +55,10 @@ class TestGetSchedulePause:
         mock_execute = MagicMock()
         mock_execute.data = None
         (
-            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.lte.return_value.gte.return_value.limit.return_value.execute
+            mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.lte.return_value.gte.return_value.limit.return_value.execute
         ).return_value = mock_execute
 
-        result = get_schedule_pause(owner_id=123, repo_id=456)
+        result = get_schedule_pause(platform="github", owner_id=123, repo_id=456)
 
         assert result is None
 
@@ -70,28 +71,32 @@ class TestGetSchedulePause:
         mock_gte.limit.return_value = mock_limit
         mock_lte = MagicMock()
         mock_lte.gte.return_value = mock_gte
+        mock_eq3 = MagicMock()
+        mock_eq3.lte.return_value = mock_lte
         mock_eq2 = MagicMock()
-        mock_eq2.lte.return_value = mock_lte
+        mock_eq2.eq.return_value = mock_eq3
         mock_eq1 = MagicMock()
         mock_eq1.eq.return_value = mock_eq2
         mock_select = MagicMock()
         mock_select.eq.return_value = mock_eq1
         mock_supabase.table.return_value.select.return_value = mock_select
 
-        get_schedule_pause(owner_id=123, repo_id=456)
+        get_schedule_pause(platform="github", owner_id=123, repo_id=456)
 
-        mock_select.eq.assert_called_with("owner_id", 123)
-        mock_eq1.eq.assert_called_with("repo_id", 456)
-        # Verify lte/gte are called with a full ISO timestamp (not just a date)
-        lte_arg = mock_eq2.lte.call_args[0][1]
+        mock_select.eq.assert_called_with("platform", "github")
+        mock_eq1.eq.assert_called_with("owner_id", 123)
+        mock_eq2.eq.assert_called_with("repo_id", 456)
+        # Verify lte/gte are called with a full ISO timestamp (date + T + time + tz)
+        iso_re = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?\+\d{2}:\d{2}$"
+        lte_arg = mock_eq3.lte.call_args[0][1]
         gte_arg = mock_lte.gte.call_args[0][1]
-        assert "T" in lte_arg, f"Expected ISO timestamp with 'T', got: {lte_arg}"
-        assert "T" in gte_arg, f"Expected ISO timestamp with 'T', got: {gte_arg}"
+        assert re.fullmatch(iso_re, lte_arg) is not None, f"Bad lte: {lte_arg}"
+        assert re.fullmatch(iso_re, gte_arg) is not None, f"Bad gte: {gte_arg}"
 
     def test_returns_none_on_exception(self, mock_supabase: MagicMock):
         mock_supabase.table.side_effect = Exception("DB connection failed")
 
-        result = get_schedule_pause(owner_id=123, repo_id=456)
+        result = get_schedule_pause(platform="github", owner_id=123, repo_id=456)
 
         assert result is None
 
@@ -125,7 +130,9 @@ class TestGetSchedulePauseIntegration:  # pylint: disable=import-outside-topleve
         )
 
         try:
-            result = get_schedule_pause(owner_id=owner_id, repo_id=repo_id)
+            result = get_schedule_pause(
+                platform="github", owner_id=owner_id, repo_id=repo_id
+            )
             assert result is not None
             assert result.pause_start
             assert result.pause_end
@@ -135,9 +142,13 @@ class TestGetSchedulePauseIntegration:  # pylint: disable=import-outside-topleve
             ).execute()
 
     def test_returns_none_for_nonexistent_owner(self):
-        result = get_schedule_pause(owner_id=999999999, repo_id=999999999)
+        result = get_schedule_pause(
+            platform="github", owner_id=999999999, repo_id=999999999
+        )
         assert result is None
 
     def test_returns_none_for_unpaused_repo(self):
-        result = get_schedule_pause(owner_id=159883862, repo_id=999999999)
+        result = get_schedule_pause(
+            platform="github", owner_id=159883862, repo_id=999999999
+        )
         assert result is None

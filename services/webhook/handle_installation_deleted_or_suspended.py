@@ -10,11 +10,14 @@ from services.supabase.email_sends.insert_email_send import insert_email_send
 from services.supabase.email_sends.update_email_send import update_email_send
 from services.supabase.installations.delete_installation import delete_installation
 from services.supabase.users.get_user import get_user
+from services.types.base_args import Platform
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(raise_on_error=False)
 def handle_installation_deleted_or_suspended(payload: InstallationPayload, action: str):
+    platform: Platform = "github"
     owner_id = payload["installation"]["account"]["id"]
     owner_name = payload["installation"]["account"]["login"]
     sender_id = payload["sender"]["id"]
@@ -24,6 +27,7 @@ def handle_installation_deleted_or_suspended(payload: InstallationPayload, actio
     slack_notify(f":skull: Installation {verb} by `{sender_name}` for `{owner_name}`")
 
     delete_installation(
+        platform=platform,
         installation_id=payload["installation"]["id"],
         user_id=sender_id,
         user_name=sender_name,
@@ -35,10 +39,16 @@ def handle_installation_deleted_or_suspended(payload: InstallationPayload, actio
         get_uninstall_email_text if action == "deleted" else get_suspend_email_text
     )
     is_new = insert_email_send(
-        owner_id=sender_id, owner_name=sender_name, email_type=email_type
+        platform=platform,
+        owner_id=sender_id,
+        owner_name=sender_name,
+        email_type=email_type,
     )
     if is_new is not False:
-        user = get_user(sender_id)
+        logger.info(
+            "handle_installation_deleted_or_suspended: sending %s email", email_type
+        )
+        user = get_user(platform=platform, user_id=sender_id)
         email = user.get("email") if user else None
         display_name = (
             (
@@ -50,11 +60,19 @@ def handle_installation_deleted_or_suspended(payload: InstallationPayload, actio
             else ""
         )
         if email:
+            logger.info(
+                "handle_installation_deleted_or_suspended: dispatching email to %s",
+                email,
+            )
             first_name = get_first_name(display_name)
             subject, text = get_email_text(first_name)
             result = send_email(to=email, subject=subject, text=text)
             if result and result.get("id"):
+                logger.info(
+                    "handle_installation_deleted_or_suspended: email sent, recording resend_email_id"
+                )
                 update_email_send(
+                    platform=platform,
                     owner_id=sender_id,
                     email_type=email_type,
                     resend_email_id=result["id"],

@@ -293,7 +293,7 @@ def test_auto_merge_success(
 
         # Verify get_repository_features was called with owner_id and repo_id
         mock_get_repo_features.assert_called_once_with(
-            owner_id=159883862, repo_id=1048247380
+            platform="github", owner_id=159883862, repo_id=1048247380
         )
 
 
@@ -1772,7 +1772,7 @@ def test_blocked_with_merge_conflicts_notifies(
         mock_merge_pr.assert_not_called()
         mock_create_comment.assert_called_once()
         comment_body = mock_create_comment.call_args[1]["body"]
-        assert "blocked" in comment_body
+        assert comment_body.startswith("Auto-merge blocked: mergeable_state=blocked")
 
 
 # --- #22: mergeable_state=behind → notify ---
@@ -1853,7 +1853,7 @@ def test_mergeable_state_behind_notifies(
         mock_merge_pr.assert_not_called()
         mock_create_comment.assert_called_once()
         comment_body = mock_create_comment.call_args[1]["body"]
-        assert "behind" in comment_body
+        assert comment_body.startswith("Auto-merge blocked: mergeable_state=behind")
 
 
 # --- #23: mergeable_state=dirty → notify ---
@@ -1934,7 +1934,10 @@ def test_mergeable_state_dirty_notifies(
         mock_merge_pr.assert_not_called()
         mock_create_comment.assert_called_once()
         comment_body = mock_create_comment.call_args[1]["body"]
-        assert "merge conflicts" in comment_body
+        assert (
+            comment_body
+            == "Auto-merge blocked: mergeable_state=dirty (merge conflicts detected)"
+        )
 
 
 # --- #24: mergeable_state=draft → notify ---
@@ -2015,7 +2018,10 @@ def test_mergeable_state_draft_notifies(
         mock_merge_pr.assert_not_called()
         mock_create_comment.assert_called_once()
         comment_body = mock_create_comment.call_args[1]["body"]
-        assert "draft" in comment_body
+        assert (
+            comment_body
+            == "Auto-merge blocked: mergeable_state=draft (PR is in draft mode)"
+        )
 
 
 # --- Merge returns 405 → notify ---
@@ -2103,7 +2109,7 @@ def test_merge_returns_405_notifies(
         mock_merge_pr.assert_called_once()
         mock_create_comment.assert_called_once()
         comment_body = mock_create_comment.call_args[1]["body"]
-        assert "branch protection" in comment_body
+        assert comment_body.startswith("Auto-merge blocked by branch protection")
 
 
 # --- Ghost suites + mergeable states that allow merge (#6, #7) ---
@@ -2200,10 +2206,10 @@ def test_ghost_suites_mergeable_state_merges(
 @pytest.mark.parametrize(
     "mergeable_state,expected_substr",
     [
-        ("blocked", "blocked"),
-        ("behind", "behind"),
-        ("dirty", "merge conflicts"),
-        ("draft", "draft"),
+        ("blocked", "Auto-merge blocked: mergeable_state=blocked"),
+        ("behind", "Auto-merge blocked: mergeable_state=behind"),
+        ("dirty", "Auto-merge blocked: mergeable_state=dirty"),
+        ("draft", "Auto-merge blocked: mergeable_state=draft"),
     ],
 )
 @patch("services.webhook.successful_check_suite_handler.slack_notify")
@@ -2245,7 +2251,7 @@ def test_ghost_suites_non_mergeable_notifies(
         mock_merge_pr.assert_not_called()
         mock_create_comment.assert_called_once()
         comment_body = mock_create_comment.call_args[1]["body"]
-        assert expected_substr in comment_body
+        assert comment_body.startswith(expected_substr)
 
 
 # --- Ghost + clean + only_test_files=true, all test files (#3) ---
@@ -2345,7 +2351,7 @@ def test_ghost_suites_nontest_files_blocked(
         mock_merge_pr.assert_not_called()
         mock_create_comment.assert_called_once()
         comment_body = mock_create_comment.call_args[1]["body"]
-        assert "non-test files" in comment_body
+        assert comment_body.startswith("Auto-merge blocked: non-test files changed:")
 
 
 # --- Ghost + clean + merge returns 405 (#5) ---
@@ -2396,7 +2402,7 @@ def test_ghost_suites_merge_405_notifies(
         mock_merge_pr.assert_called_once()
         mock_create_comment.assert_called_once()
         comment_body = mock_create_comment.call_args[1]["body"]
-        assert "branch protection" in comment_body
+        assert comment_body.startswith("Auto-merge blocked by branch protection")
 
 
 # --- Queued + can't read protection (403) → wait (#15) ---
@@ -2684,7 +2690,7 @@ def test_website_repo_non_test_files_blocked(
         mock_merge_pr.assert_not_called()
         mock_create_comment.assert_called_once()
         comment_body = mock_create_comment.call_args[1]["body"]
-        assert "non-test files" in comment_body
+        assert comment_body.startswith("Auto-merge blocked: non-test files changed:")
 
 
 @patch("services.webhook.successful_check_suite_handler.get_required_status_checks")

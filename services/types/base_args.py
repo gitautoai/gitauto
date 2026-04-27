@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Literal, TypedDict
 from typing_extensions import NotRequired
 
 from constants.models import ModelId
@@ -7,8 +7,22 @@ from schemas.supabase.types import OwnerType
 from services.github.types.webhook.review_run_payload import ReviewSubjectType
 
 
+# Git platform discriminator. Adding a new platform = add to this union and create `services/<platform>/` mirroring the GitHub/ADO shape (token, pull_requests, comments, …).
+Platform = Literal["github", "azure_devops"]
+
+
+# Minimal subset of BaseArgs needed by comment helpers (create_comment, update_comment, delete_comments_by_identifiers). BaseArgs is a structural superset, so callers with a full BaseArgs satisfy this too.
+class CommentArgs(TypedDict):
+    platform: Platform
+    owner: str
+    repo: str
+    token: str
+    pr_number: int
+
+
 class BaseArgs(TypedDict):
     # Required fields
+    platform: Platform
     owner_type: OwnerType
     owner_id: int
     owner: str

@@ -1,3 +1,4 @@
+# pyright: reportAttributeAccessIssue=false, reportUnusedVariable=false
 # pylint: disable=unused-argument
 import os
 import subprocess

@@ -1,3 +1,4 @@
+# pyright: reportUnusedVariable=false
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
 from unittest.mock import patch, AsyncMock
@@ -59,8 +60,7 @@ async def test_prettier_fails_returns_errors(
         file_paths=["src/broken.ts"],
     )
     assert result.success is False
-    assert len(result.errors) == 1
-    assert "SyntaxError" in result.errors[0]
+    assert result.errors == ["- src/broken.ts: Prettier: SyntaxError: Unexpected token"]
     assert result.fixes_applied == []
     assert result.files_with_errors == {"src/broken.ts"}
 
@@ -88,8 +88,7 @@ async def test_eslint_fails_returns_errors(
         file_paths=["src/broken.ts"],
     )
     assert result.success is False
-    assert len(result.errors) == 1
-    assert "Parsing error" in result.errors[0]
+    assert result.errors == ["- src/broken.ts: ESLint: Parsing error: Unexpected token"]
     assert result.fixes_applied == []
     assert result.files_with_errors == {"src/broken.ts"}
 
@@ -277,8 +276,9 @@ async def test_run_tsc_reports_type_errors(
         file_paths=["src/index.ts"],
     )
     assert result.success is False
-    assert len(result.errors) == 1
-    assert "TS2322" in result.errors[0]
+    assert result.errors == [
+        "- tsc: src/index.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'."
+    ]
     assert result.files_with_errors == {"src/index.ts"}
     assert result.tsc_errors == [
         "src/index.ts(1,7): error TS2322: Type 'string' is not assignable to type 'number'."
@@ -320,8 +320,10 @@ async def test_run_jest_reports_test_failures(
         file_paths=["src/index.test.ts"],
     )
     assert result.success is False
-    assert len(result.errors) == 2
-    assert "jest:" in result.errors[0]
+    assert result.errors == [
+        "- jest: FAIL src/index.test.ts",
+        "- jest: Expected true to be false",
+    ]
     assert result.files_with_errors == {"src/index.test.ts"}
 
 

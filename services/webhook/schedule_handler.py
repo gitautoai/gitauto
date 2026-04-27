@@ -95,13 +95,17 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         return None
 
     # Get repository settings - check if trigger_on_schedule is enabled
-    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+    repo_settings = get_repository(
+        platform="github", owner_id=owner_id, repo_id=repo_id
+    )
     if not repo_settings or not repo_settings.get("trigger_on_schedule"):
         logger.info("Repo %s trigger_on_schedule disabled; skipping", repo_id)
         return None
 
     # Check if schedule is paused for this repo
-    pause_info = get_schedule_pause(owner_id=owner_id, repo_id=repo_id)
+    pause_info = get_schedule_pause(
+        platform="github", owner_id=owner_id, repo_id=repo_id
+    )
     if pause_info:
         logger.info(
             "Repo %s schedule paused from %s to %s; skipping",
@@ -123,7 +127,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         logger.info("Availability check denied: %s", availability_status["log_message"])
         return None
 
-    has_purchased = check_purchase_exists(owner_id=owner_id)
+    has_purchased = check_purchase_exists(platform="github", owner_id=owner_id)
     model_id = get_preferred_model(
         repo_settings=repo_settings,
         is_paid=has_purchased,
@@ -141,6 +145,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
 
     # Create the usage row up front so LLM calls during evaluate_condition and evaluate_quality_checks have a real usage_id to attribute cost to. pr_number=0 is a placeholder; it gets updated with the real number below once create_pull_request succeeds.
     usage_id = create_user_request(
+        platform="github",
         user_id=user_id,
         user_name=user_name,
         installation_id=installation_id,
@@ -185,7 +190,9 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         item["path"]: item["sha"] for item in tree_items if item["type"] == "blob"
     }
 
-    all_coverages = get_all_coverages(owner_id=owner_id, repo_id=repo_id)
+    all_coverages = get_all_coverages(
+        platform="github", owner_id=owner_id, repo_id=repo_id
+    )
 
     # all_files LEFT JOIN all_coverages
     enriched_all_files: list[Coverages] = []
@@ -200,6 +207,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         else:
             logger.debug("Creating new coverage placeholder for %s", file_path)
             new_coverage: Coverages = {
+                "platform": "github",
                 "id": 0,
                 "full_path": file_path,
                 "owner_id": owner_id,
@@ -324,6 +332,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if not is_code_file(item_path):
             logger.info("Skipping %s: not a code file", item_path)
             exclude_from_testing(
+                platform="github",
                 owner_id=owner_id,
                 repo_id=repo_id,
                 full_path=item_path,
@@ -338,6 +347,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if is_dependency_file(item_path):
             logger.info("Skipping %s: third-party dependency", item_path)
             exclude_from_testing(
+                platform="github",
                 owner_id=owner_id,
                 repo_id=repo_id,
                 full_path=item_path,
@@ -352,6 +362,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if is_test_file(item_path):
             logger.info("Skipping %s: test file", item_path)
             exclude_from_testing(
+                platform="github",
                 owner_id=owner_id,
                 repo_id=repo_id,
                 full_path=item_path,
@@ -366,6 +377,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if is_config_file(item_path):
             logger.info("Skipping %s: config file", item_path)
             exclude_from_testing(
+                platform="github",
                 owner_id=owner_id,
                 repo_id=repo_id,
                 full_path=item_path,
@@ -380,6 +392,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if is_type_file(item_path):
             logger.info("Skipping %s: type file", item_path)
             exclude_from_testing(
+                platform="github",
                 owner_id=owner_id,
                 repo_id=repo_id,
                 full_path=item_path,
@@ -394,6 +407,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if is_migration_file(item_path):
             logger.info("Skipping %s: migration file", item_path)
             exclude_from_testing(
+                platform="github",
                 owner_id=owner_id,
                 repo_id=repo_id,
                 full_path=item_path,
@@ -410,6 +424,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if not content or not content.strip():
             logger.info("Skipping %s: empty content", item_path)
             exclude_from_testing(
+                platform="github",
                 owner_id=owner_id,
                 repo_id=repo_id,
                 full_path=item_path,
@@ -424,6 +439,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if should_skip_test(item_path, content):
             logger.info("Skipping %s: should_skip_test=True", item_path)
             exclude_from_testing(
+                platform="github",
                 owner_id=owner_id,
                 repo_id=repo_id,
                 full_path=item_path,
@@ -472,6 +488,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         if not should_test:
             logger.info("Skipping %s: %s", item_path, reason)
             exclude_from_testing(
+                platform="github",
                 owner_id=owner_id,
                 repo_id=repo_id,
                 full_path=item_path,
@@ -590,6 +607,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
                 # All passed - update DB, continue to next file
                 logger.info("All quality checks passed for %s", item_path)
                 update_quality_checks(
+                    platform="github",
                     owner_id=owner_id,
                     repo_id=repo_id,
                     file_path=item_path,
@@ -655,7 +673,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     # Create a PR
     new_branch = generate_branch_name(trigger="schedule")
     base_args: BaseArgs = {
-        "provider": "github",
+        "platform": "github",
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
@@ -717,6 +735,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         logger.info("Updating DB: quality-only PR branch")
         # Update quality check results
         update_quality_checks(
+            platform="github",
             owner_id=owner_id,
             repo_id=repo_id,
             file_path=target_path,
@@ -728,6 +747,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
         )
         # Also update issue URL
         update_issue_url(
+            platform="github",
             owner_id=owner_id,
             repo_id=repo_id,
             file_path=target_path,
@@ -737,6 +757,7 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
     elif target_item["id"] == 0:
         logger.info("Updating DB: new coverage record for %s", target_path)
         coverage_record: CoveragesInsert = {
+            "platform": "github",
             "full_path": target_item["full_path"],
             "owner_id": target_item["owner_id"],
             "repo_id": target_item["repo_id"],
@@ -763,10 +784,11 @@ def schedule_handler(event: EventBridgeSchedulerEvent):
             "checklist_hash": None,
             "quality_checks": None,
         }
-        insert_coverages(coverage_record)
+        insert_coverages(coverage_record=coverage_record)
     else:
         logger.info("Updating DB: issue URL for existing coverage row %s", target_path)
         update_issue_url(
+            platform="github",
             owner_id=owner_id,
             repo_id=repo_id,
             file_path=target_path,

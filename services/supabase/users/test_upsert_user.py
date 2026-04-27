@@ -41,7 +41,11 @@ def test_upsert_user_with_valid_email(mock_supabase, mock_check_email_is_valid):
 
     # Execute
     upsert_user(
-        user_id=user_id, user_name=user_name, email=email, display_name="Test User"
+        platform="github",
+        user_id=user_id,
+        user_name=user_name,
+        email=email,
+        display_name="Test User",
     )
 
     # Assert
@@ -49,13 +53,14 @@ def test_upsert_user_with_valid_email(mock_supabase, mock_check_email_is_valid):
     mock_supabase.table.assert_called_once_with(table_name="users")
     mock_supabase.table.return_value.upsert.assert_called_once_with(
         json={
+            "platform": "github",
             "user_id": user_id,
             "user_name": user_name,
             "display_name": "Test User",
             "email": email,
             "created_by": f"{user_id}:{user_name}",
         },
-        on_conflict="user_id",
+        on_conflict="platform,user_id",
     )
     mock_supabase.table.return_value.upsert.return_value.execute.assert_called_once()
 
@@ -70,7 +75,11 @@ def test_upsert_user_with_invalid_email(mock_supabase, mock_check_email_is_valid
 
     # Execute
     upsert_user(
-        user_id=user_id, user_name=user_name, email=email, display_name="Test User"
+        platform="github",
+        user_id=user_id,
+        user_name=user_name,
+        email=email,
+        display_name="Test User",
     )
 
     # Assert
@@ -78,12 +87,13 @@ def test_upsert_user_with_invalid_email(mock_supabase, mock_check_email_is_valid
     mock_supabase.table.assert_called_once_with(table_name="users")
     mock_supabase.table.return_value.upsert.assert_called_once_with(
         json={
+            "platform": "github",
             "user_id": user_id,
             "user_name": user_name,
             "display_name": "Test User",
             "created_by": f"{user_id}:{user_name}",
         },
-        on_conflict="user_id",
+        on_conflict="platform,user_id",
     )
     mock_supabase.table.return_value.upsert.return_value.execute.assert_called_once()
 
@@ -98,7 +108,11 @@ def test_upsert_user_with_none_email(mock_supabase, mock_check_email_is_valid):
 
     # Execute
     upsert_user(
-        user_id=user_id, user_name=user_name, email=email, display_name="Test User"
+        platform="github",
+        user_id=user_id,
+        user_name=user_name,
+        email=email,
+        display_name="Test User",
     )
 
     # Assert
@@ -106,12 +120,13 @@ def test_upsert_user_with_none_email(mock_supabase, mock_check_email_is_valid):
     mock_supabase.table.assert_called_once_with(table_name="users")
     mock_supabase.table.return_value.upsert.assert_called_once_with(
         json={
+            "platform": "github",
             "user_id": user_id,
             "user_name": user_name,
             "display_name": "Test User",
             "created_by": f"{user_id}:{user_name}",
         },
-        on_conflict="user_id",
+        on_conflict="platform,user_id",
     )
     mock_supabase.table.return_value.upsert.return_value.execute.assert_called_once()
 
@@ -127,7 +142,11 @@ def test_upsert_user_exception_handling(mock_supabase, mock_check_email_is_valid
 
     # Execute - should not raise an exception due to handle_exceptions decorator
     result = upsert_user(
-        user_id=user_id, user_name=user_name, email=email, display_name="Test User"
+        platform="github",
+        user_id=user_id,
+        user_name=user_name,
+        email=email,
+        display_name="Test User",
     )
 
     # Assert

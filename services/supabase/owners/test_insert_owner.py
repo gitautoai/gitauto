@@ -28,6 +28,7 @@ def test_insert_owner_with_stripe_customer_id(mock_supabase):
         user_id=456,
         user_name="test-user",
         stripe_customer_id="cus_test123",
+        platform="github",
     )
 
     mock_supabase.table.assert_called_once_with("owners")
@@ -37,6 +38,7 @@ def test_insert_owner_with_stripe_customer_id(mock_supabase):
             "owner_name": "test-owner",
             "owner_type": "Organization",
             "stripe_customer_id": "cus_test123",
+            "platform": "github",
             "created_by": "456:test-user",
             "updated_by": "456:test-user",
         }
@@ -52,6 +54,7 @@ def test_insert_owner_without_stripe_customer_id(mock_supabase):
         user_id=101,
         user_name="minimal-user",
         stripe_customer_id="",
+        platform="github",
     )
 
     mock_supabase.table.assert_called_once_with("owners")
@@ -61,6 +64,7 @@ def test_insert_owner_without_stripe_customer_id(mock_supabase):
             "owner_name": "minimal-owner",
             "owner_type": "User",
             "stripe_customer_id": "",
+            "platform": "github",
             "created_by": "101:minimal-user",
             "updated_by": "101:minimal-user",
         }
@@ -79,6 +83,7 @@ def test_insert_owner_exception_handled(mock_supabase):
         user_id=777,
         user_name="error-user",
         stripe_customer_id="cus_123",
+        platform="github",
     )
 
     assert result is None

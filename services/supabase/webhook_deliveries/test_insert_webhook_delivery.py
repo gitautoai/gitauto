@@ -35,12 +35,14 @@ def test_insert_webhook_delivery_success(mock_supabase_client):
         }
     ]
 
-    result = insert_webhook_delivery(delivery_id="abc-123", event_name="check_suite")
+    result = insert_webhook_delivery(
+        platform="github", delivery_id="abc-123", event_name="check_suite"
+    )
 
     assert result is True
     mock.table.assert_called_once_with("webhook_deliveries")
     mock.table.return_value.insert.assert_called_once_with(
-        {"delivery_id": "abc-123", "event_name": "check_suite"}
+        {"platform": "github", "delivery_id": "abc-123", "event_name": "check_suite"}
     )
     mock.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -49,7 +51,9 @@ def test_insert_webhook_delivery_duplicate(mock_supabase_client):
     _, mock_execute = mock_supabase_client
     mock_execute.data = []
 
-    result = insert_webhook_delivery(delivery_id="abc-123", event_name="check_suite")
+    result = insert_webhook_delivery(
+        platform="github", delivery_id="abc-123", event_name="check_suite"
+    )
 
     assert result is False
 
@@ -63,7 +67,9 @@ def test_insert_webhook_delivery_duplicate_key_error_returns_false(
     )
     mock.table.return_value.insert.return_value.execute.side_effect = api_error
 
-    result = insert_webhook_delivery(delivery_id="abc-123", event_name="check_suite")
+    result = insert_webhook_delivery(
+        platform="github", delivery_id="abc-123", event_name="check_suite"
+    )
 
     assert result is False
 
@@ -75,7 +81,9 @@ def test_insert_webhook_delivery_exception_returns_none(mock_supabase_client):
         "Database error"
     )
 
-    result = insert_webhook_delivery(delivery_id="abc-123", event_name="check_suite")
+    result = insert_webhook_delivery(
+        platform="github", delivery_id="abc-123", event_name="check_suite"
+    )
 
     assert result is None
 
@@ -88,6 +96,8 @@ def test_insert_webhook_delivery_postgrest_server_error_returns_none(
     api_error = APIError({"code": "502", "message": "JSON could not be generated"})
     mock.table.return_value.insert.return_value.execute.side_effect = api_error
 
-    result = insert_webhook_delivery(delivery_id="abc-123", event_name="check_suite")
+    result = insert_webhook_delivery(
+        platform="github", delivery_id="abc-123", event_name="check_suite"
+    )
 
     assert result is None

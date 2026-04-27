@@ -74,7 +74,9 @@ def test_handle_push_repository_not_found_falls_back_to_default_branch(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
+    mock_get_repository.assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_default_branch.assert_called_once()
     mock_get_open_prs.assert_called_once()
@@ -110,7 +112,9 @@ def test_handle_push_local_feature_to_remote_feature_not_handled(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
+    mock_get_repository.assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_not_called()
     mock_update_pr.assert_not_called()
@@ -146,7 +150,9 @@ def test_handle_push_remote_feature_to_remote_staging_not_handled(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
+    mock_get_repository.assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_not_called()
     mock_update_pr.assert_not_called()
@@ -183,7 +189,9 @@ def test_handle_push_no_open_prs_returns_early(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
+    mock_get_repository.assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
         owner="test-owner", repo="test-repo", token="test-token"
@@ -226,7 +234,9 @@ def test_handle_push_local_main_to_remote_main_handled(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
+    mock_get_repository.assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
         owner="test-owner", repo="test-repo", token="test-token"
@@ -272,7 +282,9 @@ def test_handle_push_remote_feature_to_remote_main_handled(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
+    mock_get_repository.assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
         owner="test-owner", repo="test-repo", token="test-token"
@@ -323,10 +335,16 @@ def test_handle_push_with_failed_updates(
 
     assert result is None
     assert mock_update_pr.call_count == 3
-    # Check the result summary log (last info call)
+    # Check the result summary log (last info call) — exact text from push_handler
     result_call = mock_logger.info.call_args_list[-1][0][0]
-    assert "- Failed: 1" in result_call
-    assert "PR #2: HTTP 500" in result_call
+    assert result_call == (
+        "PR branch updates (3 GitAuto PRs):\n"
+        "- Updated: 2\n"
+        "- Up-to-date: 0\n"
+        "- Conflicts: 0\n"
+        "- Failed: 1\n"
+        "Failures: PR #2: HTTP 500: Internal server error"
+    )
 
 
 @patch("services.webhook.push_handler.logger")
@@ -369,13 +387,16 @@ def test_handle_push_with_merge_conflicts(
 
     assert result is None
     assert mock_update_pr.call_count == 3
-    # Check the result summary log (last info call)
+    # Exact summary log from push_handler
     result_call = mock_logger.info.call_args_list[-1][0][0]
-    assert "- Updated: 1" in result_call
-    assert "- Up-to-date: 1" in result_call
-    assert "- Conflicts: 1" in result_call
-    assert "- Failed: 0" in result_call
-    assert "PR #2" in result_call
+    assert result_call == (
+        "PR branch updates (3 GitAuto PRs):\n"
+        "- Updated: 1\n"
+        "- Up-to-date: 1\n"
+        "- Conflicts: 1\n"
+        "- Failed: 0\n"
+        "Merge conflicts: PR #2"
+    )
 
 
 @patch("services.webhook.push_handler.logger")
@@ -408,7 +429,9 @@ def test_handle_push_no_gitauto_prs_returns_early(
     result = handle_push(cast(PushWebhookPayload, payload))
 
     assert result is None
-    mock_get_repository.assert_called_once_with(owner_id=123, repo_id=456)
+    mock_get_repository.assert_called_once_with(
+        platform="github", owner_id=123, repo_id=456
+    )
     mock_get_token.assert_called_once_with(installation_id=789)
     mock_get_open_prs.assert_called_once_with(
         owner="test-owner", repo="test-repo", token="test-token"
@@ -582,8 +605,11 @@ def test_handle_push_test_only_strict_false_skips_updates(
     )
     mock_get_open_prs.assert_not_called()
     mock_update_pr.assert_not_called()
-    # Check the skip log (last info call)
-    assert "test-only push" in mock_logger.info.call_args_list[-1][0][0]
+    # Last info call is the exact skip-log format
+    assert mock_logger.info.call_args_list[-1] == (
+        ("Skipping PR branch updates: test-only push to %s and strict=False", "main"),
+        {},
+    )
 
 
 @patch("services.webhook.push_handler.logger")

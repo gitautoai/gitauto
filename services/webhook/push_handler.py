@@ -8,6 +8,7 @@ from services.github.pulls.update_pull_request_branch import update_pull_request
 from services.github.token.get_installation_token import get_installation_access_token
 from services.github.types.webhook.push import PushWebhookPayload
 from services.supabase.repositories.get_repository import get_repository
+from services.types.base_args import Platform
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_test_file import is_test_file
 from utils.logging.logging_config import logger
@@ -16,6 +17,7 @@ from utils.logging.logging_config import logger
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def handle_push(payload: PushWebhookPayload):
     """https://docs.github.com/en/webhooks/webhook-events-and-payloads#push"""
+    platform: Platform = "github"
     repository = payload["repository"]
     owner_id = repository["owner"]["id"]
     owner_name = repository["owner"]["login"]
@@ -36,7 +38,9 @@ def handle_push(payload: PushWebhookPayload):
     token = get_installation_access_token(installation_id=installation_id)
 
     # Fallback to default branch when target_branch is not configured (same as schedule_handler and handle_coverage_report)
-    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+    repo_settings = get_repository(
+        platform=platform, owner_id=owner_id, repo_id=repo_id
+    )
     target_branch = repo_settings.get("target_branch") if repo_settings else ""
     if target_branch:
         logger.info("Using custom target_branch: %s", target_branch)
@@ -60,6 +64,7 @@ def handle_push(payload: PushWebhookPayload):
     # Check if this is a test-only push and the repo doesn't require up-to-date branches
     commits = payload.get("commits", [])
     if commits:
+        logger.info("Inspecting %d commits for test-only push detection", len(commits))
         all_files: set[str] = set()
         for commit in commits:
             all_files.update(commit.get("added", []))
@@ -98,8 +103,10 @@ def handle_push(payload: PushWebhookPayload):
             owner=owner_name, repo=repo_name, pr_number=pr_number, token=token
         )
         if status == "updated":
+            logger.info("PR #%s branch updated", pr_number)
             updated_count += 1
         elif status == "up_to_date":
+            logger.info("PR #%s branch already up-to-date", pr_number)
             up_to_date_count += 1
         elif status == "conflict":
             conflict_count += 1
@@ -114,8 +121,10 @@ def handle_push(payload: PushWebhookPayload):
 
     result_msg = f"PR branch updates ({len(open_prs)} GitAuto PRs):\n- Updated: {updated_count}\n- Up-to-date: {up_to_date_count}\n- Conflicts: {conflict_count}\n- Failed: {failed_count}"
     if conflict_prs:
+        logger.info("Appending conflict PR numbers to result message")
         result_msg += f"\nMerge conflicts: PR #{', #'.join(map(str, conflict_prs))}"
     if failures:
+        logger.info("Appending failure messages to result message")
         result_msg += f"\nFailures: {', '.join(failures)}"
     logger.info(result_msg)
 

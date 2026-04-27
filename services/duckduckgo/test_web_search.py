@@ -1,5 +1,7 @@
+# pyright: reportUnusedVariable=false
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
+import re
 from unittest.mock import patch
 
 import pytest
@@ -86,17 +88,17 @@ class TestWebSearchIntegration:
         for r in result:
             assert r["url"].startswith("http")
             assert r["title"]
-        # At least one result must be relevant to "requests"
+        # At least one result must mention "requests" (live integration data, regex match)
         combined = " ".join(
             r["title"] + r["description"] + r["url"] for r in result
         ).lower()
-        assert "requests" in combined
-        # Slack notification includes owner/repo, query, and count
-        mock_slack.assert_called_once()
-        call_text = mock_slack.call_args[0][0]
-        assert "test-owner/test-repo" in call_text
-        assert "python requests library" in call_text
-        assert "Results: 10" in call_text
+        assert re.search(r"requests", combined) is not None
+        # Slack notification text is deterministic — assert exact value.
+        mock_slack.assert_called_once_with(
+            "🔍 Web search in `test-owner/test-repo`:\n"
+            "Query: `python requests library`\n"
+            "Results: 10"
+        )
 
     @pytest.mark.integration
     @patch("services.duckduckgo.web_search.slack_notify")
@@ -111,5 +113,5 @@ class TestWebSearchIntegration:
         combined = " ".join(
             r["title"] + r["description"] + r["url"] for r in result
         ).lower()
-        assert "checkout" in combined or "github" in combined
+        assert re.search(r"checkout|github", combined) is not None
         mock_slack.assert_called_once()

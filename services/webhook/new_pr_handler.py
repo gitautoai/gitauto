@@ -133,7 +133,8 @@ async def handle_new_pr(
     owner_id = base_args["owner_id"]
     owner_type = base_args["owner_type"]
     repo_id = base_args["repo_id"]
-    set_npm_token_env(owner_id)
+    platform = base_args["platform"]
+    set_npm_token_env(platform=platform, owner_id=owner_id)
 
     # Extract PR metadata
     pr_body = base_args["pr_body"].replace(SETTINGS_LINKS, "").strip()
@@ -154,7 +155,7 @@ async def handle_new_pr(
     )
 
     # Ensure stripe customer exists (create if needed)
-    stripe_customer_id = get_stripe_customer_id(owner_id)
+    stripe_customer_id = get_stripe_customer_id(platform=platform, owner_id=owner_id)
     if not stripe_customer_id:
         logger.info(
             "Stripe customer missing for owner_id=%s; creating one so usage can be billed",
@@ -173,7 +174,12 @@ async def handle_new_pr(
                 owner_id,
             )
             updated_by = f"{sender_id}:{sender_name}" if sender_id else "system"
-            update_stripe_customer_id(owner_id, stripe_customer_id, updated_by)
+            update_stripe_customer_id(
+                platform=platform,
+                owner_id=owner_id,
+                stripe_customer_id=stripe_customer_id,
+                updated_by=updated_by,
+            )
 
     # Now check availability (stripe_customer_id will exist or be None if creation failed)
     availability_status = check_availability(
@@ -188,7 +194,7 @@ async def handle_new_pr(
     billing_type = availability_status["billing_type"]
 
     # Resolve which model to use based on repo settings and whether owner has purchased credits
-    has_purchased = check_purchase_exists(owner_id=owner_id)
+    has_purchased = check_purchase_exists(platform=platform, owner_id=owner_id)
     model_id = get_preferred_model(
         repo_settings=repo_settings,
         is_paid=has_purchased,
@@ -224,6 +230,7 @@ async def handle_new_pr(
         trigger,
     )
     usage_id = get_usage_id_by_pr_and_trigger(
+        platform=platform,
         installation_id=installation_id,
         repo_id=repo_id,
         pr_number=pr_number,
@@ -249,6 +256,7 @@ async def handle_new_pr(
             pr_number,
         )
         usage_id = create_user_request(
+            platform=platform,
             user_id=sender_id,
             user_name=sender_name,
             installation_id=installation_id,
@@ -275,6 +283,7 @@ async def handle_new_pr(
             model_id,
         )
         insert_credit(
+            platform=platform,
             owner_id=owner_id,
             transaction_type="usage",
             usage_id=usage_id,
@@ -465,7 +474,12 @@ async def handle_new_pr(
 
     # Check if uncovered code is dead or untestable (for schedule-triggered coverage issues)
     untestable_code_info: CodeAnalysisResult | None = None
-    coverage_dict = get_coverages(owner_id, repo_id, [impl_file_path])
+    coverage_dict = get_coverages(
+        platform=platform,
+        owner_id=owner_id,
+        repo_id=repo_id,
+        filenames=[impl_file_path],
+    )
     coverage_data = coverage_dict.get(impl_file_path)
     if coverage_data and impl_file_content:
         logger.info(
@@ -934,21 +948,24 @@ async def handle_new_pr(
             pr_number,
             owner_id,
         )
-        owner = get_owner(owner_id=owner_id)
+        owner = get_owner(platform=platform, owner_id=owner_id)
         if owner and owner["credit_balance_usd"] <= 0 and sender_id:
             logger.info(
                 "Owner_id=%s credit_balance_usd<=0; reserving credits_depleted email slot (dedup per owner)",
                 owner_id,
             )
             is_new = insert_email_send(
-                owner_id=owner_id, owner_name=owner_name, email_type="credits_depleted"
+                platform=platform,
+                owner_id=owner_id,
+                owner_name=owner_name,
+                email_type="credits_depleted",
             )
             if is_new is not False:
                 logger.info(
                     "credits_depleted email not sent before for owner_id=%s; looking up sender email",
                     owner_id,
                 )
-                user = get_user(user_id=sender_id)
+                user = get_user(platform=platform, user_id=sender_id)
                 email = user.get("email") if user else None
                 if email:
                     logger.info(
@@ -964,6 +981,7 @@ async def handle_new_pr(
                             result["id"],
                         )
                         update_email_send(
+                            platform=platform,
                             owner_id=owner_id,
                             email_type="credits_depleted",
                             resend_email_id=result["id"],

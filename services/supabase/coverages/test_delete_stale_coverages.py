@@ -16,6 +16,7 @@ def test_deletes_stale_files():
         ]
 
         result = delete_stale_coverages(
+            platform="github",
             owner_id=123,
             repo_id=456,
             current_files={"src/main.py"},
@@ -23,7 +24,10 @@ def test_deletes_stale_files():
 
         assert result == 1
         mock_delete.assert_called_once_with(
-            owner_id=123, repo_id=456, file_paths=["src/deleted.py"]
+            platform="github",
+            owner_id=123,
+            repo_id=456,
+            file_paths=["src/deleted.py"],
         )
 
 
@@ -38,6 +42,7 @@ def test_no_stale_files():
         ]
 
         result = delete_stale_coverages(
+            platform="github",
             owner_id=123,
             repo_id=456,
             current_files={"src/main.py"},

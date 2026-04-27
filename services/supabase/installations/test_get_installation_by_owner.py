@@ -27,11 +27,13 @@ def test_get_installation_by_owner_success():
         mock_supabase.table.return_value = mock_table
         mock_table.select.return_value = mock_select
         mock_select.eq.return_value = mock_eq
+
+        mock_eq.eq.return_value = mock_eq
         mock_eq.is_.return_value = mock_is
         mock_is.maybe_single.return_value = mock_maybe_single
         mock_maybe_single.execute.return_value = mock_result
 
-        result = get_installation_by_owner("test-owner")
+        result = get_installation_by_owner(platform="github", owner_name="test-owner")
 
         assert result is not None
         assert isinstance(result, dict)
@@ -41,7 +43,8 @@ def test_get_installation_by_owner_success():
 
         mock_supabase.table.assert_called_once_with("installations")
         mock_table.select.assert_called_once_with("*")
-        mock_select.eq.assert_called_once_with("owner_name", "test-owner")
+        mock_select.eq.assert_called_once_with("platform", "github")
+        mock_eq.eq.assert_called_with("owner_name", "test-owner")
         mock_eq.is_.assert_called_once_with("uninstalled_at", "null")
         mock_is.maybe_single.assert_called_once()
         mock_maybe_single.execute.assert_called_once()
@@ -63,11 +66,15 @@ def test_get_installation_by_owner_not_found():
         mock_supabase.table.return_value = mock_table
         mock_table.select.return_value = mock_select
         mock_select.eq.return_value = mock_eq
+
+        mock_eq.eq.return_value = mock_eq
         mock_eq.is_.return_value = mock_is
         mock_is.maybe_single.return_value = mock_maybe_single
         mock_maybe_single.execute.return_value = mock_result
 
-        result = get_installation_by_owner("nonexistent-owner")
+        result = get_installation_by_owner(
+            platform="github", owner_name="nonexistent-owner"
+        )
 
         assert result is None
 
@@ -78,7 +85,7 @@ def test_get_installation_by_owner_exception_handling():
     ) as mock_supabase:
         mock_supabase.table.side_effect = Exception("Database connection error")
 
-        result = get_installation_by_owner("test-owner")
+        result = get_installation_by_owner(platform="github", owner_name="test-owner")
 
         assert result is None
 
@@ -103,10 +110,12 @@ def test_get_installation_by_owner_filters_uninstalled():
         mock_supabase.table.return_value = mock_table
         mock_table.select.return_value = mock_select
         mock_select.eq.return_value = mock_eq
+
+        mock_eq.eq.return_value = mock_eq
         mock_eq.is_.return_value = mock_is
         mock_is.maybe_single.return_value = mock_maybe_single
         mock_maybe_single.execute.return_value = mock_result
 
-        get_installation_by_owner("test-owner")
+        get_installation_by_owner(platform="github", owner_name="test-owner")
 
         mock_eq.is_.assert_called_once_with("uninstalled_at", "null")

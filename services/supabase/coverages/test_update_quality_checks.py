@@ -19,6 +19,7 @@ def test_update_quality_checks_calls_supabase(mock_supabase: MagicMock):
     }
 
     result = update_quality_checks(
+        platform="github",
         owner_id=123,
         repo_id=456,
         file_path="src/utils/foo.ts",
@@ -31,7 +32,7 @@ def test_update_quality_checks_calls_supabase(mock_supabase: MagicMock):
 
     mock_supabase.table.assert_called_once_with("coverages")
     mock_table.update.assert_called_once()
-    assert mock_table.eq.call_count == 3
+    assert mock_table.eq.call_count == 4
     assert result == [{"id": 1}]
 
 
@@ -44,6 +45,7 @@ def test_update_quality_checks_with_none_test_sha(mock_supabase: MagicMock):
     mock_table.execute.return_value = MagicMock(data=[{"id": 1}])
 
     result = update_quality_checks(
+        platform="github",
         owner_id=123,
         repo_id=456,
         file_path="src/utils/foo.ts",

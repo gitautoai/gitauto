@@ -35,6 +35,7 @@ def test_run_install_via_codebuild_starts_build():
                 )
 
                 mock_client.start_build.assert_called_once()
+                mock_token.assert_called_once_with(platform="github", owner_id=123)
                 call_args = mock_client.start_build.call_args
                 assert call_args.kwargs["projectName"] == "gitauto-package-install"
                 env_vars = call_args.kwargs["environmentVariablesOverride"]

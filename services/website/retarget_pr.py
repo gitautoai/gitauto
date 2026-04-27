@@ -37,6 +37,7 @@ def retarget_pr(
     other_urls: list[str] = []
     pr_comments: list[str] = []
     base_args = BaseArgs(
+        platform="github",
         owner_type=owner_data["type"],
         owner_id=owner_data["id"],
         owner=owner_name,

@@ -63,15 +63,24 @@ def test_deleted_sends_uninstall_email(
         ":skull: Installation deleted by `test-sender` for `test-owner`"
     )
     mock_delete_inst.assert_called_once_with(
-        installation_id=12345, user_id=67890, user_name="test-sender"
+        platform="github",
+        installation_id=12345,
+        user_id=67890,
+        user_name="test-sender",
     )
     mock_insert_email.assert_called_once_with(
-        owner_id=67890, owner_name="test-sender", email_type="uninstall"
+        platform="github",
+        owner_id=67890,
+        owner_name="test-sender",
+        email_type="uninstall",
     )
-    mock_get_user.assert_called_once_with(67890)
+    mock_get_user.assert_called_once_with(platform="github", user_id=67890)
     mock_send_email.assert_called_once()
     mock_update_email.assert_called_once_with(
-        owner_id=67890, email_type="uninstall", resend_email_id="re_abc"
+        platform="github",
+        owner_id=67890,
+        email_type="uninstall",
+        resend_email_id="re_abc",
     )
 
 
@@ -116,15 +125,24 @@ def test_suspend_sends_suspend_email(
         ":skull: Installation suspended by `test-sender` for `test-owner`"
     )
     mock_delete_inst.assert_called_once_with(
-        installation_id=12345, user_id=67890, user_name="test-sender"
+        platform="github",
+        installation_id=12345,
+        user_id=67890,
+        user_name="test-sender",
     )
     mock_insert_email.assert_called_once_with(
-        owner_id=67890, owner_name="test-sender", email_type="suspend"
+        platform="github",
+        owner_id=67890,
+        owner_name="test-sender",
+        email_type="suspend",
     )
-    mock_get_user.assert_called_once_with(67890)
+    mock_get_user.assert_called_once_with(platform="github", user_id=67890)
     mock_send_email.assert_called_once()
     mock_update_email.assert_called_once_with(
-        owner_id=67890, email_type="suspend", resend_email_id="re_xyz"
+        platform="github",
+        owner_id=67890,
+        email_type="suspend",
+        resend_email_id="re_xyz",
     )
 
 

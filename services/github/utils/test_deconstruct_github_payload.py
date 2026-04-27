@@ -131,7 +131,9 @@ def test_deconstruct_github_payload_basic_functionality(
     assert _ == {"target_branch": None}
 
     # Verify get_repository was called with owner_id and repo_id
-    mock_get_repository.assert_called_once_with(owner_id=789, repo_id=456)
+    mock_get_repository.assert_called_once_with(
+        platform="github", owner_id=789, repo_id=456
+    )
 
 
 @patch("services.github.utils.deconstruct_github_payload.get_installation_access_token")

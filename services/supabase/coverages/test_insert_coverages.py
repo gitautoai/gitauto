@@ -25,6 +25,7 @@ def mock_supabase():
 def sample_coverage_record():
     """Fixture to provide a sample coverage record as a dictionary."""
     return {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "services/test/example.py",
         "level": "file",
@@ -52,7 +53,7 @@ def test_insert_coverages_successful_insertion(mock_supabase, sample_coverage_re
         expected_data
     )
 
-    result = insert_coverages(sample_coverage_record)
+    result = insert_coverages(coverage_record=sample_coverage_record)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
@@ -67,12 +68,12 @@ def test_insert_coverages_returns_empty_data(mock_supabase, sample_coverage_reco
     """Test insertion returns empty data."""
     mock_supabase.table.return_value.insert.return_value.execute.return_value.data = []
 
-    result = insert_coverages(sample_coverage_record)
+    result = insert_coverages(coverage_record=sample_coverage_record)
 
     assert not result
     mock_supabase.table.assert_called_once_with("coverages")
     mock_supabase.table.return_value.insert.assert_called_once_with(
-        sample_coverage_record
+        dict(sample_coverage_record)
     )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -83,12 +84,12 @@ def test_insert_coverages_returns_none_data(mock_supabase, sample_coverage_recor
         None
     )
 
-    result = insert_coverages(sample_coverage_record)
+    result = insert_coverages(coverage_record=sample_coverage_record)
 
     assert result is None
     mock_supabase.table.assert_called_once_with("coverages")
     mock_supabase.table.return_value.insert.assert_called_once_with(
-        sample_coverage_record
+        dict(sample_coverage_record)
     )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -96,6 +97,7 @@ def test_insert_coverages_returns_none_data(mock_supabase, sample_coverage_recor
 def test_insert_coverages_with_minimal_required_fields(mock_supabase):
     """Test insertion with only required fields."""
     minimal_record: CoveragesInsert = {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "minimal/path.py",
         "level": "file",
@@ -109,17 +111,20 @@ def test_insert_coverages_with_minimal_required_fields(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(minimal_record)
+    result = insert_coverages(coverage_record=minimal_record)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
-    mock_supabase.table.return_value.insert.assert_called_once_with(minimal_record)
+    mock_supabase.table.return_value.insert.assert_called_once_with(
+        dict(minimal_record)
+    )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
 
 def test_insert_coverages_with_all_optional_fields(mock_supabase):
     """Test insertion with all optional fields populated."""
     comprehensive_record: CoveragesInsert = {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "comprehensive/path.py",
         "level": "function",
@@ -145,12 +150,12 @@ def test_insert_coverages_with_all_optional_fields(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(comprehensive_record)
+    result = insert_coverages(coverage_record=comprehensive_record)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
     mock_supabase.table.return_value.insert.assert_called_once_with(
-        comprehensive_record
+        dict(comprehensive_record)
     )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -163,12 +168,12 @@ def test_insert_coverages_handles_supabase_exception(
         Exception("Database error")
     )
 
-    result = insert_coverages(sample_coverage_record)
+    result = insert_coverages(coverage_record=sample_coverage_record)
 
     assert result is None
     mock_supabase.table.assert_called_once_with("coverages")
     mock_supabase.table.return_value.insert.assert_called_once_with(
-        sample_coverage_record
+        dict(sample_coverage_record)
     )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -179,7 +184,7 @@ def test_insert_coverages_handles_table_exception(
     """Test that table method exceptions are handled."""
     mock_supabase.table.side_effect = Exception("Table access error")
 
-    result = insert_coverages(sample_coverage_record)
+    result = insert_coverages(coverage_record=sample_coverage_record)
 
     assert result is None
     mock_supabase.table.assert_called_once_with("coverages")
@@ -191,18 +196,19 @@ def test_insert_coverages_handles_insert_exception(
     """Test that insert method exceptions are handled."""
     mock_supabase.table.return_value.insert.side_effect = Exception("Insert error")
 
-    result = insert_coverages(sample_coverage_record)
+    result = insert_coverages(coverage_record=sample_coverage_record)
 
     assert result is None
     mock_supabase.table.assert_called_once_with("coverages")
     mock_supabase.table.return_value.insert.assert_called_once_with(
-        sample_coverage_record
+        dict(sample_coverage_record)
     )
 
 
 def test_insert_coverages_with_zero_coverage_values(mock_supabase):
     """Test insertion with zero coverage values."""
     zero_coverage_record: CoveragesInsert = {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "zero/coverage.py",
         "level": "file",
@@ -220,12 +226,12 @@ def test_insert_coverages_with_zero_coverage_values(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(zero_coverage_record)
+    result = insert_coverages(coverage_record=zero_coverage_record)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
     mock_supabase.table.return_value.insert.assert_called_once_with(
-        zero_coverage_record
+        dict(zero_coverage_record)
     )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -233,6 +239,7 @@ def test_insert_coverages_with_zero_coverage_values(mock_supabase):
 def test_insert_coverages_with_perfect_coverage_values(mock_supabase):
     """Test insertion with perfect coverage values."""
     perfect_coverage_record: CoveragesInsert = {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "perfect/coverage.py",
         "level": "file",
@@ -250,12 +257,12 @@ def test_insert_coverages_with_perfect_coverage_values(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(perfect_coverage_record)
+    result = insert_coverages(coverage_record=perfect_coverage_record)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
     mock_supabase.table.return_value.insert.assert_called_once_with(
-        perfect_coverage_record
+        dict(perfect_coverage_record)
     )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -263,6 +270,7 @@ def test_insert_coverages_with_perfect_coverage_values(mock_supabase):
 def test_insert_coverages_with_none_values(mock_supabase):
     """Test insertion with None values for optional fields."""
     record_with_nones: CoveragesInsert = {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "test/with_nones.py",
         "level": "file",
@@ -286,11 +294,13 @@ def test_insert_coverages_with_none_values(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(record_with_nones)
+    result = insert_coverages(coverage_record=record_with_nones)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
-    mock_supabase.table.return_value.insert.assert_called_once_with(record_with_nones)
+    mock_supabase.table.return_value.insert.assert_called_once_with(
+        dict(record_with_nones)
+    )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
 
@@ -314,12 +324,12 @@ def test_insert_coverages_with_string_coverage_values(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(string_coverage_record)  # type: ignore[arg-type]
+    result = insert_coverages(coverage_record=string_coverage_record)  # type: ignore[arg-type]
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
     mock_supabase.table.return_value.insert.assert_called_once_with(
-        string_coverage_record
+        dict(string_coverage_record)
     )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -327,6 +337,7 @@ def test_insert_coverages_with_string_coverage_values(mock_supabase):
 def test_insert_coverages_with_large_file_size(mock_supabase):
     """Test insertion with large file size."""
     large_file_record: CoveragesInsert = {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "test/large_file.py",
         "level": "file",
@@ -345,17 +356,20 @@ def test_insert_coverages_with_large_file_size(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(large_file_record)
+    result = insert_coverages(coverage_record=large_file_record)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
-    mock_supabase.table.return_value.insert.assert_called_once_with(large_file_record)
+    mock_supabase.table.return_value.insert.assert_called_once_with(
+        dict(large_file_record)
+    )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
 
 def test_insert_coverages_with_boolean_exclusion_flag(mock_supabase):
     """Test insertion with boolean exclusion flag."""
     excluded_record: CoveragesInsert = {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "test/excluded.py",
         "level": "file",
@@ -374,17 +388,20 @@ def test_insert_coverages_with_boolean_exclusion_flag(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(excluded_record)
+    result = insert_coverages(coverage_record=excluded_record)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
-    mock_supabase.table.return_value.insert.assert_called_once_with(excluded_record)
+    mock_supabase.table.return_value.insert.assert_called_once_with(
+        dict(excluded_record)
+    )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
 
 def test_insert_coverages_with_special_characters_in_path(mock_supabase):
     """Test insertion with special characters in file path."""
     special_path_record: CoveragesInsert = {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "test/special-chars_file@#$.py",
         "level": "file",
@@ -402,17 +419,20 @@ def test_insert_coverages_with_special_characters_in_path(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(special_path_record)
+    result = insert_coverages(coverage_record=special_path_record)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
-    mock_supabase.table.return_value.insert.assert_called_once_with(special_path_record)
+    mock_supabase.table.return_value.insert.assert_called_once_with(
+        dict(special_path_record)
+    )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
 
 def test_insert_coverages_with_empty_strings(mock_supabase):
     """Test insertion with empty strings for optional fields."""
     empty_strings_record: CoveragesInsert = {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "test/empty_strings.py",
         "level": "file",
@@ -435,12 +455,12 @@ def test_insert_coverages_with_empty_strings(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(empty_strings_record)
+    result = insert_coverages(coverage_record=empty_strings_record)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
     mock_supabase.table.return_value.insert.assert_called_once_with(
-        empty_strings_record
+        dict(empty_strings_record)
     )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -448,6 +468,7 @@ def test_insert_coverages_with_empty_strings(mock_supabase):
 def test_insert_coverages_with_different_levels(mock_supabase):
     """Test insertion with different level values."""
     directory_record: CoveragesInsert = {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "test/directory",
         "level": "directory",
@@ -465,17 +486,20 @@ def test_insert_coverages_with_different_levels(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(directory_record)
+    result = insert_coverages(coverage_record=directory_record)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
-    mock_supabase.table.return_value.insert.assert_called_once_with(directory_record)
+    mock_supabase.table.return_value.insert.assert_called_once_with(
+        dict(directory_record)
+    )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
 
 
 def test_insert_coverages_with_repository_level(mock_supabase):
     """Test insertion with repository level."""
     repository_record: CoveragesInsert = {
+        "platform": "github",
         "created_by": "test_user",
         "full_path": "All",
         "level": "repository",
@@ -493,9 +517,11 @@ def test_insert_coverages_with_repository_level(mock_supabase):
         expected_data
     )
 
-    result = insert_coverages(repository_record)
+    result = insert_coverages(coverage_record=repository_record)
 
     assert result == expected_data
     mock_supabase.table.assert_called_once_with("coverages")
-    mock_supabase.table.return_value.insert.assert_called_once_with(repository_record)
+    mock_supabase.table.return_value.insert.assert_called_once_with(
+        dict(repository_record)
+    )
     mock_supabase.table.return_value.insert.return_value.execute.assert_called_once()
