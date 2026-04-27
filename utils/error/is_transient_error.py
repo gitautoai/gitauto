@@ -1,9 +1,10 @@
+import requests
+
 from utils.error.is_server_error import is_server_error
 from utils.logging.logging_config import logger
 
-# Marker strings that indicate a transient GitHub-side failure surfaced through
-# non-HTTPError exceptions (e.g. ValueError from run_subprocess wrapping `git
-# push` stderr). Matched case-sensitive to avoid false positives on user text.
+# Marker strings that indicate a transient GitHub-side failure surfaced through non-HTTPError exceptions (e.g. ValueError from run_subprocess wrapping `git push` stderr).
+# Matched case-sensitive to avoid false positives on user text.
 TRANSIENT_MARKERS = (
     "remote: Internal Server Error",
     "502 Bad Gateway",
@@ -28,6 +29,23 @@ def is_transient_error(err: Exception):
     # Google GenAI returns 499 CANCELLED when its own backend closes the stream, observed during free-tier overload windows (sibling symptom of 429 RESOURCE_EXHAUSTED, but without a Retry-After hint). Retry like any 5xx via the caller's linear backoff.
     if getattr(err, "code", None) == 499:
         logger.info("is_transient_error: matched via code=499 CANCELLED")
+        return True
+
+    # requests-side TCP/streaming failures that drop the connection without a response.
+    # ConnectionError covers RemoteDisconnected/ProtocolError (Sentry AGENT-3KA/3K9 on api.github.com).
+    # ChunkedEncodingError fires when the body cuts off mid-stream (Sentry AGENT-28E).
+    # Both are transient and almost always succeed on retry once the connection is re-established.
+    if isinstance(
+        err,
+        (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.ChunkedEncodingError,
+        ),
+    ):
+        logger.info(
+            "is_transient_error: matched via requests connection-class %s",
+            type(err).__name__,
+        )
         return True
 
     err_text = str(err)

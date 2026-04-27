@@ -106,3 +106,23 @@ def test_google_400_invalid_argument_is_not_transient():
         },
     )
     assert is_transient_error(err) is False
+
+
+def test_requests_connection_error_is_transient():
+    """Sentry AGENT-3KA/3K9 (get_workflow_artifacts on api.github.com): GitHub closed the TCP connection mid-request, requests raised ConnectionError. The dropped connection is a transient network condition that almost always succeeds on retry — flag it as transient so the handle_exceptions decorator's linear backoff covers it."""
+    err = requests.exceptions.ConnectionError(
+        "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    )
+    assert is_transient_error(err) is True
+
+
+def test_requests_chunked_encoding_error_is_transient():
+    """Subclasses like requests.exceptions.ChunkedEncodingError that inherit from ConnectionError must also be retried."""
+    err = requests.exceptions.ChunkedEncodingError("Response ended prematurely")
+    assert is_transient_error(err) is True
+
+
+def test_requests_missing_schema_is_not_transient():
+    """Negative case: a generic RequestException is NOT a ConnectionError; it could be a 4xx returned via raise_for_status, a redirect loop, an SSL trust failure, or anything else. Don't blanket-retry — only ConnectionError."""
+    err = requests.exceptions.MissingSchema("invalid url")
+    assert is_transient_error(err) is False
