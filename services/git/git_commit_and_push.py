@@ -1,10 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from services.git.format_commit_message import format_commit_message
 from services.git.get_branch_head_author import get_branch_head_author
 from services.types.base_args import BaseArgs
 from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
+from utils.git.is_path_gitignored import is_path_gitignored
 from utils.logging.logging_config import logger
 
 
@@ -12,6 +13,9 @@ from utils.logging.logging_config import logger
 class GitCommitResult:
     success: bool = False
     concurrent_push_detected: bool = False
+    # Paths the caller asked us to commit that are gitignored and were dropped from the stage list.
+    # Empty when nothing was dropped.
+    gitignored_paths: list[str] = field(default_factory=list)
 
 
 @handle_exceptions(raise_on_error=True)
@@ -25,6 +29,23 @@ def git_commit_and_push(
     clone_url = base_args["clone_url"]
     new_branch = base_args["new_branch"]
     skip_ci = base_args.get("skip_ci", False)
+
+    # Drop gitignored paths from the stage list.
+    # Without this, `git add` fails with "paths are ignored by one of your .gitignore files" and the agent has wasted an edit turn on a path it shouldn't have touched (e.g. node_modules after a search_and_replace on an installed dependency, see AGENT-3J4).
+    # Surface the first skipped path on the result so the caller can warn the agent; commit the rest.
+    gitignored = [f for f in files if is_path_gitignored(clone_dir, f)]
+    if gitignored:
+        logger.warning(
+            "git_commit_and_push: dropping %d gitignored path(s) from stage list: %s",
+            len(gitignored),
+            gitignored,
+        )
+        files = [f for f in files if f not in gitignored]
+    if not files:
+        logger.warning(
+            "git_commit_and_push: every requested file is gitignored, nothing to commit"
+        )
+        return GitCommitResult(success=False, gitignored_paths=gitignored)
 
     # Stage specified files (handles new, modified, and deleted files)
     run_subprocess(["git", "add"] + files, clone_dir)
@@ -63,4 +84,4 @@ def git_commit_and_push(
         return GitCommitResult(success=False, concurrent_push_detected=True)
 
     logger.info("Committed and pushed: %s", message.split("\n")[0])
-    return GitCommitResult(success=True)
+    return GitCommitResult(success=True, gitignored_paths=gitignored)
