@@ -120,19 +120,18 @@ class TestGetBase64:
         mock_requests_get.assert_called_once_with(url=test_url, timeout=TIMEOUT)
 
     def test_get_base64_connection_error_returns_empty_string(self, mock_requests_get):
-        """Test that connection errors return empty string due to handle_exceptions decorator."""
-        # Setup
+        """ConnectionError is now treated as transient (Sentry AGENT-3KA/3K9), so handle_exceptions retries up to TRANSIENT_MAX_ATTEMPTS=3 times before giving up and returning the default empty string."""
         test_url = "https://unreachable.example.com/image.jpg"
         mock_requests_get.side_effect = requests.exceptions.ConnectionError(
             "Connection failed"
         )
 
-        # Execute
-        result = get_base64(test_url)
+        with patch("utils.error.handle_exceptions.time.sleep"):
+            result = get_base64(test_url)
 
-        # Verify
-        assert result == ""  # Default return value from handle_exceptions decorator
-        mock_requests_get.assert_called_once_with(url=test_url, timeout=TIMEOUT)
+        assert result == ""
+        assert mock_requests_get.call_count == 3
+        mock_requests_get.assert_called_with(url=test_url, timeout=TIMEOUT)
 
     def test_get_base64_timeout_error_returns_empty_string(self, mock_requests_get):
         """Test that timeout errors return empty string due to handle_exceptions decorator."""
