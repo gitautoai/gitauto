@@ -458,6 +458,139 @@ async def test_handle_check_suite_circleci_no_failed_jobs(
     mock_update_comment.assert_called()
 
 @pytest.mark.asyncio
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+@patch("services.webhook.check_suite_handler.verify_task_is_ready")
+@patch("services.webhook.check_suite_handler.detect_infra_failure")
+@patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.slack_notify")
+async def test_handle_check_suite_infra_failure_no_retry(
+    mock_slack, mock_update_usage, mock_detect_infra, mock_verify_ready,
+    mock_should_bail, mock_update_comment, mock_ensure_php, mock_ensure_node,
+    mock_clone, mock_get_pr, mock_get_repo, mock_get_token_access,
+    mock_get_failed_runs, mock_check_run_payload
+):
+    """Verify that infra failure without retry skips LLM and updates usage."""
+    mock_get_token_access.return_value = "token"
+    mock_get_failed_runs.return_value = [
+        {"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}
+    ]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {
+        "title": "title",
+        "body": "body",
+        "user": {"login": "user"},
+        "base": {"ref": "main"},
+    }
+    from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
+    mock_verify_ready.return_value = VerifyTaskIsReadyResult(errors=[], fixes_applied=[], tsc_errors=[])
+
+    mock_detect_infra.return_value = {"pattern": "OOM", "should_retry": False}
+
+    await handle_check_suite(mock_check_run_payload)
+
+    mock_update_usage.assert_called_once()
+    mock_slack.assert_called()
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+@patch("services.webhook.check_suite_handler.verify_task_is_ready")
+@patch("services.webhook.check_suite_handler.detect_infra_failure")
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.update_usage")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.get_pull_request_commits", return_value=[])
+async def test_handle_check_suite_infra_failure_with_retry(
+    mock_get_commits, mock_slack, mock_update_usage, mock_create_commit,
+    mock_detect_infra, mock_verify_ready, mock_should_bail, mock_update_comment,
+    mock_ensure_php, mock_ensure_node, mock_clone, mock_get_pr, mock_get_repo,
+    mock_get_token_access, mock_get_failed_runs, mock_check_run_payload
+):
+    """Verify that infra failure with retry triggers an empty commit."""
+    mock_get_token_access.return_value = "token"
+    mock_get_failed_runs.return_value = [
+        {"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}
+    ]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {
+        "title": "title",
+        "body": "body",
+        "user": {"login": "user"},
+        "base": {"ref": "main"},
+    }
+    from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
+    mock_verify_ready.return_value = VerifyTaskIsReadyResult(errors=[], fixes_applied=[], tsc_errors=[])
+
+    mock_detect_infra.return_value = {"pattern": "Segfault", "should_retry": True}
+    mock_create_commit.return_value = True
+
+    await handle_check_suite(mock_check_run_payload)
+
+    mock_create_commit.assert_called_once()
+    mock_update_usage.assert_called_once()
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+@patch("services.webhook.check_suite_handler.verify_task_is_ready")
+@patch("services.webhook.check_suite_handler.detect_infra_failure")
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.get_pull_request_commits")
+async def test_handle_check_suite_infra_failure_ceiling_hit(
+    mock_get_commits, mock_create_commit, mock_detect_infra, mock_verify_ready,
+    mock_should_bail, mock_update_comment, mock_ensure_php, mock_ensure_node,
+    mock_clone, mock_get_pr, mock_get_repo, mock_get_token_access,
+    mock_get_failed_runs, mock_check_run_payload
+):
+    """Verify that infra failure skips retry when MAX_INFRA_RETRIES is reached."""
+    mock_get_token_access.return_value = "token"
+    mock_get_failed_runs.return_value = [
+        {"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}
+    ]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {
+        "title": "title",
+        "body": "body",
+        "user": {"login": "user"},
+        "base": {"ref": "main"},
+    }
+    from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
+    mock_verify_ready.return_value = VerifyTaskIsReadyResult(errors=[], fixes_applied=[], tsc_errors=[])
+
+    mock_detect_infra.return_value = {"pattern": "Segfault", "should_retry": True}
+    # Mock 10 commits with "Infrastructure failure retry"
+    mock_get_commits.return_value = [{"commit": {"message": "Infrastructure failure retry"}}] * 10
+
+    await handle_check_suite(mock_check_run_payload)
+
+    mock_create_commit.assert_not_called()
+
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
