@@ -764,6 +764,134 @@ async def test_handle_check_suite_stops_if_trigger_disabled_mid_execution(
     # Should have called get_repository at least twice
     assert mock_get_repo.call_count >= 2
     mock_update_comment.assert_called()
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=False)
+@patch("services.webhook.check_suite_handler.verify_task_is_ready")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs", return_value="log")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.chat_with_agent")
+@patch("services.webhook.check_suite_handler.create_empty_commit")
+@patch("services.webhook.check_suite_handler.get_local_head_sha", return_value="abc")
+@patch("services.webhook.check_suite_handler.get_total_cost_for_pr", return_value=0.0)
+async def test_handle_check_suite_concurrent_push_detected_in_loop(
+    mock_cost, mock_head, mock_create_commit, mock_chat, mock_slack, mock_get_logs,
+    mock_verify_ready, mock_should_bail, mock_update_comment, mock_ensure_php,
+    mock_ensure_node, mock_clone, mock_get_pr, mock_get_repo, mock_get_token_access,
+    mock_get_failed_runs, mock_check_run_payload
+):
+    """Verify that handler breaks loop and skips final commit when concurrent push is detected by agent."""
+    mock_get_token_access.return_value = "token"
+    mock_get_failed_runs.return_value = [{"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {"title": "title", "body": "body", "user": {"login": "user"}, "base": {"ref": "main"}}
+    from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
+    mock_verify_ready.return_value = VerifyTaskIsReadyResult(errors=[], fixes_applied=[], tsc_errors=[])
+
+    from services.chat_with_agent import AgentResult
+    mock_chat.return_value = AgentResult(
+        messages=[], token_input=0, token_output=0, is_completed=False,
+        completion_reason="", p=0, is_planned=False, cost_usd=0.0,
+        concurrent_push_detected=True
+    )
+
+    await handle_check_suite(mock_check_run_payload)
+
+    # Should break loop and post concurrent-push bail message
+    mock_create_commit.assert_not_called()
+    mock_update_comment.assert_called()
+    # Check if the bail message was posted
+    args, _ = mock_update_comment.call_args
+    assert "Another commit landed" in args[0]
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+@patch("services.webhook.check_suite_handler.verify_task_is_ready")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs", return_value="log")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.create_empty_commit", return_value=False)
+@patch("services.webhook.check_suite_handler.get_local_head_sha", return_value="abc")
+@patch("services.webhook.check_suite_handler.get_total_cost_for_pr", return_value=0.0)
+async def test_handle_check_suite_final_commit_fails(
+    mock_cost, mock_head, mock_create_commit, mock_slack, mock_get_logs,
+    mock_verify_ready, mock_should_bail, mock_update_comment, mock_ensure_php,
+    mock_ensure_node, mock_clone, mock_get_pr, mock_get_repo, mock_get_token_access,
+    mock_get_failed_runs, mock_check_run_payload
+):
+    """Verify that handler posts respect-the-push message when final empty commit fails."""
+    mock_get_token_access.return_value = "token"
+    mock_get_failed_runs.return_value = [{"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {"title": "title", "body": "body", "user": {"login": "user"}, "base": {"ref": "main"}}
+    from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
+    mock_verify_ready.return_value = VerifyTaskIsReadyResult(errors=[], fixes_applied=[], tsc_errors=[])
+
+    await handle_check_suite(mock_check_run_payload)
+
+    # Final commit failed (return_value=False)
+    mock_create_commit.assert_called()
+    # Should post "Another commit landed" message
+    args, _ = mock_update_comment.call_args
+    assert "Another commit landed" in args[0]
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+@patch("services.webhook.check_suite_handler.verify_task_is_ready")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs", return_value="log")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.create_empty_commit", return_value=True)
+@patch("services.webhook.check_suite_handler.get_local_head_sha", return_value="abc")
+@patch("services.webhook.check_suite_handler.get_total_cost_for_pr", return_value=0.0)
+async def test_handle_check_suite_agent_did_not_complete(
+    mock_cost, mock_head, mock_create_commit, mock_slack, mock_get_logs,
+    mock_verify_ready, mock_should_bail, mock_update_comment, mock_ensure_php,
+    mock_ensure_node, mock_clone, mock_get_pr, mock_get_repo, mock_get_token_access,
+    mock_get_failed_runs, mock_check_run_payload
+):
+    """Verify that handler posts review-changes message when agent did not complete."""
+    mock_get_token_access.return_value = "token"
+    mock_get_failed_runs.return_value = [{"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {"title": "title", "body": "body", "user": {"login": "user"}, "base": {"ref": "main"}}
+    from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
+    mock_verify_ready.return_value = VerifyTaskIsReadyResult(errors=[], fixes_applied=[], tsc_errors=[])
+
+    # Force is_completed = False by mocking verify_task_is_complete
+    with patch("services.webhook.check_suite_handler.verify_task_is_complete") as mock_verify_complete:
+        from services.agents.verify_task_is_complete import \
+            VerifyTaskIsCompleteResult
+        mock_verify_complete.return_value = VerifyTaskIsCompleteResult(success=False, message="Not complete")
+        await handle_check_suite(mock_check_run_payload)
+
+    # Should post "Please review the changes" message
+    args, _ = mock_update_comment.call_args
+    assert "Please review the changes" in args[0]
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
