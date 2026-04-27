@@ -280,6 +280,7 @@ class TestGetRemoteFileContentByUrl:
         mock_create_headers.assert_called_once_with(token="test-token")
         mock_requests_get.assert_called_once()
 
+    @patch("utils.error.handle_exceptions.time.sleep")
     @patch("services.github.files.get_remote_file_content_by_url.requests.get")
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
     @patch("services.github.files.get_remote_file_content_by_url.parse_github_url")
@@ -288,9 +289,10 @@ class TestGetRemoteFileContentByUrl:
         mock_parse_url,
         mock_create_headers,
         mock_requests_get,
+        _mock_sleep,
         mock_parse_github_url,
     ):
-        """Test that requests exceptions are handled by the decorator."""
+        """requests.exceptions.ConnectionError is now treated as transient by is_transient_error (Sentry AGENT-3KA/3K9), so handle_exceptions retries up to TRANSIENT_MAX_ATTEMPTS=3 times before falling through to the default empty-tuple return."""
         mock_parse_url.return_value = mock_parse_github_url
         mock_create_headers.return_value = {"Authorization": "Bearer test-token"}
         mock_requests_get.side_effect = requests.exceptions.ConnectionError(
@@ -300,11 +302,11 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py"
         result = get_remote_file_content_by_url(url, "test-token")
 
-        # The handle_exceptions decorator should catch the error and return empty tuple
+        # The handle_exceptions decorator catches the error after the retry budget is exhausted and returns the default empty tuple.
         assert result == ("", "")
-        mock_parse_url.assert_called_once_with(url)
-        mock_create_headers.assert_called_once_with(token="test-token")
-        mock_requests_get.assert_called_once()
+        assert mock_parse_url.call_count == 3
+        assert mock_create_headers.call_count == 3
+        assert mock_requests_get.call_count == 3
 
     @patch("services.github.files.get_remote_file_content_by_url.requests.get")
     @patch("services.github.files.get_remote_file_content_by_url.create_headers")
@@ -568,8 +570,7 @@ class TestGetRemoteFileContentByUrl:
         url = "https://github.com/test-owner/test-repo/blob/main/src/test.py#L10"
         result = get_remote_file_content_by_url(url, "test-token")
 
-        # When line number exceeds file length, it should cause an IndexError
-        # which is handled by the @handle_exceptions decorator, returning empty tuple
+        # When line number exceeds file length, it should cause an IndexError which is handled by the @handle_exceptions decorator, returning empty tuple.
         assert result == ("", "")
 
     @pytest.mark.parametrize(
@@ -698,8 +699,7 @@ class TestGetRemoteFileContentByUrl:
         file_path, content = get_remote_file_content_by_url(url, "test-token")
 
         assert file_path == "src/test.py"
-        # Build the exact expected content: "# Large file" + 100 "print('line')"
-        # rows + one trailing empty line (trailing newline in `large_content`).
+        # Build the exact expected content: "# Large file" + 100 "print('line')" rows + one trailing empty line (trailing newline in `large_content`).
         numbered = ["1: # Large file"]
         numbered.extend(f"{i + 2}: print('line')" for i in range(100))
         numbered.append("102: ")  # trailing empty line from large_content's final \n

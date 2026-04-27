@@ -66,7 +66,10 @@ def test_delete_comment_with_different_comment_id(mock_delete_response):
 
         mock_delete.assert_called_once()
         actual_call = mock_delete.call_args
-        assert str(comment_id) in actual_call[1]["url"]
+        assert (
+            actual_call[1]["url"]
+            == f"https://api.github.com/repos/{owner}/{repo}/issues/comments/{comment_id}"
+        )
 
 
 def test_delete_comment_404_returns_none_silently():
@@ -193,7 +196,10 @@ def test_delete_comment_uses_github_api_url(mock_delete_response):
 
             mock_delete.assert_called_once()
             actual_call = mock_delete.call_args
-            assert "custom.api.github.com" in actual_call[1]["url"]
+            assert (
+                actual_call[1]["url"]
+                == f"https://custom.api.github.com/repos/{owner}/{repo}/issues/comments/{comment_id}"
+            )
 
 
 @pytest.mark.parametrize("comment_id", [1, 999999, 123456789])
@@ -216,10 +222,14 @@ def test_delete_comment_with_various_comment_ids(mock_delete_response, comment_i
 
         mock_delete.assert_called_once()
         actual_call = mock_delete.call_args
-        assert str(comment_id) in actual_call[1]["url"]
+        assert (
+            actual_call[1]["url"]
+            == f"https://api.github.com/repos/{owner}/{repo}/issues/comments/{comment_id}"
+        )
 
 
 def test_delete_comment_connection_error_handled():
+    """requests.exceptions.ConnectionError is now treated as transient by is_transient_error (Sentry AGENT-3KA/3K9), so handle_exceptions retries up to TRANSIENT_MAX_ATTEMPTS=3 times before giving up."""
     owner = fake.user_name()
     repo = fake.slug()
     token = fake.sha256()
@@ -227,7 +237,7 @@ def test_delete_comment_connection_error_handled():
 
     with patch(
         "services.github.comments.delete_comment.requests.delete"
-    ) as mock_delete:
+    ) as mock_delete, patch("utils.error.handle_exceptions.time.sleep"):
         mock_delete.side_effect = requests.exceptions.ConnectionError(
             "Connection failed"
         )
@@ -240,7 +250,7 @@ def test_delete_comment_connection_error_handled():
         )
 
         assert result is None
-        mock_delete.assert_called_once()
+        assert mock_delete.call_count == 3
 
 
 def test_delete_comment_decorator_configuration():

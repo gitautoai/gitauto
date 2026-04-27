@@ -124,8 +124,7 @@ def test_get_installation_access_token_403_without_suspension_message(
     mock_response.status_code = 403
     mock_response.text = "Forbidden - different reason"
     mock_response.reason = "Forbidden"
-    # Explicit empty headers — otherwise MagicMock's auto-attributes make the
-    # rate-limit extractor see a phantom Retry-After (MagicMock.__float__ returns 1.0).
+    # Explicit empty headers — otherwise MagicMock's auto-attributes make the rate-limit extractor see a phantom Retry-After (MagicMock.__float__ returns 1.0).
     mock_response.headers = {}
     mock_error = requests.exceptions.HTTPError(response=mock_response)
     mock_error.response = mock_response
@@ -485,16 +484,18 @@ def test_get_installation_access_token_function_signature_compliance():
 def test_get_installation_access_token_various_exceptions(
     mock_get_jwt, mock_create_headers, mock_requests_post, error_type, error_message
 ):
-    """Test handling of various exception types - should raise"""
+    """Test handling of various exception types - should raise. requests.exceptions.ConnectionError is now treated as transient (Sentry AGENT-3KA/3K9), so handle_exceptions retries it up to TRANSIENT_MAX_ATTEMPTS=3 times before re-raising. Other exception types still raise on the first attempt."""
     # Arrange
     installation_id = 12345
     mock_requests_post.side_effect = error_type(error_message)
 
     # Act & Assert - Should raise the exception
-    with pytest.raises(error_type):
-        get_installation_access_token(installation_id)
+    with patch("utils.error.handle_exceptions.time.sleep"):
+        with pytest.raises(error_type):
+            get_installation_access_token(installation_id)
 
-    mock_requests_post.assert_called_once()
+    expected_calls = 3 if error_type is requests.exceptions.ConnectionError else 1
+    assert mock_requests_post.call_count == expected_calls
 
 
 def test_get_installation_access_token_multiple_calls_independence(

@@ -483,6 +483,7 @@ def test_add_reviewers_timeout_error(
     mock_post.assert_called_once()
 
 
+@patch("utils.error.handle_exceptions.time.sleep")
 @patch("services.github.pulls.add_reviewers.create_headers")
 @patch("services.github.pulls.add_reviewers.requests.post")
 @patch("services.github.pulls.add_reviewers.check_user_is_collaborator")
@@ -490,10 +491,12 @@ def test_add_reviewers_connection_error(
     mock_check_collaborator,
     mock_post,
     mock_create_headers,
+    _mock_sleep,
     test_owner,
     test_repo,
     create_test_base_args,
 ):
+    """requests.exceptions.ConnectionError is now treated as transient (Sentry AGENT-3KA/3K9), so handle_exceptions retries up to TRANSIENT_MAX_ATTEMPTS=3 times before giving up and returning None."""
     base_args = create_test_base_args(
         owner=test_owner,
         repo=test_repo,
@@ -507,8 +510,8 @@ def test_add_reviewers_connection_error(
 
     result = add_reviewers(base_args)
 
-    assert result is None  # handle_exceptions decorator returns None on error
-    mock_post.assert_called_once()
+    assert result is None
+    assert mock_post.call_count == 3
 
 
 @patch("services.github.pulls.add_reviewers.create_headers")

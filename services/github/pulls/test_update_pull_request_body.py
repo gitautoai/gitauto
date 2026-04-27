@@ -166,9 +166,11 @@ def test_update_pull_request_body_http_error(mock_requests_patch, mock_create_he
     mock_response.raise_for_status.assert_called_once()
 
 
+@patch("utils.error.handle_exceptions.time.sleep")
 def test_update_pull_request_body_connection_error(
-    mock_requests_patch, mock_create_headers
+    _mock_sleep, mock_requests_patch, mock_create_headers
 ):
+    """requests.exceptions.ConnectionError is now treated as transient (Sentry AGENT-3KA/3K9), so handle_exceptions retries up to TRANSIENT_MAX_ATTEMPTS=3 times before giving up."""
     mock_requests_patch.side_effect = requests.exceptions.ConnectionError(
         "Connection failed"
     )
@@ -182,7 +184,7 @@ def test_update_pull_request_body_connection_error(
     )
 
     assert result is None
-    mock_requests_patch.assert_called_once()
+    assert mock_requests_patch.call_count == 3
 
 
 def test_update_pull_request_body_timeout_error(
