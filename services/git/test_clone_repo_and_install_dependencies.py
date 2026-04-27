@@ -68,8 +68,9 @@ def test_prepare_repo_clones_base_then_checks_out_pr(
     mock_copy_config,
 ):
     clone_url = "https://x-access-token:token@github.com/owner/repo.git"
+    mock_git_fetch.return_value = True
 
-    clone_repo_and_install_dependencies(
+    result = clone_repo_and_install_dependencies(
         owner="owner",
         repo="repo",
         base_branch="main",
@@ -78,6 +79,7 @@ def test_prepare_repo_clones_base_then_checks_out_pr(
         clone_dir="/tmp/repo",
     )
 
+    assert result is True
     mock_git_clone_to_tmp.assert_called_once_with("/tmp/repo", clone_url, "main")
     mock_git_fetch.assert_called_once_with("/tmp/repo", clone_url, "feature")
     mock_git_checkout.assert_called_once_with("/tmp/repo", "feature")
@@ -85,6 +87,34 @@ def test_prepare_repo_clones_base_then_checks_out_pr(
         owner_name="owner", repo_name="repo", clone_dir="/tmp/repo"
     )
     mock_copy_config.assert_called_once_with("/tmp/repo")
+
+
+def test_short_circuits_when_git_fetch_returns_false(
+    mock_get_clone_url,
+    mock_git_clone_to_tmp,
+    mock_git_fetch,
+    mock_git_checkout,
+    mock_s3_extract,
+    mock_copy_config,
+):
+    """Stale-webhook path: git_fetch returns False when the PR branch is gone from the remote (closed/merged PR fired a webhook days later). The setup must short-circuit BEFORE git_checkout, the S3 dependency extract, and the config-template copy — otherwise we would run downstream work against a directory that doesn't have the PR branch checked out, producing AGENT-3KC/3KD-style cascades."""
+    mock_git_fetch.return_value = False
+
+    result = clone_repo_and_install_dependencies(
+        owner="owner",
+        repo="repo",
+        base_branch="main",
+        pr_branch="feature",
+        token="token",
+        clone_dir="/tmp/repo",
+    )
+
+    assert result is False
+    mock_git_clone_to_tmp.assert_called_once()
+    mock_git_fetch.assert_called_once()
+    mock_git_checkout.assert_not_called()
+    mock_s3_extract.assert_not_called()
+    mock_copy_config.assert_not_called()
 
 
 SAMPLE_PR_BRANCH = "test/clone-integration"
