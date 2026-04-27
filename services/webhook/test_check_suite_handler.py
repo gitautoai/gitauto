@@ -1,7 +1,7 @@
+# pylint: disable=redefined-outer-name, too-many-lines, unused-argument
 """Unit tests for check_suite_handler.py"""
 
 # pyright: reportUnusedVariable=false
-# pylint: disable=too-many-lines
 
 # Test to verify imports work correctly
 # Standard imports
