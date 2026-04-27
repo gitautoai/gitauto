@@ -86,6 +86,29 @@ class TestGetDefaultBranch:
 
         assert branch == "release/v2"
 
+    def test_returns_none_when_repo_disabled(self, mock_run_subprocess):
+        """Sentry AGENT-30B and the cascade AGENT-3KQ/AGENT-3J5 (qenex-ai/metamask-extension): the customer disabled the repo, GitHub returns 403 with 'Repository ... is disabled. Please ask the owner to check their account.' Old behavior: ValueError propagated to @handle_exceptions and surfaced to Sentry every time the repo's webhook still fired. New behavior: catch the 'is disabled' marker, log info, return None — callers already treat None like an empty repo and skip the flow."""
+        mock_run_subprocess.side_effect = ValueError(
+            "Command failed: remote: Repository 'qenex-ai/metamask-extension' is disabled.\n"
+            "remote: Please ask the owner to check their account.\n"
+            "fatal: unable to access 'https://github.com/qenex-ai/metamask-extension.git/': The requested URL returned error: 403"
+        )
+
+        branch = get_default_branch(
+            clone_url="https://github.com/qenex-ai/metamask-extension.git"
+        )
+
+        assert branch is None
+
+    def test_re_raises_unrelated_value_error(self, mock_run_subprocess):
+        """Negative case for the disabled-repo shortcut: any other ValueError (auth failure, DNS error, server-side issue) must NOT silently return None. Let it propagate so the @handle_exceptions decorator captures real outages."""
+        mock_run_subprocess.side_effect = ValueError(
+            "Command failed: fatal: Authentication failed"
+        )
+
+        with pytest.raises(ValueError, match="Authentication failed"):
+            get_default_branch(clone_url="https://github.com/owner/repo.git")
+
 
 # --- Integration tests (real git, local bare repo) ---
 
