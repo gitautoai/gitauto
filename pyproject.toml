@@ -1,6 +1,6 @@
 [project]
 name = "GitAuto"
-version = "1.81.0"
+version = "1.81.1"
 requires-python = ">=3.14"
 dependencies = [
     "annotated-doc==0.0.4",
@@ -70,6 +70,7 @@ dependencies = [
     "mypy-boto3-logs==1.42.10",
     "mypy-boto3-s3==1.42.80",
     "mypy-boto3-scheduler==1.42.3",
+    "mypy-boto3-ssm==1.42.54",
     "networkx==3.6.1",
     "openai==1.107.3",
     "orjson==3.11.8",
@@ -150,7 +151,6 @@ dev = [
     "coverage==7.8.0",
     "Faker==24.14.1",
     "fastapi-cli==0.0.5",
-    "mypy-boto3-ssm>=1.42.54",
     "pre-commit==3.8.0",
     "pylint==3.2.6",
     "pyright==1.1.409",
