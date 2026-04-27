@@ -1446,6 +1446,104 @@ async def test_batch_builds_combined_review_comment(
     assert mock_get_file_content.call_count == 2
 
 
+@patch("services.webhook.review_run_handler.refresh_mongodb_cache")
+@patch("services.webhook.review_run_handler.get_pull_request")
+@patch("services.webhook.review_run_handler.slack_notify")
+@patch("services.webhook.review_run_handler.get_local_file_tree", return_value=[])
+@patch("services.webhook.review_run_handler.set_npm_token_env")
+@patch("services.webhook.review_run_handler.get_installation_access_token")
+@patch("services.webhook.review_run_handler.get_user_public_info")
+@patch("services.webhook.review_run_handler.get_repository")
+@patch("services.webhook.review_run_handler.create_user_request")
+@patch("services.webhook.review_run_handler.get_review_thread_comments")
+@patch("services.webhook.review_run_handler.reply_to_comment")
+@patch(
+    "services.webhook.review_run_handler.format_content_with_line_numbers",
+    side_effect=lambda file_path, content: content,
+)
+@patch("services.webhook.review_run_handler.read_local_file")
+@patch("services.webhook.review_run_handler.get_pull_request_files")
+@patch("services.webhook.review_run_handler.update_comment")
+@patch("services.webhook.review_run_handler.should_bail", return_value=False)
+@patch("services.webhook.review_run_handler.chat_with_agent")
+@patch("services.webhook.review_run_handler.create_empty_commit")
+@patch("services.webhook.review_run_handler.get_reference", return_value="changed_sha")
+@patch("services.webhook.review_run_handler.update_usage")
+@patch("services.webhook.review_run_handler.ensure_node_packages")
+@patch("services.webhook.review_run_handler.clone_repo_and_install_dependencies")
+@patch(
+    "services.webhook.review_run_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.review_run_handler.git_merge_base_into_pr")
+@patch("services.webhook.review_run_handler.ensure_php_packages")
+@patch(
+    "services.webhook.review_run_handler.verify_task_is_ready", new_callable=AsyncMock
+)
+@patch("services.webhook.review_run_handler.GITHUB_APP_USER_NAME", "gitauto-ai[bot]")
+@pytest.mark.asyncio
+async def test_review_run_handler_returns_none_on_stale_pr_branch(
+    _mock_verify_task_is_ready,
+    _mock_ensure_php,
+    _mock_get_behind,
+    _mock_merge_base,
+    mock_prepare_repo,
+    _mock_ensure_node_packages,
+    _mock_update_usage,
+    _mock_get_reference,
+    _mock_create_empty_commit,
+    mock_chat_with_agent,
+    _mock_should_bail,
+    _mock_update_comment,
+    mock_get_pr_files,
+    mock_get_file_content,
+    _mock_format,
+    mock_reply_to_comment,
+    mock_get_thread_comments,
+    mock_create_user_request,
+    mock_get_repo,
+    mock_get_user_public_info,
+    mock_get_token,
+    _mock_set_npm_token_env,
+    _mock_get_local_file_tree,
+    _mock_slack_notify,
+    _mock_get_pull_request,
+    mock_refresh_mongodb,
+    mock_review_comment_payload,
+):
+    """Sentry AGENT-3KB cascade in review_run_handler shape: when the PR branch was deleted before the webhook landed, clone_repo_and_install_dependencies now returns False. The handler must short-circuit BEFORE chat_with_agent or any other downstream work — that's how we keep AGENT-3KC/3KD-style cascades from firing."""
+    mock_get_token.return_value = "ghs_test_token"
+    mock_get_user_public_info.return_value = type(
+        "UserPublicInfo", (), {"email": "test@test.com", "display_name": "Test"}
+    )()
+    mock_get_repo.return_value = {"id": 98765, "trigger_on_review_comment": True}
+    mock_create_user_request.return_value = 777
+    _mock_verify_task_is_ready.return_value = VerifyTaskIsReadyResult()
+    mock_get_thread_comments.return_value = ReviewThreadResult(
+        comments=[
+            {
+                "author": {"login": "test-reviewer"},
+                "body": "Could you optimize this loop?",
+                "createdAt": "2025-09-17T12:00:00Z",
+            }
+        ]
+    )
+    mock_reply_to_comment.return_value = "http://comment-url"
+    mock_get_file_content.return_value = "def main():\n    pass"
+    mock_get_pr_files.return_value = [{"filename": "src/main.py", "status": "modified"}]
+    mock_prepare_repo.return_value = False
+
+    result = await handle_review_run(
+        mock_review_comment_payload, trigger="pr_file_review"
+    )
+
+    assert result is None
+    mock_prepare_repo.assert_called_once()
+    # Critical: nothing downstream of clone runs.
+    mock_chat_with_agent.assert_not_called()
+    mock_refresh_mongodb.assert_not_called()
+
+
 def test_agent_result_concurrent_push_field_defaults_false_review_run():
     """review_run handler breaks its agent loop + skips final empty commit when
     AgentResult.concurrent_push_detected is True. Verify the new field exists

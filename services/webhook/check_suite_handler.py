@@ -293,15 +293,19 @@ async def handle_check_suite(
         "slack_thread_ts": thread_ts,
     }
 
-    # Clone repo to tmp
-    clone_repo_and_install_dependencies(
+    # Clone repo to tmp. Returns False when the PR branch is no longer on the remote (stale webhook for a closed/merged PR); bail early instead of running tests on a non-existent branch.
+    if not clone_repo_and_install_dependencies(
         owner=owner_name,
         repo=repo_name,
         base_branch=base_branch,
         pr_branch=head_branch,
         token=token,
         clone_dir=clone_dir,
-    )
+    ):
+        logger.info(
+            "check_suite_handler: stale PR branch %s, skipping handler", head_branch
+        )
+        return None
 
     # Fire-and-forget: refresh mongodb-binaries on S3 for the next run
     refresh_mongodb_cache(

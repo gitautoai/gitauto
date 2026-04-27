@@ -2036,6 +2036,79 @@ def test_ci_log_source_strings_produce_expected_agent_input():
     )
 
 
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.create_user_request")
+@patch("services.webhook.check_suite_handler.cancel_workflow_runs")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch(
+    "services.webhook.check_suite_handler.get_head_commit_count_behind_base",
+    return_value=0,
+)
+@patch("services.webhook.check_suite_handler.git_merge_base_into_pr")
+@patch("services.webhook.check_suite_handler.refresh_mongodb_cache")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies")
+async def test_handle_check_suite_returns_none_on_stale_pr_branch(
+    mock_clone,
+    mock_refresh_mongodb,
+    _mock_merge_base,
+    _mock_get_behind,
+    _mock_ensure_php,
+    _mock_ensure_node,
+    _mock_update_comment,
+    mock_get_pr,
+    _mock_cancel,
+    mock_create_user_request,
+    mock_create_comment,
+    mock_get_pr_comments,
+    _mock_slack_notify,
+    mock_get_repo,
+    mock_get_token,
+    mock_get_failed_runs,
+    mock_check_run_payload,
+):
+    """Sentry AGENT-3KB cascade: if the PR branch was deleted before the webhook landed, clone_repo_and_install_dependencies now returns False. The handler must short-circuit BEFORE calling refresh_mongodb_cache or doing any other downstream work — that's how we keep the cascade (AGENT-3KC/3KD) from firing on a stale ref."""
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["id"] = random.randint(1000000, 9999999)
+
+    mock_get_token.return_value = "ghs_test_token_for_testing"
+    mock_get_failed_runs.return_value = [
+        {
+            "details_url": "https://github.com/test-owner/test-repo/actions/runs/12345/job/67890",
+            "name": "test",
+            "head_sha": "abc123",
+        }
+    ]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr_comments.return_value = []
+    mock_create_comment.return_value = "http://comment-url"
+    mock_create_user_request.return_value = "usage-id-stale"
+    mock_get_pr.return_value = {
+        "title": "Low Test Coverage: src/main.py",
+        "body": "Test PR description",
+        "user": {"login": "test-user"},
+        "base": {"ref": "main"},
+        "mergeable_state": "clean",
+    }
+    mock_clone.return_value = False
+
+    result = await handle_check_suite(payload)
+
+    assert result is None
+    mock_clone.assert_called_once()
+    # Critical: no downstream work runs once clone returns False.
+    mock_refresh_mongodb.assert_not_called()
+
+
 def test_agent_result_concurrent_push_field_defaults_false():
     """check_suite_handler breaks its agent loop and skips the final empty commit
     when AgentResult.concurrent_push_detected is True. Verify the new field
