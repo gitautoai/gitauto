@@ -20,7 +20,7 @@ from services.supabase.client import supabase
 from services.supabase.repository_features.get_repository_features import (
     get_repository_features,
 )
-from services.types.base_args import CommentArgs
+from services.types.base_args import CommentArgs, Platform
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_config_file import is_config_file
 from utils.files.is_test_file import is_test_file
@@ -39,6 +39,7 @@ BLOCKED_STATE_REASONS: dict[MergeableState, str] = {
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
+    platform: Platform = "github"
     check_suite = payload["check_suite"]
     pull_requests = check_suite["pull_requests"]
 
@@ -105,13 +106,14 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     # Check if auto-merge is enabled BEFORE doing expensive API calls
     # (branch protection, check suites, PR details, etc.)
     repo_features = get_repository_features(
-        platform="github", owner_id=owner_id, repo_id=repo_id
+        platform=platform, owner_id=owner_id, repo_id=repo_id
     )
     if not repo_features or not repo_features.get("auto_merge"):
         logger.info("Skipping because auto-merge is disabled for repo_id=%s", repo_id)
         return
 
     comment_args: CommentArgs = {
+        "platform": platform,
         "owner": owner_name,
         "repo": repo_name,
         "token": token,

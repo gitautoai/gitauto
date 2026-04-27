@@ -11,6 +11,15 @@ from services.github.types.webhook.review_run_payload import ReviewSubjectType
 Platform = Literal["github", "azure_devops"]
 
 
+# Minimal subset of BaseArgs needed by comment helpers (create_comment, update_comment, delete_comments_by_identifiers). BaseArgs is a structural superset, so callers with a full BaseArgs satisfy this too.
+class CommentArgs(TypedDict):
+    platform: Platform
+    owner: str
+    repo: str
+    token: str
+    pr_number: int
+
+
 class BaseArgs(TypedDict):
     # Required fields
     platform: Platform
