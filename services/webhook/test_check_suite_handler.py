@@ -374,6 +374,88 @@ async def test_handle_check_suite_skips_when_circleci_token_missing(
     mock_update_comment.assert_called()
     mock_slack_notify.assert_called()
 
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+@patch("services.webhook.check_suite_handler.verify_task_is_ready")
+@patch("services.webhook.check_suite_handler.get_circleci_token")
+@patch("services.webhook.check_suite_handler.get_circleci_workflow_jobs")
+@patch("services.webhook.check_suite_handler.get_circleci_build_logs")
+async def test_handle_check_suite_collects_circleci_logs(
+    mock_get_logs, mock_get_jobs, mock_get_token_circle, mock_verify_ready,
+    mock_should_bail, mock_update_comment, mock_ensure_php, mock_ensure_node,
+    mock_clone, mock_get_pr, mock_get_repo, mock_get_token_access,
+    mock_get_failed_runs, mock_check_run_payload
+):
+    """Verify that CircleCI logs are collected from failed jobs."""
+    mock_get_token_access.return_value = "token"
+    mock_get_failed_runs.return_value = [
+        {"details_url": "https://app.circleci.com/pipelines/org/repo/123/workflows/abc", "name": "test", "head_sha": "abc"}
+    ]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {
+        "title": "title",
+        "body": "body",
+        "user": {"login": "user"},
+        "base": {"ref": "main"},
+    }
+    from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
+    mock_verify_ready.return_value = VerifyTaskIsReadyResult(errors=[], fixes_applied=[], tsc_errors=[])
+
+    mock_get_token_circle.return_value = "circleci_token"
+    mock_get_jobs.return_value = [
+        {"job_number": 1, "status": "failed"},
+        {"job_number": 2, "status": "success"},
+        {"job_number": 3, "status": "infrastructure_fail"},
+        {"job_number": None, "status": "failed"}, # Should be skipped
+    ]
+    mock_get_logs.side_effect = ["Log 1", "Log 3"]
+
+    await handle_check_suite(mock_check_run_payload)
+
+    # Should call get_circleci_build_logs for job 1 and 3
+    assert mock_get_logs.call_count == 2
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+@patch("services.webhook.check_suite_handler.verify_task_is_ready")
+@patch("services.webhook.check_suite_handler.get_circleci_token")
+@patch("services.webhook.check_suite_handler.get_circleci_workflow_jobs")
+async def test_handle_check_suite_circleci_no_failed_jobs(
+    mock_get_jobs, mock_get_token_circle, mock_verify_ready, mock_should_bail,
+    mock_update_comment, mock_ensure_php, mock_ensure_node, mock_clone,
+    mock_get_pr, mock_get_repo, mock_get_token_access, mock_get_failed_runs,
+    mock_check_run_payload
+):
+    """Verify that handler handles case where no failed jobs are found in CircleCI workflow."""
+    mock_get_token_access.return_value = "token"
+    mock_get_failed_runs.return_value = [{"details_url": "https://app.circleci.com/pipelines/org/repo/123/workflows/abc", "name": "test", "head_sha": "abc"}]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {"title": "title", "body": "body", "user": {"login": "user"}, "base": {"ref": "main"}}
+    from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
+    mock_verify_ready.return_value = VerifyTaskIsReadyResult(errors=[], fixes_applied=[], tsc_errors=[])
+    mock_get_token_circle.return_value = "circleci_token"
+    mock_get_jobs.return_value = [{"job_number": 1, "status": "success"}]
+
+    await handle_check_suite(mock_check_run_payload)
+    mock_update_comment.assert_called()
 
 @pytest.mark.asyncio
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
