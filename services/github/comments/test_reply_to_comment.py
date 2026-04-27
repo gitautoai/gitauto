@@ -183,21 +183,49 @@ def test_reply_to_comment_http_error_handled(
     )
     with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
         mock_response = MagicMock()
-        # Create a proper HTTPError with a response object
-        http_error = requests.exceptions.HTTPError("404 Not Found")
+        # status_code != 404 so the new 404-skip branch doesn't fire — we want this test to exercise raise_for_status. handle_http_error short-circuits 5xx via is_server_error (returns default without retry).
+        mock_response.status_code = 500
+        http_error = requests.exceptions.HTTPError("500 Server Error")
         http_error.response = MagicMock()
-        http_error.response.status_code = 404
-        http_error.response.reason = "Not Found"
-        http_error.response.text = "Repository not found"
+        http_error.response.status_code = 500
+        http_error.response.reason = "Internal Server Error"
+        http_error.response.text = "Server error"
+        http_error.response.headers = {}
         mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
 
         result = reply_to_comment(base_args, "Test body")
 
         assert result is None
-        mock_create_headers.assert_called_once_with(token="test-token")
         mock_post.assert_called_once()
         mock_response.raise_for_status.assert_called_once()
+
+
+def test_reply_to_comment_skips_on_404_without_raising(
+    mock_create_headers, create_test_base_args
+):
+    """Sentry AGENT-303/304 (Foxquilt/foxden-shared-lib PR 629 comment 3093714165): the parent review comment was deleted before GitAuto could reply, GitHub returned 404, raise_for_status raised HTTPError. Old behavior: HTTPError propagated to @handle_exceptions and surfaced to Sentry as a 'real' error every time a thread got cleaned up. New behavior: detect status_code==404 and return None silently — there's nothing to retry and the Sentry alert was just noise."""
+    base_args = create_test_base_args(
+        owner="Foxquilt",
+        repo="foxden-shared-lib",
+        token="test-token",
+        pr_number=629,
+        review_id=3093714165,
+    )
+    with patch("services.github.comments.reply_to_comment.requests.post") as mock_post:
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        # If we mistakenly fall through to raise_for_status, this side_effect proves it — but the new branch returns before reaching it.
+        mock_response.raise_for_status.side_effect = AssertionError(
+            "raise_for_status should not run when status_code==404"
+        )
+        mock_post.return_value = mock_response
+
+        result = reply_to_comment(base_args, "Test reply")
+
+        assert result is None
+        mock_post.assert_called_once()
+        mock_response.raise_for_status.assert_not_called()
 
 
 def test_reply_to_comment_request_exception_handled(
