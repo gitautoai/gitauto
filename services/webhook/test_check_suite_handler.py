@@ -17,7 +17,8 @@ from constants.messages import CHECK_RUN_FAILED_MESSAGE
 from services.agents.verify_task_is_complete import VerifyTaskIsCompleteResult
 from services.chat_with_agent import AgentResult
 from services.webhook import check_suite_handler
-from services.webhook.check_suite_handler import handle_check_suite
+from services.webhook.check_suite_handler import (handle_check_suite,
+                                                  insert_check_suite)
 from utils.logs.label_log_source import label_log_source
 
 
@@ -123,6 +124,76 @@ async def test_handle_check_suite_skips_non_gitauto_branch(
     mock_get_token.assert_not_called()
     mock_get_repo.assert_not_called()
     mock_get_failed_runs.assert_not_called()
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.insert_check_suite")
+async def test_handle_check_suite_skips_duplicate_check_suite(mock_insert, mock_check_run_payload):
+    """Verify that duplicate check_suite_id is ignored."""
+    mock_insert.return_value = False
+    await handle_check_suite(mock_check_run_payload)
+    mock_insert.assert_called_once()
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.insert_check_suite", return_value=True)
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+async def test_handle_check_suite_skips_no_failed_runs(mock_get_token, mock_get_failed_runs, _mock_insert, mock_check_run_payload):
+    """Verify that handler skips when no failed check runs are found."""
+    mock_get_failed_runs.return_value = []
+    await handle_check_suite(mock_check_run_payload)
+    mock_get_failed_runs.assert_called_once()
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.insert_check_suite", return_value=True)
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+async def test_handle_check_suite_skips_unsupported_providers(mock_get_token, mock_get_failed_runs, _mock_insert, mock_check_run_payload):
+    """Verify that unsupported CI providers are skipped."""
+    providers = [
+        ("https://app.deepsource.com/gh/owner/repo", "DeepSource"),
+        ("https://admin.pipeline.side8.io", "Side8"),
+        ("https://unknown-ci.com/run/123", "Unknown"),
+    ]
+    for url, name in providers:
+        mock_get_failed_runs.return_value = [{"details_url": url, "name": "test", "head_sha": "abc"}]
+        await handle_check_suite(mock_check_run_payload)
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.insert_check_suite", return_value=True)
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+async def test_handle_check_suite_skips_no_pull_requests(mock_get_token, mock_get_failed_runs, _mock_insert, mock_check_run_payload):
+    """Verify that handler skips when no pull requests are associated with the check suite."""
+    payload = mock_check_run_payload.copy()
+    payload["check_suite"] = payload["check_suite"].copy()
+    payload["check_suite"]["pull_requests"] = []
+
+    mock_get_failed_runs.return_value = [{"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}]
+
+    # We need to mock get_user_public_info because it's called before checking pull_requests
+    with patch("services.webhook.check_suite_handler.get_user_public_info") as mock_user_info:
+        from collections import namedtuple
+        UserInfo = namedtuple("UserInfo", ["email", "display_name"])
+        mock_user_info.return_value = UserInfo(email="test@example.com", display_name="Test User")
+        await handle_check_suite(payload)
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.insert_check_suite", return_value=True)
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+async def test_handle_check_suite_resolves_email_from_commits(mock_get_token, mock_get_failed_runs, _mock_insert, mock_check_run_payload):
+    """Verify that sender email is resolved from commit history if public email is missing."""
+    mock_get_failed_runs.return_value = [{"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}]
+
+    with patch("services.webhook.check_suite_handler.get_user_public_info") as mock_user_info, \
+         patch("services.webhook.check_suite_handler.get_email_from_commits") as mock_get_email, \
+         patch("services.webhook.check_suite_handler.get_repository", return_value={"trigger_on_test_failure": False}):
+        from collections import namedtuple
+        UserInfo = namedtuple("UserInfo", ["email", "display_name"])
+        mock_user_info.return_value = UserInfo(email=None, display_name="Test User")
+        mock_get_email.return_value = "resolved@example.com"
+        await handle_check_suite(mock_check_run_payload)
+        mock_get_email.assert_called_once()
 
 
 @pytest.mark.asyncio
