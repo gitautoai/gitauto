@@ -1,41 +1,50 @@
+from typing import TypedDict
+
 # Local imports
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 from utils.logs.strip_jest_noise import strip_jest_noise
 
-# Patterns for transient infrastructure failures (not code bugs). Add more as we encounter them.
-INFRA_FAILURE_PATTERNS = [
-    # Codecov uploader validation failures
-    "Validate Codecov Uploader",
-    "computed checksum did NOT match",
-    "BAD signature from \"Codecov Uploader",
+
+class InfraFailureMatch(TypedDict):
+    pattern: str
+    should_retry: bool
+
+
+# Patterns for transient infrastructure failures (not code bugs).
+# Add more as we encounter them.
+INFRA_FAILURE_PATTERNS: list[InfraFailureMatch] = [
+    # Codecov uploader validation failures. These resolve when vendor-side signing artifacts settle, not by our empty commits.
+    {"pattern": "Validate Codecov Uploader", "should_retry": False},
+    {"pattern": "computed checksum did NOT match", "should_retry": False},
+    {"pattern": 'BAD signature from "Codecov Uploader', "should_retry": False},
     # Segfaults
-    "Segmentation fault",
-    "exit code 139",
+    {"pattern": "Segmentation fault", "should_retry": True},
+    {"pattern": "exit code 139", "should_retry": True},
     # Terraform / AWS backend misconfiguration
-    "BucketRegionError",
-    "incorrect region, the bucket is not in",
+    {"pattern": "BucketRegionError", "should_retry": True},
+    {"pattern": "incorrect region, the bucket is not in", "should_retry": True},
     # Package registry failures
-    'Request failed "502 Bad Gateway"',
-    'Request failed "503 Service Unavailable"',
-    'Request failed "429 Too Many Requests"',
-    "ETIMEDOUT",
-    "ECONNRESET",
-    "ECONNREFUSED",
-    "EAI_AGAIN",
+    {"pattern": 'Request failed "502 Bad Gateway"', "should_retry": True},
+    {"pattern": 'Request failed "503 Service Unavailable"', "should_retry": True},
+    {"pattern": 'Request failed "429 Too Many Requests"', "should_retry": True},
+    {"pattern": "ETIMEDOUT", "should_retry": True},
+    {"pattern": "ECONNRESET", "should_retry": True},
+    {"pattern": "ECONNREFUSED", "should_retry": True},
+    {"pattern": "EAI_AGAIN", "should_retry": True},
     # CI timeouts
-    "Too long with no output",
-    "context deadline exceeded",
+    {"pattern": "Too long with no output", "should_retry": True},
+    {"pattern": "context deadline exceeded", "should_retry": True},
     # OOM
-    "out of memory",
-    "exit code 137",
-    "ENOMEM",
+    {"pattern": "out of memory", "should_retry": True},
+    {"pattern": "exit code 137", "should_retry": True},
+    {"pattern": "ENOMEM", "should_retry": True},
     # MongoMemoryServer binary crash (version/distro mismatch with cached S3 binary)
-    "MongoMemoryServer Instance failed",
-    'signal "SIGABRT"',
+    {"pattern": "MongoMemoryServer Instance failed", "should_retry": True},
+    {"pattern": 'signal "SIGABRT"', "should_retry": True},
     # AWS IAM permission errors (Lambda role lacks access to SSM/SecretsManager/etc.)
-    "AccessDeniedException",
-    "no identity-based policy allows",
+    {"pattern": "AccessDeniedException", "should_retry": True},
+    {"pattern": "no identity-based policy allows", "should_retry": True},
 ]
 
 
@@ -44,10 +53,14 @@ def detect_infra_failure(error_log: str):
     # Strip console.warn/log blocks and AWS SSM-fallback warnings before scanning so app-level noise (e.g. "AccessDeniedException" from a console.warn that fell back to a default) can't false-positive this classifier.
     error_log = strip_jest_noise(error_log)
     lower_log = error_log.lower()
-    for pattern in INFRA_FAILURE_PATTERNS:
-        if pattern.lower() in lower_log:
-            logger.info("Infrastructure failure detected: '%s'", pattern)
-            return pattern
+    for infra_failure in INFRA_FAILURE_PATTERNS:
+        if infra_failure["pattern"].lower() in lower_log:
+            logger.info(
+                "Infrastructure failure detected: pattern='%s' should_retry=%s",
+                infra_failure["pattern"],
+                infra_failure["should_retry"],
+            )
+            return infra_failure
 
     logger.info("No infrastructure failure pattern matched")
     return None

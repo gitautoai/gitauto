@@ -208,7 +208,7 @@ Six sections per PR — four cells of {GitAuto, Wes} × {X, LinkedIn}, plus HN t
 - Customer-facing only — skip test/internal changes.
 - **Banned openers** (do not start any post with these or close variants):
   - "Spent the morning [verb-ing]…" and close variants ("Spent the day…", "Spent the weekend…", "Spent N hours…").
-  Open with the concrete finding, the before/after, or the user-facing outcome. Never chronological autobiography.
+  - **Abstract aphorisms / thought-leadership platitudes.** Lines like "An agent can be locally correct on every step and still take a globally wrong action", "Sometimes the simplest fix is the hardest", "Every system has a hidden invariant" — these tell the reader nothing about what the post is actually about and read like LinkedIn-influencer fortune cookies. Open with the concrete finding, the before/after snippet, or the user-facing outcome. The first line must state a specific fact someone could disagree with.
 - **No "we broke X and fixed it" framing.** Every PR is a fix of something, so postmortem-style posts on every PR turn the feed into a wall of failures and debrand the product — even when each story is individually true. Frame posts as **capability, outcome, or design decision**, not as confession:
   - Capability: "GitAuto now X" / "X now handles Y case".
   - Outcome: "30% faster PR review" / "200 PRs auto-merged last week".

@@ -646,11 +646,28 @@ async def handle_check_suite(
     # Detect infrastructure failures (segfaults, OOM, etc.) - skip LLM and retry CI
     infra_failure = detect_infra_failure(error_log)
     if infra_failure:
-        logger.info(
-            "Detected infrastructure failure=%s on PR #%s; using CI-retry path instead of LLM fix",
-            infra_failure,
-            pr_number,
-        )
+        if not infra_failure["should_retry"]:
+            msg = f"Detected `{infra_failure["pattern"]}`. This is an external CI validation failure, so GitAuto will not create an empty commit retry."
+            add_log_message(msg, log_messages)
+            update_comment(body="\n".join(log_messages), base_args=base_args)
+            if usage_id:
+                logger.info(
+                    "Finalizing usage_id=%s for no-retry infra classification", usage_id
+                )
+                update_usage(
+                    usage_id=usage_id,
+                    token_input=0,
+                    token_output=0,
+                    total_seconds=int(time.time() - current_time),
+                    is_completed=True,
+                    pr_number=pr_number,
+                    original_error_log=error_log,
+                    minimized_error_log=clean_logs(error_log),
+                )
+            logger.info("No-retry infra classification on PR #%s: %s", pr_number, msg)
+            slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
+            return
+
         # Count previous infra retries from commit messages (pr_commits already fetched above)
         infra_retry_msg = "Infrastructure failure retry"
         infra_retry_count = sum(
@@ -658,13 +675,7 @@ async def handle_check_suite(
         )
 
         if infra_retry_count >= MAX_INFRA_RETRIES:
-            logger.warning(
-                "Infra-retry ceiling hit on PR #%s: %d previous retries for %s, giving up on retriggers",
-                pr_number,
-                infra_retry_count,
-                infra_failure,
-            )
-            msg = f"Infrastructure failure (`{infra_failure}`) persists after {infra_retry_count} retries. Skipping."
+            msg = f"Infrastructure failure (`{infra_failure["pattern"]}`) persists after {infra_retry_count} retries. Skipping."
             add_log_message(msg, log_messages)
             update_comment(body="\n".join(log_messages), base_args=base_args)
             if usage_id:
@@ -681,15 +692,18 @@ async def handle_check_suite(
                     original_error_log=error_log,
                     minimized_error_log=clean_logs(error_log),
                 )
-            logger.info(msg)
-            slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
-            logger.info(
-                "returning early because infra_retry_count >= MAX_INFRA_RETRIES"
+            logger.warning(
+                "Infra-retry ceiling hit on PR #%s: %d previous retries for %s: %s",
+                pr_number,
+                infra_retry_count,
+                infra_failure["pattern"],
+                msg,
             )
+            slack_notify(f"{msg} in `{owner_name}/{repo_name}`", thread_ts)
             return
 
         # Re-trigger CI with empty commit instead of calling LLM
-        msg = f"Detected `{infra_failure}` (not a code issue). Re-triggering CI (retry {infra_retry_count + 1}/{MAX_INFRA_RETRIES})..."
+        msg = f"Detected `{infra_failure["pattern"]}` (not a code issue). Re-triggering CI (retry {infra_retry_count + 1}/{MAX_INFRA_RETRIES})..."
         add_log_message(msg, log_messages)
         update_comment(body="\n".join(log_messages), base_args=base_args)
         pushed = create_empty_commit(base_args=base_args, message=infra_retry_msg)

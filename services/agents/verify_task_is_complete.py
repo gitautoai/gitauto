@@ -303,7 +303,8 @@ async def verify_task_is_complete(
         infra_failure = detect_infra_failure(combined_errors)
         if infra_failure:
             logger.warning(
-                "Jest infra failure detected (%s), skipping errors", infra_failure
+                "Jest infra failure detected (%s), skipping errors",
+                infra_failure["pattern"],
             )
         else:
             logger.info(

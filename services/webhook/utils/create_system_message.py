@@ -42,10 +42,10 @@ def create_system_message(
 
     # Add quality checklist so generated tests cover all quality categories
     checklist_json = json.dumps(QUALITY_CHECKLIST, indent=2)
+    logger.info("Quality checklist injected (%d categories)", len(QUALITY_CHECKLIST))
     content_parts.append(
         f"<quality_checklist>\nWhen writing tests, ensure coverage of these quality categories where applicable to the file:\n{checklist_json}\n</quality_checklist>"
     )
-    logger.info("Quality checklist injected (%d categories)", len(QUALITY_CHECKLIST))
 
     # Repository rules
     if repo_settings:
