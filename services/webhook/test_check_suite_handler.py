@@ -242,6 +242,73 @@ async def test_handle_check_suite_merges_when_dirty(
     mock_get_behind.assert_called_once()
     mock_merge_base.assert_called_once_with(clone_dir=pytest.any, base_branch="main", behind_by=5)
 
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+async def test_handle_check_suite_skips_when_permission_denied(
+    mock_should_bail, mock_update_comment, mock_slack_notify, mock_get_comments,
+    mock_ensure_php, mock_ensure_node, mock_clone, mock_get_pr, mock_get_repo,
+    mock_get_token, mock_get_failed_runs, mock_check_run_payload
+):
+    """Verify that handler skips when a permission denied comment exists."""
+    mock_get_token.return_value = "token"
+    mock_get_failed_runs.return_value = [{"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {
+        "title": "title",
+        "body": "body",
+        "user": {"login": "user"},
+        "base": {"ref": "main"},
+    }
+    mock_get_comments.return_value = [
+        {
+            "user": {"login": GITHUB_APP_USER_NAME},
+            "body": "Permission denied. Please grant access.", # This should contain PERMISSION_DENIED_MESSAGE
+        }
+    ]
+    # Need to make sure PERMISSION_DENIED_MESSAGE is actually in the body
+    from constants.messages import PERMISSION_DENIED_MESSAGE
+    mock_get_comments.return_value[0]["body"] = PERMISSION_DENIED_MESSAGE
+
+    await handle_check_suite(mock_check_run_payload)
+    mock_slack_notify.assert_called()
+
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.check_suite_handler.get_pull_request_commits")
+@patch("services.webhook.check_suite_handler.create_comment")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+async def test_handle_check_suite_skips_too_many_commits(
+    mock_should_bail, mock_slack_notify, mock_create_comment, mock_get_commits,
+    mock_get_comments, mock_ensure_php, mock_ensure_node, mock_clone, mock_get_pr,
+    mock_get_repo, mock_get_token, mock_get_failed_runs, mock_check_run_payload
+):
+    """Verify that handler stops after MAX_GITAUTO_COMMITS_PER_PR to prevent infinite loops."""
+    mock_get_token.return_value = "token"
+    mock_get_failed_runs.return_value = [{"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {"title": "title", "body": "body", "user": {"login": "user"}, "base": {"ref": "main"}}
+    mock_get_commits.return_value = [{"commit": {"author": {"name": GITHUB_APP_USER_NAME}}}] * 10 # More than MAX_GITAUTO_COMMITS_PER_PR
+    await handle_check_suite(mock_check_run_payload)
+    mock_create_comment.assert_called()
+
 
 
 @pytest.mark.asyncio
