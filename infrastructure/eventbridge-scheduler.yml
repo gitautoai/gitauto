@@ -52,21 +52,6 @@ Resources:
       SourceArn: !Sub 'arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/*'
 
   # =============================================================================
-  # EFS Cleanup Schedule (runs daily at 3am UTC)
-  # =============================================================================
-  EfsCleanupSchedule:
-    Type: AWS::Scheduler::Schedule
-    Properties:
-      Name: cleanup-stale-efs-repos
-      ScheduleExpression: 'cron(0 3 * * ? *)'
-      FlexibleTimeWindow:
-        Mode: 'OFF'
-      Target:
-        Arn: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunctionName}'
-        RoleArn: !GetAtt EventBridgeSchedulerRole.Arn
-        Input: '{"triggerType": "cleanup"}'
-
-  # =============================================================================
   # IAM User for Scheduler Management (used by website to create schedules)
   # =============================================================================
   GitAutoUser:
