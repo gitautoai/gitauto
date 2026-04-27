@@ -892,6 +892,59 @@ async def test_handle_check_suite_agent_did_not_complete(
     # Should post "Please review the changes" message
     args, _ = mock_update_comment.call_args
     assert "Please review the changes" in args[0]
+@pytest.mark.asyncio
+@patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
+@patch("services.webhook.check_suite_handler.get_installation_access_token")
+@patch("services.webhook.check_suite_handler.get_repository")
+@patch("services.webhook.check_suite_handler.get_pull_request")
+@patch("services.webhook.check_suite_handler.clone_repo_and_install_dependencies", return_value=True)
+@patch("services.webhook.check_suite_handler.ensure_node_packages")
+@patch("services.webhook.check_suite_handler.ensure_php_packages")
+@patch("services.webhook.check_suite_handler.get_pr_comments", return_value=[])
+@patch("services.webhook.check_suite_handler.update_comment")
+@patch("services.webhook.check_suite_handler.should_bail", return_value=True)
+@patch("services.webhook.check_suite_handler.verify_task_is_ready")
+@patch("services.webhook.check_suite_handler.get_workflow_run_logs", return_value="log")
+@patch("services.webhook.check_suite_handler.slack_notify")
+@patch("services.webhook.check_suite_handler.create_empty_commit", return_value=True)
+@patch("services.webhook.check_suite_handler.get_local_head_sha", return_value="abc")
+@patch("services.webhook.check_suite_handler.get_total_cost_for_pr", return_value=0.0)
+async def test_handle_check_suite_posts_completion_reason(
+    mock_cost, mock_head, mock_create_commit, mock_slack, mock_get_logs,
+    mock_verify_ready, mock_should_bail, mock_update_comment, mock_ensure_php,
+    mock_ensure_node, mock_clone, mock_get_pr, mock_get_repo, mock_get_token_access,
+    mock_get_failed_runs, mock_check_run_payload
+):
+    """Verify that handler posts completion_reason when it's set."""
+    mock_get_token_access.return_value = "token"
+    mock_get_failed_runs.return_value = [{"details_url": "https://github.com/actions/runs/1", "name": "test", "head_sha": "abc"}]
+    mock_get_repo.return_value = {"trigger_on_test_failure": True}
+    mock_get_pr.return_value = {"title": "title", "body": "body", "user": {"login": "user"}, "base": {"ref": "main"}}
+    from services.agents.verify_task_is_ready import VerifyTaskIsReadyResult
+    mock_verify_ready.return_value = VerifyTaskIsReadyResult(errors=[], fixes_applied=[], tsc_errors=[])
+
+    # We need to inject a completion_reason. Since it's set inside the loop,
+    # we can mock chat_with_agent to return is_completed=True and a reason.
+    # But wait, completion_reason is set when trigger_on_test_failure is disabled mid-execution.
+    # Let's use that path.
+
+    # Reset should_bail to False to enter loop
+    mock_should_bail.return_value = False
+
+    with patch("services.webhook.check_suite_handler.chat_with_agent") as mock_chat:
+        from services.chat_with_agent import AgentResult
+        mock_chat.return_value = AgentResult(
+            messages=[], token_input=0, token_output=0, is_completed=False,
+            completion_reason="", p=0, is_planned=False, cost_usd=0.0
+        )
+        # Mock get_repository to return True then False
+        mock_get_repo.side_effect = [{"trigger_on_test_failure": True}, {"trigger_on_test_failure": False}]
+
+        await handle_check_suite(mock_check_run_payload)
+
+    # Should post the completion reason
+    args, _ = mock_update_comment.call_args
+    assert "Stopped because the test failure trigger was disabled" in args[0]
 @patch("services.webhook.check_suite_handler.get_failed_check_runs_from_check_suite")
 @patch("services.webhook.check_suite_handler.get_installation_access_token")
 @patch("services.webhook.check_suite_handler.get_repository")
