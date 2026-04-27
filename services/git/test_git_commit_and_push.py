@@ -96,9 +96,8 @@ def test_git_commit_and_push_skip_ci(create_test_base_args):
         )
         assert result.success is True
         assert result.concurrent_push_detected is False
-        # commit_args_captured[3] is the full message: "<subject> [skip ci]"
-        # followed by a "\n\nCo-Authored-By: ..." trailer appended by
-        # format_commit_message. Assert the subject line (first line) exactly.
+        # commit_args_captured[3] is the full message: "<subject> [skip ci]" followed by a "\n\nCo-Authored-By: ..." trailer appended by format_commit_message.
+        # Assert the subject line (first line) exactly.
         assert commit_args_captured[:3] == ["git", "commit", "-m"]
         assert commit_args_captured[3].splitlines()[0] == "Update file.py [skip ci]"
 
@@ -292,6 +291,101 @@ def test_git_commit_and_push_bails_on_non_fast_forward(create_test_base_args):
     assert len(calls) == 4
 
 
+def test_git_commit_and_push_rejects_gitignored_path(create_test_base_args):
+    """Sentry AGENT-3J4 (Foxquilt/foxden-policy-document-backend PR 1410,
+    2026-04-20): agent ran search_and_replace on node_modules/test-exclude/index.js
+    (an installed dependency), then git_commit_and_push tried to `git add` it.
+    Git rejected with 'paths are ignored by one of your .gitignore files'. The
+    guard catches this up-front via git check-ignore and returns a structured
+    result so the caller can decide (typically: tell the agent to stop editing
+    ignored paths). No run_subprocess for git add/commit/push should fire."""
+    calls = []
+
+    def mock_run(args, cwd):
+        calls.append(args)
+        return MagicMock(returncode=0, stdout="")
+
+    with patch(
+        "services.git.git_commit_and_push.run_subprocess", side_effect=mock_run
+    ), patch(
+        "services.git.git_commit_and_push.is_path_gitignored",
+        return_value=True,
+    ) as mock_ignored:
+        result = git_commit_and_push(
+            base_args=create_test_base_args(),
+            message="Edit installed dep",
+            files=["node_modules/test-exclude/index.js"],
+        )
+
+    assert isinstance(result, GitCommitResult)
+    assert result.success is False
+    assert result.gitignored_paths == ["node_modules/test-exclude/index.js"]
+    assert result.concurrent_push_detected is False
+    mock_ignored.assert_called_once()
+    assert not calls
+
+
+def test_git_commit_and_push_drops_gitignored_and_commits_rest(create_test_base_args):
+    """When a multi-file commit mixes gitignored and tracked paths, drop the
+    ignored ones and commit the rest. Today every caller passes a single-element
+    list so this is forward-looking — but the contract accepts list[str], so the
+    behavior must be correct under the type signature."""
+    add_args_captured = []
+
+    def mock_run(args, cwd):
+        if args[:2] == ["git", "add"]:
+            add_args_captured.extend(args)
+        return MagicMock(returncode=0, stdout="")
+
+    def fake_check_ignore(_clone_dir, path):
+        return path.startswith("node_modules/")
+
+    with patch(
+        "services.git.git_commit_and_push.run_subprocess", side_effect=mock_run
+    ), patch(
+        "services.git.git_commit_and_push.is_path_gitignored",
+        side_effect=fake_check_ignore,
+    ):
+        result = git_commit_and_push(
+            base_args=create_test_base_args(),
+            message="Mixed update",
+            files=["node_modules/x/y.js", "src/app.py", "src/util.py"],
+        )
+
+    assert result.success is True
+    # All gitignored paths are surfaced (currently one) so the caller can warn the agent.
+    assert result.gitignored_paths == ["node_modules/x/y.js"]
+    # `git add` only saw the non-ignored ones, in original order.
+    assert add_args_captured == ["git", "add", "src/app.py", "src/util.py"]
+
+
+def test_git_commit_and_push_allows_non_gitignored_path(create_test_base_args):
+    """Negative case for the gitignore guard: when the guard returns False the
+    normal add/commit/push sequence must still run end-to-end."""
+    calls = []
+
+    def mock_run(args, cwd):
+        calls.append(args)
+        return MagicMock(returncode=0, stdout="")
+
+    with patch(
+        "services.git.git_commit_and_push.run_subprocess", side_effect=mock_run
+    ), patch("services.git.git_commit_and_push.is_path_gitignored", return_value=False):
+        result = git_commit_and_push(
+            base_args=create_test_base_args(),
+            message="Normal edit",
+            files=["src/app.py"],
+        )
+
+    assert result == GitCommitResult(success=True, gitignored_paths=[])
+    assert [c[:2] for c in calls] == [
+        ["git", "add"],
+        ["git", "commit"],
+        ["git", "remote"],
+        ["git", "push"],
+    ]
+
+
 def test_git_commit_and_push_does_not_retry_non_transient(create_test_base_args):
     """A 'pathspec did not match' or similar non-transient failure must NOT retry — otherwise we'd waste time on errors that will never succeed."""
     attempts = {"push": 0}
@@ -351,6 +445,5 @@ def test_git_commit_and_push_to_local_bare(local_repo, create_test_base_args):
             text=True,
             check=False,
         )
-        # Commit message has a trailer appended by format_commit_message; assert
-        # the subject line (first line) matches exactly.
+        # Commit message has a trailer appended by format_commit_message; assert the subject line (first line) matches exactly.
         assert log.stdout.strip().splitlines()[0] == "Add new file"

@@ -171,18 +171,29 @@ def search_and_replace(
     )
     if not commit_result.success:
         logger.warning(
-            "search_and_replace: push for %s failed (concurrent_push_detected=%s on %s)",
+            "search_and_replace: push for %s failed (concurrent_push_detected=%s gitignored_paths=%s on %s)",
             file_path,
             commit_result.concurrent_push_detected,
+            commit_result.gitignored_paths,
             base_args["new_branch"],
         )
+        if commit_result.gitignored_paths:
+            logger.info("search_and_replace: returning gitignored message to agent")
+            ignored_list = ", ".join(f"`{p}`" for p in commit_result.gitignored_paths)
+            message = f"{ignored_list} gitignored — local edit applied but cannot be committed, so probably pointless."
+        elif commit_result.concurrent_push_detected:
+            logger.info(
+                "search_and_replace: returning concurrent-push message to agent"
+            )
+            branch = base_args["new_branch"]
+            message = f"Concurrent push detected on `{branch}` while committing {file_path}. Another commit landed; aborting this edit."
+        else:
+            logger.info("search_and_replace: returning generic commit-failed message")
+            message = f"Failed to commit/push {file_path}."
+        logger.info("search_and_replace: returning failed FileWriteResult")
         return FileWriteResult(
             success=False,
-            message=(
-                f"Concurrent push detected on `{base_args['new_branch']}` while committing {file_path}. Another commit landed; aborting this edit."
-                if commit_result.concurrent_push_detected
-                else f"Failed to commit/push {file_path}."
-            ),
+            message=message,
             file_path=file_path,
             content="",
             concurrent_push_detected=commit_result.concurrent_push_detected,

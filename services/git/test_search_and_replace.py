@@ -266,12 +266,7 @@ def test_diff_included_in_message(create_test_base_args, tmp_path):
 
 # ---------------------------------------------------------------------------
 # Real CPython _pydecimal.py (~6300 lines, 227K chars)
-#
-# This file has extreme repetition: the 3-line block
-#     other = _convert_other(other)
-#     if other is NotImplemented:
-#         return other
-# appears 14 times across arithmetic methods (__add__, __sub__, __mul__, etc.).
+# This file has extreme repetition: the 3-line _convert_other / NotImplemented / return-other block appears 14 times across arithmetic methods (__add__, __sub__, __mul__, etc.).
 # The "if context is None: context = getcontext()" block appears 39 times.
 # ---------------------------------------------------------------------------
 
@@ -943,3 +938,69 @@ def test_search_and_replace_propagates_concurrent_push(
         content="",
         concurrent_push_detected=True,
     )
+
+
+def test_returns_gitignored_message_when_commit_skipped(
+    create_test_base_args, tmp_path, monkeypatch
+):
+    """Sentry AGENT-3J4: agent edited node_modules/test-exclude/index.js, an installed dep covered by .gitignore. git_commit_and_push now drops gitignored paths from the stage list and surfaces them on GitCommitResult.gitignored_paths. search_and_replace must turn that into a clear agent-facing message stating the file is gitignored, the local edit applied, and the change cannot be committed — so the agent stops trying."""
+    (tmp_path / "node_modules").mkdir()
+    (tmp_path / "node_modules" / "test-exclude").mkdir()
+    target = tmp_path / "node_modules" / "test-exclude" / "index.js"
+    target.write_text("module.exports = function () { return 'old'; };\n")
+
+    monkeypatch.setattr(
+        search_and_replace_mod,
+        "git_commit_and_push",
+        lambda **kwargs: GitCommitResult(
+            success=False,
+            gitignored_paths=["node_modules/test-exclude/index.js"],
+        ),
+    )
+
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
+    result = search_and_replace(
+        old_string="return 'old';",
+        new_string="return 'new';",
+        file_path="node_modules/test-exclude/index.js",
+        base_args=base_args,
+    )
+
+    assert result == FileWriteResult(
+        success=False,
+        message="`node_modules/test-exclude/index.js` gitignored — local edit applied but cannot be committed, so probably pointless.",
+        file_path="node_modules/test-exclude/index.js",
+        content="",
+        concurrent_push_detected=False,
+    )
+
+
+def test_returns_multi_path_gitignored_message(
+    create_test_base_args, tmp_path, monkeypatch
+):
+    """Forward-looking: when a future caller passes multiple files and several are gitignored, the message must list all of them, not just the first one. Catches the bug where I narrowed list[str] to a single value."""
+    target = tmp_path / "src.py"
+    target.write_text("old\n")
+
+    monkeypatch.setattr(
+        search_and_replace_mod,
+        "git_commit_and_push",
+        lambda **kwargs: GitCommitResult(
+            success=False,
+            gitignored_paths=["dist/built.js", "node_modules/x/y.js"],
+        ),
+    )
+
+    base_args = create_test_base_args(clone_dir=str(tmp_path))
+    result = search_and_replace(
+        old_string="old",
+        new_string="new",
+        file_path="src.py",
+        base_args=base_args,
+    )
+
+    assert (
+        result.message
+        == "`dist/built.js`, `node_modules/x/y.js` gitignored — local edit applied but cannot be committed, so probably pointless."
+    )
+    assert result.success is False
