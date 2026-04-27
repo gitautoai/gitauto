@@ -82,5 +82,6 @@ def test_retarget_pr_clones_and_delegates(
     assert call_kwargs["base_args"]["owner"] == "owner"
     assert call_kwargs["base_args"]["repo"] == "repo"
     assert call_kwargs["base_args"]["pr_number"] == 42
+    assert call_kwargs["base_args"]["platform"] == "github"
     # retarget_pr has no LLM calls, so it passes usage_id=0 as a placeholder — no llm_requests row is ever written from this path.
     assert call_kwargs["base_args"]["usage_id"] == 0

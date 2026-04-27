@@ -1,5 +1,3 @@
-from typing import cast
-
 from config import PRODUCT_ID
 from constants.urls import DOC_URLS
 from services.github.branches.get_required_status_checks import (
@@ -22,7 +20,7 @@ from services.supabase.client import supabase
 from services.supabase.repository_features.get_repository_features import (
     get_repository_features,
 )
-from services.types.base_args import BaseArgs
+from services.types.base_args import CommentArgs
 from utils.error.handle_exceptions import handle_exceptions
 from utils.files.is_config_file import is_config_file
 from utils.files.is_test_file import is_test_file
@@ -70,18 +68,15 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     installation_id = payload["installation"]["id"]
     token = get_installation_access_token(installation_id=installation_id)
 
-    # CRITICAL: Skip [skip ci] commits FIRST before any auto-merge logic.
-    # When GitAuto creates a PR with an initial [skip ci] commit, GitHub fires
-    # check_suite completed with conclusion=success (no checks ran = success).
-    # Without this early check, the handler could attempt to auto-merge an empty PR.
+    # CRITICAL: Skip [skip ci] commits FIRST before any auto-merge logic. When GitAuto creates a PR with an initial [skip ci] commit, GitHub fires check_suite completed with conclusion=success (no checks ran = success). Without this early check, the handler could attempt to auto-merge an empty PR.
     head_sha = check_suite["head_sha"]
     head_commit_message = check_suite["head_commit"]["message"]
     if "[skip ci]" in head_commit_message:
         logger.info("Last commit has [skip ci], skipping auto-merge check")
         return
 
-    # Mark only the latest attempt as test-passed. A PR may have multiple usage
-    # records (initial run failed → retry failed → final attempt succeeded).
+    # Mark only the latest attempt as test-passed.
+    # A PR may have multiple usage records (initial run failed → retry failed → final attempt succeeded).
     # The most recent record is the one whose code CI just validated.
     result = (
         supabase.table("usage")
@@ -109,20 +104,19 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
 
     # Check if auto-merge is enabled BEFORE doing expensive API calls
     # (branch protection, check suites, PR details, etc.)
-    repo_features = get_repository_features(owner_id=owner_id, repo_id=repo_id)
+    repo_features = get_repository_features(
+        platform="github", owner_id=owner_id, repo_id=repo_id
+    )
     if not repo_features or not repo_features.get("auto_merge"):
         logger.info("Skipping because auto-merge is disabled for repo_id=%s", repo_id)
         return
 
-    comment_args = cast(
-        BaseArgs,
-        {
-            "owner": owner_name,
-            "repo": repo_name,
-            "token": token,
-            "pr_number": pr_number,
-        },
-    )
+    comment_args: CommentArgs = {
+        "owner": owner_name,
+        "repo": repo_name,
+        "token": token,
+        "pr_number": pr_number,
+    }
 
     base_branch = pull_request["base"]["ref"]
 
@@ -306,8 +300,15 @@ def handle_successful_check_suite(payload: CheckSuiteCompletedPayload):
     else:
         logger.info("auto_merge_only_test_files disabled, skipping file check")
 
-    # All conditions met - merge the PR
-    merge_method = cast(MergeMethod, repo_features.get("merge_method", "merge"))
+    # All conditions met - merge the PR. Narrow merge_method to MergeMethod by validating against the literal set.
+    raw_merge_method = repo_features.get("merge_method") or "merge"
+    if raw_merge_method not in ("merge", "squash", "rebase"):
+        logger.warning(
+            "auto_merge: invalid merge_method=%s, defaulting to 'merge'",
+            raw_merge_method,
+        )
+        raw_merge_method = "merge"
+    merge_method: MergeMethod = raw_merge_method
     msg = f"Auto-merging PR #{pr_number} with method={merge_method}"
     logger.info(msg)
     result = merge_pull_request(

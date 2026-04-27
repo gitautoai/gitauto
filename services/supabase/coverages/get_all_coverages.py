@@ -1,18 +1,14 @@
-# Standard imports
-from typing import cast
-
-# Third-party imports
 from schemas.supabase.types import Coverages
-
-# Local imports
 from services.supabase.client import supabase
+from services.types.base_args import Platform
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 PAGE_SIZE = 1000
 
 
 @handle_exceptions(default_return_value=[], raise_on_error=False)
-def get_all_coverages(owner_id: int, repo_id: int):
+def get_all_coverages(*, platform: Platform, owner_id: int, repo_id: int):
     all_records: list[Coverages] = []
     offset = 0
 
@@ -20,6 +16,7 @@ def get_all_coverages(owner_id: int, repo_id: int):
         result = (
             supabase.table("coverages")
             .select("*")
+            .eq("platform", platform)
             .eq("owner_id", owner_id)
             .eq("repo_id", repo_id)
             .eq("level", "file")
@@ -29,13 +26,25 @@ def get_all_coverages(owner_id: int, repo_id: int):
         )
 
         if not result.data:
+            logger.info("get_all_coverages: no more rows at offset=%s", offset)
             break
 
-        all_records.extend(cast(Coverages, item) for item in result.data)
+        all_records.extend(Coverages(**item) for item in result.data)
 
         if len(result.data) < PAGE_SIZE:
+            logger.info(
+                "get_all_coverages: short page, ending after %d records",
+                len(all_records),
+            )
             break
 
         offset += PAGE_SIZE
 
+    logger.info(
+        "get_all_coverages: returning %d records for %s/%s/%s",
+        len(all_records),
+        platform,
+        owner_id,
+        repo_id,
+    )
     return all_records

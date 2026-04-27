@@ -15,12 +15,11 @@ def mock_supabase():
         mock_table = MagicMock()
         mock_update = MagicMock()
         mock_eq = MagicMock()
-        MagicMock()
 
-        # Chain the method calls
         mock.table.return_value = mock_table
         mock_table.update.return_value = mock_update
         mock_update.eq.return_value = mock_eq
+        mock_eq.eq.return_value = mock_eq
         mock_eq.execute.return_value = None
 
         yield mock
@@ -45,7 +44,12 @@ def test_delete_installation_successful_execution(mock_supabase, mock_datetime_n
     user_id = 67890
     user_name = "test-user"
 
-    result = delete_installation(installation_id, user_id, user_name)
+    result = delete_installation(
+        platform="github",
+        installation_id=installation_id,
+        user_id=user_id,
+        user_name=user_name,
+    )
 
     # Verify the function returns None (as expected from the decorator)
     assert result is None
@@ -60,6 +64,9 @@ def test_delete_installation_successful_execution(mock_supabase, mock_datetime_n
     }
     mock_supabase.table.return_value.update.assert_called_once_with(json=expected_data)
     mock_supabase.table.return_value.update.return_value.eq.assert_called_once_with(
+        column="platform", value="github"
+    )
+    mock_supabase.table.return_value.update.return_value.eq.return_value.eq.assert_called_with(
         column="installation_id", value=installation_id
     )
     mock_supabase.table.return_value.update.return_value.eq.return_value.execute.assert_called_once()
@@ -73,11 +80,16 @@ def test_delete_installation_with_zero_installation_id(
     user_id = 123
     user_name = "zero-test"
 
-    result = delete_installation(installation_id, user_id, user_name)
+    result = delete_installation(
+        platform="github",
+        installation_id=installation_id,
+        user_id=user_id,
+        user_name=user_name,
+    )
 
     assert result is None
     mock_supabase.table.assert_called_once_with(table_name="installations")
-    mock_supabase.table.return_value.update.return_value.eq.assert_called_once_with(
+    mock_supabase.table.return_value.update.return_value.eq.return_value.eq.assert_called_with(
         column="installation_id", value=0
     )
 
@@ -90,11 +102,16 @@ def test_delete_installation_with_negative_installation_id(
     user_id = 456
     user_name = "negative-test"
 
-    result = delete_installation(installation_id, user_id, user_name)
+    result = delete_installation(
+        platform="github",
+        installation_id=installation_id,
+        user_id=user_id,
+        user_name=user_name,
+    )
 
     assert result is None
     mock_supabase.table.assert_called_once_with(table_name="installations")
-    mock_supabase.table.return_value.update.return_value.eq.assert_called_once_with(
+    mock_supabase.table.return_value.update.return_value.eq.return_value.eq.assert_called_with(
         column="installation_id", value=-1
     )
 
@@ -107,11 +124,16 @@ def test_delete_installation_with_large_installation_id(
     user_id = 888888888
     user_name = "large-test"
 
-    result = delete_installation(installation_id, user_id, user_name)
+    result = delete_installation(
+        platform="github",
+        installation_id=installation_id,
+        user_id=user_id,
+        user_name=user_name,
+    )
 
     assert result is None
     mock_supabase.table.assert_called_once_with(table_name="installations")
-    mock_supabase.table.return_value.update.return_value.eq.assert_called_once_with(
+    mock_supabase.table.return_value.update.return_value.eq.return_value.eq.assert_called_with(
         column="installation_id", value=999999999
     )
 
@@ -122,7 +144,12 @@ def test_delete_installation_with_zero_user_id(mock_supabase, mock_datetime_now)
     user_id = 0
     user_name = "zero-user"
 
-    result = delete_installation(installation_id, user_id, user_name)
+    result = delete_installation(
+        platform="github",
+        installation_id=installation_id,
+        user_id=user_id,
+        user_name=user_name,
+    )
 
     assert result is None
 
@@ -140,7 +167,12 @@ def test_delete_installation_with_empty_user_name(mock_supabase, mock_datetime_n
     user_id = 67890
     user_name = ""
 
-    result = delete_installation(installation_id, user_id, user_name)
+    result = delete_installation(
+        platform="github",
+        installation_id=installation_id,
+        user_id=user_id,
+        user_name=user_name,
+    )
 
     assert result is None
 
@@ -169,7 +201,12 @@ def test_delete_installation_with_special_characters_in_user_name(
     user_id = 67890
 
     for user_name in special_names:
-        result = delete_installation(installation_id, user_id, user_name)
+        result = delete_installation(
+            platform="github",
+            installation_id=installation_id,
+            user_id=user_id,
+            user_name=user_name,
+        )
 
         assert result is None
 
@@ -193,12 +230,17 @@ def test_delete_installation_supabase_exception_handling(
     user_name = "test-user"
 
     # Make the execute method raise an exception
-    mock_supabase.table.return_value.update.return_value.eq.return_value.execute.side_effect = Exception(
+    mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.side_effect = Exception(
         "Database error"
     )
 
     # The function should return None due to handle_exceptions decorator
-    result = delete_installation(installation_id, user_id, user_name)
+    result = delete_installation(
+        platform="github",
+        installation_id=installation_id,
+        user_id=user_id,
+        user_name=user_name,
+    )
 
     assert result is None
     mock_supabase.table.assert_called_once_with(table_name="installations")
@@ -210,18 +252,21 @@ def test_delete_installation_data_structure_format(mock_supabase, mock_datetime_
     user_id = 67890
     user_name = "test-user"
 
-    delete_installation(installation_id, user_id, user_name)
+    delete_installation(
+        platform="github",
+        installation_id=installation_id,
+        user_id=user_id,
+        user_name=user_name,
+    )
 
     # Verify the exact data structure passed to update
     call_args = mock_supabase.table.return_value.update.call_args
     update_data = call_args[1]["json"]
 
-    # Verify the structure and format
-    assert "uninstalled_at" in update_data
-    assert "uninstalled_by" in update_data
-    assert update_data["uninstalled_at"] == "2023-01-15T10:30:45+00:00"
-    assert update_data["uninstalled_by"] == "67890:test-user"
-    assert len(update_data) == 2  # Only these two fields should be present
+    assert update_data == {
+        "uninstalled_at": "2023-01-15T10:30:45+00:00",
+        "uninstalled_by": "67890:test-user",
+    }
 
 
 @pytest.mark.parametrize(
@@ -238,11 +283,19 @@ def test_delete_installation_with_various_parameter_combinations(
     mock_supabase, mock_datetime_now, installation_id, user_id, user_name
 ):
     """Test that delete_installation works with various parameter combinations."""
-    result = delete_installation(installation_id, user_id, user_name)
+    result = delete_installation(
+        platform="github",
+        installation_id=installation_id,
+        user_id=user_id,
+        user_name=user_name,
+    )
 
     assert result is None
     mock_supabase.table.assert_called_once_with(table_name="installations")
     mock_supabase.table.return_value.update.return_value.eq.assert_called_once_with(
+        column="platform", value="github"
+    )
+    mock_supabase.table.return_value.update.return_value.eq.return_value.eq.assert_called_with(
         column="installation_id", value=installation_id
     )
 
@@ -258,7 +311,12 @@ def test_delete_installation_method_chaining(mock_supabase, mock_datetime_now):
     user_id = 67890
     user_name = "test-user"
 
-    delete_installation(installation_id, user_id, user_name)
+    delete_installation(
+        platform="github",
+        installation_id=installation_id,
+        user_id=user_id,
+        user_name=user_name,
+    )
 
     # Verify the method chain is called in the correct order
     mock_supabase.table.assert_called_once_with(table_name="installations")
@@ -266,11 +324,13 @@ def test_delete_installation_method_chaining(mock_supabase, mock_datetime_now):
     # Get the mock objects from the chain
     table_mock = mock_supabase.table.return_value
     update_mock = table_mock.update.return_value
-    eq_mock = update_mock.eq.return_value
+    eq1_mock = update_mock.eq.return_value
+    eq2_mock = eq1_mock.eq.return_value
 
     table_mock.update.assert_called_once()
     update_mock.eq.assert_called_once()
-    eq_mock.execute.assert_called_once()
+    eq1_mock.eq.assert_called_once()
+    eq2_mock.execute.assert_called_once()
 
 
 def test_delete_installation_decorator_behavior():
@@ -282,11 +342,16 @@ def test_delete_installation_decorator_behavior():
     with patch(
         "services.supabase.installations.delete_installation.supabase"
     ) as mock_supabase:
-        mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+        mock_supabase.table.return_value.update.return_value.eq.return_value.eq.return_value.execute.return_value = (
             "some_value"
         )
 
-        result = delete_installation(12345, 67890, "test-user")
+        result = delete_installation(
+            platform="github",
+            installation_id=12345,
+            user_id=67890,
+            user_name="test-user",
+        )
         assert (
             result is None
         )  # Should return None due to decorator default_return_value
@@ -298,7 +363,12 @@ def test_delete_installation_datetime_iso_format():
         "services.supabase.installations.delete_installation.supabase"
     ) as mock_supabase:
         # Use real datetime to test the actual ISO format
-        result = delete_installation(12345, 67890, "test-user")
+        result = delete_installation(
+            platform="github",
+            installation_id=12345,
+            user_id=67890,
+            user_name="test-user",
+        )
 
         assert result is None
 

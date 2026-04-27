@@ -54,7 +54,7 @@ MODEL_REGISTRY: dict[ModelId, ModelInfo] = {
         display_name="Claude Sonnet 4.6",
         credit_cost_usd=4,
         user_selectable=True,
-        free_tier=True,
+        free_tier=False,
     ),
     # Claude (fallback-only, same cost as their newer versions)
     ClaudeModelId.OPUS_4_6: ModelInfo(
@@ -91,7 +91,7 @@ MODEL_REGISTRY: dict[ModelId, ModelInfo] = {
         display_name="Gemini 2.5 Flash",
         credit_cost_usd=4,
         user_selectable=True,
-        free_tier=True,
+        free_tier=False,
     ),
     GoogleModelId.GEMMA_4_31B: ModelInfo(
         provider=ModelProvider.GOOGLE,

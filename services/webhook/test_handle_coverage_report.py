@@ -59,7 +59,7 @@ def test_handle_coverage_report_with_python_sample():
         assert call_kwargs["repo_id"] == 67890
 
         # Verify upsert_repo_coverage was called with count fields
-        repo_coverage_data = mock_upsert_repo.call_args[0][0]
+        repo_coverage_data = mock_upsert_repo.call_args.kwargs["coverage_data"]
         assert repo_coverage_data["lines_covered"] == 3813
         assert repo_coverage_data["lines_total"] == 5616
         assert repo_coverage_data["functions_covered"] == 188
@@ -68,7 +68,7 @@ def test_handle_coverage_report_with_python_sample():
         assert repo_coverage_data["branches_total"] == 1828
 
         # Verify upsert_coverages does NOT include fields that don't exist in coverages table
-        coverage_records = mock_upsert_cov.call_args[0][0]
+        coverage_records = mock_upsert_cov.call_args.kwargs["coverage_records"]
         excluded_fields = [
             "lines_covered",
             "lines_total",
@@ -266,7 +266,7 @@ def test_handle_coverage_report_with_javascript_sample():
         mock_upsert_repo.assert_called_once()
 
         # Verify upsert_repo_coverage was called with count fields
-        repo_coverage_data = mock_upsert_repo.call_args[0][0]
+        repo_coverage_data = mock_upsert_repo.call_args.kwargs["coverage_data"]
         assert repo_coverage_data["lines_covered"] == 141
         assert repo_coverage_data["lines_total"] == 3919
         assert repo_coverage_data["functions_covered"] == 40
@@ -441,7 +441,7 @@ def test_scenario1_file_exists_and_in_lcov_updates_coverage():
 
         assert result is True
         mock_upsert_cov.assert_called_once()
-        upsert_data = mock_upsert_cov.call_args[0][0]
+        upsert_data = mock_upsert_cov.call_args.kwargs["coverage_records"]
         assert len(upsert_data) > 0
         mock_delete_stale.assert_called_once()
 
@@ -500,9 +500,9 @@ def test_scenario2_file_exists_but_not_in_lcov_not_touched():
         )
 
         assert result is True
-        upsert_data = mock_upsert_cov.call_args[0][0]
+        upsert_data = mock_upsert_cov.call_args.kwargs["coverage_records"]
         upserted_paths = [item["full_path"] for item in upsert_data]
-        assert "src/components/Table/index.tsx" not in upserted_paths
+        assert upserted_paths.count("src/components/Table/index.tsx") == 0
         mock_delete_stale.assert_called_once()
 
 
@@ -560,6 +560,7 @@ def test_scenario3_file_deleted_from_repo_removes_coverage():
 
         assert result is True
         mock_delete_stale.assert_called_once_with(
+            platform="github",
             owner_id=12345,
             repo_id=67890,
             current_files={"services/github/github_manager.py"},
@@ -1186,7 +1187,7 @@ def test_handle_coverage_report_stale_target_branch_falls_back():
             branch_name="test-branch",
         )
         mock_update_repo.assert_called_once_with(
-            owner_id=12345, repo_id=67890, target_branch=""
+            platform="github", owner_id=12345, repo_id=67890, target_branch=""
         )
         mock_default.assert_called_once_with(
             clone_url="https://x-access-token:fake-token@github.com/test-owner/test-repo.git"

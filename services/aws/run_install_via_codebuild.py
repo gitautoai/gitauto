@@ -27,7 +27,7 @@ def run_install_via_codebuild(
         {"name": "NODE_VERSION", "value": node_version, "type": "PLAINTEXT"},
     ]
 
-    npm_token = get_npm_token(owner_id)
+    npm_token = get_npm_token(platform="github", owner_id=owner_id)
     if npm_token:
         env_overrides.append(
             {"name": "NPM_TOKEN", "value": npm_token, "type": "PLAINTEXT"}

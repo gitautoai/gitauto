@@ -39,7 +39,7 @@ def _setup_mock_chain(mock_supabase_client, results):
     """Helper to set up the mock chain for paginated queries.
     results: list of lists, one per page call."""
     chain = (
-        mock_supabase_client.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.order.return_value.range.return_value
+        mock_supabase_client.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.eq.return_value.order.return_value.range.return_value
     )
     mock_results = []
     for data in results:
@@ -54,7 +54,7 @@ def test_get_all_coverages_returns_coverage_list(
 ):
     _setup_mock_chain(mock_supabase_client, [sample_coverage_data])
 
-    result = get_all_coverages(owner_id=789, repo_id=123)
+    result = get_all_coverages(platform="github", owner_id=789, repo_id=123)
 
     assert len(result) == 2
     assert result[0]["full_path"] == "src/main.py"
@@ -65,7 +65,7 @@ def test_get_all_coverages_returns_coverage_list(
 def test_get_all_coverages_returns_empty_list_when_no_data(mock_supabase_client):
     _setup_mock_chain(mock_supabase_client, [[]])
 
-    result = get_all_coverages(owner_id=789, repo_id=123)
+    result = get_all_coverages(platform="github", owner_id=789, repo_id=123)
 
     assert not result
 
@@ -73,7 +73,7 @@ def test_get_all_coverages_returns_empty_list_when_no_data(mock_supabase_client)
 def test_get_all_coverages_returns_empty_list_when_data_is_none(mock_supabase_client):
     _setup_mock_chain(mock_supabase_client, [None])
 
-    result = get_all_coverages(owner_id=789, repo_id=123)
+    result = get_all_coverages(platform="github", owner_id=789, repo_id=123)
 
     assert not result
 
@@ -81,7 +81,7 @@ def test_get_all_coverages_returns_empty_list_when_data_is_none(mock_supabase_cl
 def test_get_all_coverages_exception_handling(mock_supabase_client):
     mock_supabase_client.table.side_effect = Exception("Database error")
 
-    result = get_all_coverages(owner_id=789, repo_id=123)
+    result = get_all_coverages(platform="github", owner_id=789, repo_id=123)
 
     assert not result
 
@@ -92,7 +92,7 @@ def test_get_all_coverages_paginates_when_more_than_page_size(mock_supabase_clie
     page2 = [{"id": PAGE_SIZE, "full_path": "last_file.py"}]
     _setup_mock_chain(mock_supabase_client, [page1, page2])
 
-    result = get_all_coverages(owner_id=789, repo_id=123)
+    result = get_all_coverages(platform="github", owner_id=789, repo_id=123)
 
     assert len(result) == PAGE_SIZE + 1
     assert result[-1]["full_path"] == "last_file.py"
@@ -103,6 +103,6 @@ def test_get_all_coverages_stops_on_empty_second_page(mock_supabase_client):
     page1 = [{"id": i, "full_path": f"file_{i}.py"} for i in range(PAGE_SIZE)]
     _setup_mock_chain(mock_supabase_client, [page1, []])
 
-    result = get_all_coverages(owner_id=789, repo_id=123)
+    result = get_all_coverages(platform="github", owner_id=789, repo_id=123)
 
     assert len(result) == PAGE_SIZE

@@ -205,7 +205,7 @@ async def test_review_run_handler_accumulates_tokens_correctly(
     # Verify other expected parameters
     assert isinstance(usage_call_kwargs.get("total_seconds"), int)
     assert usage_call_kwargs["pr_number"] == 123
-    mock_get_repo.assert_called_with(owner_id=11111, repo_id=98765)
+    mock_get_repo.assert_called_with(platform="github", owner_id=11111, repo_id=98765)
 
 
 @patch("services.webhook.review_run_handler.get_pull_request")
@@ -1308,6 +1308,7 @@ async def test_batch_dedup_second_invocation_returns_early(
 
     assert result is None
     mock_insert_webhook_delivery.assert_called_once_with(
+        platform="github",
         delivery_id="review-dedup-98765-123-77777",
         event_name="pr_file_review_dedup",
     )

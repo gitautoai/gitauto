@@ -54,3 +54,28 @@ def test_create_comment_request_error(
 
     # Assert
     assert result is None
+
+
+def test_create_comment_returns_none_when_url_is_not_str(
+    test_owner, test_repo, test_token, create_test_base_args
+):
+    """If GitHub returns a non-string url field, the helper should return None."""
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"url": 12345}
+    comment_args = create_test_base_args(
+        owner=test_owner,
+        repo=test_repo,
+        token=test_token,
+        pr_number=123,
+    )
+
+    with patch(
+        "services.github.comments.create_comment.requests.post"
+    ) as mock_post, patch(
+        "services.github.comments.create_comment.create_headers"
+    ) as mock_create_headers:
+        mock_create_headers.return_value = {"Authorization": f"Bearer {test_token}"}
+        mock_post.return_value = mock_response
+        result = create_comment(body="Test", base_args=comment_args)
+
+    assert result is None

@@ -1,3 +1,4 @@
+# pyright: reportUnusedVariable=false
 # pylint: disable=unused-argument
 import os
 import subprocess
@@ -52,7 +53,10 @@ def test_uses_latest_commit_sha_when_available(
     result = git_revert_file(file_path="src/app.ts", base_args=base_args)
 
     assert result.success is True
-    assert "abc123d" in result.message
+    assert (
+        result.message
+        == "Reverted src/app.ts to the version before agent started (abc123d)"
+    )
     assert result.content == "sha content"
     mock_subprocess.assert_called_once_with(
         ["git", "checkout", "abc123def456", "--", "src/app.ts"],
@@ -242,7 +246,10 @@ def test_git_revert_file_uses_commit_sha(local_repo, create_test_base_args):
         result = git_revert_file(file_path="README.md", base_args=base_args)
 
         assert result.success is True
-        assert pr_sha[:7] in result.message
+        assert (
+            result.message
+            == f"Reverted README.md to the version before agent started ({pr_sha[:7]})"
+        )
         assert result.content == "# PR author change\n"
         with open(readme_path, encoding="utf-8") as f:
             assert f.read() == "# PR author change\n"

@@ -1,3 +1,4 @@
+# pyright: reportUnusedVariable=false
 # pylint: disable=unused-argument
 # pyright: reportUnusedVariable=false
 import json
@@ -158,7 +159,7 @@ def test_get_eslint_config_finds_eslintrc(create_test_base_args):
 
         config = json.loads(result["content"])
         assert config["parser"] == "@typescript-eslint/parser"
-        assert "simple-import-sort/imports" in config["rules"]
+        assert config["rules"]["simple-import-sort/imports"] == "error"
 
 
 def test_get_eslint_config_finds_eslint_config_js(create_test_base_args):
@@ -388,7 +389,10 @@ def test_get_eslint_config_with_complex_eslint_config_in_package_json(
 
         config = json.loads(result["content"])
         assert config["parser"] == "@typescript-eslint/parser"
-        assert "eslint:recommended" in config["extends"]
+        assert config["extends"] == [
+            "eslint:recommended",
+            "plugin:@typescript-eslint/recommended",
+        ]
         assert config["rules"]["no-console"] == "warn"
         assert config["env"]["node"] is True
 

@@ -1,12 +1,19 @@
 # Local imports
 from constants.supabase import SUPABASE_BATCH_SIZE
 from services.supabase.client import supabase
+from services.types.base_args import Platform
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
-def delete_coverages_by_paths(owner_id: int, repo_id: int, file_paths: list[str]):
+def delete_coverages_by_paths(
+    *,
+    platform: Platform,
+    owner_id: int,
+    repo_id: int,
+    file_paths: list[str],
+):
     all_deleted: list[dict] = []
 
     if not file_paths:
@@ -18,6 +25,7 @@ def delete_coverages_by_paths(owner_id: int, repo_id: int, file_paths: list[str]
         result = (
             supabase.table("coverages")
             .delete()
+            .eq("platform", platform)
             .eq("owner_id", owner_id)
             .eq("repo_id", repo_id)
             .in_("full_path", batch)
@@ -36,4 +44,5 @@ def delete_coverages_by_paths(owner_id: int, repo_id: int, file_paths: list[str]
             repo_id,
         )
 
+    logger.info("delete_coverages_by_paths: %d total deleted", len(all_deleted))
     return all_deleted

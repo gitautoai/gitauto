@@ -34,6 +34,7 @@ def test_handle_new_pr_signature():
 
 def _get_base_args():
     return {
+        "platform": "github",
         "installation_id": 123,
         "owner_id": 456,
         "owner_type": "User",
@@ -167,7 +168,12 @@ async def test_stripe_customer_id_update(
         trigger="dashboard",
     )
 
-    mock_update_stripe.assert_called_once_with(456, "cus_new123", "888:test_sender")
+    mock_update_stripe.assert_called_once_with(
+        platform="github",
+        owner_id=456,
+        stripe_customer_id="cus_new123",
+        updated_by="888:test_sender",
+    )
 
 
 @pytest.mark.asyncio
@@ -1543,8 +1549,8 @@ async def test_credits_depleted_email_sent(
     await handle_new_pr(payload=_get_test_payload(), trigger="dashboard")
 
     mock_insert_credit.assert_called_once()
-    mock_get_owner.assert_called_with(owner_id=456)
-    mock_get_user.assert_called_with(user_id=888)
+    mock_get_owner.assert_called_with(platform="github", owner_id=456)
+    mock_get_user.assert_called_with(platform="github", user_id=888)
     mock_get_email_text.assert_called_with("test_sender")
     mock_send_email.assert_called_once_with(
         to="user@example.com", subject="Credits Depleted", text="Your credits are gone"
@@ -1605,6 +1611,7 @@ async def test_new_pr_handler_token_accumulation(
     # Mock the payload deconstruction
     mock_deconstruct_github_payload.return_value = (
         {
+            "platform": "github",
             "installation_id": 123,
             "owner_id": 456,
             "owner_type": "User",
@@ -1779,6 +1786,7 @@ async def test_few_test_files_include_contents_in_prompt(
 ):
     mock_deconstruct_github_payload.return_value = (
         {
+            "platform": "github",
             "installation_id": 123,
             "owner_id": 456,
             "owner_type": "User",
@@ -1931,6 +1939,7 @@ async def test_many_test_files_include_paths_only_in_prompt(
 ):
     mock_deconstruct_github_payload.return_value = (
         {
+            "platform": "github",
             "installation_id": 123,
             "owner_id": 456,
             "owner_type": "User",
@@ -2299,6 +2308,7 @@ async def test_reuse_branch_skips_create_and_charges_existing_usage_id(
 
     # Lookup happened with the right keys
     mock_get_usage_id.assert_called_once_with(
+        platform="github",
         installation_id=123,
         repo_id=789,
         pr_number=100,

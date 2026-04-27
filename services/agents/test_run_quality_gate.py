@@ -1,4 +1,4 @@
-# pyright: reportArgumentType=false
+# pyright: reportArgumentType=false, reportAttributeAccessIssue=false, reportUnusedVariable=false
 from unittest.mock import patch
 
 from services.agents.run_quality_gate import run_quality_gate

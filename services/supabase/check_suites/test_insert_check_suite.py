@@ -3,8 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from postgrest.exceptions import APIError
-from services.supabase.check_suites.insert_check_suite import \
-    insert_check_suite
+from services.supabase.check_suites.insert_check_suite import insert_check_suite
 
 
 @pytest.fixture
@@ -25,11 +24,13 @@ def test_insert_check_suite_success(mock_supabase_client):
     mock, mock_execute = mock_supabase_client
     mock_execute.data = [{"check_suite_id": 12345, "created_at": "2025-12-18T00:00:00"}]
 
-    result = insert_check_suite(check_suite_id=12345)
+    result = insert_check_suite(platform="github", check_suite_id=12345)
 
     assert result is True
     mock.table.assert_called_once_with("check_suites")
-    mock.table.return_value.insert.assert_called_once_with({"check_suite_id": 12345})
+    mock.table.return_value.insert.assert_called_once_with(
+        {"platform": "github", "check_suite_id": 12345}
+    )
     mock.table.return_value.insert.return_value.execute.assert_called_once()
 
 
@@ -37,7 +38,7 @@ def test_insert_check_suite_duplicate(mock_supabase_client):
     _, mock_execute = mock_supabase_client
     mock_execute.data = []
 
-    result = insert_check_suite(check_suite_id=12345)
+    result = insert_check_suite(platform="github", check_suite_id=12345)
 
     assert result is False
 
@@ -49,7 +50,7 @@ def test_insert_check_suite_duplicate_key_error_returns_false(mock_supabase_clie
     )
     mock.table.return_value.insert.return_value.execute.side_effect = api_error
 
-    result = insert_check_suite(check_suite_id=12345)
+    result = insert_check_suite(platform="github", check_suite_id=12345)
 
     assert result is False
 
@@ -60,20 +61,19 @@ def test_insert_check_suite_exception_returns_false(mock_supabase_client):
         "Database error"
     )
 
-    result = insert_check_suite(check_suite_id=12345)
+    result = insert_check_suite(platform="github", check_suite_id=12345)
 
     assert result is False
 
 
 def test_insert_check_suite_non_duplicate_api_error_reraises(mock_supabase_client):
-    # APIError with a non-23505 code should re-raise (line 23), which the
-    # handle_exceptions decorator catches and returns False.
+    # APIError with a non-23505 code should re-raise, which the handle_exceptions decorator catches and returns False.
     mock, _ = mock_supabase_client
     api_error = APIError(
         {"code": "42501", "message": "permission denied for table check_suites"}
     )
     mock.table.return_value.insert.return_value.execute.side_effect = api_error
 
-    result = insert_check_suite(check_suite_id=99999)
+    result = insert_check_suite(platform="github", check_suite_id=99999)
 
     assert result is False

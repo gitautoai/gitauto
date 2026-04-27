@@ -47,6 +47,7 @@ def create_test_base_args():
             else random.choice(list(USER_SELECTABLE_MODELS))
         )
         defaults: BaseArgs = {
+            "platform": "github",
             "owner_type": "User",
             "owner_id": random.randint(1, 999999),
             "owner": "test-owner",

@@ -28,6 +28,7 @@ class TestExcludeFromTesting:
             exclusion_reason="ai_no_testable_logic",
             updated_by="test_user",
             impl_blob_sha="abc123",
+            platform="github",
         )
 
         assert result == mock_result.data
@@ -44,8 +45,9 @@ class TestExcludeFromTesting:
                 "exclusion_reason": "ai_no_testable_logic",
                 "updated_by": "test_user",
                 "impl_blob_sha": "abc123",
+                "platform": "github",
             },
-            on_conflict="repo_id,full_path",
+            on_conflict="platform,repo_id,full_path",
             default_to_null=False,
         )
 
@@ -75,5 +77,6 @@ class TestExcludeFromTesting:
                 exclusion_reason=reason,
                 updated_by="test_user",
                 impl_blob_sha=None,
+                platform="github",
             )
             assert result is not None

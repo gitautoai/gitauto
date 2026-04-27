@@ -9,13 +9,16 @@ from services.supabase.owners.check_owner_exists import check_owner_exists
 from services.supabase.owners.insert_owner import insert_owner
 from services.supabase.users.upsert_user import upsert_user
 from services.stripe.create_stripe_customer import create_stripe_customer
+from services.types.base_args import Platform
 from services.webhook.process_repositories import process_repositories
 from services.webhook.setup_handler import setup_handler
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(raise_on_error=True)
 async def handle_installation_created(payload: InstallationPayload):
+    platform: Platform = "github"
     installation_id = payload["installation"]["id"]
     owner = payload["installation"]["account"]
     owner_id = owner["id"]
@@ -27,15 +30,25 @@ async def handle_installation_created(payload: InstallationPayload):
     token = get_installation_access_token(installation_id=installation_id)
     user_info = get_user_public_info(username=sender_name, token=token)
     if not user_info.email and repositories:
+        logger.info(
+            "handle_installation_created: no public email; falling back to commits"
+        )
         for repo in repositories:
             email = get_email_from_commits(
                 owner=owner_name, repo=repo["name"], username=sender_name, token=token
             )
             if email:
                 user_info.email = email
+                logger.info(
+                    "handle_installation_created: using commit email from %s",
+                    repo["name"],
+                )
                 break
 
-    if not check_owner_exists(owner_id=owner_id):
+    if not check_owner_exists(platform=platform, owner_id=owner_id):
+        logger.info(
+            "handle_installation_created: owner %s not in DB; inserting", owner_id
+        )
         customer_id = create_stripe_customer(
             owner_name=owner_name,
             owner_id=owner_id,
@@ -44,6 +57,7 @@ async def handle_installation_created(payload: InstallationPayload):
             user_name=sender_name,
         )
         insert_owner(
+            platform=platform,
             owner_id=owner_id,
             owner_name=owner_name,
             owner_type=owner_type,
@@ -52,10 +66,14 @@ async def handle_installation_created(payload: InstallationPayload):
             stripe_customer_id=customer_id or "",
         )
 
-    if not check_grant_exists(owner_id=owner_id):
-        insert_credit(owner_id=owner_id, transaction_type="grant")
+    if not check_grant_exists(platform=platform, owner_id=owner_id):
+        logger.info(
+            "handle_installation_created: granting initial credits to %s", owner_id
+        )
+        insert_credit(platform=platform, owner_id=owner_id, transaction_type="grant")
 
     insert_installation(
+        platform=platform,
         installation_id=installation_id,
         owner_id=owner_id,
         owner_type=owner_type,
@@ -65,6 +83,7 @@ async def handle_installation_created(payload: InstallationPayload):
     )
 
     upsert_user(
+        platform=platform,
         user_id=user_id,
         user_name=sender_name,
         email=user_info.email,
@@ -85,6 +104,9 @@ async def handle_installation_created(payload: InstallationPayload):
 
     # Auto-create coverage workflow PR when a single repo is installed
     if repositories and len(repositories) == 1:
+        logger.info(
+            "handle_installation_created: single repo install, auto-running setup_handler"
+        )
         await setup_handler(
             owner_name=owner_name,
             repo_name=repositories[0]["name"],

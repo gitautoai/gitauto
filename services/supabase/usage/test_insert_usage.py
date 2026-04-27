@@ -24,6 +24,7 @@ def test_insert_usage_success_with_all_parameters():
 
     with patch("services.supabase.usage.insert_usage.supabase", mock_supabase):
         result = insert_usage(
+            platform="github",
             owner_id=1,
             owner_type="Organization",
             owner_name="test_org",
@@ -52,6 +53,7 @@ def test_insert_usage_success_minimal_parameters():
 
     with patch("services.supabase.usage.insert_usage.supabase", mock_supabase):
         result = insert_usage(
+            platform="github",
             owner_id=1,
             owner_type="Organization",
             owner_name="test_org",
@@ -79,6 +81,7 @@ def test_insert_usage_with_zero_values():
 
     with patch("services.supabase.usage.insert_usage.supabase", mock_supabase):
         result = insert_usage(
+            platform="github",
             owner_id=0,
             owner_type="Organization",
             owner_name="test_org",
@@ -114,6 +117,7 @@ def test_insert_usage_with_different_triggers():
     with patch("services.supabase.usage.insert_usage.supabase", mock_supabase):
         for trigger in triggers:
             result = insert_usage(
+                platform="github",
                 owner_id=1,
                 owner_type="Organization",
                 owner_name="test_org",
@@ -138,6 +142,7 @@ def test_insert_usage_with_exception():
 
     with patch("services.supabase.usage.insert_usage.supabase", mock_supabase):
         result = insert_usage(
+            platform="github",
             owner_id=1,
             owner_type="Organization",
             owner_name="test_org",
@@ -169,6 +174,7 @@ def test_insert_usage_with_http_error():
 
     with patch("services.supabase.usage.insert_usage.supabase", mock_supabase):
         result = insert_usage(
+            platform="github",
             owner_id=1,
             owner_type="Organization",
             owner_name="test_org",
@@ -193,6 +199,7 @@ def test_insert_usage_with_json_decode_error():
 
     with patch("services.supabase.usage.insert_usage.supabase", mock_supabase):
         result = insert_usage(
+            platform="github",
             owner_id=1,
             owner_type="Organization",
             owner_name="test_org",
@@ -220,6 +227,7 @@ def test_insert_usage_execute_exception():
 
     with patch("services.supabase.usage.insert_usage.supabase", mock_supabase):
         result = insert_usage(
+            platform="github",
             owner_id=1,
             owner_type="Organization",
             owner_name="test_org",

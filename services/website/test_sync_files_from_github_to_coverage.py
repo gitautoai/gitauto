@@ -83,7 +83,7 @@ def test_sync_upserts_files(
 
     mock_verify_api_key.assert_called_once_with("test-api-key")
     mock_upsert_coverages.assert_called_once()
-    records = mock_upsert_coverages.call_args[0][0]
+    records = mock_upsert_coverages.call_args.kwargs["coverage_records"]
     assert len(records) == 2
     assert records[0]["full_path"] == "src/main.py"
     assert records[0]["file_size"] == 100
@@ -137,6 +137,7 @@ def test_sync_deletes_stale_when_tree_has_no_source_files(
 
     # Read succeeded (tree_items non-empty), so stale coverages should be deleted
     mock_delete_stale_coverages.assert_called_once_with(
+        platform="github",
         owner_id=123,
         repo_id=456,
         current_files=set(),
@@ -164,7 +165,7 @@ def test_sync_filters_directories(
         api_key="test-api-key",
     )
 
-    records = mock_upsert_coverages.call_args[0][0]
+    records = mock_upsert_coverages.call_args.kwargs["coverage_records"]
     assert len(records) == 1
     assert records[0]["full_path"] == "src/main.py"
 
