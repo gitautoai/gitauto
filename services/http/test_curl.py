@@ -90,8 +90,7 @@ class TestCurl:
         )
 
         # After strip_html: "A" * 20_000 (CSS inside <style> removed, tags removed).
-        # Suffix order in curl.py: HTML notice is prepended in front of the
-        # truncation notice, so the final string is content + html + trunc.
+        # Suffix order in curl.py: HTML notice is prepended in front of the truncation notice, so the final string is content + html + trunc.
         stripped = "A" * 20_000
         truncated = stripped[:MAX_CURL_CHARS]
         expected = truncated + HTML_SUFFIX + _truncation_suffix(raw_len)
@@ -188,15 +187,57 @@ class TestCurl:
         assert sent_headers == {"User-Agent": USER_AGENT}
 
 
+class TestCurl4xx:
+    @patch("services.http.curl.slack_notify")
+    @patch("services.http.curl.requests.get")
+    def test_returns_status_marker_on_404_without_raising(
+        self, mock_get, _mock_slack, create_test_base_args
+    ):
+        """Sentry AGENT-35Y/35X/23G: agent curl'd a stale codecov-circleci-orb upload.sh URL where src/scripts is now a submodule, raw.githubusercontent.com returned 404, raise_for_status raised HTTPError, @handle_exceptions captured to Sentry. New behavior: return a short HTTP status marker so the agent can interpret the response and try a different URL — no Sentry alert."""
+        mock_response = Mock()
+        mock_response.status_code = 404
+        mock_response.reason = "Not Found"
+        mock_response.raise_for_status = Mock(
+            side_effect=AssertionError(
+                "raise_for_status should not run when status_code is 4xx"
+            )
+        )
+        mock_get.return_value = mock_response
+
+        base_args = create_test_base_args()
+        url = "https://raw.githubusercontent.com/codecov/codecov-circleci-orb/main/src/scripts/upload.sh"
+        result = curl(base_args, url)
+
+        assert result == f"HTTP 404 Not Found: {url}"
+        mock_response.raise_for_status.assert_not_called()
+
+    @patch("services.http.curl.slack_notify")
+    @patch("services.http.curl.requests.get")
+    def test_returns_status_marker_on_403_without_raising(
+        self, mock_get, _mock_slack, create_test_base_args
+    ):
+        """Same shortcut for any 4xx: 403 (auth) and 422 (validation) are agent-visible signals, not GitAuto crashes."""
+        mock_response = Mock()
+        mock_response.status_code = 403
+        mock_response.reason = "Forbidden"
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        base_args = create_test_base_args()
+        url = "https://api.github.com/repos/private/no-access"
+        result = curl(base_args, url)
+
+        assert result == f"HTTP 403 Forbidden: {url}"
+
+
 class TestCurlIntegration:
     @pytest.mark.integration
     @patch("services.http.curl.slack_notify")
     def test_real_curl_returns_raw_content(self, _mock_slack, create_test_base_args):
         base_args = create_test_base_args()
 
-        # httpbin.org/get returns a JSON response whose exact bytes vary on
-        # every call (IP, user-agent headers echoed back). Assert the response
-        # is a non-empty string and parses as JSON with an expected shape.
+        # httpbin.org/get returns a JSON response whose exact bytes vary on every call (IP, user-agent headers echoed back).
+        # Assert the response is a non-empty string and parses as JSON with an expected shape.
         result = curl(base_args, "https://httpbin.org/get")
         assert isinstance(result, str)
         assert result != ""

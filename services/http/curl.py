@@ -36,11 +36,28 @@ CURL: ToolUnionParam = {
 def curl(base_args: BaseArgs, url: str, **_kwargs):
     logger.info("Curl URL: url=%s", url)
 
-    # api.github.com returns 404 for private repos without a token (AGENT-35Y/35X).
-    # Send the installation token so fetching private repo content works; harmless otherwise.
+    # api.github.com returns 404 for private repos without a token. Send the installation token so fetching private repo content works; harmless otherwise.
     headers = {"User-Agent": USER_AGENT}
     headers.update(github_auth_headers(url, base_args.get("token")))
     response = requests.get(url, headers=headers, timeout=TIMEOUT)
+
+    # 4xx is a result the agent should see, not a GitAuto crash to alert on.
+    # Sentry AGENT-35Y/35X/23G: agent curl'd a stale codecov-circleci-orb upload.sh URL where src/scripts is now a submodule, raw.githubusercontent.com returned 404, raise_for_status raised HTTPError, @handle_exceptions captured to Sentry. Return a short marker so the agent can interpret the status and try a different URL or give up — no alert.
+    # The isinstance int guard keeps the check inert against tests that mock requests.get without setting status_code (MagicMock comparisons would TypeError).
+    status_code = response.status_code
+    if isinstance(status_code, int) and 400 <= status_code < 500:
+        logger.info(
+            "Curl: %d %s on %s; returning status to agent",
+            response.status_code,
+            response.reason,
+            url,
+        )
+        thread_ts = base_args.get("slack_thread_ts")
+        slack_notify(
+            f"🌐 Curl: `{url}` → {response.status_code} {response.reason}", thread_ts
+        )
+        return f"HTTP {response.status_code} {response.reason}: {url}"
+
     response.raise_for_status()
 
     raw_len = len(response.text)
