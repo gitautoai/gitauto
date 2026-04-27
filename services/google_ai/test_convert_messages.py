@@ -1,6 +1,9 @@
 # pyright: reportOptionalMemberAccess=false, reportOptionalSubscript=false, reportArgumentType=false, reportOptionalIterable=false
 import json
 from pathlib import Path
+from typing import cast
+
+from anthropic.types import MessageParam
 
 from services.google_ai.convert_messages import convert_messages_to_google
 
@@ -161,3 +164,56 @@ def test_convert_real_messages_last_tool_result_content():
     assert fr.response == {
         "result": "Content replaced in the file: services/anthropic/test_client.py successfully."
     }
+
+
+def test_consecutive_user_messages_merged_into_one_content():
+    """Sentry AGENT-36R/36K/36N/36P (gitautoai/website 2026-04-16): chat_with_agent emits two consecutive user messages on the first turn (one with the JSON task payload, one with the source code). Anthropic accepts that, Google rejects with 400 INVALID_ARGUMENT because Contents must alternate user/model. The fix merges consecutive same-role messages into one Content with both parts in original order."""
+    messages = cast(
+        list[MessageParam],
+        [
+            {"role": "user", "content": "task payload"},
+            {"role": "user", "content": "source code"},
+            {"role": "assistant", "content": "model reply"},
+        ],
+    )
+
+    result = convert_messages_to_google(messages)
+
+    assert [c.role for c in result] == ["user", "model"]
+    assert [p.text for p in result[0].parts] == ["task payload", "source code"]
+    assert [p.text for p in result[1].parts] == ["model reply"]
+
+
+def test_consecutive_assistant_messages_merged_into_one_content():
+    """Mirror of the consecutive-user case: two consecutive assistant messages must merge to a single 'model' Content. Locks the contract symmetrically."""
+    messages = cast(
+        list[MessageParam],
+        [
+            {"role": "user", "content": "ask"},
+            {"role": "assistant", "content": "thinking"},
+            {"role": "assistant", "content": "decided"},
+        ],
+    )
+
+    result = convert_messages_to_google(messages)
+
+    assert [c.role for c in result] == ["user", "model"]
+    assert [p.text for p in result[1].parts] == ["thinking", "decided"]
+
+
+def test_alternating_messages_unchanged_by_merge_logic():
+    """Negative case for the merge: when input already alternates, output should be one Content per input message (no false merging across role boundaries). Guards against an over-eager merge that collapses everything into a single Content."""
+    messages = cast(
+        list[MessageParam],
+        [
+            {"role": "user", "content": "u1"},
+            {"role": "assistant", "content": "a1"},
+            {"role": "user", "content": "u2"},
+            {"role": "assistant", "content": "a2"},
+        ],
+    )
+
+    result = convert_messages_to_google(messages)
+
+    assert [c.role for c in result] == ["user", "model", "user", "model"]
+    assert [c.parts[0].text for c in result] == ["u1", "a1", "u2", "a2"]
