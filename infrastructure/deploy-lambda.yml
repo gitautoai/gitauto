@@ -144,7 +144,8 @@ Resources:
       # Python (~800 MB) + Node.js/Jest (~2 GB) + mongod (~500 MB) + OS (~100 MB)
       MemorySize: 4096
       EphemeralStorage:
-        Size: 2048
+        # 10240 MB is Lambda's max. Sentry AGENT-3KQ/AGENT-35R: D0LLi/SecLists (security wordlists, ~2GB checkout) hit "No space left on device" at 97% during git checkout because /tmp had only 2 GB. AWS bills ephemeral storage above 512 MB at $0.0000000308/GB-second; bumping from 2 GB to 10 GB adds ~$0.00001 per 60s invocation.
+        Size: 10240
       Timeout: !Ref LambdaTimeoutSeconds
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
