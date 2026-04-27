@@ -4,6 +4,7 @@ from anthropic.types import ToolUnionParam
 
 from services.types.base_args import BaseArgs
 from utils.error.handle_exceptions import handle_exceptions
+from utils.files.list_local_directory import list_local_directory
 from utils.logging.logging_config import logger
 
 GET_LOCAL_FILE_TREE: ToolUnionParam = {
@@ -25,28 +26,11 @@ GET_LOCAL_FILE_TREE: ToolUnionParam = {
 @handle_exceptions(default_return_value=[], raise_on_error=False)
 def get_local_file_tree(base_args: BaseArgs, dir_path: str = "", **_kwargs):
     clone_dir = base_args["clone_dir"]
-    result: list[str] = []
-
     if not dir_path or dir_path == ".":
+        logger.info("get_local_file_tree: empty/dot dir_path, using clone_dir")
         target_dir = clone_dir
     else:
+        logger.info("get_local_file_tree: joining %s under clone_dir", dir_path)
         target_dir = os.path.join(clone_dir, dir_path.strip("/"))
 
-    if not os.path.isdir(target_dir):
-        msg = f"Directory '{dir_path}' not found."
-        logger.info(msg)
-        return result
-
-    entries = os.listdir(target_dir)
-    dirs: list[str] = []
-    files: list[str] = []
-
-    for entry in entries:
-        full_path = os.path.join(target_dir, entry)
-        if os.path.isdir(full_path):
-            dirs.append(f"{entry}/")
-        else:
-            files.append(entry)
-
-    result = sorted(dirs) + sorted(files)
-    return result
+    return list_local_directory(target_dir)
