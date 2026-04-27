@@ -114,6 +114,14 @@ Resources:
               - Effect: Allow
                 Action: lambda:InvokeFunction
                 Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunctionName}'
+        # SSM list — at cold start, run_subprocess queries describe_parameters under /gitauto/ to learn the names of GitAuto secrets, so it can scrub them from the env handed to customer subprocess children (Sentry AGENT-3KJ et al.). Only metadata; values are still injected at deploy time via {{resolve:ssm:...}} above.
+        - PolicyName: SSMDescribeGitautoParameters
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ssm:DescribeParameters
+                Resource: '*'
 
   # =============================================================================
   # CloudWatch Log Group

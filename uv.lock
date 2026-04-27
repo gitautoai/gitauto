@@ -596,7 +596,7 @@ wheels = [
 
 [[package]]
 name = "gitauto"
-version = "1.78.14"
+version = "1.81.0"
 source = { virtual = "." }
 dependencies = [
     { name = "annotated-doc" },
@@ -746,6 +746,7 @@ dev = [
     { name = "coverage" },
     { name = "faker" },
     { name = "fastapi-cli" },
+    { name = "mypy-boto3-ssm" },
     { name = "pre-commit" },
     { name = "pylint" },
     { name = "pyright" },
@@ -911,6 +912,7 @@ dev = [
     { name = "coverage", specifier = "==7.8.0" },
     { name = "faker", specifier = "==24.14.1" },
     { name = "fastapi-cli", specifier = "==0.0.5" },
+    { name = "mypy-boto3-ssm", specifier = ">=1.42.54" },
     { name = "pre-commit", specifier = "==3.8.0" },
     { name = "pylint", specifier = "==3.2.6" },
     { name = "pyright", specifier = "==1.1.409" },
@@ -1529,6 +1531,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/72/60/23af8437c015c8b5d08eafdcb3490ead122e963225fbeede9d9546a273c6/mypy_boto3_scheduler-1.42.3.tar.gz", hash = "sha256:9f25661f95de78f43bd5011573a199dd4609e25ffaa08fc25152264ffb6146be", size = 18502, upload-time = "2025-12-04T21:12:23.167Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b6/70/1ff1916e3bbc668a3979e314477e6ae656eb03818c6c6a5533b70e6fcb0d/mypy_boto3_scheduler-1.42.3-py3-none-any.whl", hash = "sha256:e2a6844cf728210a5a98023b43a1262eba533926fce94e7eb90e239140d4e5e5", size = 24801, upload-time = "2025-12-04T21:12:21.896Z" },
+]
+
+[[package]]
+name = "mypy-boto3-ssm"
+version = "1.42.54"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6a/e9/cde8a9fe2bf061e595256e5542f4c803efdcb2f741611bcae9763f2af993/mypy_boto3_ssm-1.42.54.tar.gz", hash = "sha256:f4bc19a08635757808b66ef94a5b52c3729da998587745962626e60606a1be2c", size = 94255, upload-time = "2026-02-20T20:49:58.148Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ef/54/58fa9dba05049adbfd5ecbd755a2e730c118d682367d885e8b35e9b9f0cf/mypy_boto3_ssm-1.42.54-py3-none-any.whl", hash = "sha256:dfd70aa5f60be70437b53482fa6e183bafe922598a50fc6c51f6ad3bd70d8c04", size = 95951, upload-time = "2026-02-20T20:49:54.202Z" },
 ]
 
 [[package]]

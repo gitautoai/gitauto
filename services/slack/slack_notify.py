@@ -17,8 +17,10 @@ SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def slack_notify(text: str, thread_ts: str | None = None):
     if not IS_PRD:
+        logger.info("slack_notify: skipping non-prod environment")
         return None
     if not SLACK_BOT_TOKEN:
+        logger.error("slack_notify: SLACK_BOT_TOKEN is not set")
         raise ValueError("SLACK_BOT_TOKEN is not set")
 
     headers = {
@@ -29,6 +31,7 @@ def slack_notify(text: str, thread_ts: str | None = None):
     payload = {"channel": SLACK_CHANNEL_ID, "text": text}
 
     if thread_ts:
+        logger.info("slack_notify: posting in thread %s", thread_ts)
         payload["thread_ts"] = thread_ts
 
     response = requests.post(
@@ -50,4 +53,5 @@ def slack_notify(text: str, thread_ts: str | None = None):
         return None
 
     ts: str = response_data.get("ts")
+    logger.info("slack_notify: posted ts=%s", ts)
     return ts
