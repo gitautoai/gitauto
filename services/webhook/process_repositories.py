@@ -28,6 +28,7 @@ def process_repositories(
     # Insert all repos upfront so website knows total count for progress tracking
     for repo in repositories:
         upsert_repository(
+            platform="github",
             owner_id=owner_id,
             owner_name=owner_name,
             owner_type=owner_type,

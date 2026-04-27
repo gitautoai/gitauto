@@ -23,6 +23,7 @@ def test_cleans_up_s3_deps():
                 cast(InstallationRepositoriesPayload, payload)
             )
 
+            mock_valid.assert_called_once_with(platform="github", installation_id=123)
             assert mock_s3.call_count == 2
             mock_s3.assert_any_call(owner="test-owner", repo="repo1")
             mock_s3.assert_any_call(owner="test-owner", repo="repo2")

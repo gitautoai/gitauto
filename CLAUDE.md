@@ -140,7 +140,8 @@ assert find_test_files("foo.ts", all_files, None) == ["foo.test.ts"]
 **CRITICAL: NEVER start without explicit user request. PR must be clean — don't ignore failures.**
 
 1. `git fetch origin main && git merge origin/main`
-2. `git commit -m "descriptive message"` — user has already run `git add` before saying "lgtm"
+2. `git commit -m "<one-liner subject>"` — user has already run `git add` before saying "lgtm"
+   - **One-liner only.** No body paragraphs. The PR body file (`.pr-bodies/<pr#>.md`) carries the long-form context, not the commit message.
    - Pre-commit hook runs automatically (see `scripts/git/pre_commit_hook.sh`): pip-freeze, generate-types, black, ruff, print/logging checks, then pylint + pyright + pytest concurrently
    - Install: `ln -sf ../../scripts/git/pre_commit_hook.sh .git/hooks/pre-commit`
    - **If hooks fail**: fix, re-stage, commit again. Don't stage other sessions' files.

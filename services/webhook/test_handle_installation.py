@@ -187,7 +187,9 @@ class TestHandleInstallationCreated:
         )
 
         # Verify owner creation flow
-        all_mocks["check_owner_exists"].assert_called_once_with(owner_id=67890)
+        all_mocks["check_owner_exists"].assert_called_once_with(
+            platform="github", owner_id=67890
+        )
         all_mocks["create_stripe_customer"].assert_called_once_with(
             owner_name="test-owner",
             owner_id=67890,
@@ -202,16 +204,20 @@ class TestHandleInstallationCreated:
             user_id=11111,
             user_name="test-sender",
             stripe_customer_id="cus_test123",
+            platform="github",
         )
 
         # Verify grant creation flow
-        all_mocks["check_grant_exists"].assert_called_once_with(owner_id=67890)
+        all_mocks["check_grant_exists"].assert_called_once_with(
+            platform="github", owner_id=67890
+        )
         all_mocks["insert_credit"].assert_called_once_with(
-            owner_id=67890, transaction_type="grant"
+            owner_id=67890, transaction_type="grant", platform="github"
         )
 
         # Verify installation creation
         all_mocks["insert_installation"].assert_called_once_with(
+            platform="github",
             installation_id=12345,
             owner_id=67890,
             owner_type="Organization",
@@ -222,6 +228,7 @@ class TestHandleInstallationCreated:
 
         # Verify user upsert
         all_mocks["upsert_user"].assert_called_once_with(
+            platform="github",
             user_id=11111,
             user_name="test-sender",
             email="test@example.com",
@@ -265,12 +272,16 @@ class TestHandleInstallationCreated:
         )
 
         # Verify owner creation flow is skipped
-        all_mocks["check_owner_exists"].assert_called_once_with(owner_id=67890)
+        all_mocks["check_owner_exists"].assert_called_once_with(
+            platform="github", owner_id=67890
+        )
         all_mocks["create_stripe_customer"].assert_not_called()
         all_mocks["insert_owner"].assert_not_called()
 
         # Verify grant creation flow is skipped
-        all_mocks["check_grant_exists"].assert_called_once_with(owner_id=67890)
+        all_mocks["check_grant_exists"].assert_called_once_with(
+            platform="github", owner_id=67890
+        )
         all_mocks["insert_credit"].assert_not_called()
 
         # Verify installation creation still happens
@@ -281,6 +292,7 @@ class TestHandleInstallationCreated:
             owner_name="test-owner",
             user_id=11111,
             user_name="test-sender",
+            platform="github",
         )
 
         # Verify user upsert still happens
@@ -289,6 +301,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
             email="test@example.com",
             display_name="Test Sender",
+            platform="github",
         )
 
         # Verify repository processing still happens
@@ -321,7 +334,9 @@ class TestHandleInstallationCreated:
         await handle_installation_created(mock_installation_payload)
 
         # Verify owner creation flow
-        all_mocks["check_owner_exists"].assert_called_once_with(owner_id=67890)
+        all_mocks["check_owner_exists"].assert_called_once_with(
+            platform="github", owner_id=67890
+        )
         all_mocks["create_stripe_customer"].assert_called_once_with(
             owner_name="test-owner",
             owner_id=67890,
@@ -336,10 +351,13 @@ class TestHandleInstallationCreated:
             user_id=11111,
             user_name="test-sender",
             stripe_customer_id="cus_test123",
+            platform="github",
         )
 
         # Verify grant creation flow is skipped
-        all_mocks["check_grant_exists"].assert_called_once_with(owner_id=67890)
+        all_mocks["check_grant_exists"].assert_called_once_with(
+            platform="github", owner_id=67890
+        )
         all_mocks["insert_credit"].assert_not_called()
 
     async def test_handle_installation_created_existing_owner_new_grant(
@@ -358,14 +376,18 @@ class TestHandleInstallationCreated:
         await handle_installation_created(mock_installation_payload)
 
         # Verify owner creation flow is skipped
-        all_mocks["check_owner_exists"].assert_called_once_with(owner_id=67890)
+        all_mocks["check_owner_exists"].assert_called_once_with(
+            platform="github", owner_id=67890
+        )
         all_mocks["create_stripe_customer"].assert_not_called()
         all_mocks["insert_owner"].assert_not_called()
 
         # Verify grant creation flow
-        all_mocks["check_grant_exists"].assert_called_once_with(owner_id=67890)
+        all_mocks["check_grant_exists"].assert_called_once_with(
+            platform="github", owner_id=67890
+        )
         all_mocks["insert_credit"].assert_called_once_with(
-            owner_id=67890, transaction_type="grant"
+            owner_id=67890, transaction_type="grant", platform="github"
         )
 
     async def test_handle_installation_created_with_user_type_owner(
@@ -393,6 +415,7 @@ class TestHandleInstallationCreated:
             user_id=11111,
             user_name="test-sender",
             stripe_customer_id="cus_test123",
+            platform="github",
         )
 
         # Verify installation creation with User type
@@ -403,6 +426,7 @@ class TestHandleInstallationCreated:
             owner_name="test-owner",
             user_id=11111,
             user_name="test-sender",
+            platform="github",
         )
 
     async def test_handle_installation_created_with_none_email(
@@ -427,6 +451,7 @@ class TestHandleInstallationCreated:
             user_name="test-sender",
             email=None,
             display_name="Test Sender",
+            platform="github",
         )
 
     async def test_handle_installation_created_with_empty_email(
@@ -447,7 +472,11 @@ class TestHandleInstallationCreated:
 
         # Verify user upsert with empty email
         all_mocks["upsert_user"].assert_called_once_with(
-            user_id=11111, user_name="test-sender", email="", display_name="Test Sender"
+            user_id=11111,
+            user_name="test-sender",
+            email="",
+            display_name="Test Sender",
+            platform="github",
         )
 
     async def test_handle_installation_created_with_token_error(
@@ -582,7 +611,9 @@ class TestHandleInstallationCreated:
         with pytest.raises(Exception, match="Database error"):
             await handle_installation_created(mock_installation_payload)
 
-        all_mocks["check_owner_exists"].assert_called_once_with(owner_id=67890)
+        all_mocks["check_owner_exists"].assert_called_once_with(
+            platform="github", owner_id=67890
+        )
         all_mocks["create_stripe_customer"].assert_not_called()
 
     async def test_handle_installation_created_with_exception_in_create_stripe_customer(
@@ -640,7 +671,9 @@ class TestHandleInstallationCreated:
         with pytest.raises(Exception, match="Grant check error"):
             await handle_installation_created(mock_installation_payload)
 
-        all_mocks["check_grant_exists"].assert_called_once_with(owner_id=67890)
+        all_mocks["check_grant_exists"].assert_called_once_with(
+            platform="github", owner_id=67890
+        )
         all_mocks["insert_credit"].assert_not_called()
 
     async def test_handle_installation_created_with_exception_in_insert_credit(
@@ -749,7 +782,9 @@ class TestHandleInstallationCreated:
         all_mocks["get_installation_access_token"].assert_called_once_with(
             installation_id="12345"
         )
-        all_mocks["check_owner_exists"].assert_called_once_with(owner_id="67890")
+        all_mocks["check_owner_exists"].assert_called_once_with(
+            platform="github", owner_id="67890"
+        )
         all_mocks["create_stripe_customer"].assert_called_once_with(
             owner_name="test-owner",
             owner_id="67890",
@@ -792,6 +827,7 @@ class TestHandleInstallationCreated:
             user_name="tëst-sëndér",
             email="tëst@ëxämplë.com",
             display_name="Test Sender",
+            platform="github",
         )
 
     async def test_handle_installation_created_with_zero_ids(
@@ -817,7 +853,9 @@ class TestHandleInstallationCreated:
         all_mocks["get_installation_access_token"].assert_called_once_with(
             installation_id=0
         )
-        all_mocks["check_owner_exists"].assert_called_once_with(owner_id=0)
+        all_mocks["check_owner_exists"].assert_called_once_with(
+            platform="github", owner_id=0
+        )
         all_mocks["create_stripe_customer"].assert_called_once_with(
             owner_name="test-owner",
             owner_id=0,
@@ -849,7 +887,9 @@ class TestHandleInstallationCreated:
         all_mocks["get_installation_access_token"].assert_called_once_with(
             installation_id=-1
         )
-        all_mocks["check_owner_exists"].assert_called_once_with(owner_id=-2)
+        all_mocks["check_owner_exists"].assert_called_once_with(
+            platform="github", owner_id=-2
+        )
         all_mocks["create_stripe_customer"].assert_called_once_with(
             owner_name="test-owner",
             owner_id=-2,

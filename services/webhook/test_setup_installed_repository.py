@@ -308,6 +308,7 @@ def test_process_repositories_stats_saved_correctly(
     assert mock_upsert_repository.call_count == 2
     # Second call should have stats
     mock_upsert_repository.assert_called_with(
+        platform="github",
         owner_id=12345,
         owner_name="test-owner",
         owner_type="Organization",
@@ -374,6 +375,7 @@ def test_process_repositories_empty_repo_skips_clone(
     mock_get_repository_stats.assert_not_called()
     # Only called once without stats (empty repo skips clone)
     mock_upsert_repository.assert_called_once_with(
+        platform="github",
         owner_id=12345,
         owner_name="test-owner",
         owner_type="Organization",

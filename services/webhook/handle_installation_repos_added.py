@@ -4,6 +4,7 @@ from services.github.users.get_email_from_commits import get_email_from_commits
 from services.github.users.get_user_public_email import get_user_public_info
 from services.supabase.installations.is_installation_valid import is_installation_valid
 from services.supabase.users.upsert_user import upsert_user
+from services.types.base_args import Platform
 from services.webhook.process_repositories import process_repositories
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -13,8 +14,9 @@ from utils.logging.logging_config import logger
 def handle_installation_repos_added(
     payload: InstallationRepositoriesPayload,
 ):
+    platform: Platform = "github"
     installation_id = payload["installation"]["id"]
-    if not is_installation_valid(installation_id=installation_id):
+    if not is_installation_valid(platform=platform, installation_id=installation_id):
         logger.info(
             "Installation %s is not valid, skipping repos added", installation_id
         )
@@ -36,14 +38,22 @@ def handle_installation_repos_added(
     # Capture sender's email (this sender may differ from the original installer)
     sender_info = get_user_public_info(username=sender_name, token=token)
     if not sender_info.email and repositories:
+        logger.info(
+            "handle_installation_repos_added: no public email, falling back to commits"
+        )
         for repo in repositories:
             email = get_email_from_commits(
                 owner=owner_name, repo=repo["name"], username=sender_name, token=token
             )
             if email:
                 sender_info.email = email
+                logger.info(
+                    "handle_installation_repos_added: using commit email from %s",
+                    repo["name"],
+                )
                 break
     upsert_user(
+        platform=platform,
         user_id=sender_id,
         user_name=sender_name,
         email=sender_info.email,

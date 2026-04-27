@@ -10,10 +10,12 @@ OwnerType = Literal["User", "Organization"]
 class CheckSuites(TypedDict):
     check_suite_id: int
     created_at: datetime.datetime | None
+    platform: str
 
 
 class CheckSuitesInsert(TypedDict):
     check_suite_id: int
+    platform: str
 
 
 class CircleciTokens(TypedDict):
@@ -24,6 +26,7 @@ class CircleciTokens(TypedDict):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     updated_by: str
+    platform: str
 
 
 class CircleciTokensInsert(TypedDict):
@@ -31,6 +34,7 @@ class CircleciTokensInsert(TypedDict):
     token: str
     created_by: str
     updated_by: str
+    platform: str
 
 
 class CodecovTokens(TypedDict):
@@ -41,6 +45,7 @@ class CodecovTokens(TypedDict):
     updated_at: datetime.datetime
     created_by: str
     updated_by: str
+    platform: str
 
 
 class CodecovTokensInsert(TypedDict):
@@ -48,6 +53,7 @@ class CodecovTokensInsert(TypedDict):
     token: str
     created_by: str
     updated_by: str
+    platform: str
 
 
 class Contacts(TypedDict):
@@ -72,6 +78,7 @@ class Contacts(TypedDict):
     additional_info: str | None
     created_at: datetime.datetime | None
     updated_at: datetime.datetime | None
+    platform: str
 
 
 class ContactsInsert(TypedDict):
@@ -93,6 +100,7 @@ class ContactsInsert(TypedDict):
     target_coverage_other: NotRequired[str | None]
     testing_challenges: NotRequired[str | None]
     additional_info: NotRequired[str | None]
+    platform: str
 
 
 class Coverages(TypedDict):
@@ -123,6 +131,7 @@ class Coverages(TypedDict):
     test_blob_sha: str | None
     checklist_hash: str | None
     quality_checks: dict[str, Any] | None
+    platform: str
 
 
 class CoveragesInsert(TypedDict):
@@ -150,6 +159,7 @@ class CoveragesInsert(TypedDict):
     test_blob_sha: NotRequired[str | None]
     checklist_hash: NotRequired[str | None]
     quality_checks: NotRequired[dict[str, Any] | None]
+    platform: str
 
 
 class Credits(TypedDict):
@@ -161,6 +171,7 @@ class Credits(TypedDict):
     usage_id: int | None
     expires_at: datetime.datetime | None
     created_at: datetime.datetime
+    platform: str
 
 
 class CreditsInsert(TypedDict):
@@ -170,6 +181,7 @@ class CreditsInsert(TypedDict):
     stripe_payment_intent_id: NotRequired[str | None]
     usage_id: NotRequired[int | None]
     expires_at: NotRequired[datetime.datetime | None]
+    platform: str
 
 
 class EmailSends(TypedDict):
@@ -181,6 +193,7 @@ class EmailSends(TypedDict):
     created_at: datetime.datetime
     replied_at: datetime.datetime | None
     updated_at: datetime.datetime | None
+    platform: str
 
 
 class EmailSendsInsert(TypedDict):
@@ -189,6 +202,7 @@ class EmailSendsInsert(TypedDict):
     email_type: str
     resend_email_id: NotRequired[str | None]
     replied_at: NotRequired[datetime.datetime | None]
+    platform: str
 
 
 class Installations(TypedDict):
@@ -200,6 +214,7 @@ class Installations(TypedDict):
     owner_id: int
     created_by: str | None
     uninstalled_by: str | None
+    platform: str
 
 
 class InstallationsInsert(TypedDict):
@@ -210,6 +225,7 @@ class InstallationsInsert(TypedDict):
     owner_id: int
     created_by: NotRequired[str | None]
     uninstalled_by: NotRequired[str | None]
+    platform: str
 
 
 class LlmRequests(TypedDict):
@@ -264,6 +280,7 @@ class MarketingCoverage(TypedDict):
     lines: int | None
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    platform: str
 
 
 class MarketingCoverageInsert(TypedDict):
@@ -274,6 +291,7 @@ class MarketingCoverageInsert(TypedDict):
     source: str
     line_coverage: NotRequired[float | None]
     lines: NotRequired[int | None]
+    platform: str
 
 
 class MarketingEmailQueue(TypedDict):
@@ -287,6 +305,7 @@ class MarketingEmailQueue(TypedDict):
     created_at: datetime.datetime
     draft_id: str
     slack_thread_ts: str | None
+    platform: str
 
 
 class MarketingEmailQueueInsert(TypedDict):
@@ -298,6 +317,7 @@ class MarketingEmailQueueInsert(TypedDict):
     sent_at: NotRequired[datetime.datetime | None]
     draft_id: str
     slack_thread_ts: NotRequired[str | None]
+    platform: str
 
 
 class MarketingRepoSearchHistory(TypedDict):
@@ -309,6 +329,7 @@ class MarketingRepoSearchHistory(TypedDict):
     created_at: datetime.datetime
     status: str
     stars: int | None
+    platform: str
 
 
 class MarketingRepoSearchHistoryInsert(TypedDict):
@@ -318,6 +339,7 @@ class MarketingRepoSearchHistoryInsert(TypedDict):
     repo_name: str
     status: str
     stars: NotRequired[int | None]
+    platform: str
 
 
 class MarketingUsers(TypedDict):
@@ -334,6 +356,7 @@ class MarketingUsers(TypedDict):
     email_source: str
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    platform: str
 
 
 class MarketingUsersInsert(TypedDict):
@@ -347,6 +370,7 @@ class MarketingUsersInsert(TypedDict):
     last_name: NotRequired[str | None]
     email: str
     email_source: str
+    platform: str
 
 
 class NpmTokens(TypedDict):
@@ -357,6 +381,7 @@ class NpmTokens(TypedDict):
     updated_at: datetime.datetime
     created_by: str
     updated_by: str
+    platform: str
 
 
 class NpmTokensInsert(TypedDict):
@@ -364,6 +389,7 @@ class NpmTokensInsert(TypedDict):
     token: str
     created_by: str
     updated_by: str
+    platform: str
 
 
 class Owners(TypedDict):
@@ -382,6 +408,7 @@ class Owners(TypedDict):
     auto_reload_target_usd: int
     max_spending_limit_usd: int | None
     auto_reload_in_progress: datetime.datetime | None
+    platform: str
 
 
 class OwnersInsert(TypedDict):
@@ -398,6 +425,7 @@ class OwnersInsert(TypedDict):
     auto_reload_target_usd: int
     max_spending_limit_usd: NotRequired[int | None]
     auto_reload_in_progress: NotRequired[datetime.datetime | None]
+    platform: str
 
 
 class RepoCoverage(TypedDict):
@@ -420,6 +448,7 @@ class RepoCoverage(TypedDict):
     functions_covered: int
     branches_total: int
     branches_covered: int
+    platform: str
 
 
 class RepoCoverageInsert(TypedDict):
@@ -440,6 +469,7 @@ class RepoCoverageInsert(TypedDict):
     functions_covered: int
     branches_total: int
     branches_covered: int
+    platform: str
 
 
 class Repositories(TypedDict):
@@ -475,6 +505,7 @@ class Repositories(TypedDict):
     test_dir_prefixes: list[str]
     preferred_language: str | None
     preferred_model: str | None
+    platform: str
 
 
 class RepositoriesInsert(TypedDict):
@@ -507,6 +538,7 @@ class RepositoriesInsert(TypedDict):
     test_dir_prefixes: list[str]
     preferred_language: NotRequired[str | None]
     preferred_model: NotRequired[str | None]
+    platform: str
 
 
 class RepositoryFeatures(TypedDict):
@@ -522,6 +554,7 @@ class RepositoryFeatures(TypedDict):
     created_by: str
     updated_at: datetime.datetime
     updated_by: str
+    platform: str
 
 
 class RepositoryFeaturesInsert(TypedDict):
@@ -534,6 +567,7 @@ class RepositoryFeaturesInsert(TypedDict):
     merge_method: str
     created_by: str
     updated_by: str
+    platform: str
 
 
 class SchedulePauses(TypedDict):
@@ -547,6 +581,7 @@ class SchedulePauses(TypedDict):
     created_at: datetime.datetime
     updated_by: str
     updated_at: datetime.datetime
+    platform: str
 
 
 class SchedulePausesInsert(TypedDict):
@@ -557,6 +592,7 @@ class SchedulePausesInsert(TypedDict):
     reason: NotRequired[str | None]
     created_by: str
     updated_by: str
+    platform: str
 
 
 class TotalRepoCoverage(TypedDict):
@@ -614,6 +650,7 @@ class Usage(TypedDict):
     lambda_log_group: str | None
     lambda_log_stream: str | None
     lambda_request_id: str | None
+    platform: str
 
 
 class UsageInsert(TypedDict):
@@ -641,6 +678,7 @@ class UsageInsert(TypedDict):
     lambda_log_group: NotRequired[str | None]
     lambda_log_stream: NotRequired[str | None]
     lambda_request_id: NotRequired[str | None]
+    platform: str
 
 
 class Users(TypedDict):
@@ -655,6 +693,7 @@ class Users(TypedDict):
     deleted_at: datetime.datetime | None
     display_name_override: str | None
     skip_drip_emails: bool
+    platform: str
 
 
 class UsersInsert(TypedDict):
@@ -667,6 +706,7 @@ class UsersInsert(TypedDict):
     deleted_at: NotRequired[datetime.datetime | None]
     display_name_override: NotRequired[str | None]
     skip_drip_emails: bool
+    platform: str
 
 
 class WebhookDeliveries(TypedDict):
@@ -674,8 +714,10 @@ class WebhookDeliveries(TypedDict):
     delivery_id: str
     event_name: str
     created_at: datetime.datetime | None
+    platform: str
 
 
 class WebhookDeliveriesInsert(TypedDict):
     delivery_id: str
     event_name: str
+    platform: str

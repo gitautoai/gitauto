@@ -1,12 +1,14 @@
-from typing import cast
-
 from constants.triggers import Trigger
 from services.supabase.client import supabase
+from services.types.base_args import Platform
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=False)
 def insert_usage(
+    *,
+    platform: Platform,
     owner_id: int,
     owner_type: str,
     owner_name: str,
@@ -27,6 +29,7 @@ def insert_usage(
         supabase.table(table_name="usage")
         .insert(
             json={
+                "platform": platform,
                 "owner_id": owner_id,
                 "owner_type": owner_type,
                 "owner_name": owner_name,
@@ -48,4 +51,7 @@ def insert_usage(
         )
         .execute()
     )
-    return cast(int, result.data[0]["id"])
+    # Supabase returns Any-typed dict; coerce to int for runtime-safe narrowing.
+    usage_id = int(result.data[0]["id"])
+    logger.info("insert_usage: created usage_id=%s for %s", usage_id, platform)
+    return usage_id

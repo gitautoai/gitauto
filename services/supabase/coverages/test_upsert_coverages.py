@@ -20,6 +20,7 @@ def mock_supabase():
 def sample_coverage_record():
     """Create a sample coverage record for testing."""
     record: CoveragesInsert = {
+        "platform": "github",
         "repo_id": 123,
         "full_path": "src/test.py",
         "owner_id": 456,
@@ -38,6 +39,7 @@ def sample_coverage_record():
 def sample_coverage_records(sample_coverage_record):
     """Create multiple sample coverage records for testing."""
     second_record: CoveragesInsert = {
+        "platform": "github",
         "repo_id": 123,
         "full_path": "src/another.py",
         "owner_id": 456,
@@ -61,7 +63,7 @@ class TestUpsertCoverages:
         coverage_records = []
 
         # Act
-        result = upsert_coverages(coverage_records)
+        result = upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         assert result is None
@@ -81,13 +83,15 @@ class TestUpsertCoverages:
         )
 
         # Act
-        result = upsert_coverages(coverage_records)
+        result = upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         assert result == mock_result.data
         mock_supabase.table.assert_called_once_with("coverages")
         mock_supabase.table.return_value.upsert.assert_called_once_with(
-            coverage_records, on_conflict="repo_id,full_path", default_to_null=False
+            list(coverage_records),
+            on_conflict="platform,repo_id,full_path",
+            default_to_null=False,
         )
         mock_supabase.table.return_value.upsert.return_value.execute.assert_called_once()
 
@@ -107,14 +111,14 @@ class TestUpsertCoverages:
         )
 
         # Act
-        result = upsert_coverages(sample_coverage_records)
+        result = upsert_coverages(coverage_records=sample_coverage_records)
 
         # Assert
         assert result == mock_result.data
         mock_supabase.table.assert_called_once_with("coverages")
         mock_supabase.table.return_value.upsert.assert_called_once_with(
-            sample_coverage_records,
-            on_conflict="repo_id,full_path",
+            list(sample_coverage_records),
+            on_conflict="platform,repo_id,full_path",
             default_to_null=False,
         )
         mock_supabase.table.return_value.upsert.return_value.execute.assert_called_once()
@@ -133,11 +137,13 @@ class TestUpsertCoverages:
         )
 
         # Act
-        upsert_coverages(coverage_records)
+        upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         mock_supabase.table.return_value.upsert.assert_called_once_with(
-            coverage_records, on_conflict="repo_id,full_path", default_to_null=False
+            list(coverage_records),
+            on_conflict="platform,repo_id,full_path",
+            default_to_null=False,
         )
 
     def test_upsert_coverages_returns_result_data(
@@ -164,7 +170,7 @@ class TestUpsertCoverages:
         )
 
         # Act
-        result = upsert_coverages(coverage_records)
+        result = upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         assert result == expected_data
@@ -183,7 +189,7 @@ class TestUpsertCoverages:
         )
 
         # Act
-        result = upsert_coverages(coverage_records)
+        result = upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         assert not result
@@ -202,7 +208,7 @@ class TestUpsertCoverages:
         )
 
         # Act
-        result = upsert_coverages(coverage_records)
+        result = upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         assert result is None
@@ -224,12 +230,14 @@ class TestUpsertCoverages:
         mock_upsert.execute.return_value = mock_result
 
         # Act
-        result = upsert_coverages(coverage_records)
+        result = upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         mock_supabase.table.assert_called_once_with("coverages")
         mock_table.upsert.assert_called_once_with(
-            coverage_records, on_conflict="repo_id,full_path", default_to_null=False
+            list(coverage_records),
+            on_conflict="platform,repo_id,full_path",
+            default_to_null=False,
         )
         mock_upsert.execute.assert_called_once()
         assert result == mock_result.data
@@ -254,6 +262,7 @@ class TestUpsertCoverages:
         # Arrange
         coverage_records: list[CoveragesInsert] = [
             {
+                "platform": "github",
                 "repo_id": 123,
                 "full_path": "src/file1.py",
                 "owner_id": 456,
@@ -266,6 +275,7 @@ class TestUpsertCoverages:
                 "branch_name": "main",
             },
             {
+                "platform": "github",
                 "repo_id": 123,
                 "full_path": "src/file2.py",
                 "owner_id": 456,
@@ -286,12 +296,14 @@ class TestUpsertCoverages:
         )
 
         # Act
-        result = upsert_coverages(coverage_records)
+        result = upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         assert result == mock_result.data
         mock_supabase.table.return_value.upsert.assert_called_once_with(
-            coverage_records, on_conflict="repo_id,full_path", default_to_null=False
+            list(coverage_records),
+            on_conflict="platform,repo_id,full_path",
+            default_to_null=False,
         )
 
     def test_upsert_coverages_with_different_repo_ids(self, mock_supabase):
@@ -299,6 +311,7 @@ class TestUpsertCoverages:
         # Arrange
         coverage_records: list[CoveragesInsert] = [
             {
+                "platform": "github",
                 "repo_id": 123,
                 "full_path": "src/test.py",
                 "owner_id": 456,
@@ -309,6 +322,7 @@ class TestUpsertCoverages:
                 "branch_name": "main",
             },
             {
+                "platform": "github",
                 "repo_id": 789,
                 "full_path": "src/test.py",  # Same path, different repo
                 "owner_id": 456,
@@ -327,12 +341,14 @@ class TestUpsertCoverages:
         )
 
         # Act
-        result = upsert_coverages(coverage_records)
+        result = upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         assert result == mock_result.data
         mock_supabase.table.return_value.upsert.assert_called_once_with(
-            coverage_records, on_conflict="repo_id,full_path", default_to_null=False
+            list(coverage_records),
+            on_conflict="platform,repo_id,full_path",
+            default_to_null=False,
         )
 
     def test_upsert_coverages_preserves_input_data_structure(
@@ -349,7 +365,7 @@ class TestUpsertCoverages:
         )
 
         # Act
-        upsert_coverages(sample_coverage_records)
+        upsert_coverages(coverage_records=sample_coverage_records)
 
         # Assert
         assert sample_coverage_records == original_records
@@ -368,7 +384,7 @@ class TestUpsertCoverages:
         )
 
         # Act
-        upsert_coverages(coverage_records)
+        upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         mock_supabase.table.assert_called_once_with("coverages")
@@ -387,11 +403,13 @@ class TestUpsertCoverages:
         )
 
         # Act
-        upsert_coverages(coverage_records)
+        upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         mock_supabase.table.return_value.upsert.assert_called_once_with(
-            coverage_records, on_conflict="repo_id,full_path", default_to_null=False
+            list(coverage_records),
+            on_conflict="platform,repo_id,full_path",
+            default_to_null=False,
         )
 
     def test_upsert_coverages_large_dataset(self, mock_supabase):
@@ -421,11 +439,13 @@ class TestUpsertCoverages:
         )
 
         # Act
-        result = upsert_coverages(coverage_records)
+        result = upsert_coverages(coverage_records=coverage_records)
 
         # Assert
         assert result == mock_result.data
         assert result is not None and len(result) == 100
         mock_supabase.table.return_value.upsert.assert_called_once_with(
-            coverage_records, on_conflict="repo_id,full_path", default_to_null=False
+            list(coverage_records),
+            on_conflict="platform,repo_id,full_path",
+            default_to_null=False,
         )

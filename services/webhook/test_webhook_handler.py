@@ -204,7 +204,9 @@ class TestHandleWebhookEvent:
         mock_slack_notify.assert_called_once_with(
             "🎉 Installation unsuspended by `test-sender` for `test-owner`"
         )
-        mock_unsuspend_installation.assert_called_once_with(installation_id=12345)
+        mock_unsuspend_installation.assert_called_once_with(
+            platform="github", installation_id=12345
+        )
 
     @pytest.mark.asyncio
     async def test_handle_webhook_event_installation_repos_added(
@@ -533,7 +535,9 @@ class TestHandleWebhookEvent:
 
             await handle_webhook_event(event_name="pull_request", payload=payload)
 
-            mock_get_usage_by_pr.assert_called_once_with(111, 789, 456)
+            mock_get_usage_by_pr.assert_called_once_with(
+                platform="github", owner_id=111, repo_id=789, pr_number=456
+            )
             assert mock_update_usage.call_count == 2
             mock_update_usage.assert_any_call(usage_id=1, is_merged=True)
             mock_update_usage.assert_any_call(usage_id=2, is_merged=True)

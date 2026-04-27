@@ -38,6 +38,7 @@ def valid_installation_data():
         "owner_name": TEST_OWNER_NAME,
         "user_id": 11111,
         "user_name": "test-sender",
+        "platform": "github",
     }
 
 
@@ -68,6 +69,7 @@ def test_insert_installation_success(mock_supabase_client, valid_installation_da
 def test_insert_installation_with_minimal_data(mock_supabase_client):
     """Test installation insertion with minimal required data."""
     minimal_data = {
+        "platform": "github",
         "installation_id": 12345,
         "owner_id": 67890,
         "owner_type": "User",
@@ -94,6 +96,7 @@ def test_insert_installation_with_minimal_data(mock_supabase_client):
 def test_insert_installation_with_organization_owner(mock_supabase_client):
     """Test installation insertion with Organization owner type."""
     org_data = {
+        "platform": "github",
         "installation_id": 98765,
         "owner_id": 11111,
         "owner_type": "Organization",
@@ -127,6 +130,7 @@ def test_insert_installation_with_various_data_types(
 ):
     """Test installation insertion with various valid data combinations."""
     result = insert_installation(
+        platform="github",
         installation_id=installation_id,
         owner_id=owner_id,
         owner_type=owner_type,
@@ -149,6 +153,7 @@ def test_insert_installation_with_various_data_types(
 def test_insert_installation_supabase_chain_calls(mock_supabase_client):
     """Test that Supabase method chain is called in correct order."""
     insert_installation(
+        platform="github",
         installation_id=TEST_INSTALLATION_ID,
         owner_id=TEST_OWNER_ID,
         owner_type=TEST_OWNER_TYPE,
@@ -168,9 +173,7 @@ def test_insert_installation_handles_exceptions_decorator():
     # Verify the function has the handle_exceptions decorator applied
     assert hasattr(insert_installation, "__wrapped__")
 
-    # The decorator should be configured with raise_on_error=True
-    # This is tested implicitly by the fact that exceptions would be raised
-    # rather than returning the default value (None)
+    # The decorator should be configured with raise_on_error=True. This is tested implicitly by the fact that exceptions would be raised rather than returning the default value (None).
 
 
 def test_insert_installation_function_signature():
@@ -178,17 +181,16 @@ def test_insert_installation_function_signature():
     sig = inspect.signature(insert_installation)
 
     # Assert parameter count and names
-    assert len(sig.parameters) == 6
-    expected_params = [
+    assert len(sig.parameters) == 7
+    assert set(sig.parameters.keys()) == {
         "installation_id",
         "owner_id",
         "owner_type",
         "owner_name",
         "user_id",
         "user_name",
-    ]
-    for param in expected_params:
-        assert param in sig.parameters
+        "platform",
+    }
 
     # Assert parameter type annotations
     assert sig.parameters["installation_id"].annotation is int
@@ -212,6 +214,7 @@ def test_insert_installation_with_supabase_exception():
         # Since raise_on_error=True, the exception should be raised
         with pytest.raises(Exception, match="Database error"):
             insert_installation(
+                platform="github",
                 installation_id=TEST_INSTALLATION_ID,
                 owner_id=TEST_OWNER_ID,
                 owner_type=TEST_OWNER_TYPE,
@@ -242,6 +245,7 @@ def test_insert_installation_with_http_error():
         # Since raise_on_error=True, the exception should be raised
         with pytest.raises(requests.exceptions.HTTPError):
             insert_installation(
+                platform="github",
                 installation_id=TEST_INSTALLATION_ID,
                 owner_id=TEST_OWNER_ID,
                 owner_type=TEST_OWNER_TYPE,
@@ -265,6 +269,7 @@ def test_insert_installation_with_special_characters_in_owner_name(
 
     for owner_name in special_names:
         insert_installation(
+            platform="github",
             installation_id=TEST_INSTALLATION_ID,
             owner_id=TEST_OWNER_ID,
             owner_type=TEST_OWNER_TYPE,
@@ -288,6 +293,7 @@ def test_insert_installation_with_large_ids(mock_supabase_client):
     large_owner_id = 888888888888
 
     insert_installation(
+        platform="github",
         installation_id=large_installation_id,
         owner_id=large_owner_id,
         owner_type=TEST_OWNER_TYPE,
@@ -311,6 +317,7 @@ def test_insert_installation_preserves_function_name():
 def test_insert_installation_with_empty_owner_name(mock_supabase_client):
     """Test installation insertion with empty owner name."""
     insert_installation(
+        platform="github",
         installation_id=TEST_INSTALLATION_ID,
         owner_id=TEST_OWNER_ID,
         owner_type=TEST_OWNER_TYPE,
@@ -331,6 +338,7 @@ def test_insert_installation_with_different_owner_types(mock_supabase_client):
 
     for owner_type in owner_types:
         insert_installation(
+            platform="github",
             installation_id=TEST_INSTALLATION_ID,
             owner_id=TEST_OWNER_ID,
             owner_type=owner_type,

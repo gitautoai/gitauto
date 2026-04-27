@@ -1,11 +1,15 @@
 from constants.triggers import Trigger
 from services.supabase.usage.insert_usage import insert_usage
 from services.supabase.users.upsert_user import upsert_user
+from services.types.base_args import Platform
 from utils.error.handle_exceptions import handle_exceptions
+from utils.logging.logging_config import logger
 
 
 @handle_exceptions(default_return_value=None, raise_on_error=True)
 def create_user_request(
+    *,
+    platform: Platform,
     user_id: int,
     user_name: str,
     installation_id: int,
@@ -27,6 +31,7 @@ def create_user_request(
     lambda_request_id = lambda_info.get("request_id") if lambda_info else None
 
     usage_id = insert_usage(
+        platform=platform,
         owner_id=owner_id,
         owner_type=owner_type,
         owner_name=owner_name,
@@ -44,6 +49,18 @@ def create_user_request(
     )
 
     upsert_user(
-        user_id=user_id, user_name=user_name, email=email, display_name=display_name
+        platform=platform,
+        user_id=user_id,
+        user_name=user_name,
+        email=email,
+        display_name=display_name,
+    )
+    logger.info(
+        "create_user_request: usage_id=%s platform=%s pr=%s/%s#%s",
+        usage_id,
+        platform,
+        owner_name,
+        repo_name,
+        pr_number,
     )
     return usage_id

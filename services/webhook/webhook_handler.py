@@ -1,5 +1,5 @@
 # Standard imports
-from typing import Any, cast
+from typing import Any
 
 # Local imports
 from config import (
@@ -81,7 +81,7 @@ async def handle_webhook_event(
     if event_name == "push":
         set_trigger("push")
         logger.info("Handling push event")
-        handle_push(payload=cast(PushWebhookPayload, payload))
+        handle_push(payload=PushWebhookPayload(**payload))
         return
 
     # For other events, we need to check the action
@@ -89,19 +89,19 @@ async def handle_webhook_event(
         logger.info("No action in payload for event=%s, skipping", event_name)
         return
 
-    # if event_name == "marketplace_purchase" and action in ("purchased"):
-    #     logger.info("Marketplace purchase is triggered")
-    #     await handle_installation_created(payload=payload)
+    # TODO: marketplace_purchase ("purchased") — when re-enabled, dispatch to handle_installation_created. See https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=purchased#marketplace_purchase
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=created#installation
     if event_name == "installation" and action in ("created"):
+        logger.info("handle_webhook_event: installation created")
         set_trigger("installation")
-        typed_payload = cast(InstallationPayload, payload)
+        typed_payload = InstallationPayload(**payload)
         owner_name = typed_payload["installation"]["account"]["login"]
         sender_name = typed_payload["sender"]["login"]
         msg = f"🎉 New installation by `{sender_name}` for `{owner_name}`"
         slack_notify(msg)
         await handle_installation_created(payload=typed_payload)
+        logger.info("handle_webhook_event: installation created handled")
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=deleted#installation
@@ -109,26 +109,31 @@ async def handle_webhook_event(
     if event_name == "installation" and action in ("deleted", "suspend"):
         set_trigger("installation")
         logger.info("Handling installation %s", action)
-        typed_payload = cast(InstallationPayload, payload)
+        typed_payload = InstallationPayload(**payload)
         handle_installation_deleted_or_suspended(payload=typed_payload, action=action)
         return
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=unsuspend#installation
     if event_name == "installation" and action in ("unsuspend"):
+        logger.info("handle_webhook_event: installation unsuspend")
         set_trigger("installation")
-        typed_payload = cast(InstallationPayload, payload)
+        typed_payload = InstallationPayload(**payload)
         owner_name = typed_payload["installation"]["account"]["login"]
         sender_name = typed_payload["sender"]["login"]
         msg = f"🎉 Installation unsuspended by `{sender_name}` for `{owner_name}`"
         slack_notify(msg)
-        unsuspend_installation(installation_id=typed_payload["installation"]["id"])
+        unsuspend_installation(
+            platform="github", installation_id=typed_payload["installation"]["id"]
+        )
+        logger.info("handle_webhook_event: unsuspend handled")
         return
 
     # Handle repository additions/removals when GitAuto is added to a repository
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation_repositories
     if event_name == "installation_repositories":
+        logger.info("handle_webhook_event: installation_repositories %s", action)
         set_trigger("installation_repositories")
-        typed_payload = cast(InstallationRepositoriesPayload, payload)
+        typed_payload = InstallationRepositoriesPayload(**payload)
         if action == "added":
             logger.info("Handling installation_repositories added")
             handle_installation_repos_added(payload=typed_payload)
@@ -142,7 +147,8 @@ async def handle_webhook_event(
     # Handle PR labeled events (triggered by dashboard or schedule adding gitauto label to a PR)
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
     if event_name == "pull_request" and action == "labeled":
-        typed_payload = cast(PrLabeledPayload, payload)
+        logger.info("handle_webhook_event: pull_request labeled")
+        typed_payload = PrLabeledPayload(**payload)
         pr_number = typed_payload["pull_request"]["number"]
         set_pr_number(pr_number)
 
@@ -167,7 +173,11 @@ async def handle_webhook_event(
             return
 
         suffix = head_ref[len(prefix) :]
-        trigger = cast(NewPrTrigger, suffix.split("-")[0])
+        raw_trigger = suffix.split("-")[0]
+        if raw_trigger not in ("dashboard", "schedule"):
+            logger.info("Ignoring branch with unknown trigger: %s", raw_trigger)
+            return
+        trigger: NewPrTrigger = raw_trigger  # narrowed to Literal by the check above
         set_trigger(trigger)
         await handle_new_pr(
             payload=typed_payload,
@@ -179,7 +189,8 @@ async def handle_webhook_event(
     # Track merged PRs as this is also our success status
     # See https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
     if event_name == "pull_request" and action == "closed":
-        typed_payload = cast(PrClosedPayload, payload)
+        logger.info("handle_webhook_event: pull_request closed")
+        typed_payload = PrClosedPayload(**payload)
         pull_request = typed_payload["pull_request"]
 
         # Check PR is merged and this is correct GitAuto environment
@@ -207,7 +218,9 @@ async def handle_webhook_event(
         repo_id = repository["id"]
         owner_id = repository["owner"]["id"]
 
-        usage_records = get_usage_by_pr(owner_id, repo_id, pr_number)
+        usage_records = get_usage_by_pr(
+            platform="github", owner_id=owner_id, repo_id=repo_id, pr_number=pr_number
+        )
         for record in usage_records:
             update_usage(usage_id=record["id"], is_merged=True)
 
@@ -222,7 +235,7 @@ async def handle_webhook_event(
     # Do nothing when action is "deleted"
     if event_name == "pull_request_review_comment" and action in ("created", "edited"):
         set_trigger("pr_file_review")
-        typed_payload = cast(ReviewRunPayload, payload)
+        typed_payload = ReviewRunPayload(**payload)
         pr_number = typed_payload["pull_request"]["number"]
         set_pr_number(pr_number)
         logger.info("Handling pull_request_review_comment %s", action)
@@ -235,7 +248,7 @@ async def handle_webhook_event(
 
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review
     if event_name == "pull_request_review" and action in ("submitted", "edited"):
-        typed_payload = cast(PullRequestReviewPayload, payload)
+        typed_payload = PullRequestReviewPayload(**payload)
         set_trigger("pr_review")
         pr_number = typed_payload["pull_request"]["number"]
         set_pr_number(pr_number)
@@ -266,6 +279,10 @@ async def handle_webhook_event(
             return
 
         if state in ("changes_requested", "commented") and body.strip():
+            logger.info(
+                "handle_webhook_event: PR review state=%s with body, fetching inline comments",
+                state,
+            )
             # Skip if this review also has inline comments, which trigger separately via pull_request_review_comment with better file/line metadata
             review_id = review["id"]
             installation_id = typed_payload["installation"]["id"]
@@ -317,8 +334,9 @@ async def handle_webhook_event(
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment
     # Handle general PR comments (not inline review comments)
     if event_name == "issue_comment" and action in ("created", "edited"):
+        logger.info("handle_webhook_event: issue_comment %s", action)
         set_trigger("pr_comment")
-        typed_payload = cast(IssueCommentWebhookPayload, payload)
+        typed_payload = IssueCommentWebhookPayload(**payload)
         issue = typed_payload["issue"]
         pr_number = issue["number"]
         set_pr_number(pr_number)
@@ -390,7 +408,8 @@ async def handle_webhook_event(
 
     # Handle check_suite events
     if event_name == "check_suite" and action == "completed":
-        typed_payload = cast(CheckSuiteCompletedPayload, payload)
+        logger.info("handle_webhook_event: check_suite completed")
+        typed_payload = CheckSuiteCompletedPayload(**payload)
         check_suite = typed_payload["check_suite"]
         app_slug = check_suite["app"]["slug"]
         conclusion = check_suite["conclusion"]

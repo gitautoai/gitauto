@@ -25,6 +25,7 @@ def test_delete_coverages_by_paths_deletes_matching_records():
         )
 
         result = delete_coverages_by_paths(
+            platform="github",
             owner_id=123,
             repo_id=456,
             file_paths=["deleted/file.py"],
@@ -32,6 +33,7 @@ def test_delete_coverages_by_paths_deletes_matching_records():
 
         mock_supabase.table.assert_called_once_with("coverages")
         mock_table.delete.assert_called_once()
+        mock_table.eq.assert_any_call("platform", "github")
         mock_table.eq.assert_any_call("owner_id", 123)
         mock_table.eq.assert_any_call("repo_id", 456)
         mock_table.in_.assert_called_once_with("full_path", ["deleted/file.py"])
@@ -40,6 +42,7 @@ def test_delete_coverages_by_paths_deletes_matching_records():
 
 def test_delete_coverages_by_paths_returns_empty_list_for_empty_input():
     result = delete_coverages_by_paths(
+        platform="github",
         owner_id=123,
         repo_id=456,
         file_paths=[],
@@ -65,6 +68,7 @@ def test_delete_coverages_by_paths_handles_multiple_files():
         )
 
         result = delete_coverages_by_paths(
+            platform="github",
             owner_id=123,
             repo_id=456,
             file_paths=["deleted/file1.py", "deleted/file2.py"],
@@ -91,6 +95,7 @@ def test_delete_coverages_by_paths_batches_large_lists():
         file_paths = [f"path/to/file{i}.py" for i in range(SUPABASE_BATCH_SIZE + 50)]
 
         delete_coverages_by_paths(
+            platform="github",
             owner_id=123,
             repo_id=456,
             file_paths=file_paths,
@@ -128,6 +133,9 @@ class TestDeleteCoveragesByPathsIntegration:
             for i in range(SUPABASE_BATCH_SIZE + 50)
         ]
         result = delete_coverages_by_paths(
-            owner_id=999999, repo_id=999999, file_paths=file_paths_large
+            platform="github",
+            owner_id=999999,
+            repo_id=999999,
+            file_paths=file_paths_large,
         )
         assert result is not None

@@ -45,7 +45,9 @@ def deconstruct_github_payload(
     clone_url = get_clone_url(owner_name, repo_name, token)
 
     # Get repository rules from Supabase
-    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+    repo_settings = get_repository(
+        platform="github", owner_id=owner_id, repo_id=repo_id
+    )
     target_branch = repo_settings["target_branch"] if repo_settings else None
 
     # If target branch is set and exists in the repository, use it, otherwise use default branch
@@ -77,6 +79,7 @@ def deconstruct_github_payload(
     sender_display_name = sender_info.display_name
 
     base_args: BaseArgs = {
+        "platform": "github",
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,

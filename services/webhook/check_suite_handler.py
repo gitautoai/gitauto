@@ -71,7 +71,7 @@ from services.supabase.usage.update_retry_error_hashes import (
     update_retry_error_hashes,
 )
 from services.supabase.usage.update_usage import update_usage
-from services.types.base_args import BaseArgs
+from services.types.base_args import BaseArgs, Platform
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.get_preferred_model import get_preferred_model
 from services.webhook.utils.maybe_switch_to_free_model import maybe_switch_to_free_model
@@ -99,6 +99,7 @@ async def handle_check_suite(
 ):
     current_time = time.time()
     trigger = "test_failure"
+    platform: Platform = "github"
 
     # Extract repository and installation info
     repo = payload["repository"]
@@ -117,7 +118,7 @@ async def handle_check_suite(
     )
 
     # Deduplicate by check_suite_id (GitHub may send duplicate webhooks with different delivery_ids)
-    if not insert_check_suite(check_suite_id=check_suite_id):
+    if not insert_check_suite(platform=platform, check_suite_id=check_suite_id):
         logger.info("Duplicate check_suite_id=%s ignored", check_suite_id)
         return
 
@@ -196,7 +197,7 @@ async def handle_check_suite(
     owner = repo.get("owner", None)
     owner_type = owner["type"]
     owner_id = owner["id"]
-    set_npm_token_env(owner_id)
+    set_npm_token_env(platform=platform, owner_id=owner_id)
 
     # Extract sender related variables
     sender_id = payload["sender"]["id"]
@@ -230,12 +231,14 @@ async def handle_check_suite(
     pr_title = full_pr["title"]
 
     # Get repository settings - check if trigger_on_test_failure is enabled
-    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+    repo_settings = get_repository(
+        platform=platform, owner_id=owner_id, repo_id=repo_id
+    )
     if not repo_settings or not repo_settings.get("trigger_on_test_failure"):
         logger.info("trigger_on_test_failure disabled for PR #%s", pr_number)
         return
 
-    has_purchased = check_purchase_exists(owner_id=owner_id)
+    has_purchased = check_purchase_exists(platform=platform, owner_id=owner_id)
     model_id = get_preferred_model(
         repo_settings=repo_settings,
         is_paid=has_purchased,
@@ -248,6 +251,7 @@ async def handle_check_suite(
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args: BaseArgs = {
         # Required fields
+        "platform": "github",
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
@@ -421,6 +425,7 @@ async def handle_check_suite(
 
     # Create a usage record
     usage_id = create_user_request(
+        platform=platform,
         user_id=sender_id,
         user_name=sender_name,
         installation_id=installation_id,
@@ -485,7 +490,7 @@ async def handle_check_suite(
     ci_log_source = ""
     if is_circleci:
         ci_log_source = f"CircleCI for {owner_name}/{repo_name}"
-        circleci_token = get_circleci_token(owner_id)
+        circleci_token = get_circleci_token(platform=platform, owner_id=owner_id)
 
         if not circleci_token:
             logger.warning(
@@ -556,7 +561,7 @@ async def handle_check_suite(
         error_log += f"Details:\n{text}\n\n"
 
         # Fetch file-level coverage from Codecov API
-        codecov_token = get_codecov_token(owner_id)
+        codecov_token = get_codecov_token(platform=platform, owner_id=owner_id)
         if codecov_token:
             logger.info(
                 "Codecov token present; fetching file-level coverage details for owner_id=%s",
@@ -752,7 +757,10 @@ async def handle_check_suite(
 
     # Check if this error hash has been attempted before (scoped to this PR). Compare by error hash only - workflow_id changes every CI run but the error is the same.
     existing_hashes = get_retry_error_hashes(
-        owner_id=owner_id, repo_id=repo_id, pr_number=pr_number
+        platform=platform,
+        owner_id=owner_id,
+        repo_id=repo_id,
+        pr_number=pr_number,
     )
     if error_log_hash in existing_hashes:
         msg = f"Skipping `{check_run_name}` because GitAuto has already tried to fix this error before."
@@ -783,7 +791,11 @@ async def handle_check_suite(
     # Save the error hash to avoid retrying the same error
     existing_hashes.append(error_log_hash)
     update_retry_error_hashes(
-        owner_id=owner_id, repo_id=repo_id, pr_number=pr_number, hashes=existing_hashes
+        platform=platform,
+        owner_id=owner_id,
+        repo_id=repo_id,
+        pr_number=pr_number,
+        hashes=existing_hashes,
     )
 
     p += 5
@@ -933,7 +945,9 @@ async def handle_check_suite(
         )
 
         # Re-check trigger_on_test_failure in case it was disabled during execution
-        refreshed_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+        refreshed_settings = get_repository(
+            platform=platform, owner_id=owner_id, repo_id=repo_id
+        )
         if not refreshed_settings or not refreshed_settings.get(
             "trigger_on_test_failure"
         ):

@@ -27,6 +27,7 @@ class TestCreateUserRequest:
             "trigger": "dashboard",
             "email": "test@example.com",
             "display_name": "Test User",
+            "platform": "github",
         }
 
     @pytest.fixture
@@ -54,6 +55,7 @@ class TestCreateUserRequest:
         assert result == 999
 
         mock_dependencies["insert_usage"].assert_called_once_with(
+            platform="github",
             owner_id=11111,
             owner_type="Organization",
             owner_name="test_org",
@@ -71,6 +73,7 @@ class TestCreateUserRequest:
         )
 
         mock_dependencies["upsert_user"].assert_called_once_with(
+            platform="github",
             user_id=12345,
             user_name="test_user",
             email="test@example.com",
@@ -99,6 +102,7 @@ class TestCreateUserRequest:
         assert result == 666
 
         mock_dependencies["upsert_user"].assert_called_once_with(
+            platform="github",
             user_id=12345,
             user_name="test_user",
             email=None,

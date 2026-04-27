@@ -130,7 +130,7 @@ def test_get_all_coverages_contract():
         mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.order.return_value.execute.return_value = (
             mock_result
         )
-        result = get_all_coverages(owner_id=789, repo_id=123)
+        result = get_all_coverages(platform="github", owner_id=789, repo_id=123)
         assert not result
         assert result is not None
         assert isinstance(result, list)
@@ -556,7 +556,7 @@ def test_schedule_handler_prioritizes_zero_coverage_files(
         )
 
         mock_insert.assert_called_once()
-        coverage_record = mock_insert.call_args[0][0]
+        coverage_record = mock_insert.call_args.kwargs["coverage_record"]
         assert coverage_record["full_path"] == "src/new_file.py"
         assert coverage_record["owner_id"] == 123
         assert coverage_record["repo_id"] == 456

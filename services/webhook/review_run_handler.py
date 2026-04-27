@@ -54,7 +54,7 @@ from services.github.comments.update_progress import update_progress
 from services.supabase.create_user_request import create_user_request
 from services.supabase.repositories.get_repository import get_repository
 from services.supabase.usage.update_usage import update_usage
-from services.types.base_args import ReviewBaseArgs
+from services.types.base_args import Platform, ReviewBaseArgs
 from services.webhook.utils.create_system_message import create_system_message
 from services.webhook.utils.get_preferred_model import get_preferred_model
 from services.webhook.utils.maybe_switch_to_free_model import maybe_switch_to_free_model
@@ -74,6 +74,7 @@ async def handle_review_run(
     lambda_info: dict[str, str | None] | None = None,
 ):
     current_time = time.time()
+    platform: Platform = "github"
     # Extract comment fields
     review = payload["comment"]
     review_id = review["id"]
@@ -97,7 +98,7 @@ async def handle_review_run(
     owner_type = owner["type"]
     owner_id = owner["id"]
     owner_name = owner["login"]
-    set_npm_token_env(owner_id)
+    set_npm_token_env(platform=platform, owner_id=owner_id)
 
     # Extract PR related variables
     pull_request = payload["pull_request"]
@@ -123,12 +124,14 @@ async def handle_review_run(
         return
 
     # Check if review comment trigger is enabled for this repo
-    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+    repo_settings = get_repository(
+        platform=platform, owner_id=owner_id, repo_id=repo_id
+    )
     if not repo_settings or not repo_settings.get("trigger_on_review_comment"):
         logger.info("trigger_on_review_comment is disabled, skipping")
         return
 
-    has_purchased = check_purchase_exists(owner_id=owner_id)
+    has_purchased = check_purchase_exists(platform=platform, owner_id=owner_id)
     model_id = get_preferred_model(
         repo_settings=repo_settings,
         is_paid=has_purchased,
@@ -180,7 +183,9 @@ async def handle_review_run(
     if pull_request_review_id and trigger == "pr_file_review":
         dedup_key = f"review-dedup-{repo_id}-{pr_number}-{pull_request_review_id}"
         inserted = insert_webhook_delivery(
-            delivery_id=dedup_key, event_name="pr_file_review_dedup"
+            platform=platform,
+            delivery_id=dedup_key,
+            event_name="pr_file_review_dedup",
         )
         if inserted is False:
             logger.info(
@@ -321,6 +326,7 @@ async def handle_review_run(
 
     # Create the usage row up front so base_args carries a real usage_id and every downstream LLM call attributes cost correctly.
     usage_id = create_user_request(
+        platform=platform,
         user_id=sender_id,
         user_name=sender_name,
         installation_id=installation_id,
@@ -340,6 +346,7 @@ async def handle_review_run(
     clone_dir = get_clone_dir(owner_name, repo_name, pr_number)
     base_args: ReviewBaseArgs = {
         # Required fields
+        "platform": "github",
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,
@@ -566,7 +573,9 @@ async def handle_review_run(
     fixes_applied = validation_result.fixes_applied
 
     # Get repository settings
-    repo_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+    repo_settings = get_repository(
+        platform=platform, owner_id=owner_id, repo_id=repo_id
+    )
 
     # Plan how to fix the error
     today = datetime.now().strftime("%Y-%m-%d")
@@ -663,7 +672,9 @@ async def handle_review_run(
         )
 
         # Re-check trigger_on_review_comment in case it was disabled during execution
-        refreshed_settings = get_repository(owner_id=owner_id, repo_id=repo_id)
+        refreshed_settings = get_repository(
+            platform=platform, owner_id=owner_id, repo_id=repo_id
+        )
         if not refreshed_settings or not refreshed_settings.get(
             "trigger_on_review_comment"
         ):

@@ -22,17 +22,20 @@ def mock_query_chain(mock_supabase):
     mock_select = MagicMock()
     mock_eq1 = MagicMock()
     mock_eq2 = MagicMock()
+    mock_eq3 = MagicMock()
 
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq1
     mock_eq1.eq.return_value = mock_eq2
+    mock_eq2.eq.return_value = mock_eq3
 
     return {
         "table": mock_table,
         "select": mock_select,
         "eq1": mock_eq1,
         "eq2": mock_eq2,
+        "eq3": mock_eq3,
     }
 
 
@@ -51,18 +54,19 @@ def test_check_grant_exists_returns_true_when_grants_exist(
     # Arrange
     owner_id = 123456
     mock_query_result.data = [{"id": 1}, {"id": 2}]  # Multiple grants
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert result is True
     mock_supabase.table.assert_called_once_with("credits")
     mock_query_chain["table"].select.assert_called_once_with("id")
-    mock_query_chain["select"].eq.assert_called_once_with("owner_id", owner_id)
-    mock_query_chain["eq1"].eq.assert_called_once_with("transaction_type", "grant")
-    mock_query_chain["eq2"].execute.assert_called_once()
+    mock_query_chain["select"].eq.assert_called_once_with("platform", "github")
+    mock_query_chain["eq1"].eq.assert_called_once_with("owner_id", owner_id)
+    mock_query_chain["eq2"].eq.assert_called_once_with("transaction_type", "grant")
+    mock_query_chain["eq3"].execute.assert_called_once()
 
 
 def test_check_grant_exists_returns_true_when_single_grant_exists(
@@ -72,10 +76,10 @@ def test_check_grant_exists_returns_true_when_single_grant_exists(
     # Arrange
     owner_id = 789012
     mock_query_result.data = [{"id": 42}]  # Single grant
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert result is True
@@ -88,18 +92,19 @@ def test_check_grant_exists_returns_false_when_no_grants_exist(
     # Arrange
     owner_id = 345678
     mock_query_result.data = []  # No grants
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert result is False
     mock_supabase.table.assert_called_once_with("credits")
     mock_query_chain["table"].select.assert_called_once_with("id")
-    mock_query_chain["select"].eq.assert_called_once_with("owner_id", owner_id)
-    mock_query_chain["eq1"].eq.assert_called_once_with("transaction_type", "grant")
-    mock_query_chain["eq2"].execute.assert_called_once()
+    mock_query_chain["select"].eq.assert_called_once_with("platform", "github")
+    mock_query_chain["eq1"].eq.assert_called_once_with("owner_id", owner_id)
+    mock_query_chain["eq2"].eq.assert_called_once_with("transaction_type", "grant")
+    mock_query_chain["eq3"].execute.assert_called_once()
 
 
 def test_check_grant_exists_handles_database_exception(mock_supabase):
@@ -109,7 +114,7 @@ def test_check_grant_exists_handles_database_exception(mock_supabase):
     mock_supabase.table.side_effect = Exception("Database connection error")
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert (
@@ -125,10 +130,10 @@ def test_check_grant_exists_with_various_owner_ids(
     """Test that check_grant_exists works with various owner ID values."""
     # Arrange
     mock_query_result.data = []
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert result is False
@@ -143,7 +148,7 @@ def test_check_grant_exists_handles_query_chain_exception(mock_supabase):
     mock_table.select.side_effect = Exception("Query error")
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert (
@@ -157,16 +162,16 @@ def test_check_grant_exists_handles_execute_exception(mock_supabase, mock_query_
     """Test that check_grant_exists handles exceptions during execute."""
     # Arrange
     owner_id = 777777
-    mock_query_chain["eq2"].execute.side_effect = Exception("Execute error")
+    mock_query_chain["eq3"].execute.side_effect = Exception("Execute error")
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert (
         result is False
     )  # Should return default_return_value due to @handle_exceptions
-    mock_query_chain["eq2"].execute.assert_called_once()
+    mock_query_chain["eq3"].execute.assert_called_once()
 
 
 def test_check_grant_exists_handles_result_data_access_exception(
@@ -180,10 +185,10 @@ def test_check_grant_exists_handles_result_data_access_exception(
     type(mock_query_result).data = PropertyMock(
         side_effect=AttributeError("No data attribute")
     )
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert (
@@ -197,10 +202,10 @@ def test_check_grant_exists_with_none_data(mock_supabase, mock_query_chain):
     owner_id = 111111
     mock_query_result = MagicMock()
     mock_query_result.data = None
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert (
@@ -214,10 +219,10 @@ def test_check_grant_exists_with_empty_list_data(mock_supabase, mock_query_chain
     owner_id = 222222
     mock_query_result = MagicMock()
     mock_query_result.data = []
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert result is False
@@ -231,10 +236,10 @@ def test_check_grant_exists_with_large_result_set(mock_supabase, mock_query_chai
     mock_query_result = MagicMock()
     # Create a large list of grant records
     mock_query_result.data = [{"id": i} for i in range(100)]
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert result is True
@@ -248,10 +253,10 @@ def test_check_grant_exists_verifies_correct_table_name(
     # Arrange
     owner_id = 444444
     mock_query_result.data = []
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    check_grant_exists(owner_id=owner_id)
+    check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     mock_supabase.table.assert_called_once_with("credits")
@@ -264,10 +269,10 @@ def test_check_grant_exists_verifies_correct_select_field(
     # Arrange
     owner_id = 555555
     mock_query_result.data = []
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    check_grant_exists(owner_id=owner_id)
+    check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     mock_query_chain["table"].select.assert_called_once_with("id")
@@ -280,13 +285,13 @@ def test_check_grant_exists_verifies_correct_owner_id_filter(
     # Arrange
     owner_id = 666666
     mock_query_result.data = []
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    check_grant_exists(owner_id=owner_id)
+    check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
-    mock_query_chain["select"].eq.assert_called_once_with("owner_id", owner_id)
+    mock_query_chain["eq1"].eq.assert_called_once_with("owner_id", owner_id)
 
 
 def test_check_grant_exists_verifies_correct_transaction_type_filter(
@@ -296,13 +301,13 @@ def test_check_grant_exists_verifies_correct_transaction_type_filter(
     # Arrange
     owner_id = 777777
     mock_query_result.data = []
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    check_grant_exists(owner_id=owner_id)
+    check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
-    mock_query_chain["eq1"].eq.assert_called_once_with("transaction_type", "grant")
+    mock_query_chain["eq2"].eq.assert_called_once_with("transaction_type", "grant")
 
 
 def test_check_grant_exists_handles_type_error_on_len(mock_supabase, mock_query_chain):
@@ -311,10 +316,10 @@ def test_check_grant_exists_handles_type_error_on_len(mock_supabase, mock_query_
     owner_id = 888888
     mock_query_result = MagicMock()
     mock_query_result.data = 42  # This will cause TypeError when len() is called
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert (
@@ -330,10 +335,10 @@ def test_check_grant_exists_handles_attribute_error_on_result(
     owner_id = 999999
     mock_query_result = MagicMock()
     del mock_query_result.data  # Remove the data attribute
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert (
@@ -358,10 +363,10 @@ def test_check_grant_exists_with_different_data_sizes(
     owner_id = 123456
     mock_query_result = MagicMock()
     mock_query_result.data = data_content
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert result is expected_result
@@ -376,7 +381,7 @@ def test_check_grant_exists_handles_key_error_exception(
     mock_query_chain["select"].eq.side_effect = KeyError("Missing key")
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert (
@@ -393,7 +398,7 @@ def test_check_grant_exists_handles_value_error_exception(
     mock_query_chain["eq1"].eq.side_effect = ValueError("Invalid value")
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert (
@@ -408,10 +413,10 @@ def test_check_grant_exists_return_type_is_boolean(
     # Arrange
     owner_id = 131313
     mock_query_result.data = [{"id": 1}]
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert isinstance(result, bool)
@@ -425,10 +430,10 @@ def test_check_grant_exists_return_type_is_boolean_when_false(
     # Arrange
     owner_id = 141414
     mock_query_result.data = []
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert isinstance(result, bool)
@@ -456,10 +461,10 @@ def test_check_grant_exists_with_complex_data_structure(
             "amount": GRANT_AMOUNT,
         },
     ]
-    mock_query_chain["eq2"].execute.return_value = mock_query_result
+    mock_query_chain["eq3"].execute.return_value = mock_query_result
 
     # Act
-    result = check_grant_exists(owner_id=owner_id)
+    result = check_grant_exists(platform="github", owner_id=owner_id)
 
     # Assert
     assert result is True

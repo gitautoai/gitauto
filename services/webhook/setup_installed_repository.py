@@ -60,6 +60,7 @@ def setup_installed_repository(
 
     # Insert repository first (without stats to avoid overwriting existing)
     upsert_repository(
+        platform="github",
         owner_id=owner_id,
         owner_name=owner_name,
         owner_type=owner_type,
@@ -111,6 +112,7 @@ def setup_installed_repository(
     stats = get_repository_stats(local_path=clone_dir)
     logger.info("Repository %s stats: %s", repo_name, stats)
     upsert_repository(
+        platform="github",
         owner_id=owner_id,
         owner_name=owner_name,
         owner_type=owner_type,
@@ -146,6 +148,7 @@ def setup_installed_repository(
     new_branch = generate_branch_name(trigger="setup")
 
     base_args: BaseArgs = {
+        "platform": "github",
         "owner_type": owner_type,
         "owner_id": owner_id,
         "owner": owner_name,

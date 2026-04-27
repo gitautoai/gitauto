@@ -74,7 +74,7 @@ async def setup_handler(
         f"Setup started for {owner_name}/{repo_name} by {sender_name} from {source}"
     )
 
-    installation = get_installation_by_owner(owner_name)
+    installation = get_installation_by_owner(platform="github", owner_name=owner_name)
     if not installation:
         logger.warning("setup_handler: no installation for %s; skipping", owner_name)
         slack_notify(
@@ -86,7 +86,9 @@ async def setup_handler(
     owner_id = installation["owner_id"]
     owner_type = installation["owner_type"]
 
-    repository = get_repository_by_name(owner_id, repo_name)
+    repository = get_repository_by_name(
+        platform="github", owner_id=owner_id, repo_name=repo_name
+    )
     repo_id = repository["repo_id"] if repository else 0
     if repository and repository.get("target_branch"):
         target_branch = repository["target_branch"]
@@ -129,6 +131,7 @@ async def setup_handler(
     # Must match: website/app/actions/github/get-open-setup-pr.ts
     title = "Set up test coverage workflow"
     base_args: BaseArgs = {
+        "platform": "github",
         "owner": owner_name,
         "owner_id": owner_id,
         "owner_type": owner_type,
@@ -174,6 +177,7 @@ async def setup_handler(
     logger.info("Created coverage PR %s/%s#%d", owner_name, repo_name, pr_number)
 
     usage_id = insert_usage(
+        platform="github",
         owner_id=owner_id,
         owner_type=owner_type,
         owner_name=owner_name,

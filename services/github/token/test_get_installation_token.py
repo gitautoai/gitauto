@@ -85,7 +85,10 @@ def test_get_installation_access_token_suspended(
 
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_called_once_with(
-        installation_id=installation_id, user_id=0, user_name="System"
+        platform="github",
+        installation_id=installation_id,
+        user_id=0,
+        user_name="System",
     )
 
 
@@ -110,7 +113,10 @@ def test_get_installation_access_token_not_found(
 
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_called_once_with(
-        installation_id=installation_id, user_id=0, user_name="System"
+        platform="github",
+        installation_id=installation_id,
+        user_id=0,
+        user_name="System",
     )
 
 
@@ -543,7 +549,10 @@ def test_get_installation_access_token_suspended_with_partial_message(
 
     mock_requests_post.assert_called_once()
     mock_delete_installation.assert_called_once_with(
-        installation_id=installation_id, user_id=0, user_name="System"
+        platform="github",
+        installation_id=installation_id,
+        user_id=0,
+        user_name="System",
     )
 
 
@@ -571,23 +580,18 @@ def test_get_installation_access_token_response_with_additional_fields(
     mock_requests_post.assert_called_once()
 
 
-def test_get_installation_access_token_cast_behavior(
+def test_get_installation_access_token_non_string_token_raises(
     mock_get_jwt, mock_create_headers, mock_requests_post
 ):
-    """Test that the function properly casts the token to string"""
-    # Arrange
+    """A non-string token from GitHub is invalid and must be rejected (no silent cast)."""
     installation_id = 12345
-    # Simulate a non-string token value that should be cast to string
     mock_response = MagicMock()
-    mock_response.json.return_value = {"token": 123456}  # Integer token
+    mock_response.json.return_value = {"token": 123456}
     mock_requests_post.return_value = mock_response
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    with pytest.raises(ValueError, match="non-string token"):
+        get_installation_access_token(installation_id)
 
-    # Assert
-    assert result == 123456  # cast() should handle the conversion
-    assert isinstance(result, int)  # cast() preserves the original type
     mock_requests_post.assert_called_once()
 
 
@@ -608,19 +612,16 @@ def test_get_installation_access_token_empty_response_body(
     mock_requests_post.assert_called_once()
 
 
-def test_get_installation_access_token_null_token_value(
+def test_get_installation_access_token_null_token_value_raises(
     mock_get_jwt, mock_create_headers, mock_requests_post
 ):
-    """Test handling of null token value in response"""
-    # Arrange
+    """A null token from GitHub is invalid and must be rejected (no silent return-None)."""
     installation_id = 12345
     mock_response = MagicMock()
     mock_response.json.return_value = {"token": None}
     mock_requests_post.return_value = mock_response
 
-    # Act
-    result = get_installation_access_token(installation_id)
+    with pytest.raises(ValueError, match="non-string token"):
+        get_installation_access_token(installation_id)
 
-    # Assert
-    assert result is None
     mock_requests_post.assert_called_once()

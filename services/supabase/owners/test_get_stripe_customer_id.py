@@ -22,16 +22,19 @@ def test_get_stripe_customer_id_success(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = ([None, [{"stripe_customer_id": "cus_test123"}]], 1)
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify
     assert result == "cus_test123"
     mock_supabase.table.assert_called_once_with(table_name="owners")
     mock_table.select.assert_called_once_with("stripe_customer_id")
-    mock_select.eq.assert_called_once_with(column="owner_id", value=123456)
+    mock_select.eq.assert_called_once_with(column="platform", value="github")
+    mock_eq.eq.assert_called_with(column="owner_id", value=123456)
     mock_eq.execute.assert_called_once()
 
 
@@ -45,10 +48,12 @@ def test_get_stripe_customer_id_none_value(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = ([None, [{"stripe_customer_id": None}]], 1)
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify
     assert result is None
@@ -64,10 +69,12 @@ def test_get_stripe_customer_id_empty_string(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = ([None, [{"stripe_customer_id": ""}]], 1)
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify
     assert result == ""
@@ -83,10 +90,12 @@ def test_get_stripe_customer_id_no_data(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = (None, 0)
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify
     assert result is None
@@ -102,10 +111,12 @@ def test_get_stripe_customer_id_empty_data_array(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = ([], 0)
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify
     assert result is None
@@ -121,10 +132,12 @@ def test_get_stripe_customer_id_insufficient_data_length(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = ([None], 0)
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify
     assert result is None
@@ -140,10 +153,12 @@ def test_get_stripe_customer_id_none_second_element(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = ([None, None], 0)
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify
     assert result is None
@@ -155,7 +170,7 @@ def test_get_stripe_customer_id_exception_handling(mock_supabase):
     mock_supabase.table.side_effect = Exception("Database connection error")
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify that the default return value is returned
     assert result is None
@@ -171,6 +186,8 @@ def test_get_stripe_customer_id_with_different_owner_ids(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = (
         [None, [{"stripe_customer_id": "cus_different123"}]],
         1,
@@ -180,11 +197,11 @@ def test_get_stripe_customer_id_with_different_owner_ids(mock_supabase):
     test_cases = [0, 1, 999999, 123456789]
 
     for owner_id in test_cases:
-        result = get_stripe_customer_id(owner_id=owner_id)
+        result = get_stripe_customer_id(platform="github", owner_id=owner_id)
         assert result == "cus_different123"
 
-        # Verify the correct owner_id was passed
-        calls = mock_select.eq.call_args_list
+        # Verify the correct owner_id was passed (on second eq, after platform)
+        calls = mock_eq.eq.call_args_list
         assert any(call[1]["value"] == owner_id for call in calls)
 
 
@@ -198,6 +215,8 @@ def test_get_stripe_customer_id_multiple_records(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = (
         [
             None,
@@ -210,7 +229,7 @@ def test_get_stripe_customer_id_multiple_records(mock_supabase):
     )
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify that the first record is used
     assert result == "cus_first123"
@@ -228,13 +247,15 @@ def test_get_stripe_customer_id_long_customer_id(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = (
         [None, [{"stripe_customer_id": long_customer_id}]],
         1,
     )
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify
     assert result == long_customer_id
@@ -259,17 +280,19 @@ def test_get_stripe_customer_id_parametrized_owner_ids(mock_supabase, owner_id):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = (
         [None, [{"stripe_customer_id": f"cus_test_{owner_id}"}]],
         1,
     )
 
     # Execute
-    result = get_stripe_customer_id(owner_id=owner_id)
+    result = get_stripe_customer_id(platform="github", owner_id=owner_id)
 
     # Verify
     assert result == f"cus_test_{owner_id}"
-    mock_select.eq.assert_called_with(column="owner_id", value=owner_id)
+    mock_eq.eq.assert_called_with(column="owner_id", value=owner_id)
 
 
 def test_get_stripe_customer_id_supabase_method_chain(mock_supabase):
@@ -282,15 +305,18 @@ def test_get_stripe_customer_id_supabase_method_chain(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = ([None, [{"stripe_customer_id": "cus_test123"}]], 1)
 
     # Execute
-    get_stripe_customer_id(owner_id=123456)
+    get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify the complete method chain
     mock_supabase.table.assert_called_once_with(table_name="owners")
     mock_table.select.assert_called_once_with("stripe_customer_id")
-    mock_select.eq.assert_called_once_with(column="owner_id", value=123456)
+    mock_select.eq.assert_called_once_with(column="platform", value="github")
+    mock_eq.eq.assert_called_with(column="owner_id", value=123456)
     mock_eq.execute.assert_called_once()
 
 
@@ -304,10 +330,12 @@ def test_get_stripe_customer_id_empty_record_list(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = ([None, []], 0)
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify
     assert result is None
@@ -325,13 +353,15 @@ def test_get_stripe_customer_id_special_characters_in_customer_id(mock_supabase)
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = (
         [None, [{"stripe_customer_id": special_customer_id}]],
         1,
     )
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify
     assert result == special_customer_id
@@ -349,13 +379,15 @@ def test_get_stripe_customer_id_unicode_customer_id(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
+
+    mock_eq.eq.return_value = mock_eq
     mock_eq.execute.return_value = (
         [None, [{"stripe_customer_id": unicode_customer_id}]],
         1,
     )
 
     # Execute
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify
     assert result == unicode_customer_id
@@ -372,11 +404,13 @@ def test_get_stripe_customer_id_malformed_response_structure(mock_supabase):
     mock_table.select.return_value = mock_select
     mock_select.eq.return_value = mock_eq
 
+    mock_eq.eq.return_value = mock_eq
+
     # Test with malformed response that would cause IndexError
     mock_eq.execute.return_value = ([None, [{}]], 1)  # Missing stripe_customer_id key
 
     # Execute - should handle the KeyError gracefully due to handle_exceptions decorator
-    result = get_stripe_customer_id(owner_id=123456)
+    result = get_stripe_customer_id(platform="github", owner_id=123456)
 
     # Verify that the default return value is returned
     assert result is None

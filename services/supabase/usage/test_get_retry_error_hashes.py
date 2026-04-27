@@ -26,12 +26,15 @@ def test_get_retry_error_hashes_aggregates_from_all_records():
     ) as mock_supabase:
         mock_table = _setup_mock_table(mock_supabase, mock_response)
 
-        result = get_retry_error_hashes(123, 456, 789)
+        result = get_retry_error_hashes(
+            platform="github", owner_id=123, repo_id=456, pr_number=789
+        )
 
         assert result == ["hash1", "hash2", "hash3", "hash4"]
         mock_supabase.table.assert_called_once_with("usage")
         mock_table.select.assert_called_once_with("retry_error_hashes")
-        assert mock_table.eq.call_count == 3
+        assert mock_table.eq.call_count == 4
+        mock_table.eq.assert_any_call("platform", "github")
         mock_table.eq.assert_any_call("owner_id", 123)
         mock_table.eq.assert_any_call("repo_id", 456)
         mock_table.eq.assert_any_call("pr_number", 789)
@@ -47,7 +50,9 @@ def test_get_retry_error_hashes_with_single_record():
     ) as mock_supabase:
         _setup_mock_table(mock_supabase, mock_response)
 
-        result = get_retry_error_hashes(123, 456, 789)
+        result = get_retry_error_hashes(
+            platform="github", owner_id=123, repo_id=456, pr_number=789
+        )
 
         assert result == ["hash1", "hash2", "hash3"]
 
@@ -61,7 +66,9 @@ def test_get_retry_error_hashes_with_empty_response_data():
     ) as mock_supabase:
         _setup_mock_table(mock_supabase, mock_response)
 
-        result = get_retry_error_hashes(123, 456, 789)
+        result = get_retry_error_hashes(
+            platform="github", owner_id=123, repo_id=456, pr_number=789
+        )
 
         assert not result
 
@@ -75,7 +82,9 @@ def test_get_retry_error_hashes_with_none_response_data():
     ) as mock_supabase:
         _setup_mock_table(mock_supabase, mock_response)
 
-        result = get_retry_error_hashes(123, 456, 789)
+        result = get_retry_error_hashes(
+            platform="github", owner_id=123, repo_id=456, pr_number=789
+        )
 
         assert not result
 
@@ -92,7 +101,9 @@ def test_get_retry_error_hashes_with_empty_hashes_in_records():
     ) as mock_supabase:
         _setup_mock_table(mock_supabase, mock_response)
 
-        result = get_retry_error_hashes(123, 456, 789)
+        result = get_retry_error_hashes(
+            platform="github", owner_id=123, repo_id=456, pr_number=789
+        )
 
         assert result == ["hash1"]
 
@@ -110,7 +121,9 @@ def test_get_retry_error_hashes_deduplicates_across_records():
     ) as mock_supabase:
         _setup_mock_table(mock_supabase, mock_response)
 
-        result = get_retry_error_hashes(123, 456, 789)
+        result = get_retry_error_hashes(
+            platform="github", owner_id=123, repo_id=456, pr_number=789
+        )
 
         assert result == ["hash1", "hash2", "hash3"]
 
@@ -121,7 +134,9 @@ def test_get_retry_error_hashes_with_exception():
     ) as mock_supabase:
         mock_supabase.table.side_effect = Exception("Database error")
 
-        result = get_retry_error_hashes(123, 456, 789)
+        result = get_retry_error_hashes(
+            platform="github", owner_id=123, repo_id=456, pr_number=789
+        )
 
         assert not result
 
@@ -135,7 +150,9 @@ def test_get_retry_error_hashes_with_missing_key():
     ) as mock_supabase:
         _setup_mock_table(mock_supabase, mock_response)
 
-        result = get_retry_error_hashes(123, 456, 789)
+        result = get_retry_error_hashes(
+            platform="github", owner_id=123, repo_id=456, pr_number=789
+        )
 
         assert not result
 
@@ -151,6 +168,8 @@ def test_get_retry_error_hashes_with_execute_exception():
         mock_table.not_.is_.return_value = mock_table
         mock_table.execute.side_effect = Exception("Execute error")
 
-        result = get_retry_error_hashes(123, 456, 789)
+        result = get_retry_error_hashes(
+            platform="github", owner_id=123, repo_id=456, pr_number=789
+        )
 
         assert not result

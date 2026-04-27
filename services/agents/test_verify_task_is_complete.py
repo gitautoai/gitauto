@@ -1,3 +1,4 @@
+# pyright: reportUnusedVariable=false
 # pylint: disable=too-many-lines,unused-argument
 # pyright: reportArgumentType=false
 # pyright: reportUnusedVariable=false

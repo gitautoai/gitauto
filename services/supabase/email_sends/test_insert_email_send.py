@@ -33,13 +33,21 @@ def test_insert_email_send_success(mock_supabase_client):
     ]
 
     result = insert_email_send(
-        owner_id=12345, owner_name="test-user", email_type="uninstall"
+        platform="github",
+        owner_id=12345,
+        owner_name="test-user",
+        email_type="uninstall",
     )
 
     assert result is True
     mock.table.assert_called_once_with("email_sends")
     mock.table.return_value.insert.assert_called_once_with(
-        {"owner_id": 12345, "owner_name": "test-user", "email_type": "uninstall"}
+        {
+            "platform": "github",
+            "owner_id": 12345,
+            "owner_name": "test-user",
+            "email_type": "uninstall",
+        }
     )
     mock.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -49,7 +57,10 @@ def test_insert_email_send_duplicate(mock_supabase_client):
     mock_execute.data = []
 
     result = insert_email_send(
-        owner_id=12345, owner_name="test-user", email_type="uninstall"
+        platform="github",
+        owner_id=12345,
+        owner_name="test-user",
+        email_type="uninstall",
     )
 
     assert result is False
@@ -63,7 +74,10 @@ def test_insert_email_send_duplicate_key_error_returns_false(mock_supabase_clien
     mock.table.return_value.insert.return_value.execute.side_effect = api_error
 
     result = insert_email_send(
-        owner_id=12345, owner_name="test-user", email_type="uninstall"
+        platform="github",
+        owner_id=12345,
+        owner_name="test-user",
+        email_type="uninstall",
     )
 
     assert result is False
@@ -77,7 +91,10 @@ def test_insert_email_send_exception_returns_none(mock_supabase_client):
     )
 
     result = insert_email_send(
-        owner_id=12345, owner_name="test-user", email_type="uninstall"
+        platform="github",
+        owner_id=12345,
+        owner_name="test-user",
+        email_type="uninstall",
     )
 
     assert result is None
@@ -90,7 +107,10 @@ def test_insert_email_send_postgrest_server_error_returns_none(mock_supabase_cli
     mock.table.return_value.insert.return_value.execute.side_effect = api_error
 
     result = insert_email_send(
-        owner_id=12345, owner_name="test-user", email_type="uninstall"
+        platform="github",
+        owner_id=12345,
+        owner_name="test-user",
+        email_type="uninstall",
     )
 
     assert result is None

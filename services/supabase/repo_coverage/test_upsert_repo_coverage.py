@@ -78,7 +78,7 @@ class TestUpsertRepoCoverage:
         )
 
         # Execute
-        result = upsert_repo_coverage(sample_repo_coverage_data)
+        result = upsert_repo_coverage(coverage_data=sample_repo_coverage_data)
 
         # Verify
         assert result == expected_data
@@ -86,7 +86,7 @@ class TestUpsertRepoCoverage:
 
         # Verify the insert was called with the data
         mock_supabase_client.table.return_value.insert.assert_called_once_with(
-            sample_repo_coverage_data
+            dict(sample_repo_coverage_data)
         )
         mock_supabase_client.table.return_value.insert.return_value.execute.assert_called_once()
 
@@ -104,7 +104,7 @@ class TestUpsertRepoCoverage:
         )
 
         # Execute
-        result = upsert_repo_coverage(minimal_repo_coverage_data)
+        result = upsert_repo_coverage(coverage_data=minimal_repo_coverage_data)
 
         # Verify
         assert result == expected_data
@@ -112,13 +112,14 @@ class TestUpsertRepoCoverage:
 
         # Verify the insert was called with the data
         mock_supabase_client.table.return_value.insert.assert_called_once_with(
-            minimal_repo_coverage_data
+            dict(minimal_repo_coverage_data)
         )
         mock_supabase_client.table.return_value.insert.return_value.execute.assert_called_once()
 
     def test_upsert_with_all_required_fields(self, mock_supabase_client):
         """Test upsert with all required fields."""
         coverage_data: RepoCoverageInsert = {
+            "platform": "github",
             "branch_name": "feature-branch",
             "created_by": "test-user",
             "owner_id": 123456,
@@ -146,13 +147,14 @@ class TestUpsertRepoCoverage:
             mock_result
         )
 
-        result = upsert_repo_coverage(coverage_data)
+        result = upsert_repo_coverage(coverage_data=coverage_data)
 
         assert result == expected_data
 
         call_args = mock_supabase_client.table.return_value.insert.call_args[0][0]
         assert call_args["line_coverage"] == 75.0
-        assert len(call_args) == 17
+        assert call_args["platform"] == "github"
+        assert len(call_args) == 18
 
     def test_empty_result_data(self, mock_supabase_client, sample_repo_coverage_data):
         """Test handling of empty result data."""
@@ -165,7 +167,7 @@ class TestUpsertRepoCoverage:
         )
 
         # Execute
-        result = upsert_repo_coverage(sample_repo_coverage_data)
+        result = upsert_repo_coverage(coverage_data=sample_repo_coverage_data)
 
         # Verify
         assert not result
@@ -182,7 +184,7 @@ class TestUpsertRepoCoverage:
         )
 
         # Execute
-        result = upsert_repo_coverage(sample_repo_coverage_data)
+        result = upsert_repo_coverage(coverage_data=sample_repo_coverage_data)
 
         # Verify
         assert result is None
@@ -196,7 +198,7 @@ class TestUpsertRepoCoverage:
         mock_supabase_client.table.side_effect = Exception("Database connection error")
 
         # Execute
-        result = upsert_repo_coverage(sample_repo_coverage_data)
+        result = upsert_repo_coverage(coverage_data=sample_repo_coverage_data)
 
         # Verify - should return None due to handle_exceptions decorator
         assert result is None
@@ -216,7 +218,7 @@ class TestUpsertRepoCoverage:
         mock_insert.execute.return_value = mock_result
 
         # Execute
-        result = upsert_repo_coverage(sample_repo_coverage_data)
+        result = upsert_repo_coverage(coverage_data=sample_repo_coverage_data)
 
         # Verify the complete chain
         mock_supabase_client.table.assert_called_once_with("repo_coverage")
