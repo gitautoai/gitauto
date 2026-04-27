@@ -32,18 +32,25 @@ def test_clean_merge_with_api_count(mock_run):
         assert c != call(["git", "diff", "--name-only", "--diff-filter=U"], "/tmp/repo")
 
 
+@patch("services.git.git_merge_base_into_pr.deepen_until_merge_base")
 @patch("services.git.git_merge_base_into_pr.run_subprocess")
-def test_clean_merge_with_exponential_fallback(mock_run):
+def test_clean_merge_with_exponential_fallback(mock_run, mock_deepen):
+    """When behind_by=0, the function delegates to deepen_until_merge_base for the exponential fallback (extracted helper, used by both git_merge_base_into_pr and git_diff). Assert the delegation happens with the right args, not the inline schedule we no longer own here."""
     result = git_merge_base_into_pr(
         clone_dir="/tmp/repo", base_branch="main", behind_by=0
     )
 
     assert result is True
-    # Should try exponential deepen (first step = 100), then merge-base succeeds
-    mock_run.assert_any_call(
-        ["git", "fetch", "--deepen", "100", "origin", "main"], "/tmp/repo"
-    )
-    mock_run.assert_any_call(["git", "merge-base", "HEAD", "origin/main"], "/tmp/repo")
+    mock_deepen.assert_called_once_with("/tmp/repo", "main")
+    # No direct --deepen calls happen in this module anymore — they're inside the helper.
+    deepen_calls = [
+        c
+        for c in mock_run.call_args_list
+        if c[0][0][:3] == ["git", "fetch", "--deepen"]
+    ]
+    assert deepen_calls == []
+    # The merge step still runs in git_merge_base_into_pr after the helper returns.
+    mock_run.assert_any_call(["git", "merge", "origin/main", "--no-edit"], "/tmp/repo")
 
 
 @patch("services.git.git_merge_base_into_pr.run_subprocess")
@@ -216,8 +223,10 @@ def test_integration_conflict_merge(conflict_repo):
         with open(shared_path, encoding="utf-8") as f:
             content = f.read()
 
-        assert "<<<<<<<" in content
-        assert ">>>>>>>" in content
+        # Conflict markers are committed verbatim by git's merge driver — count occurrences instead of comparing the whole file (the closing marker carries the merged commit SHA which varies per run).
+        assert content.count("<<<<<<<") == 1
+        assert content.count("=======") == 1
+        assert content.count(">>>>>>>") == 1
 
         # Verify git is in a clean state (no merge in progress)
         result = subprocess.run(
