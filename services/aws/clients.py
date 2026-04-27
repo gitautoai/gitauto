@@ -6,6 +6,7 @@ from mypy_boto3_lambda import LambdaClient
 from mypy_boto3_logs import CloudWatchLogsClient
 from mypy_boto3_s3 import S3Client
 from mypy_boto3_scheduler import EventBridgeSchedulerClient
+from mypy_boto3_ssm import SSMClient
 
 from constants.aws import AWS_REGION
 
@@ -22,3 +23,5 @@ s3_client: S3Client = boto3.client("s3", region_name=AWS_REGION)
 scheduler_client: EventBridgeSchedulerClient = boto3.client(
     "scheduler", region_name=AWS_REGION
 )
+
+ssm_client: SSMClient = boto3.client("ssm", region_name=AWS_REGION)

@@ -39,7 +39,8 @@ def test_ssm_params_are_not_secure_string():
         params = response.get("Parameters", [])
         if not params:
             pytest.fail(f"SSM parameter {name} not found in {AWS_REGION}")
-        if params[0]["Type"] == "SecureString":
+        # Type is NotRequired in ParameterMetadataTypeDef; treat absence as a non-SecureString param (the assertion at the end only flags actual SecureStrings).
+        if params[0].get("Type") == "SecureString":
             secure_params.append(name)
 
     assert not secure_params, (
