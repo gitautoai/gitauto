@@ -49,14 +49,16 @@ def mock_function_with_raise_on_error():
 
 
 def test_handle_exceptions_returns_none_on_error():
-    """Test that decorator returns None when an error occurs."""
-    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get:
+    """Test that decorator returns None when an error occurs. requests.exceptions.ConnectionError is now treated as transient (Sentry AGENT-3KA/3K9), so the decorator retries up to TRANSIENT_MAX_ATTEMPTS=3 times before giving up."""
+    with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
+        "utils.error.handle_exceptions.time.sleep"
+    ):
         mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
         result = mock_function_for_testing()
 
         assert result is None
-        mock_get.assert_called_once()
+        assert mock_get.call_count == 3
 
 
 def test_handle_exceptions_returns_custom_default():
@@ -291,17 +293,17 @@ def test_handle_exceptions_http_error_no_retry():
 
 
 def test_handle_exceptions_connection_error():
-    """Test that connection errors are handled without retry and report to sentry."""
+    """ConnectionError is now treated as transient (Sentry AGENT-3KA/3K9), so the decorator retries up to TRANSIENT_MAX_ATTEMPTS=3 times before giving up. Sentry still captures the error once after retries are exhausted — we want signal that something is genuinely wrong even after retry."""
     with patch("utils.error.test_handle_exceptions.requests.get") as mock_get, patch(
         "sentry_sdk.capture_exception"
-    ) as mock_sentry:
+    ) as mock_sentry, patch("utils.error.handle_exceptions.time.sleep"):
         conn_error = requests.exceptions.ConnectionError("Connection failed")
         mock_get.side_effect = conn_error
 
         result = mock_function_for_testing()
 
         assert result is None
-        mock_get.assert_called_once()
+        assert mock_get.call_count == 3
         mock_sentry.assert_called_once_with(conn_error)
 
 

@@ -103,9 +103,11 @@ def test_get_circleci_job_artifacts_missing_items_key():
 
 
 def test_get_circleci_job_artifacts_connection_error():
-    """Test handling of connection errors through the handle_exceptions decorator."""
+    """Built-in ConnectionError is NOT a requests.exceptions.ConnectionError, so it falls through is_transient_error → not retried → single call."""
     # Mock the requests.get function to raise a ConnectionError
-    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get, patch(
+        "utils.error.handle_exceptions.time.sleep"
+    ):
         mock_get.side_effect = ConnectionError("Failed to establish a connection")
 
         # Call the function and verify it returns the default empty list
@@ -116,8 +118,8 @@ def test_get_circleci_job_artifacts_connection_error():
         # Verify the result is an empty list (default_return_value from handle_exceptions)
         assert not result
 
-        # Verify the get function was called with the expected parameters
-        mock_get.assert_called_once()
+        # Built-in ConnectionError doesn't match the requests.exceptions.ConnectionError isinstance check, so no retry — exactly one call.
+        assert mock_get.call_count == 1
 
 
 def test_get_circleci_job_artifacts_json_decode_error():
@@ -137,7 +139,10 @@ def test_get_circleci_job_artifacts_json_decode_error():
 
         # Verify the result is an empty list (default_return_value from handle_exceptions)
         assert not result
-        assert "gh/owner/repo" in mock_get.call_args[1]["url"]
+        assert (
+            mock_get.call_args[1]["url"]
+            == "https://circleci.com/api/v2/project/gh/owner/repo/303/artifacts"
+        )
 
 
 def test_get_circleci_job_artifacts_unexpected_response_structure():
@@ -377,8 +382,10 @@ def test_get_circleci_job_artifacts_empty_token():
 
 
 def test_get_circleci_job_artifacts_connection_error_specific():
-    """Test handling of specific connection errors."""
-    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get:
+    """requests.exceptions.ConnectionError is now treated as transient by is_transient_error (Sentry AGENT-3KA/3K9), so handle_exceptions retries up to TRANSIENT_MAX_ATTEMPTS=3 times before giving up."""
+    with patch("services.circleci.get_job_artifacts.requests.get") as mock_get, patch(
+        "utils.error.handle_exceptions.time.sleep"
+    ):
         mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
         result = get_circleci_job_artifacts(
@@ -386,7 +393,7 @@ def test_get_circleci_job_artifacts_connection_error_specific():
         )
 
         assert not result
-        mock_get.assert_called_once()
+        assert mock_get.call_count == 3
 
 
 def test_get_circleci_job_artifacts_request_exception():

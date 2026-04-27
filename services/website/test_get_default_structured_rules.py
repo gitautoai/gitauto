@@ -60,10 +60,8 @@ def test_get_default_structured_rules_success(
     mock_response.raise_for_status.assert_called_once()
     mock_response.json.assert_called_once()
 
-    # Verify result
+    # Verify result equals the sample fixture exactly; the dict-instance check is implicit in equality.
     assert result == sample_structured_rules
-    assert isinstance(result, dict)
-    assert "codePatternStrategy" in result
 
 
 def test_get_default_structured_rules_empty_response(mock_requests_get):
@@ -135,16 +133,16 @@ def test_get_default_structured_rules_http_error_500(mock_requests_get):
 
 
 def test_get_default_structured_rules_network_error(mock_requests_get):
-    """Test handling of network connection error."""
+    """Test handling of network connection error. requests.exceptions.ConnectionError is now treated as transient (Sentry AGENT-3KA/3K9), so handle_exceptions retries up to TRANSIENT_MAX_ATTEMPTS=3 times before giving up."""
     # Setup mock to raise connection error
     mock_requests_get.side_effect = requests.exceptions.ConnectionError("Network error")
 
-    # Call function - should return {} due to handle_exceptions decorator
-    result = get_default_structured_rules()
+    with patch("utils.error.handle_exceptions.time.sleep"):
+        result = get_default_structured_rules()
 
     # Verify result is {} (default_return_value from decorator)
     assert result == {}
-    mock_requests_get.assert_called_once()
+    assert mock_requests_get.call_count == 3
 
 
 def test_get_default_structured_rules_timeout_error(mock_requests_get):
@@ -230,8 +228,5 @@ def test_get_default_structured_rules_partial_data(mock_requests_get):
     # Call function
     result = get_default_structured_rules()
 
-    # Verify result
+    # Equality with `partial_data` already pins the keys; len/in checks are redundant.
     assert result == partial_data
-    assert len(result) == 2
-    assert "codePatternStrategy" in result
-    assert "enableCommentsInGeneratedTestCode" in result

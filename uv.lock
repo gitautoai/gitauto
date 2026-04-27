@@ -596,7 +596,7 @@ wheels = [
 
 [[package]]
 name = "gitauto"
-version = "1.78.5"
+version = "1.78.11"
 source = { virtual = "." }
 dependencies = [
     { name = "annotated-doc" },
