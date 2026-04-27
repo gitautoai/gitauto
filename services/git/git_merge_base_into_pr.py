@@ -1,3 +1,4 @@
+from services.git.deepen_until_merge_base import deepen_until_merge_base
 from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
 from utils.logging.logging_config import logger
@@ -5,9 +6,9 @@ from utils.logging.logging_config import logger
 
 @handle_exceptions(default_return_value=False, raise_on_error=False)
 def git_merge_base_into_pr(clone_dir: str, base_branch: str, behind_by: int):
-    # Shallow clones (--depth 1) lack a common ancestor, so git merge fails.
-    # --unshallow fetches full history but is too slow for large repos (e.g. 61K commits = 137s).
-    # Instead, --deepen N fetches only N more commits from the shallow boundary.
+    # Need a merge-base before merging; see deepen_until_merge_base for the why.
+    # When GitHub's Compare API gave us a known behind_by, deepen by that exact amount in one shot — cheaper than the helper's exponential climb.
+    # Otherwise fall back to the shared helper.
     if behind_by > 0:
         # behind_by from GitHub Compare API: e.g. PR is 50 commits behind main → deepen 60
         depth = behind_by + 10
@@ -16,30 +17,10 @@ def git_merge_base_into_pr(clone_dir: str, base_branch: str, behind_by: int):
             ["git", "fetch", "--deepen", str(depth), "origin", base_branch], clone_dir
         )
     else:
-        # API failed (returned default 0) — exponential deepen: 100 → 500 → 2500 → 12500
-        logger.info("behind_by=0, using exponential deepen fallback")
-        depth = 100
-        while depth <= 12500:
-            logger.info("Deepening by %d", depth)
-            run_subprocess(
-                ["git", "fetch", "--deepen", str(depth), "origin", base_branch],
-                clone_dir,
-            )
-            try:
-                run_subprocess(
-                    ["git", "merge-base", "HEAD", f"origin/{base_branch}"], clone_dir
-                )
-                logger.info("Merge base found at deepen=%d", depth)
-                break
-            except ValueError:
-                logger.info("Merge base not found at deepen=%d", depth)
-                depth *= 5
-        else:
-            # Cumulative depth after loop: 100+500+2500+12500 = 15600 commits wasn't enough
-            logger.warning("Exponential deepen exhausted, falling back to --unshallow")
-            run_subprocess(
-                ["git", "fetch", "--unshallow", "origin", base_branch], clone_dir
-            )
+        logger.info(
+            "behind_by=0, delegating to deepen_until_merge_base for exponential fallback"
+        )
+        deepen_until_merge_base(clone_dir, base_branch)
 
     # Merge base branch into PR branch
     try:

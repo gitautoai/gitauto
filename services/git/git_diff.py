@@ -1,6 +1,7 @@
 from anthropic.types import ToolUnionParam
 
 from services.claude.tools.properties import FILE_PATH
+from services.git.deepen_until_merge_base import deepen_until_merge_base
 from services.types.base_args import BaseArgs
 from utils.command.run_subprocess import run_subprocess
 from utils.error.handle_exceptions import handle_exceptions
@@ -43,7 +44,17 @@ def git_diff(
         logger.info("git_diff: scoping to file_path=%s", file_path)
         cmd.extend(["--", file_path.strip("/")])
 
-    result = run_subprocess(args=cmd, cwd=clone_dir)
+    try:
+        result = run_subprocess(args=cmd, cwd=clone_dir)
+    except ValueError as err:
+        # Three-dot diff fails on shallow clones; see deepen_until_merge_base for the why and the schedule.
+        if "no merge base" not in str(err):
+            logger.error("git_diff: unhandled subprocess error: %s", err)
+            raise
+        logger.warning("git_diff: no merge base, deepening base branch")
+        deepen_until_merge_base(clone_dir, base_branch)
+        logger.info("git_diff: retrying diff after deepen")
+        result = run_subprocess(args=cmd, cwd=clone_dir)
 
     diff = result.stdout
     if not diff:
